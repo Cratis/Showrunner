@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Chronicle.EventSequences;
 using Cratis.Showrunner.Usher.Contracts.Access;
 using Cratis.Showrunner.Usher.Identity;
 using Cratis.Showrunner.Usher.Identity.ShareIdentity;
@@ -25,14 +26,14 @@ public record GrantAccess(IssueId IssueId, AccessDuration AccessDuration)
     /// <param name="reporter">The signed-in reporter.</param>
     /// <param name="clock">The <see cref="TimeProvider"/> the grant starts from.</param>
     /// <returns><see cref="ReporterSharedIdentity"/> when identity is not shared yet, then <see cref="ReporterGrantedAccess"/>.</returns>
-    public IEnumerable<object> Handle(Issue? issue, ISignedInReporter reporter, TimeProvider clock)
+    public IEnumerable<EventForEventSourceId> Handle(Issue? issue, ISignedInReporter reporter, TimeProvider clock)
     {
         if (issue is not { IdentityShared: true })
         {
-            yield return new ReporterSharedIdentity(reporter.Reporter);
+            yield return ReporterSubjects.Fact(IssueId, reporter.Identity, new ReporterSharedIdentity(reporter.Reporter));
         }
 
-        yield return new ReporterGrantedAccess(AccessDuration.From(clock.GetUtcNow()));
+        yield return ReporterSubjects.Fact(IssueId, reporter.Identity, new ReporterGrantedAccess(AccessDuration.From(clock.GetUtcNow())));
     }
 }
 

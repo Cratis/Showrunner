@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Chronicle.EventSequences;
 using Cratis.Showrunner.Usher.Access;
 using Cratis.Showrunner.Usher.Access.GrantAccess;
 using Cratis.Showrunner.Usher.Contracts.Conversation;
@@ -85,14 +86,14 @@ public record ReportError(
     /// <see cref="ReporterFlaggedError"/>, then <see cref="ReporterAddedDetails"/>, <see cref="ReporterSharedIdentity"/>
     /// and <see cref="ReporterGrantedAccess"/> when present.
     /// </returns>
-    public IEnumerable<object> Handle(
+    public IEnumerable<EventForEventSourceId> Handle(
         CapturedError error,
         ISignedInReporter reporter,
         IOptions<UsherOptions> options,
         IComputeErrorFingerprints fingerprints,
         TimeProvider clock)
     {
-        yield return new ReporterFlaggedError(
+        yield return Fact(new ReporterFlaggedError(
             error.Location,
             CorrelationIds,
             error.StackFrames,
@@ -101,22 +102,24 @@ public record ReportError(
             fingerprints.Compute(error.ApplicationVersion, error.Location, error.ErrorType, error.ErrorMessage, error.StackFrames),
             options.Value.ApplicationName,
             error.ApplicationVersion,
-            reporter.Identity);
+            reporter.Identity));
 
         if (!string.IsNullOrWhiteSpace(Details))
         {
-            yield return new ReporterAddedDetails(Details);
+            yield return Fact(new ReporterAddedDetails(Details));
         }
 
         if (ShareIdentity || GrantAccess)
         {
-            yield return new ReporterSharedIdentity(reporter.Reporter);
+            yield return Fact(new ReporterSharedIdentity(reporter.Reporter));
         }
 
         if (GrantAccess)
         {
-            yield return new ReporterGrantedAccess(AccessDuration.From(clock.GetUtcNow()));
+            yield return Fact(new ReporterGrantedAccess(AccessDuration.From(clock.GetUtcNow())));
         }
+
+        EventForEventSourceId Fact(object fact) => ReporterSubjects.Fact(IssueId, reporter.Identity, fact);
     }
 }
 

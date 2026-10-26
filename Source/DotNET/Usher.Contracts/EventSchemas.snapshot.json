@@ -63,7 +63,13 @@
         "type": "string"
       },
       "details": {
-        "type": "string"
+        "type": "string",
+        "compliance": [
+          {
+            "metadataType": "PII",
+            "details": "Free text the reporter adds to an issue; it can name or identify them and is shown to support to work on the issue."
+          }
+        ]
       }
     },
     "required": [
@@ -83,7 +89,13 @@
         "format": "guid"
       },
       "answer": {
-        "type": "string"
+        "type": "string",
+        "compliance": [
+          {
+            "metadataType": "PII",
+            "details": "Free text the reporter writes in answer to support; it can name or identify them and is shown to support to work on the issue."
+          }
+        ]
       }
     },
     "required": [
@@ -193,7 +205,13 @@
             "type": "string"
           },
           "identityProviderSubject": {
-            "type": "string"
+            "type": "string",
+            "compliance": [
+              {
+                "metadataType": "PII",
+                "details": "A pseudonymous identifier of the reporter at their identity provider; the application matches the reporter\u0027s issues to them by it, and the desk learns it only when the reporter shares who they are."
+              }
+            ]
           },
           "name": {
             "type": "string",
@@ -302,7 +320,13 @@
         "type": "string"
       },
       "reason": {
-        "type": "string"
+        "type": "string",
+        "compliance": [
+          {
+            "metadataType": "PII",
+            "details": "Free text the reporter writes when reopening an issue; it can name or identify them and is shown to support to work on the issue."
+          }
+        ]
       }
     },
     "required": [
@@ -421,7 +445,13 @@
         }
       },
       "errorMessage": {
-        "type": "string"
+        "type": "string",
+        "compliance": [
+          {
+            "metadataType": "PII",
+            "details": "The message of an error the reporter hit; an application can put what the reporter entered into it, so it can identify them. Shown to support to work on the issue."
+          }
+        ]
       },
       "errorType": {
         "type": "string"
@@ -483,10 +513,22 @@
         }
       },
       "summary": {
-        "type": "string"
+        "type": "string",
+        "compliance": [
+          {
+            "metadataType": "PII",
+            "details": "Free text the reporter writes to describe their problem; it can name or identify them and is shown to support to work on the issue."
+          }
+        ]
       },
       "description": {
-        "type": "string"
+        "type": "string",
+        "compliance": [
+          {
+            "metadataType": "PII",
+            "details": "Free text the reporter writes about what happened; it can name or identify them and is shown to support to work on the issue."
+          }
+        ]
       },
       "applicationName": {
         "type": "string"

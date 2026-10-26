@@ -90,7 +90,22 @@ The desk publishes these from its outbox. They describe what support did with th
 | `ValidUntil` | `Access` | `ConceptAs<DateTimeOffset>`; the fixed end of a grant |
 | `AccessRequestReason` | `Access` | Text |
 
-`IdentityProviderName` and `IdentityProviderSubject` together identify the reporter and are the keys both sides correlate by, so they are not classified as personal data. `ReporterName` and `Email` are `[PII]`. The compliance subject of `IssueAttributedToReporter` is its event source, the issue, because each issue belongs to exactly one reporter; erasing a reporter means erasing the subject of every issue they reported. The free-text concepts are not classified. `SupportAuthorName` is not classified either: a desk that treats the names of its people as personal data sends `NotSet`.
+### Personal data
+
+What the reporter writes, and who they are, is classified `[PII]` on the shared concepts themselves, so it is encrypted in both stores:
+
+| Concept | Why |
+| --- | --- |
+| `Summary`, `Description`, `Details`, `Answer`, `ReopenReason` | Free text the reporter writes; it can name or identify them |
+| `ErrorMessage` | An application can put what the reporter entered into an error message |
+| `ReporterName`, `Email` | Who the reporter is |
+| `IdentityProviderSubject` | A pseudonymous identifier of the reporter. It is still personal data, so erasing the reporter makes it unreadable too; `IdentityProviderName` names the provider, not the person, and is not classified |
+
+`SupportAuthorName`, `QuestionText`, `ReplyText` and the other texts the desk writes are not classified: they are the desk's, and a desk that treats the names of its people as personal data sends `NotSet`.
+
+**The compliance subject is the reporter, not the issue.** Every fact the reporter records is appended with the subject `usher-reporter-<sha-256 of the identity provider and subject>`, and the publisher publishes each contract event with the subject of the private event it comes from. One erasure of that subject therefore covers everything a person wrote on all of their issues. The subject is a one-way hash because it travels unencrypted with every event, and the desk is not meant to learn who reported an issue before the reporter shares who they are. Events Usher or the desk record (a grant lapsing, a session, the desk's replies) keep the issue as their subject.
+
+**The desk reads forwarded events in the clear.** Encryption keys are per event store and namespace. When Chronicle forwards an event from the application's outbox to the desk's inbox, it copies the subject's key from the application's store into the desk's store, in the same namespace, the first time it forwards an event of that subject, and the desk's inbox stores the content encrypted under that copy. So the desk decrypts what it receives like its own events, and the classification can live on the shared concepts. Erasure is per store: erasing the reporter in the application deletes the application's key, and a desk that must forget them too deletes the same subject in its own store. Chronicle never copies a key into a store that erased it.
 
 ## Mapping to private events
 

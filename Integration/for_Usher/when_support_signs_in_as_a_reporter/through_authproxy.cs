@@ -74,7 +74,7 @@ public class through_authproxy : Specification
         var validUntil = DateTimeOffset.UtcNow.AddHours(1);
         foreach (var issue in new[] { _issueId, anotherIssue })
         {
-            await tenant.EventLog.Append(issue, new ReporterDescribedIssue(new("Invoicing", "Invoices", "SendInvoice"), [], "The invoice is not sent", "I pressed send.", "Ledger", "1.2.3", _reporterSubject));
+            await tenant.EventLog.Append(issue, new ReporterDescribedIssue(new("Invoicing", "Invoices", "SendInvoice"), [], "The invoice is not sent", "I pressed send.", "Ledger", "1.2.3", new Identity.UserIdentity("entra", _reporterSubject)));
             await tenant.EventLog.Append(issue, new ReporterSharedIdentity(_reporter));
         }
 

@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Chronicle.EventSequences;
 using Cratis.Showrunner.Usher.Contracts.Lifecycle;
 using Cratis.Showrunner.Usher.Identity;
 using Cratis.Showrunner.Usher.Issues;
@@ -19,8 +20,10 @@ public record ReopenIssue(IssueId IssueId, ReopenReason Reason)
     /// <summary>
     /// Handles the command.
     /// </summary>
-    /// <returns>The <see cref="ReporterReopenedIssue"/> event.</returns>
-    public ReporterReopenedIssue Handle() => new(Reason);
+    /// <param name="reporter">The signed-in reporter.</param>
+    /// <returns>The <see cref="ReporterReopenedIssue"/> event, with the reporter as its compliance subject.</returns>
+    public EventForEventSourceId Handle(ISignedInReporter reporter) =>
+        ReporterSubjects.Fact(IssueId, reporter.Identity, new ReporterReopenedIssue(Reason));
 }
 
 /// <summary>

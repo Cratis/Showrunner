@@ -5,6 +5,7 @@
 using Cratis.Showrunner.Usher.Access;
 using Cratis.Showrunner.Usher.Access.GrantAccess;
 using Cratis.Showrunner.Usher.given;
+using Cratis.Showrunner.Usher.Identity;
 using Cratis.Showrunner.Usher.Identity.ShareIdentity;
 
 namespace Cratis.Showrunner.Usher.Reporting.ReportIssue.when_reporting_an_issue;
@@ -25,6 +26,9 @@ public class and_access_is_granted : an_issue_command<ReportIssue>
     [Fact] void should_succeed() => _result.ShouldBeSuccessful();
     [Fact] void should_append_the_report_then_the_identity_then_the_grant() =>
         _scenario.AppendedEvents.Select(_ => _.Event.Content.GetType()).ShouldEqual([typeof(ReporterDescribedIssue), typeof(ReporterSharedIdentity), typeof(ReporterGrantedAccess)]);
+
+    [Fact] void should_append_everything_with_the_reporter_as_compliance_subject() =>
+        _scenario.AppendedEvents.ShouldEachConformTo(_ => _.Event.Context.Subject == ReporterSubjects.For(Reporters.Identity));
 
     [Fact]
     async Task should_share_who_the_signed_in_reporter_is() =>

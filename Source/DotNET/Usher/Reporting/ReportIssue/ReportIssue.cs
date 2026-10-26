@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Chronicle.EventSequences;
 using Cratis.Showrunner.Usher.Access;
 using Cratis.Showrunner.Usher.Access.GrantAccess;
 using Cratis.Showrunner.Usher.Contracts.Identity;
@@ -45,26 +46,28 @@ public record ReportIssue(
     /// <param name="options">The <see cref="UsherOptions"/> naming the application.</param>
     /// <param name="clock">The <see cref="TimeProvider"/> a grant starts from.</param>
     /// <returns><see cref="ReporterDescribedIssue"/>, then <see cref="ReporterSharedIdentity"/> and <see cref="ReporterGrantedAccess"/> when chosen.</returns>
-    public IEnumerable<object> Handle(ISignedInReporter reporter, IOptions<UsherOptions> options, TimeProvider clock)
+    public IEnumerable<EventForEventSourceId> Handle(ISignedInReporter reporter, IOptions<UsherOptions> options, TimeProvider clock)
     {
-        yield return new ReporterDescribedIssue(
+        yield return Fact(new ReporterDescribedIssue(
             Location,
             CorrelationIds,
             Summary,
             Description,
             options.Value.ApplicationName,
             ApplicationVersion,
-            reporter.Identity);
+            reporter.Identity));
 
         if (ShareIdentity || GrantAccess)
         {
-            yield return new ReporterSharedIdentity(reporter.Reporter);
+            yield return Fact(new ReporterSharedIdentity(reporter.Reporter));
         }
 
         if (GrantAccess)
         {
-            yield return new ReporterGrantedAccess(AccessDuration.From(clock.GetUtcNow()));
+            yield return Fact(new ReporterGrantedAccess(AccessDuration.From(clock.GetUtcNow())));
         }
+
+        EventForEventSourceId Fact(object fact) => ReporterSubjects.Fact(IssueId, reporter.Identity, fact);
     }
 }
 

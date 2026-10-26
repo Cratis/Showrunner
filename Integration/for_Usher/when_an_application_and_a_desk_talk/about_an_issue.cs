@@ -9,6 +9,7 @@ using Cratis.Showrunner.Usher.Contracts.Identity;
 using Cratis.Showrunner.Usher.Contracts.Lifecycle;
 using Cratis.Showrunner.Usher.Contracts.Reporting;
 using Cratis.Showrunner.Usher.Contracts.WorkItems;
+using Cratis.Showrunner.Usher.Identity;
 using Cratis.Showrunner.Usher.Identity.ShareIdentity;
 using Cratis.Showrunner.Usher.Integration.given;
 using Cratis.Showrunner.Usher.Receiving;
@@ -26,6 +27,8 @@ public class about_an_issue : Specification
     static readonly EventStoreNamespaceName _tenant = "fjord-logistics";
     static readonly IdentityProviderSubject _reporterSubject = "8c2f6a1e-reporter";
     static readonly Reporter _reporter = new("entra", _reporterSubject, "Ada Lovelace", "ada@example.com");
+    static readonly UserIdentity _reportedBy = new("entra", _reporterSubject);
+    static readonly Subject _complianceSubject = ReporterSubjects.For(_reportedBy);
 
     Desk _desk;
     Application _application;
@@ -59,16 +62,17 @@ public class about_an_issue : Specification
         // The reporter's facts, recorded in the tenant's namespace as Usher's commands record them.
         var tenant = await _application.In(_tenant);
         _validUntil = DateTimeOffset.UtcNow.AddSeconds(5);
-        await tenant.EventLog.Append(_issueId, new ReporterDescribedIssue(
+        var described = new ReporterDescribedIssue(
             new("Invoicing", "Invoices", "SendInvoice"),
             [],
             "The invoice is not sent",
             "I pressed send and nothing happened.",
             "Ledger",
             "1.2.3",
-            _reporterSubject));
-        await tenant.EventLog.Append(_issueId, new ReporterSharedIdentity(_reporter));
-        await tenant.EventLog.Append(_issueId, new ReporterGrantedAccess(_validUntil));
+            _reportedBy);
+        await tenant.EventLog.Append(_issueId, described, subject: _complianceSubject);
+        await tenant.EventLog.Append(_issueId, new ReporterSharedIdentity(_reporter), subject: _complianceSubject);
+        await tenant.EventLog.Append(_issueId, new ReporterGrantedAccess(_validUntil), subject: _complianceSubject);
 
         _issueReported = await _desk.WaitFor<IssueReported>(_application.Name, _tenant, _issueId);
         _attributed = await _desk.WaitFor<IssueAttributedToReporter>(_application.Name, _tenant, _issueId);
@@ -98,6 +102,9 @@ public class about_an_issue : Specification
     [Fact] void should_publish_the_report_to_the_desk_in_the_tenants_namespace() => _issueReported.Context.Namespace.ShouldEqual(_tenant);
     [Fact] void should_name_the_tenant_in_the_report() => ((IssueReported)_issueReported.Content).TenantId.ShouldEqual(new TenantId(_tenant.Value));
     [Fact] void should_carry_the_summary_in_the_report() => ((IssueReported)_issueReported.Content).Summary.Value.ShouldEqual("The invoice is not sent");
+    [Fact] void should_let_the_desk_read_the_personal_description_in_the_report() => ((IssueReported)_issueReported.Content).Description.Value.ShouldEqual("I pressed send and nothing happened.");
+    [Fact] void should_publish_the_report_with_the_reporter_as_its_compliance_subject() => _issueReported.Context.Subject.ShouldEqual(_complianceSubject);
+    [Fact] void should_let_the_desk_read_who_the_reporter_is() => ((IssueAttributedToReporter)_attributed.Content).Reporter.Email.ShouldEqual(_reporter.Email);
     [Fact] void should_not_publish_the_reporter_subject_with_the_report() => JsonSerializer.Serialize(_issueReported.Content).ShouldNotContain(_reporterSubject.Value);
     [Fact] void should_publish_who_the_reporter_is_once_shared() => ((IssueAttributedToReporter)_attributed.Content).Reporter.ShouldEqual(_reporter);
     [Fact] void should_publish_the_grant() => ((AccessGranted)_accessGranted.Content).ValidUntil.Value.ToUnixTimeMilliseconds().ShouldEqual(_validUntil.Value.ToUnixTimeMilliseconds());

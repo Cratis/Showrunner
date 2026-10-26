@@ -135,7 +135,7 @@ Access, recorded by the application itself:
 
 ### Personal data
 
-`ReporterSharedIdentity` is the only event with personal data: the reporter's name and email are classified `[PII]` and encrypted with the issue as compliance subject. `ReportedBy`, the identity provider and its id for the reporter, is recorded on the first event of every issue so the reporter finds their own issues even when they never share who they are. It is a pseudonymous key, not classified, and never published to the desk; the desk learns the reporter only through `ReporterSharedIdentity`.
+Everything the reporter writes (`Summary`, `Description`, `Details`, `Answer`, `ReopenReason`, `ErrorMessage`) and who they are (`ReporterName`, `Email`, `IdentityProviderSubject`) is classified `[PII]`. The reporter's commands append every fact with the reporter, not the issue, as compliance subject: `ReporterSubjects.For(identity)`, a one-way hash of the identity provider and subject. Erasing that subject in a tenant's namespace erases what the person wrote on all their issues there. `ReportedBy`, the identity provider and subject of the reporter, is recorded on the first event of every issue so the reporter finds their own issues even when they never share who they are; it is never published to the desk, which learns the reporter only through `ReporterSharedIdentity`. How the classification reaches the desk is in [Contracts](./contracts.md#personal-data).
 
 ### Error fingerprints
 

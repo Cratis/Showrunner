@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Chronicle.EventSequences;
 using Cratis.Showrunner.Usher.Contracts.Identity;
 using Cratis.Showrunner.Usher.Issues;
 
@@ -19,8 +20,9 @@ public record ShareIdentity(IssueId IssueId)
     /// Handles the command.
     /// </summary>
     /// <param name="reporter">The signed-in reporter.</param>
-    /// <returns>The <see cref="ReporterSharedIdentity"/> event.</returns>
-    public ReporterSharedIdentity Handle(ISignedInReporter reporter) => new(reporter.Reporter);
+    /// <returns>The <see cref="ReporterSharedIdentity"/> event, with the reporter as its compliance subject.</returns>
+    public EventForEventSourceId Handle(ISignedInReporter reporter) =>
+        ReporterSubjects.Fact(IssueId, reporter.Identity, new ReporterSharedIdentity(reporter.Reporter));
 }
 
 /// <summary>

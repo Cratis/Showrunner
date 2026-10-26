@@ -24,6 +24,7 @@
     },
     "files": [
         "dist",
+        "styles.css",
         "**/*.ts",
         "**/*.tsx",
         "!**/for_*/**",
@@ -44,7 +45,8 @@
                 "types": "./dist/cjs/index.d.ts",
                 "default": "./dist/cjs/index.js"
             }
-        }
+        },
+        "./styles": "./styles.css"
     },
     "scripts": {
         "prepare": "yarn g:build",
@@ -75,5 +77,8 @@
         "@cratis/arc.react": "^22.143.0",
         "@cratis/components": "^4.38.0",
         "react": "^19.0.0"
-    }
+    },
+    "sideEffects": [
+        "*.css"
+    ]
 }

@@ -1,0 +1,74 @@
+<Project>
+    <Import Project="$(MSBuildThisFileDirectory)../../Directory.Build.props" />
+
+    <!--
+        Every project under Source/DotNET is a library published to NuGet. Package metadata shared by all of
+        them lives here; each project sets its own PackageId, Description and PackageTags.
+    -->
+    <PropertyGroup>
+        <IsPackable>true</IsPackable>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <Copyright>Copyright Cratis</Copyright>
+        <Authors>Cratis</Authors>
+        <Company>Cratis</Company>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <RepositoryType>git</RepositoryType>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <RepositoryUrl>https://github.com/Cratis/Showrunner</RepositoryUrl>
+        <PackageProjectUrl>https://github.com/Cratis/Showrunner</PackageProjectUrl>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+
+        <GenerateAssemblyTitleAttribute>true</GenerateAssemblyTitleAttribute>
+        <GenerateAssemblyDescriptionAttribute>true</GenerateAssemblyDescriptionAttribute>
+
+        <!-- Debuggability -->
+        <DebugType>portable</DebugType>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <IncludeSymbols>True</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
+        <None Include="$(MSBuildThisFileDirectory)../../README.md" Pack="true" PackagePath="/" />
+    </ItemGroup>
+
+    <!--
+        Every project references Cratis.Fundamentals directly so the central pin decides the resolved
+        version, rather than letting it float to whatever floor Arc/Chronicle happen to declare
+        (transitive pinning is off).
+    -->
+    <ItemGroup>
+        <PackageReference Include="Cratis.Fundamentals" />
+    </ItemGroup>
+
+    <!--
+        Inline specs live beside the code they specify (when_*/, for_*/, given/ folders). Every project
+        under Source/DotNET doubles as a test project in Debug; the spec files are stripped from Release
+        builds by the #if DEBUG guard every spec file carries. Everything below is Debug-only, so the
+        Release build that `dotnet pack` produces carries no test framework, test SDK or spec dependency.
+    -->
+    <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+        <IsTestProject>true</IsTestProject>
+
+        <!-- Spec classes and members follow the for_/when_/should_ naming, and the test SDK generates
+             an entry point next to the library's own code. -->
+        <NoWarn>$(NoWarn);CS7022;IDE1006;IDE0005;MA0101;RCS1266;xUnit1031</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+        <!-- One Establish/Because per spec class instead of per [Fact] — see the file's own comment. -->
+        <Compile Include="$(MSBuildThisFileDirectory)SharedSpecificationInstance.cs" Link="SharedSpecificationInstance.cs" />
+        <PackageReference Include="xunit" />
+        <PackageReference Include="xunit.runner.visualstudio">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="NSubstitute" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" />
+        <PackageReference Include="Cratis.Specifications.XUnit" />
+        <PackageReference Include="Cratis.Arc.Chronicle.Testing" />
+        <PackageReference Include="Cratis.Chronicle.Testing" />
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    </ItemGroup>
+</Project>

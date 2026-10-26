@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>Cratis.Showrunner.Usher</AssemblyName>
+        <RootNamespace>Cratis.Showrunner.Usher</RootNamespace>
+        <PackageId>Cratis.Showrunner.Usher</PackageId>
+        <Description>Usher — the Showrunner support part for issue reporting and support conversations, built on Cratis Arc and Chronicle.</Description>
+        <PackageTags>cratis;showrunner;usher;support;arc;chronicle;event-sourcing</PackageTags>
+
+        <!-- The TypeScript proxies for Usher's commands and queries are generated into the
+             @cratis/showrunner.usher npm package. The Cratis.Showrunner.Usher namespace segments are
+             skipped so a slice in Cratis.Showrunner.Usher.<Feature>.<Slice> lands in <Feature>/<Slice>/.
+             Release builds clear CratisProxiesOutputPath (-p:CratisProxiesOutputPath=) so generation only
+             runs from the Debug build. -->
+        <CratisProxiesOutputPath>$(MSBuildThisFileDirectory)../../JavaScript/Usher</CratisProxiesOutputPath>
+        <CratisProxiesSegmentsToSkip>3</CratisProxiesSegmentsToSkip>
+        <CratisProxiesSkipOutputDeletion>true</CratisProxiesSkipOutputDeletion>
+        <CratisProxiesSkipCommandNameInRoute>true</CratisProxiesSkipCommandNameInRoute>
+        <CratisProxiesUseSourceFileAsOutputFile>true</CratisProxiesUseSourceFileAsOutputFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Cratis.Arc" />
+        <PackageReference Include="Cratis.Arc.Chronicle" />
+        <PackageReference Include="Cratis.Arc.ProxyGenerator.Build">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../Usher.Contracts/Usher.Contracts.csproj" />
+    </ItemGroup>
+</Project>

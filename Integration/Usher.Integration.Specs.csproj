@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <!--
+        End-to-end specifications for Usher against a real Chronicle kernel in a container (Testcontainers): an
+        application store running Usher in a generic host, and a desk store exchanging the contract events with it
+        through their outboxes and inboxes. Needs Docker. Run with:
+
+            dotnet test Integration/Usher.Integration.Specs.csproj
+
+        Set USHER_CHRONICLE_IMAGE to run against another kernel image.
+    -->
+    <PropertyGroup>
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <OutputType>Exe</OutputType>
+        <AssemblyName>Cratis.Showrunner.Usher.Integration.Specs</AssemblyName>
+        <RootNamespace>Cratis.Showrunner.Usher.Integration</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <!-- One Establish/Because per spec class, as in the inline specs. -->
+        <Compile Include="../Source/DotNET/SharedSpecificationInstance.cs" Link="SharedSpecificationInstance.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../Source/DotNET/Usher/Usher.csproj" />
+        <ProjectReference Include="../Source/DotNET/Usher.Contracts/Usher.Contracts.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Cratis.Fundamentals" />
+        <PackageReference Include="xunit" />
+        <PackageReference Include="xunit.runner.visualstudio">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" />
+        <PackageReference Include="Cratis.Specifications.XUnit" />
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+        <PackageReference Include="Testcontainers" />
+        <PackageReference Include="SSH.NET" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Update="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+</Project>

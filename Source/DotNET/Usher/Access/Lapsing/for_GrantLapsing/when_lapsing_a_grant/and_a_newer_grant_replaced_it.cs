@@ -17,7 +17,7 @@ public class and_a_newer_grant_replaced_it : grant_lapsing
     async Task Because()
     {
         await HappenedOn(_issueId, new ReporterGrantedAccess(_earlier), new ReporterRevokedAccess(), new ReporterGrantedAccess(_later));
-        await _lapsing.Lapse(_eventStore, new(_issueId, _earlier));
+        await _lapsing.Lapse(_eventStore, _issueId);
         await ReadEventsOf(_issueId);
     }
 

@@ -17,7 +17,7 @@ public class and_the_reporter_revoked_it : grant_lapsing
     {
         // The grant was nominated before the reporter revoked it.
         await HappenedOn(_issueId, new ReporterGrantedAccess(_validUntil), new ReporterRevokedAccess());
-        await _lapsing.Lapse(_eventStore, new(_issueId, _validUntil));
+        await _lapsing.Lapse(_eventStore, _issueId);
         await ReadEventsOf(_issueId);
     }
 

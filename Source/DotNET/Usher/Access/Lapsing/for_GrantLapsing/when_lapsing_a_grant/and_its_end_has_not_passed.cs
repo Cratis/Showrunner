@@ -8,17 +8,17 @@ using Cratis.Showrunner.Usher.Contracts.Access;
 
 namespace Cratis.Showrunner.Usher.Access.Lapsing.for_GrantLapsing.when_lapsing_a_grant;
 
-public class and_it_is_still_in_effect : grant_lapsing
+public class and_its_end_has_not_passed : grant_lapsing
 {
-    static readonly ValidUntil _validUntil = new(Now.AddMinutes(-5));
+    static readonly ValidUntil _validUntil = new(Now.AddMinutes(5));
 
     async Task Because()
     {
         await HappenedOn(_issueId, new ReporterGrantedAccess(_validUntil));
-        await _lapsing.Lapse(_eventStore, new(_issueId, _validUntil));
+        await _lapsing.Lapse(_eventStore, _issueId);
         await ReadEventsOf(_issueId);
     }
 
-    [Fact] void should_lapse_the_grant() => _events[^1].Content.ShouldEqual(new AccessGrantLapsed(_validUntil));
+    [Fact] void should_not_lapse_it() => _events.ShouldNotContain(_ => _.Content is AccessGrantLapsed);
 }
 #endif

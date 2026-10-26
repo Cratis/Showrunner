@@ -15,8 +15,8 @@ public class and_it_already_lapsed : grant_lapsing
     async Task Because()
     {
         await HappenedOn(_issueId, new ReporterGrantedAccess(_validUntil));
-        await _lapsing.Lapse(_eventStore, new(_issueId, _validUntil));
-        await _lapsing.Lapse(_eventStore, new(_issueId, _validUntil));
+        await _lapsing.Lapse(_eventStore, _issueId);
+        await _lapsing.Lapse(_eventStore, _issueId);
         await ReadEventsOf(_issueId);
     }
 

@@ -62,9 +62,10 @@ public record GrantToLapse(IssueId Id, ValidUntil ValidUntil)
 /// <remarks>
 /// <para>
 /// <see cref="GrantToLapse"/> only nominates candidates; the decision is taken against the issue's own events. The
-/// lapse is appended only when the last access event on the issue is the grant being lapsed, and the append is guarded
-/// by a concurrency scope on those events, so a grant revoked or replaced in the meantime is never lapsed. It is
-/// appended once per grant: a second instance lapsing the same grant at the same time appends nothing.
+/// lapse is appended only when the last access event on the issue is a grant whose end has passed, and the append is
+/// guarded by a concurrency scope on those events, so a grant revoked or replaced in the meantime is never lapsed. It
+/// carries the grant's exact end, and it is appended once per grant: a second instance lapsing the same grant at the
+/// same time appends nothing.
 /// </para>
 /// <para>
 /// Support can never sign in on a grant past its end even before the lapse is recorded:
@@ -89,50 +90,52 @@ public class GrantLapsing(TimeProvider time, ILogger<GrantLapsing> logger)
         var grants = await eventStore.ReadModels.GetInstances<GrantToLapse>();
         foreach (var grant in grants.Where(_ => _.IsDue(now)))
         {
-            await Lapse(eventStore, grant);
+            await Lapse(eventStore, grant.Id);
         }
     }
 
     /// <summary>
-    /// Lapses one grant, when it is still the grant in effect on its issue.
+    /// Lapses the grant in effect on an issue, when its end has passed.
     /// </summary>
     /// <param name="eventStore">The event store of the namespace.</param>
-    /// <param name="grant">The grant to lapse.</param>
+    /// <param name="issueId">The issue.</param>
     /// <returns>An awaitable task.</returns>
     /// <exception cref="GrantCouldNotLapse">The event log refused the lapse for another reason than a change on the issue.</exception>
-    public async Task Lapse(IEventStore eventStore, GrantToLapse grant)
+    public async Task Lapse(IEventStore eventStore, IssueId issueId)
     {
+        // The issue's own events decide, not the read model: they hold the grant's exact end, and they are what the
+        // append is guarded against.
         var eventTypes = _accessEvents.Select(eventStore.EventTypes.GetEventTypeFor).ToArray();
-        var accessEvents = await eventStore.EventLog.GetForEventSourceIdAndEventTypes(grant.Id, eventTypes);
+        var accessEvents = await eventStore.EventLog.GetForEventSourceIdAndEventTypes(issueId, eventTypes);
         var last = accessEvents.Count > 0 ? accessEvents[^1] : null;
-        if (last?.Content is not ReporterGrantedAccess granted || granted.ValidUntil != grant.ValidUntil)
+        if (last?.Content is not ReporterGrantedAccess granted || granted.ValidUntil.Value > time.GetUtcNow())
         {
             return;
         }
 
         var result = await eventStore.EventLog.AppendOnce(
-            grant.Id,
-            new AccessGrantLapsed(grant.ValidUntil),
-            KeyFor(grant),
-            concurrencyScope: new ConcurrencyScope(last.Context.SequenceNumber, grant.Id, EventTypes: eventTypes));
+            issueId,
+            new AccessGrantLapsed(granted.ValidUntil),
+            KeyFor(issueId, granted.ValidUntil),
+            concurrencyScope: new ConcurrencyScope(last.Context.SequenceNumber, issueId, EventTypes: eventTypes));
 
         if (result.HasConcurrencyViolations)
         {
             // The reporter revoked or granted again between the read and the append; the next round decides afresh.
-            logger.GrantChangedWhileLapsing(grant.Id, eventStore.Namespace);
+            logger.GrantChangedWhileLapsing(issueId, eventStore.Namespace);
             return;
         }
 
         if (!result.IsSuccess && !result.HasIdempotencyConflicts)
         {
-            throw new GrantCouldNotLapse(grant.Id, eventStore.Namespace, result);
+            throw new GrantCouldNotLapse(issueId, eventStore.Namespace, result);
         }
 
-        logger.GrantLapsed(grant.Id, grant.ValidUntil, eventStore.Namespace);
+        logger.GrantLapsed(issueId, granted.ValidUntil, eventStore.Namespace);
     }
 
-    static IdempotencyKey KeyFor(GrantToLapse grant) =>
-        new($"usher-lapse-{grant.Id.Value:D}-{grant.ValidUntil.Value.UtcTicks}");
+    static IdempotencyKey KeyFor(IssueId issueId, ValidUntil validUntil) =>
+        new($"usher-lapse-{issueId.Value:D}-{validUntil.Value.UtcTicks}");
 }
 
 /// <summary>

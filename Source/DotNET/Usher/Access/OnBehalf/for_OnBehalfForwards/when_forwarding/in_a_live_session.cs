@@ -4,6 +4,7 @@
 #if DEBUG
 using Cratis.Showrunner.Usher.Access.GrantAccess;
 using Cratis.Showrunner.Usher.Access.OnBehalf.for_OnBehalfForwards.given;
+using Cratis.Showrunner.Usher.Access.Sessions;
 using Cratis.Showrunner.Usher.given;
 using Cratis.Showrunner.Usher.Identity.ShareIdentity;
 
@@ -13,7 +14,7 @@ public class in_a_live_session : a_forwarded_request
 {
     async Task Because()
     {
-        await Happened(IssueEvents.Described(Reporters.Identity), new ReporterSharedIdentity(Reporters.Reporter), new ReporterGrantedAccess(Now.AddHours(1)));
+        await Happened(IssueEvents.Described(Reporters.Identity), new ReporterSharedIdentity(Reporters.Reporter), new ReporterGrantedAccess(Now.AddHours(1)), new SupportSignedInAsReporter(Reporters.SessionId, IssueEvents.Support, IssueEvents.SupportPerson));
         await Forwarded();
     }
 

@@ -32,6 +32,7 @@ namespace Cratis.Showrunner.Usher.Access.Sessions;
 /// <param name="Withdrawn">Whether the reporter withdrew the issue.</param>
 /// <param name="ValidUntil">The end of the last grant; <see cref="Unset.ValidUntil"/> when there was none.</param>
 /// <param name="Sessions">The sessions support had, by identifier.</param>
+/// <param name="Permitted">The sessions Usher's grant check let AuthProxy start, whether they started or not.</param>
 /// <param name="LastSequenceNumber">The sequence number of the last event it was folded from.</param>
 public record SupportAccess(
     UserIdentity ReportedBy,
@@ -40,6 +41,7 @@ public record SupportAccess(
     bool Withdrawn,
     ValidUntil ValidUntil,
     ImmutableDictionary<SupportSessionId, SupportSessionFacts> Sessions,
+    ImmutableHashSet<SupportSessionId> Permitted,
     EventSequenceNumber LastSequenceNumber)
 {
     /// <summary>
@@ -54,6 +56,7 @@ public record SupportAccess(
         typeof(ReporterRevokedAccess),
         typeof(AccessGrantLapsed),
         typeof(ReporterWithdrewIssue),
+        typeof(SupportSessionPermitted),
         typeof(SupportSignedInAsReporter),
         typeof(SupportSessionEnded)
     ];
@@ -67,6 +70,7 @@ public record SupportAccess(
         false,
         false,
         Unset.ValidUntil,
+        [],
         [],
         EventSequenceNumber.Unavailable);
 
@@ -101,6 +105,13 @@ public record SupportAccess(
     /// <param name="sessionId">The session.</param>
     /// <returns>True when support signed in for it.</returns>
     public bool HasStarted(SupportSessionId sessionId) => Sessions.ContainsKey(sessionId);
+
+    /// <summary>
+    /// Gets whether the grant check already let AuthProxy start a session.
+    /// </summary>
+    /// <param name="sessionId">The session.</param>
+    /// <returns>True when it was permitted.</returns>
+    public bool WasPermitted(SupportSessionId sessionId) => Permitted.Contains(sessionId);
 
     /// <summary>
     /// Gets whether a session ended.
@@ -162,6 +173,7 @@ public record SupportAccess(
             ReporterWithdrewIssue => this with { Granted = false, Withdrawn = true },
             ReporterRevokedAccess => this with { Granted = false },
             AccessGrantLapsed lapsed when lapsed.ValidUntil == ValidUntil => this with { Granted = false },
+            SupportSessionPermitted permitted => this with { Permitted = Permitted.Add(permitted.SessionId) },
             SupportSignedInAsReporter signedIn when !HasStarted(signedIn.SessionId) =>
                 this with { Sessions = Sessions.Add(signedIn.SessionId, new(signedIn.Author, sequenceNumber, false)) },
             SupportSessionEnded ended when HasStarted(ended.SessionId) =>

@@ -26,6 +26,17 @@ public record SupportSessionId(string Value) : ConceptAs<string>(Value)
 }
 
 /// <summary>
+/// Usher's grant check let AuthProxy start a session in which support signs in as the reporter: the grant was live and
+/// the session had not started yet (Cratis/AuthProxy#217). AuthProxy checks the grant once before it announces a
+/// session, so a session is permitted at most once; a later grant check for a session that was permitted but never
+/// started is not live, so a session the application never recorded as started can not be used. It has no public
+/// event.
+/// </summary>
+/// <param name="SessionId">The session.</param>
+[EventType]
+public record SupportSessionPermitted(SupportSessionId SessionId);
+
+/// <summary>
 /// Support signed in as the reporter under a live grant to look into the issue (Cratis/Showrunner#7). Both identities
 /// are in the causation of this and every event appended in the session; the payload carries the one the reporter is
 /// shown. It has no public event.

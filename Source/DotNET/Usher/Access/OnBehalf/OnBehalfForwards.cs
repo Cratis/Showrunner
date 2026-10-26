@@ -88,7 +88,7 @@ public class OnBehalfForwards(RequestDelegate next, IOptionsMonitor<UsherOptions
         }
 
         var request = new SupportSessionRequest(issue, assertion.SessionId, assertion.Subject, new(assertion.ActorIdentityProvider, assertion.Actor));
-        var checkedGrant = await sessions.Check(eventStore, request);
+        var checkedGrant = await sessions.CheckSession(eventStore, request);
         return checkedGrant.TryGetError(out var refusal) ? refusal : null;
     }
 

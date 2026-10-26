@@ -43,11 +43,19 @@ public class SupportSessions(TimeProvider time, ILogger<SupportSessions> logger)
         SupportAccess.From(await ReadEvents(eventStore, issueId));
 
     /// <summary>
-    /// Checks whether support may act as the reporter in a session right now.
+    /// Answers AuthProxy's grant check: whether support may act as the reporter in a session right now.
     /// </summary>
+    /// <remarks>
+    /// AuthProxy checks the grant once before it announces a new session, with the identifier the session will have,
+    /// and again while the session lasts. A session that has not started is therefore live once: the first check
+    /// records <see cref="SupportSessionPermitted"/>, and every later check for it is not live until Usher has
+    /// acknowledged its start. A session Usher never recorded as started can not be kept alive by asking again, on this
+    /// instance or any other.
+    /// </remarks>
     /// <param name="eventStore">The event store of the issue's namespace.</param>
     /// <param name="request">The <see cref="SupportSessionRequest"/>.</param>
     /// <returns>The <see cref="LiveGrant"/>, or why there is none.</returns>
+    /// <exception cref="SupportSessionNotRecorded">The event log refused to record that the session was permitted.</exception>
     public async Task<Result<LiveGrant, SupportSessionRefusal>> Check(IEventStore eventStore, SupportSessionRequest request)
     {
         var access = await Read(eventStore, request.IssueId);
@@ -55,6 +63,33 @@ public class SupportSessions(TimeProvider time, ILogger<SupportSessions> logger)
         {
             logger.SessionRefused(request.IssueId, refusal, eventStore.Namespace);
             return refusal;
+        }
+
+        if (!access.HasStarted(request.SessionId) && !await Permit(eventStore, request, access))
+        {
+            logger.SessionRefused(request.IssueId, SupportSessionRefusal.SessionNotStarted, eventStore.Namespace);
+            return SupportSessionRefusal.SessionNotStarted;
+        }
+
+        return new LiveGrant(access.ValidUntil, access.SharedIdentity!);
+    }
+
+    /// <summary>
+    /// Checks whether support may act as the reporter right now in a session that started: the session started and has
+    /// not ended, and the grant lets support act.
+    /// </summary>
+    /// <param name="eventStore">The event store of the issue's namespace.</param>
+    /// <param name="request">The <see cref="SupportSessionRequest"/>.</param>
+    /// <returns>The <see cref="LiveGrant"/>, or why there is none.</returns>
+    public async Task<Result<LiveGrant, SupportSessionRefusal>> CheckSession(IEventStore eventStore, SupportSessionRequest request)
+    {
+        var access = await Read(eventStore, request.IssueId);
+        var refusal = access.RefusalFor(request, time.GetUtcNow()) ??
+            (access.HasStarted(request.SessionId) ? null : SupportSessionRefusal.SessionNotStarted);
+        if (refusal is { } refused)
+        {
+            logger.SessionRefused(request.IssueId, refused, eventStore.Namespace);
+            return refused;
         }
 
         return new LiveGrant(access.ValidUntil, access.SharedIdentity!);
@@ -177,6 +212,32 @@ public class SupportSessions(TimeProvider time, ILogger<SupportSessions> logger)
         {
             await End(eventStore, issueId, sessionId);
         }
+    }
+
+    static async Task<bool> Permit(IEventStore eventStore, SupportSessionRequest request, SupportAccess access)
+    {
+        if (access.WasPermitted(request.SessionId))
+        {
+            return false;
+        }
+
+        // Once per session, whichever instance answers: a second check for the same session that has not started finds
+        // the first one's permit and is not live.
+        var result = await eventStore.EventLog.AppendOnce(
+            request.IssueId,
+            new SupportSessionPermitted(request.SessionId),
+            KeyFor("permitted", request.IssueId, request.SessionId));
+        if (result.WasAlreadyAppended || result.HasIdempotencyConflicts)
+        {
+            return false;
+        }
+
+        if (!result.IsSuccess)
+        {
+            throw new SupportSessionNotRecorded(typeof(SupportSessionPermitted), request.IssueId, eventStore.Namespace, result);
+        }
+
+        return true;
     }
 
     static IdempotencyKey KeyFor(string what, IssueId issueId, SupportSessionId sessionId) =>

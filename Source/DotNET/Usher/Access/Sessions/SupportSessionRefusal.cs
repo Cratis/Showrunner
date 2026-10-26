@@ -46,5 +46,11 @@ public enum SupportSessionRefusal
     /// <summary>
     /// The reporter withdrew the issue, which ends support's access to it for good.
     /// </summary>
-    IssueWithdrawn = 7
+    IssueWithdrawn = 7,
+
+    /// <summary>
+    /// The session never started: AuthProxy never announced it, or Usher never acknowledged it. A session the
+    /// application has no record of is never live.
+    /// </summary>
+    SessionNotStarted = 8
 }

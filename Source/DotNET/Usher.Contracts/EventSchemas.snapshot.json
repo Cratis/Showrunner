@@ -1,0 +1,582 @@
+{
+  "AccessExpired:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "tenantId"
+    ],
+    "title": "AccessExpired"
+  },
+  "AccessGranted:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "validUntil": {
+        "type": "string",
+        "format": "date-time-offset"
+      }
+    },
+    "required": [
+      "tenantId",
+      "validUntil"
+    ],
+    "title": "AccessGranted"
+  },
+  "AccessRequested:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "reason": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "tenantId",
+      "reason"
+    ],
+    "title": "AccessRequested"
+  },
+  "AccessRevoked:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "tenantId"
+    ],
+    "title": "AccessRevoked"
+  },
+  "DetailsAdded:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "details": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "tenantId",
+      "details"
+    ],
+    "title": "DetailsAdded"
+  },
+  "QuestionAnswered:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "questionId": {
+        "type": "string",
+        "format": "guid"
+      },
+      "answer": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "tenantId",
+      "questionId",
+      "answer"
+    ],
+    "title": "QuestionAnswered"
+  },
+  "QuestionAsked:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "questionId": {
+        "type": "string",
+        "format": "guid"
+      },
+      "question": {
+        "type": "string"
+      },
+      "author": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ],
+            "x-enumNames": [
+              "Person",
+              "Agent"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "kind"
+        ],
+        "title": "SupportAuthor"
+      }
+    },
+    "required": [
+      "tenantId",
+      "questionId",
+      "question",
+      "author"
+    ],
+    "title": "QuestionAsked"
+  },
+  "ReplySent:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "reply": {
+        "type": "string"
+      },
+      "author": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ],
+            "x-enumNames": [
+              "Person",
+              "Agent"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "kind"
+        ],
+        "title": "SupportAuthor"
+      }
+    },
+    "required": [
+      "tenantId",
+      "reply",
+      "author"
+    ],
+    "title": "ReplySent"
+  },
+  "IssueAttributedToReporter:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "reporter": {
+        "type": "object",
+        "properties": {
+          "identityProvider": {
+            "type": "string"
+          },
+          "identityProviderSubject": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "compliance": [
+              {
+                "metadataType": "PII",
+                "details": "Shown to the support desk so support can address the reporter, only after the reporter chose to share who they are."
+              }
+            ]
+          },
+          "email": {
+            "type": "string",
+            "compliance": [
+              {
+                "metadataType": "PII",
+                "details": "Lets the support desk contact the reporter about their issue, only after the reporter chose to share who they are."
+              }
+            ]
+          }
+        },
+        "required": [
+          "identityProvider",
+          "identityProviderSubject",
+          "name",
+          "email"
+        ],
+        "title": "Reporter"
+      }
+    },
+    "required": [
+      "tenantId",
+      "reporter"
+    ],
+    "title": "IssueAttributedToReporter"
+  },
+  "IssueLinkedToKnownIssue:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "knownIssueId": {
+        "type": "string",
+        "format": "guid"
+      },
+      "title": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "tenantId",
+      "knownIssueId",
+      "title"
+    ],
+    "title": "IssueLinkedToKnownIssue"
+  },
+  "IssueUnlinkedFromKnownIssue:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "knownIssueId": {
+        "type": "string",
+        "format": "guid"
+      }
+    },
+    "required": [
+      "tenantId",
+      "knownIssueId"
+    ],
+    "title": "IssueUnlinkedFromKnownIssue"
+  },
+  "IssueAccepted:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "tenantId"
+    ],
+    "title": "IssueAccepted"
+  },
+  "IssueClosedAsWontFix:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "reason": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "tenantId",
+      "reason"
+    ],
+    "title": "IssueClosedAsWontFix"
+  },
+  "IssueReopened:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "reason": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "tenantId",
+      "reason"
+    ],
+    "title": "IssueReopened"
+  },
+  "IssueResolved:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "resolution": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "tenantId",
+      "resolution"
+    ],
+    "title": "IssueResolved"
+  },
+  "IssueTriaged:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "tenantId"
+    ],
+    "title": "IssueTriaged"
+  },
+  "IssueWithdrawn:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "tenantId"
+    ],
+    "title": "IssueWithdrawn"
+  },
+  "WorkStarted:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "tenantId"
+    ],
+    "title": "WorkStarted"
+  },
+  "ErrorReported:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "location": {
+        "type": "object",
+        "properties": {
+          "module": {
+            "type": "string"
+          },
+          "feature": {
+            "type": "string"
+          },
+          "slice": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "module",
+          "feature",
+          "slice"
+        ],
+        "title": "SliceLocation"
+      },
+      "correlationIds": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "format": "guid"
+        }
+      },
+      "stackFrames": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "method": {
+              "type": "string"
+            },
+            "file": {
+              "type": "string"
+            },
+            "line": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "required": [
+            "method",
+            "file",
+            "line"
+          ],
+          "title": "StackFrame"
+        }
+      },
+      "errorMessage": {
+        "type": "string"
+      },
+      "errorType": {
+        "type": "string"
+      },
+      "fingerprint": {
+        "type": "string"
+      },
+      "applicationName": {
+        "type": "string"
+      },
+      "applicationVersion": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "tenantId",
+      "location",
+      "correlationIds",
+      "stackFrames",
+      "errorMessage",
+      "errorType",
+      "fingerprint",
+      "applicationName",
+      "applicationVersion"
+    ],
+    "title": "ErrorReported"
+  },
+  "IssueReported:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "location": {
+        "type": "object",
+        "properties": {
+          "module": {
+            "type": "string"
+          },
+          "feature": {
+            "type": "string"
+          },
+          "slice": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "module",
+          "feature",
+          "slice"
+        ],
+        "title": "SliceLocation"
+      },
+      "correlationIds": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "format": "guid"
+        }
+      },
+      "summary": {
+        "type": "string"
+      },
+      "description": {
+        "type": "string"
+      },
+      "applicationName": {
+        "type": "string"
+      },
+      "applicationVersion": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "tenantId",
+      "location",
+      "correlationIds",
+      "summary",
+      "description",
+      "applicationName",
+      "applicationVersion"
+    ],
+    "title": "IssueReported"
+  },
+  "IssueFixedInRelease:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "releaseVersion": {
+        "type": "string"
+      },
+      "workItemReference": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "tenantId",
+      "releaseVersion",
+      "workItemReference"
+    ],
+    "title": "IssueFixedInRelease"
+  },
+  "IssueLinkedToWorkItem:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "workItem": {
+        "type": "object",
+        "properties": {
+          "tracker": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "tracker",
+          "reference",
+          "title",
+          "url"
+        ],
+        "title": "WorkItem"
+      }
+    },
+    "required": [
+      "tenantId",
+      "workItem"
+    ],
+    "title": "IssueLinkedToWorkItem"
+  },
+  "IssueUnlinkedFromWorkItem:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "workItemReference": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "tenantId",
+      "workItemReference"
+    ],
+    "title": "IssueUnlinkedFromWorkItem"
+  }
+}

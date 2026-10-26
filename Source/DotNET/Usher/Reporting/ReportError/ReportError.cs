@@ -5,7 +5,6 @@ using Cratis.Chronicle.EventSequences;
 using Cratis.Showrunner.Usher.Access;
 using Cratis.Showrunner.Usher.Access.GrantAccess;
 using Cratis.Showrunner.Usher.Contracts.Conversation;
-using Cratis.Showrunner.Usher.Contracts.Identity;
 using Cratis.Showrunner.Usher.Contracts.Reporting;
 using Cratis.Showrunner.Usher.Conversation.AddDetails;
 using Cratis.Showrunner.Usher.Identity;

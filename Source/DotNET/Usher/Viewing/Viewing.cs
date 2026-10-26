@@ -10,7 +10,6 @@ using Cratis.Showrunner.Usher.Access.RevokeAccess;
 using Cratis.Showrunner.Usher.Access.Sessions;
 using Cratis.Showrunner.Usher.Contracts.Access;
 using Cratis.Showrunner.Usher.Contracts.Conversation;
-using Cratis.Showrunner.Usher.Contracts.Identity;
 using Cratis.Showrunner.Usher.Contracts.KnownIssues;
 using Cratis.Showrunner.Usher.Contracts.Reporting;
 using Cratis.Showrunner.Usher.Contracts.WorkItems;

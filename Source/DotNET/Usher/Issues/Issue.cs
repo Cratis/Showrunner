@@ -6,7 +6,6 @@ using Cratis.Showrunner.Usher.Access.Lapsing;
 using Cratis.Showrunner.Usher.Access.RevokeAccess;
 using Cratis.Showrunner.Usher.Contracts.Access;
 using Cratis.Showrunner.Usher.Contracts.Conversation;
-using Cratis.Showrunner.Usher.Contracts.Identity;
 using Cratis.Showrunner.Usher.Conversation.AnswerQuestion;
 using Cratis.Showrunner.Usher.Identity;
 using Cratis.Showrunner.Usher.Identity.ShareIdentity;

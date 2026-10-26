@@ -22,7 +22,7 @@ public class when_an_earlier_grant_lapses_after_a_new_grant : a_read_model<Issue
     async Task Because()
     {
         await Happened(
-            IssueEvents.Described(Reporters.Subject),
+            IssueEvents.Described(Reporters.Identity),
             new ReporterGrantedAccess(_earlier),
             new ReporterRevokedAccess(),
             new ReporterGrantedAccess(_later),

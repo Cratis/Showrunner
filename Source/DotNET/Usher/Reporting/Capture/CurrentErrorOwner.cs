@@ -17,7 +17,7 @@ public class CurrentErrorOwner(ISignedInReporter reporter, ITenantIdAccessor ten
     /// <inheritdoc/>
     public bool TryGet([NotNullWhen(true)] out ErrorOwner? owner)
     {
-        owner = reporter.IsSignedIn ? new ErrorOwner(tenants.Current.Value, reporter.Subject) : null;
+        owner = reporter.IsSignedIn ? new ErrorOwner(tenants.Current.Value, reporter.Identity) : null;
         return owner is not null;
     }
 }

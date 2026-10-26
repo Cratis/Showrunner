@@ -11,7 +11,7 @@ public class and_the_actor_is_the_reporter : a_refusal
     async Task Because()
     {
         await Granted();
-        _result = await _sessions.Check(_eventStore, Request with { Actor = Reporters.Subject });
+        _result = await _sessions.Check(_eventStore, Request with { Actor = Reporters.Identity });
     }
 
     [Fact] void should_not_be_live() => _result.IsSuccess.ShouldBeFalse();

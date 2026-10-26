@@ -28,7 +28,7 @@ builder.AddUsher(usher =>
 
 The host fails to start when `ApplicationName` is not set. Arc discovers Usher's commands and queries, and Chronicle its events, read models and reactors, from the referenced assembly; there is nothing else to register. `AddUsher` also adds a hosted service that exchanges events with the desks and lapses grants; see [Exchanging events with a desk](./desk-exchange.md).
 
-Every command and query requires a signed-in user. Usher takes who the reporter is from the signed-in identity, never from the request: the `sub` claim (or the name identifier) is the reporter's subject, the `name` and `email` claims are what support sees when the reporter shares who they are, and the identity provider comes from Arc's identity provider claim.
+Every command and query requires a signed-in user. Usher takes who the reporter is from the signed-in identity, never from the request: the `sub` claim (or the name identifier) is the reporter's subject, the `name` and `email` claims are what support sees when the reporter shares who they are, and the identity provider comes from Arc's identity provider claim. A subject is unique only within its identity provider, so Usher identifies the reporter by the pair, `UserIdentity(IdentityProvider, Subject)`: two people with the same subject at two providers never see or act on each other's issues, and a captured error is kept for the pair too.
 
 ## Commands
 
@@ -68,16 +68,16 @@ Both queries are observable: the client gets the current result and a new one ev
 | `Listing` | `ReportedIssue.MyIssues()` | The signed-in reporter's issues, most recent activity first |
 | `Viewing` | `IssueConversation.ForIssue(issueId)` | One of the signed-in reporter's issues with everything that happened on it; nothing for an issue they did not report |
 
-**`ReportedIssue`** has `Id`, `Kind` (`Error`, `Manual`), `Title` (the summary, or the error message), `State`, `ReportedAt`, `LastActivityAt`, `WaitingOnReporter` (support asked something not yet answered), `KnownIssueTitle`, `WorkItem`, `FixedInVersion`, `ReporterSubject` and `OpenQuestions`.
+**`ReportedIssue`** has `Id`, `Kind` (`Error`, `Manual`), `Title` (the summary, or the error message), `State`, `ReportedAt`, `LastActivityAt`, `WaitingOnReporter` (support asked something not yet answered), `KnownIssueTitle`, `WorkItem`, `FixedInVersion`, `ReportedBy` and `OpenQuestions`.
 
-**`IssueConversation`** has `Id`, `Title`, `State`, `Location`, `ReportedAt`, `IdentityShared`, `OpenQuestion` (the latest unanswered question), `Entries`, `Access`, `KnownIssueTitle`, `WorkItem`, `FixedInVersion` and `ReporterSubject`.
+**`IssueConversation`** has `Id`, `Title`, `State`, `Location`, `ReportedAt`, `IdentityShared`, `OpenQuestion` (the latest unanswered question), `Entries`, `Access`, `KnownIssueTitle`, `WorkItem`, `FixedInVersion` and `ReportedBy`.
 
 - Each entry has `EntryId`, `Kind`, `Text`, `AuthorKind` (`Reporter`, `Support`, `Agent`, `System`), `AuthorName`, `At`, `QuestionId`, and `ActedBy` and `Session` for what support did while signed in as the reporter (see [What the reporter sees](./access-and-sessions.md#what-the-reporter-sees)). Questions and replies are from support or an agent, with the name the desk lets the reporter see; state changes, links, access requests, lapses and releases are from `System`.
 - `Access` has `State` (`NotGranted`, `Granted`, `Revoked`, `Lapsed`), `ValidUntil`, the pending `Request` with its reason, and the `Sessions` in which support signed in as the reporter.
 
 A value that is not there is empty or `NotSet`, never null.
 
-Usher stores issues in the tenant's own event store namespace, so both queries only see the current tenant's issues; within it they return only issues whose `ReporterSubject` is the signed-in user's subject.
+Usher stores issues in the tenant's own event store namespace, so both queries only see the current tenant's issues; within it they return only issues whose `ReportedBy` is the signed-in user's identity provider and subject.
 
 ## The lifecycle of an issue
 
@@ -113,8 +113,8 @@ The reporter's side, recorded by the commands:
 
 | Event | Payload |
 | --- | --- |
-| `ReporterDescribedIssue` | `Location`, `CorrelationIds`, `Summary`, `Description`, `ApplicationName`, `ApplicationVersion`, `ReporterSubject` |
-| `ReporterFlaggedError` | `Location`, `CorrelationIds`, `StackFrames`, `ErrorMessage`, `ErrorType`, `Fingerprint`, `ApplicationName`, `ApplicationVersion`, `ReporterSubject` |
+| `ReporterDescribedIssue` | `Location`, `CorrelationIds`, `Summary`, `Description`, `ApplicationName`, `ApplicationVersion`, `ReportedBy` |
+| `ReporterFlaggedError` | `Location`, `CorrelationIds`, `StackFrames`, `ErrorMessage`, `ErrorType`, `Fingerprint`, `ApplicationName`, `ApplicationVersion`, `ReportedBy` |
 | `ReporterSharedIdentity` | `Reporter` |
 | `ReporterAddedDetails` | `Details` |
 | `ReporterAnsweredQuestion` | `QuestionId`, `Answer` |
@@ -135,7 +135,7 @@ Access, recorded by the application itself:
 
 ### Personal data
 
-`ReporterSharedIdentity` is the only event with personal data: the reporter's name and email are classified `[PII]` and encrypted with the issue as compliance subject. `ReporterSubject`, the identity provider's id for the reporter, is recorded on the first event of every issue so the reporter finds their own issues even when they never share who they are. It is a pseudonymous key, not classified, and never published to the desk; the desk learns the reporter only through `ReporterSharedIdentity`.
+`ReporterSharedIdentity` is the only event with personal data: the reporter's name and email are classified `[PII]` and encrypted with the issue as compliance subject. `ReportedBy`, the identity provider and its id for the reporter, is recorded on the first event of every issue so the reporter finds their own issues even when they never share who they are. It is a pseudonymous key, not classified, and never published to the desk; the desk learns the reporter only through `ReporterSharedIdentity`.
 
 ### Error fingerprints
 

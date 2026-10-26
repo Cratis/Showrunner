@@ -20,7 +20,7 @@ public class when_the_issue_is_linked_and_unlinked : a_read_model<ReportedIssue>
     {
         var knownIssueId = new KnownIssueId(Guid.NewGuid());
         await Happened(
-            IssueEvents.Described(Reporters.Subject),
+            IssueEvents.Described(Reporters.Identity),
             new SupportLinkedIssueToKnownIssue(knownIssueId, "Invoices are not sent"),
             new SupportLinkedIssueToWorkItem(_workItem));
         _linked = _scenario.Instance!;

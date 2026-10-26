@@ -12,7 +12,7 @@ public class and_someone_else_reported_the_issue : an_issue_command<AnswerQuesti
 {
     readonly QuestionId _questionId = QuestionId.New();
 
-    void Establish() => GivenReportedBy(Reporters.SomeoneElse, new SupportAskedQuestion(_questionId, "Which invoice?", IssueEvents.Support));
+    void Establish() => GivenReportedBy(Reporters.SomeoneElsesIdentity, new SupportAskedQuestion(_questionId, "Which invoice?", IssueEvents.Support));
 
     async Task Because() => _result = await _scenario.Execute(new AnswerQuestion(_issueId, _questionId, "The one for March."));
 

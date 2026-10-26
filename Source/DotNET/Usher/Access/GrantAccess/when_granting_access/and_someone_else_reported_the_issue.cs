@@ -8,7 +8,7 @@ namespace Cratis.Showrunner.Usher.Access.GrantAccess.when_granting_access;
 
 public class and_someone_else_reported_the_issue : an_issue_command<GrantAccess>
 {
-    void Establish() => GivenReportedBy(Reporters.SomeoneElse);
+    void Establish() => GivenReportedBy(Reporters.SomeoneElsesIdentity);
 
     async Task Because() => _result = await _scenario.Execute(new GrantAccess(_issueId, AccessDuration.OneHour));
 

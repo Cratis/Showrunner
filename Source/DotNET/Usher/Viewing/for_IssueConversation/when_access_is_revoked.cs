@@ -14,7 +14,7 @@ public class when_access_is_revoked : a_read_model<IssueConversation>
 
     async Task Because()
     {
-        await Happened(IssueEvents.Described(Reporters.Subject), new ReporterGrantedAccess(Start.AddHours(1)), new ReporterRevokedAccess());
+        await Happened(IssueEvents.Described(Reporters.Identity), new ReporterGrantedAccess(Start.AddHours(1)), new ReporterRevokedAccess());
         _issue = _scenario.Instance!;
     }
 

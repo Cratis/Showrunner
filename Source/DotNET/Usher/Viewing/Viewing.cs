@@ -270,7 +270,7 @@ public record IssueAccess(AccessState State, ValidUntil ValidUntil, AccessReques
 /// <param name="KnownIssueTitle">The title of the known issue it is linked to; <see cref="KnownIssueTitle.NotSet"/> when it is not.</param>
 /// <param name="WorkItem">The work item it is linked to; <see cref="Unset.WorkItem"/> when it is not.</param>
 /// <param name="FixedInVersion">The version that has the fix; <see cref="ReleaseVersion.NotSet"/> until a release ships it.</param>
-/// <param name="ReporterSubject">The subject of the reporter who reported the issue.</param>
+/// <param name="ReportedBy">Who reported the issue, at their identity provider.</param>
 [ReadModel]
 public record IssueConversation(
     IssueId Id,
@@ -285,7 +285,7 @@ public record IssueConversation(
     KnownIssueTitle KnownIssueTitle,
     WorkItem WorkItem,
     ReleaseVersion FixedInVersion,
-    IdentityProviderSubject ReporterSubject)
+    UserIdentity ReportedBy)
 {
     /// <summary>
     /// Observes one issue the signed-in reporter reported, in the current tenant. An issue someone else reported is
@@ -303,9 +303,9 @@ public record IssueConversation(
             return new BehaviorSubject<IssueConversation>(null!);
         }
 
-        var subject = reporter.Subject;
+        var identity = reporter.Identity;
         return ObservedQueries.Map(
-            readModels.Observe<IssueConversation>(issue => issue.Id == issueId && issue.ReporterSubject == subject),
+            readModels.Observe<IssueConversation>(issue => issue.Id == issueId && issue.ReportedBy == identity),
             issues => issues.FirstOrDefault()!);
     }
 
@@ -317,7 +317,7 @@ public record IssueConversation(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static IssueConversation Reduce(ReporterDescribedIssue @event, IssueConversation? current, EventContext context) =>
-        current ?? IssueConversationTransitions.Open(context, (string)@event.Summary, @event.Location, @event.ReporterSubject, ConversationEntryKind.IssueDescribed, (string)@event.Description);
+        current ?? IssueConversationTransitions.Open(context, (string)@event.Summary, @event.Location, @event.ReportedBy, ConversationEntryKind.IssueDescribed, (string)@event.Description);
 
     /// <summary>
     /// Opens the conversation with a reported error.
@@ -327,7 +327,7 @@ public record IssueConversation(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static IssueConversation Reduce(ReporterFlaggedError @event, IssueConversation? current, EventContext context) =>
-        current ?? IssueConversationTransitions.Open(context, (string)@event.ErrorMessage, @event.Location, @event.ReporterSubject, ConversationEntryKind.ErrorReported, (string)@event.ErrorMessage);
+        current ?? IssueConversationTransitions.Open(context, (string)@event.ErrorMessage, @event.Location, @event.ReportedBy, ConversationEntryKind.ErrorReported, (string)@event.ErrorMessage);
 
     /// <summary>
     /// Records that the reporter shared who they are.
@@ -612,7 +612,7 @@ internal static class IssueConversationTransitions
     /// <param name="context">The context of the event that opened it.</param>
     /// <param name="title">What the issue is shown as.</param>
     /// <param name="location">Where it was reported.</param>
-    /// <param name="reporterSubject">The subject of the reporter.</param>
+    /// <param name="reportedBy">Who reported it.</param>
     /// <param name="kind">What the first entry records.</param>
     /// <param name="text">The text of the first entry.</param>
     /// <returns>The opened conversation.</returns>
@@ -620,7 +620,7 @@ internal static class IssueConversationTransitions
         EventContext context,
         IssueTitle title,
         SliceLocation location,
-        IdentityProviderSubject reporterSubject,
+        UserIdentity reportedBy,
         ConversationEntryKind kind,
         ConversationEntryText text) => new(
         new IssueId(Guid.Parse(context.EventSourceId.Value)),
@@ -635,7 +635,7 @@ internal static class IssueConversationTransitions
         KnownIssueTitle.NotSet,
         Unset.WorkItem,
         ReleaseVersion.NotSet,
-        reporterSubject);
+        reportedBy);
 
     /// <summary>
     /// Adds an entry to an existing conversation, applies a change and finds the open question; a conversation that

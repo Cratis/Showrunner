@@ -54,7 +54,7 @@ public record ReportIssue(
             Description,
             options.Value.ApplicationName,
             ApplicationVersion,
-            reporter.Subject);
+            reporter.Identity);
 
         if (ShareIdentity || GrantAccess)
         {
@@ -105,9 +105,9 @@ public class ReportIssueValidator : CommandValidator<ReportIssue>
 /// <param name="Description">What happened.</param>
 /// <param name="ApplicationName">The application, as configured in <c>AddUsher</c>.</param>
 /// <param name="ApplicationVersion">The version of the application the reporter runs.</param>
-/// <param name="ReporterSubject">
-/// The reporter's subject at their identity provider. It is how the reporter finds their own issues even when they do
-/// not share who they are; it is a pseudonymous id and never published to the desk.
+/// <param name="ReportedBy">
+/// Who the reporter is at their identity provider: the provider and the subject. It is how the reporter finds their own
+/// issues even when they do not share who they are; it is a pseudonymous id and never published to the desk.
 /// </param>
 [EventType]
 public record ReporterDescribedIssue(
@@ -117,4 +117,4 @@ public record ReporterDescribedIssue(
     Description Description,
     ApplicationName ApplicationName,
     ApplicationVersion ApplicationVersion,
-    IdentityProviderSubject ReporterSubject);
+    UserIdentity ReportedBy);

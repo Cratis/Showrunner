@@ -31,7 +31,7 @@ public class and_nothing_is_shared : an_issue_command<ReportIssue>
             e.Location == IssueEvents.Location &&
             e.ApplicationName == "Ledger" &&
             e.ApplicationVersion == "1.2.3" &&
-            e.ReporterSubject == Reporters.Subject);
+            e.ReportedBy == Reporters.Identity);
 
     [Fact] void should_not_share_identity() => _scenario.AppendedEvents.ShouldNotContain(_ => _.Event.Content is ReporterSharedIdentity);
 }

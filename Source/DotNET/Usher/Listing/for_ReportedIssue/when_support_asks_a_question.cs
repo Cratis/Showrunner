@@ -14,7 +14,7 @@ public class when_support_asks_a_question : a_read_model<ReportedIssue>
 
     async Task Because()
     {
-        await Happened(IssueEvents.Described(Reporters.Subject), new SupportAskedQuestion(QuestionId.New(), "Which invoice?", IssueEvents.Support));
+        await Happened(IssueEvents.Described(Reporters.Identity), new SupportAskedQuestion(QuestionId.New(), "Which invoice?", IssueEvents.Support));
         _issue = _scenario.Instance!;
     }
 

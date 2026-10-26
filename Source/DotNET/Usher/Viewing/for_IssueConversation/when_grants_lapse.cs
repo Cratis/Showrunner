@@ -24,7 +24,7 @@ public class when_grants_lapse : a_read_model<IssueConversation>
     async Task Because()
     {
         await Happened(
-            IssueEvents.Described(Reporters.Subject),
+            IssueEvents.Described(Reporters.Identity),
             new ReporterGrantedAccess(_earlier),
             new ReporterRevokedAccess(),
             new ReporterGrantedAccess(_later),

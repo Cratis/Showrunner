@@ -20,7 +20,7 @@ public class when_support_and_the_reporter_converse : a_read_model<IssueConversa
     async Task Because()
     {
         await Happened(
-            IssueEvents.Described(Reporters.Subject),
+            IssueEvents.Described(Reporters.Identity),
             new SupportAskedQuestion(_first, "Which invoice?", IssueEvents.Support),
             new SupportAskedQuestion(_second, "Which browser?", IssueEvents.Agent),
             new SupportAskedQuestion(_second, "Which browser?", IssueEvents.Agent));

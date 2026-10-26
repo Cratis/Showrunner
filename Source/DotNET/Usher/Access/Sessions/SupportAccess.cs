@@ -7,6 +7,7 @@ using Cratis.Showrunner.Usher.Access.Lapsing;
 using Cratis.Showrunner.Usher.Access.RevokeAccess;
 using Cratis.Showrunner.Usher.Contracts.Access;
 using Cratis.Showrunner.Usher.Contracts.Identity;
+using Cratis.Showrunner.Usher.Identity;
 using Cratis.Showrunner.Usher.Identity.ShareIdentity;
 using Cratis.Showrunner.Usher.Issues;
 using Cratis.Showrunner.Usher.Reporting.ReportError;
@@ -24,14 +25,14 @@ namespace Cratis.Showrunner.Usher.Access.Sessions;
 /// guarded against exactly the events it was folded from. The grant follows the same rules as <see cref="Issue"/>:
 /// a lapse of an earlier grant never ends a later one.
 /// </remarks>
-/// <param name="ReporterSubject">The subject of the reporter; <see cref="IdentityProviderSubject.NotSet"/> when the issue was never reported.</param>
+/// <param name="ReportedBy">Who reported the issue, at their identity provider; <see cref="UserIdentity.NotSet"/> when it was never reported.</param>
 /// <param name="SharedIdentity">Who the reporter is, when they let support know; <see langword="null"/> until they do.</param>
 /// <param name="Granted">Whether a grant is in effect, not revoked or lapsed; it may still have passed its end.</param>
 /// <param name="ValidUntil">The end of the last grant; <see cref="Unset.ValidUntil"/> when there was none.</param>
 /// <param name="Sessions">The sessions support had, by identifier.</param>
 /// <param name="LastSequenceNumber">The sequence number of the last event it was folded from.</param>
 public record SupportAccess(
-    IdentityProviderSubject ReporterSubject,
+    UserIdentity ReportedBy,
     Reporter? SharedIdentity,
     bool Granted,
     ValidUntil ValidUntil,
@@ -57,7 +58,7 @@ public record SupportAccess(
     /// Nothing happened on the issue.
     /// </summary>
     public static readonly SupportAccess None = new(
-        IdentityProviderSubject.NotSet,
+        UserIdentity.NotSet,
         null,
         false,
         Unset.ValidUntil,
@@ -67,7 +68,7 @@ public record SupportAccess(
     /// <summary>
     /// Gets whether the issue was reported.
     /// </summary>
-    public bool IsReported => ReporterSubject != IdentityProviderSubject.NotSet;
+    public bool IsReported => ReportedBy.IsSet;
 
     /// <summary>
     /// Gets the sessions that started and have not ended.
@@ -116,12 +117,13 @@ public record SupportAccess(
             return SupportSessionRefusal.IssueNotReported;
         }
 
-        if (ReporterSubject != request.Subject)
+        if (ReportedBy.Subject != request.Subject)
         {
             return SupportSessionRefusal.NotTheReporter;
         }
 
-        if (request.Actor == request.Subject)
+        // The same subject at another identity provider is somebody else; only the reporter's own identity is them.
+        if (request.Actor == ReportedBy)
         {
             return SupportSessionRefusal.ActorIsTheReporter;
         }
@@ -136,15 +138,15 @@ public record SupportAccess(
             return SupportSessionRefusal.NoLiveGrant;
         }
 
-        return SharedIdentity?.IdentityProviderSubject == request.Subject ? null : SupportSessionRefusal.IdentityNotShared;
+        return SharedIdentity is not null && UserIdentity.Of(SharedIdentity) == ReportedBy ? null : SupportSessionRefusal.IdentityNotShared;
     }
 
     SupportAccess Apply(object @event, EventSequenceNumber sequenceNumber)
     {
         var next = @event switch
         {
-            ReporterDescribedIssue described when !IsReported => this with { ReporterSubject = described.ReporterSubject },
-            ReporterFlaggedError flagged when !IsReported => this with { ReporterSubject = flagged.ReporterSubject },
+            ReporterDescribedIssue described when !IsReported => this with { ReportedBy = described.ReportedBy },
+            ReporterFlaggedError flagged when !IsReported => this with { ReportedBy = flagged.ReportedBy },
             ReporterSharedIdentity shared => this with { SharedIdentity = shared.Reporter },
             ReporterGrantedAccess granted => this with { Granted = true, ValidUntil = granted.ValidUntil },
             ReporterRevokedAccess => this with { Granted = false },

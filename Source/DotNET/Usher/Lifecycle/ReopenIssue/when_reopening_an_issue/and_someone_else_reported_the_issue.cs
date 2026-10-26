@@ -9,7 +9,7 @@ namespace Cratis.Showrunner.Usher.Lifecycle.ReopenIssue.when_reopening_an_issue;
 
 public class and_someone_else_reported_the_issue : an_issue_command<ReopenIssue>
 {
-    void Establish() => GivenReportedBy(Reporters.SomeoneElse, new SupportResolvedIssue("Fixed the send button."));
+    void Establish() => GivenReportedBy(Reporters.SomeoneElsesIdentity, new SupportResolvedIssue("Fixed the send button."));
 
     async Task Because() => _result = await _scenario.Execute(new ReopenIssue(_issueId, "It still does not send."));
 

@@ -5,6 +5,7 @@
 using System.Security.Claims;
 using Cratis.Arc.Identity;
 using Cratis.Showrunner.Usher.Contracts.Identity;
+using Cratis.Showrunner.Usher.Identity;
 
 namespace Cratis.Showrunner.Usher.given;
 
@@ -24,21 +25,47 @@ public static class Reporters
     public static readonly IdentityProviderSubject SomeoneElse = "d41b77c0-someone-else";
 
     /// <summary>
+    /// The identity provider the reporter signs in with.
+    /// </summary>
+    public static readonly IdentityProviderName IdentityProvider = "entra";
+
+    /// <summary>
+    /// Another identity provider.
+    /// </summary>
+    public static readonly IdentityProviderName AnotherIdentityProvider = "github";
+
+    /// <summary>
+    /// Who the reporter is at their identity provider.
+    /// </summary>
+    public static readonly UserIdentity Identity = new(IdentityProvider, Subject);
+
+    /// <summary>
+    /// Who someone else is at the reporter's identity provider.
+    /// </summary>
+    public static readonly UserIdentity SomeoneElsesIdentity = new(IdentityProvider, SomeoneElse);
+
+    /// <summary>
+    /// Somebody else with the reporter's subject, at another identity provider.
+    /// </summary>
+    public static readonly UserIdentity SameSubjectAtAnotherProvider = new(AnotherIdentityProvider, Subject);
+
+    /// <summary>
     /// The reporter as they are shared with the desk.
     /// </summary>
-    public static readonly Reporter Reporter = new("entra", Subject, "Ada Lovelace", "ada@example.com");
+    public static readonly Reporter Reporter = new(IdentityProvider, Subject, "Ada Lovelace", "ada@example.com");
 
     /// <summary>
     /// Creates a signed-in principal.
     /// </summary>
     /// <param name="subject">The subject to sign in as.</param>
+    /// <param name="identityProvider">The identity provider to sign in with; the reporter's by default.</param>
     /// <returns>The principal.</returns>
-    public static ClaimsPrincipal SignedInAs(IdentityProviderSubject subject) => new(new ClaimsIdentity(
+    public static ClaimsPrincipal SignedInAs(IdentityProviderSubject subject, IdentityProviderName? identityProvider = null) => new(new ClaimsIdentity(
         [
             new Claim("sub", subject),
             new Claim("name", (string)Reporter.Name),
             new Claim("email", (string)Reporter.Email),
-            new Claim(MicrosoftIdentityPlatformClaims.IdentityProvider, (string)Reporter.IdentityProvider)
+            new Claim(MicrosoftIdentityPlatformClaims.IdentityProvider, (string)(identityProvider ?? IdentityProvider))
         ],
         "Specifications"));
 

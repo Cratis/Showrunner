@@ -24,7 +24,7 @@ public class and_the_reporter_wrote_nothing : an_issue_command<ReportError>
             e.Location == IssueEvents.Location &&
             e.ApplicationName == "Ledger" &&
             e.ApplicationVersion == "1.2.3" &&
-            e.ReporterSubject == Reporters.Subject);
+            e.ReportedBy == Reporters.Identity);
 
     [Fact]
     async Task should_fingerprint_the_error_it_was_sent() =>

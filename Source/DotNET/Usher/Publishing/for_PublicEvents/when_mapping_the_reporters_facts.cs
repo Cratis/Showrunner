@@ -32,8 +32,8 @@ public class when_mapping_the_reporters_facts : Specification
 
     void Establish()
     {
-        _flagged = IssueEvents.Flagged(Reporters.Subject);
-        _described = IssueEvents.Described(Reporters.Subject);
+        _flagged = IssueEvents.Flagged(Reporters.Identity);
+        _described = IssueEvents.Described(Reporters.Identity);
     }
 
     [Fact] void should_map_a_flagged_error_to_error_reported() => PublicEvents.For(_flagged, _tenant).ShouldEqual(new ErrorReported(

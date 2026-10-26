@@ -16,7 +16,7 @@ namespace Cratis.Showrunner.Usher.Reporting.Capture.for_CaptureFailedCommands.wh
 /// </summary>
 public class in_the_command_pipeline : an_issue_command<ReportError.ReportError>
 {
-    static readonly ErrorOwner Owner = new("fjord", Reporters.Subject);
+    static readonly ErrorOwner Owner = new("fjord", Reporters.Identity);
     CapturedErrors _store;
 
     void Establish()

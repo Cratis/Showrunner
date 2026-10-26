@@ -16,7 +16,7 @@ public class when_another_work_item_is_unlinked : a_read_model<ReportedIssue>
     async Task Because()
     {
         await Happened(
-            IssueEvents.Described(Reporters.Subject),
+            IssueEvents.Described(Reporters.Identity),
             new SupportLinkedIssueToWorkItem(_workItem),
             new SupportUnlinkedWorkItem("Cratis/Ledger#7"));
         _issue = _scenario.Instance!;

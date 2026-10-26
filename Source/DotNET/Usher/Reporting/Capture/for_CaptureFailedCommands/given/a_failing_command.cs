@@ -15,7 +15,7 @@ namespace Cratis.Showrunner.Usher.Reporting.Capture.for_CaptureFailedCommands.gi
 /// </summary>
 public class a_failing_command : Specification
 {
-    protected static readonly ErrorOwner Owner = new("fjord", "8c2f6a1e-reporter");
+    protected static readonly ErrorOwner Owner = new("fjord", new("entra", "8c2f6a1e-reporter"));
 
     protected IServiceCollection _services;
     protected ICurrentErrorOwner _owners;

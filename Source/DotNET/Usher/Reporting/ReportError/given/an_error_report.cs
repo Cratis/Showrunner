@@ -16,7 +16,7 @@ namespace Cratis.Showrunner.Usher.Reporting.ReportError.given;
 /// </summary>
 public class an_error_report : an_issue_command<ReportError>
 {
-    protected static readonly ErrorOwner Owner = new("fjord", Reporters.Subject);
+    protected static readonly ErrorOwner Owner = new("fjord", Reporters.Identity);
     protected static readonly CapturedError Captured = new(
         new("Invoicing", "Invoices", "PayInvoice"),
         "Ledger.Invoicing.InvoiceAlreadyPaid",

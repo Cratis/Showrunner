@@ -14,9 +14,9 @@ public class and_issues_from_several_reporters_exist : a_query<ReportedIssue>
 
     void Establish()
     {
-        Given(_mine, IssueEvents.Described(Reporters.Subject));
-        Given(_someoneElses, IssueEvents.Described(Reporters.SomeoneElse));
-        Given(_alsoMine, IssueEvents.Flagged(Reporters.Subject));
+        Given(_mine, IssueEvents.Described(Reporters.Identity));
+        Given(_someoneElses, IssueEvents.Described(Reporters.SomeoneElsesIdentity));
+        Given(_alsoMine, IssueEvents.Flagged(Reporters.Identity));
     }
 
     async Task Because() => _result = await _scenario.Perform(nameof(ReportedIssue.MyIssues));

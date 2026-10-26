@@ -11,7 +11,7 @@ public class and_someone_else_reported_it : a_query<IssueConversation>
 {
     readonly IssueId _issueId = IssueId.New();
 
-    void Establish() => Given(_issueId, IssueEvents.Described(Reporters.SomeoneElse));
+    void Establish() => Given(_issueId, IssueEvents.Described(Reporters.SomeoneElsesIdentity));
 
     async Task Because() => _result = await _scenario.Perform(nameof(IssueConversation.ForIssue), new QueryArguments { ["issueId"] = _issueId });
 

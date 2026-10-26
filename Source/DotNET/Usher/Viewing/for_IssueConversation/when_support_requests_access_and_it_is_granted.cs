@@ -18,7 +18,7 @@ public class when_support_requests_access_and_it_is_granted : a_read_model<Issue
 
     async Task Because()
     {
-        await Happened(IssueEvents.Described(Reporters.Subject), new SupportRequestedAccess("To see the invoice."));
+        await Happened(IssueEvents.Described(Reporters.Identity), new SupportRequestedAccess("To see the invoice."));
         _requested = _scenario.Instance!.Access;
         await Happened(new ReporterSharedIdentity(Reporters.Reporter), new ReporterGrantedAccess(_validUntil));
         _issue = _scenario.Instance!;

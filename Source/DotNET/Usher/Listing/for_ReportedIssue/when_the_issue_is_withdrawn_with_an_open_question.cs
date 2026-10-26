@@ -16,7 +16,7 @@ public class when_the_issue_is_withdrawn_with_an_open_question : a_read_model<Re
     async Task Because()
     {
         await Happened(
-            IssueEvents.Described(Reporters.Subject),
+            IssueEvents.Described(Reporters.Identity),
             new SupportAskedQuestion(QuestionId.New(), "Which invoice?", IssueEvents.Support),
             new ReporterWithdrewIssue());
         _issue = _scenario.Instance!;

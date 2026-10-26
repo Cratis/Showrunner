@@ -21,7 +21,7 @@ public class when_the_issue_is_linked_and_a_release_ships_the_fix : a_read_model
     {
         var knownIssueId = new KnownIssueId(Guid.NewGuid());
         await Happened(
-            IssueEvents.Described(Reporters.Subject),
+            IssueEvents.Described(Reporters.Identity),
             new SupportLinkedIssueToKnownIssue(knownIssueId, "Invoices are not sent"),
             new SupportLinkedIssueToWorkItem(_workItem),
             new ReleaseShippedFix("4.12.3", "Cratis/Ledger#42"));

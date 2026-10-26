@@ -9,6 +9,7 @@ using Cratis.Showrunner.Usher.Access.GrantAccess;
 using Cratis.Showrunner.Usher.Contracts.Access;
 using Cratis.Showrunner.Usher.Contracts.Identity;
 using Cratis.Showrunner.Usher.given;
+using Cratis.Showrunner.Usher.Identity;
 using Cratis.Showrunner.Usher.Identity.ShareIdentity;
 
 namespace Cratis.Showrunner.Usher.Access.Sessions.for_SupportSessions.given;
@@ -17,7 +18,7 @@ public class support_sessions : Specification
 {
     protected static readonly DateTimeOffset Now = new(2026, 10, 26, 12, 0, 0, TimeSpan.Zero);
     protected static readonly ValidUntil ValidUntil = new(Now.AddHours(1));
-    protected static readonly IdentityProviderSubject Actor = "support-person";
+    protected static readonly UserIdentity Actor = new("entra", "support-person");
     protected static readonly SupportSessionId SessionId = "a-session";
 
     protected EventStoreForTesting _eventStore;
@@ -42,7 +43,7 @@ public class support_sessions : Specification
 
     protected async Task Happened(params object[] events)
     {
-        await _eventStore.EventLog.Append(_issueId, IssueEvents.Described(Reporters.Subject));
+        await _eventStore.EventLog.Append(_issueId, IssueEvents.Described(Reporters.Identity));
         foreach (var @event in events)
         {
             await _eventStore.EventLog.Append(_issueId, @event);

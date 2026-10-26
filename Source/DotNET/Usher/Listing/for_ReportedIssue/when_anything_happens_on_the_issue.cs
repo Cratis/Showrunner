@@ -25,7 +25,7 @@ public class when_anything_happens_on_the_issue : a_read_model<ReportedIssue>
         SupportSessionId sessionId = "a-session";
         object[] events =
         [
-            IssueEvents.Described(Reporters.Subject),
+            IssueEvents.Described(Reporters.Identity),
             new ReporterSharedIdentity(Reporters.Reporter),
             new ReporterAddedDetails("Every Monday."),
             new SupportRequestedAccess("To see the invoice."),

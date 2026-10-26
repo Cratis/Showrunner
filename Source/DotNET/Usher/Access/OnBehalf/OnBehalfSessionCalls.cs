@@ -68,7 +68,8 @@ public class OnBehalfSessionCalls(
         }
 
         var principal = await principals.For(grant.Reporter, assertion.Tenant);
-        if (!string.Equals(principal.UserId, assertion.Subject.Value, StringComparison.Ordinal))
+        if (!string.Equals(principal.UserId, assertion.Subject.Value, StringComparison.Ordinal) ||
+            !string.Equals(principal.IdentityProvider, grant.Reporter.IdentityProvider.Value, StringComparison.Ordinal))
         {
             logger.PrincipalForSomebodyElse(found.Request.IssueId);
             return Results.Json(OnBehalfGrantAnswer.NotLive, _serializerOptions);
@@ -163,7 +164,7 @@ public class OnBehalfSessionCalls(
             return null;
         }
 
-        return new(eventStore, new SupportSessionRequest(issue, assertion.SessionId, assertion.Subject, assertion.Actor));
+        return new(eventStore, new SupportSessionRequest(issue, assertion.SessionId, assertion.Subject, new(assertion.ActorIdentityProvider, assertion.Actor)));
     }
 
     async Task<(OnBehalfAssertion? Assertion, OnBehalfSessionNotification? Notification, IResult? Failure)> Notification(HttpContext http, string purpose)

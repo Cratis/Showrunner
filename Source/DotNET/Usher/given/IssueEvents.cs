@@ -5,6 +5,7 @@
 using Cratis.Showrunner.Usher.Contracts.Conversation;
 using Cratis.Showrunner.Usher.Contracts.Identity;
 using Cratis.Showrunner.Usher.Contracts.Reporting;
+using Cratis.Showrunner.Usher.Identity;
 using Cratis.Showrunner.Usher.Reporting.ReportError;
 using Cratis.Showrunner.Usher.Reporting.ReportIssue;
 
@@ -23,9 +24,9 @@ public static class IssueEvents
     /// <summary>
     /// A problem described by hand.
     /// </summary>
-    /// <param name="reporter">The subject of the reporter.</param>
+    /// <param name="reporter">Who reported it.</param>
     /// <returns>The event.</returns>
-    public static ReporterDescribedIssue Described(IdentityProviderSubject reporter) => new(
+    public static ReporterDescribedIssue Described(UserIdentity reporter) => new(
         Location,
         [],
         "The invoice is not sent",
@@ -37,9 +38,9 @@ public static class IssueEvents
     /// <summary>
     /// A reported error.
     /// </summary>
-    /// <param name="reporter">The subject of the reporter.</param>
+    /// <param name="reporter">Who reported it.</param>
     /// <returns>The event.</returns>
-    public static ReporterFlaggedError Flagged(IdentityProviderSubject reporter) => new(
+    public static ReporterFlaggedError Flagged(UserIdentity reporter) => new(
         Location,
         [],
         [],

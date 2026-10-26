@@ -14,7 +14,7 @@ public class when_an_error_is_flagged_with_details : a_read_model<IssueConversat
 
     async Task Because()
     {
-        await Happened(IssueEvents.Flagged(Reporters.Subject), new ReporterAddedDetails("I was sending the March invoice."));
+        await Happened(IssueEvents.Flagged(Reporters.Identity), new ReporterAddedDetails("I was sending the March invoice."));
         _issue = _scenario.Instance!;
     }
 

@@ -15,7 +15,7 @@ public class when_an_issue_is_described : a_read_model<ReportedIssue>
 
     async Task Because()
     {
-        await Happened(IssueEvents.Described(Reporters.Subject));
+        await Happened(IssueEvents.Described(Reporters.Identity));
         _issue = _scenario.Instance!;
     }
 
@@ -29,6 +29,6 @@ public class when_an_issue_is_described : a_read_model<ReportedIssue>
     [Fact] void should_not_be_linked_to_a_known_issue() => _issue.KnownIssueTitle.ShouldEqual(KnownIssueTitle.NotSet);
     [Fact] void should_not_be_linked_to_a_work_item() => _issue.WorkItem.ShouldEqual(Unset.WorkItem);
     [Fact] void should_not_be_fixed_in_a_release() => _issue.FixedInVersion.ShouldEqual(ReleaseVersion.NotSet);
-    [Fact] void should_belong_to_the_reporter() => _issue.ReporterSubject.ShouldEqual(Reporters.Subject);
+    [Fact] void should_belong_to_the_reporter() => _issue.ReportedBy.ShouldEqual(Reporters.Identity);
 }
 #endif

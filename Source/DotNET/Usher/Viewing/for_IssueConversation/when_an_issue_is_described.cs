@@ -17,7 +17,7 @@ public class when_an_issue_is_described : a_read_model<IssueConversation>
 
     async Task Because()
     {
-        await Happened(IssueEvents.Described(Reporters.Subject));
+        await Happened(IssueEvents.Described(Reporters.Identity));
         _issue = _scenario.Instance!;
         _entry = _issue.Entries.Single();
     }
@@ -33,7 +33,7 @@ public class when_an_issue_is_described : a_read_model<IssueConversation>
     [Fact] void should_not_be_linked_to_a_known_issue() => _issue.KnownIssueTitle.ShouldEqual(KnownIssueTitle.NotSet);
     [Fact] void should_not_be_linked_to_a_work_item() => _issue.WorkItem.ShouldEqual(Unset.WorkItem);
     [Fact] void should_not_be_fixed_in_a_release() => _issue.FixedInVersion.ShouldEqual(ReleaseVersion.NotSet);
-    [Fact] void should_belong_to_the_reporter() => _issue.ReporterSubject.ShouldEqual(Reporters.Subject);
+    [Fact] void should_belong_to_the_reporter() => _issue.ReportedBy.ShouldEqual(Reporters.Identity);
     [Fact] void should_start_with_the_description() => _entry.Kind.ShouldEqual(ConversationEntryKind.IssueDescribed);
     [Fact] void should_have_the_description_as_text() => _entry.Text.ShouldEqual(new ConversationEntryText("I pressed send and nothing happened."));
     [Fact] void should_be_from_the_reporter() => _entry.AuthorKind.ShouldEqual(ConversationAuthorKind.Reporter);

@@ -17,7 +17,7 @@ public class when_a_release_ships_the_fix_and_the_issue_is_reopened : a_read_mod
     async Task Because()
     {
         await Happened(
-            IssueEvents.Described(Reporters.Subject),
+            IssueEvents.Described(Reporters.Identity),
             new SupportResolvedIssue("Fixed."),
             new ReleaseShippedFix("4.12.3", "Cratis/Ledger#42"));
         _fixedIn = _scenario.Instance!.FixedInVersion;

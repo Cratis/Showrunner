@@ -44,7 +44,7 @@ namespace Cratis.Showrunner.Usher.Listing;
 /// <param name="KnownIssueTitle">The title of the known issue it is linked to; <see cref="KnownIssueTitle.NotSet"/> when it is not.</param>
 /// <param name="WorkItem">The work item it is linked to; <see cref="Unset.WorkItem"/> when it is not.</param>
 /// <param name="FixedInVersion">The version that has the fix; <see cref="ReleaseVersion.NotSet"/> until a release ships it.</param>
-/// <param name="ReporterSubject">The subject of the reporter who reported the issue.</param>
+/// <param name="ReportedBy">Who reported the issue, at their identity provider.</param>
 /// <param name="OpenQuestions">The questions support asked that the reporter has not answered.</param>
 [ReadModel]
 public record ReportedIssue(
@@ -58,7 +58,7 @@ public record ReportedIssue(
     KnownIssueTitle KnownIssueTitle,
     WorkItem WorkItem,
     ReleaseVersion FixedInVersion,
-    IdentityProviderSubject ReporterSubject,
+    UserIdentity ReportedBy,
     IEnumerable<QuestionId> OpenQuestions)
 {
     /// <summary>
@@ -75,9 +75,9 @@ public record ReportedIssue(
             return new BehaviorSubject<IEnumerable<ReportedIssue>>([]);
         }
 
-        var subject = reporter.Subject;
+        var identity = reporter.Identity;
         return ObservedQueries.Map(
-            readModels.Observe<ReportedIssue>(issue => issue.ReporterSubject == subject),
+            readModels.Observe<ReportedIssue>(issue => issue.ReportedBy == identity),
             issues => (IEnumerable<ReportedIssue>)[.. issues.OrderByDescending(issue => issue.LastActivityAt)]);
     }
 
@@ -89,7 +89,7 @@ public record ReportedIssue(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static ReportedIssue Reduce(ReporterDescribedIssue @event, ReportedIssue? current, EventContext context) =>
-        current ?? ReportedIssueTransitions.Open(context, IssueKind.Manual, (string)@event.Summary, @event.ReporterSubject);
+        current ?? ReportedIssueTransitions.Open(context, IssueKind.Manual, (string)@event.Summary, @event.ReportedBy);
 
     /// <summary>
     /// Opens the issue from a reported error.
@@ -99,7 +99,7 @@ public record ReportedIssue(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static ReportedIssue Reduce(ReporterFlaggedError @event, ReportedIssue? current, EventContext context) =>
-        current ?? ReportedIssueTransitions.Open(context, IssueKind.Error, (string)@event.ErrorMessage, @event.ReporterSubject);
+        current ?? ReportedIssueTransitions.Open(context, IssueKind.Error, (string)@event.ErrorMessage, @event.ReportedBy);
 
     /// <summary>
     /// Records activity when the reporter shares who they are.
@@ -346,9 +346,9 @@ internal static class ReportedIssueTransitions
     /// <param name="context">The context of the event that opened it.</param>
     /// <param name="kind">How it was reported.</param>
     /// <param name="title">What it is shown as.</param>
-    /// <param name="reporterSubject">The subject of the reporter.</param>
+    /// <param name="reportedBy">Who reported it.</param>
     /// <returns>The opened issue.</returns>
-    internal static ReportedIssue Open(EventContext context, IssueKind kind, IssueTitle title, IdentityProviderSubject reporterSubject) => new(
+    internal static ReportedIssue Open(EventContext context, IssueKind kind, IssueTitle title, UserIdentity reportedBy) => new(
         new IssueId(Guid.Parse(context.EventSourceId.Value)),
         kind,
         title,
@@ -359,7 +359,7 @@ internal static class ReportedIssueTransitions
         KnownIssueTitle.NotSet,
         Unset.WorkItem,
         ReleaseVersion.NotSet,
-        reporterSubject,
+        reportedBy,
         []);
 
     /// <summary>

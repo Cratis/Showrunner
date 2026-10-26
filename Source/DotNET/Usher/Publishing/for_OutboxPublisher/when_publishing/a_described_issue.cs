@@ -19,7 +19,7 @@ public class a_described_issue : an_outbox_publisher
 
     async Task Because()
     {
-        _described = IssueEvents.Described(Reporters.Subject);
+        _described = IssueEvents.Described(Reporters.Identity);
         var context = ContextFor();
         await _publisher.IssueDescribed(_described, context, DeliveryOf(context));
         await ReadOutbox();

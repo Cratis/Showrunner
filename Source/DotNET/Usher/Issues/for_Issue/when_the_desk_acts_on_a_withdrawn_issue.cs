@@ -14,7 +14,7 @@ public class when_the_desk_acts_on_a_withdrawn_issue : a_read_model<Issue>
 
     async Task Because()
     {
-        await Happened(IssueEvents.Described(Reporters.Subject), new ReporterWithdrewIssue(), new SupportAcceptedIssue(), new SupportResolvedIssue("Fixed."));
+        await Happened(IssueEvents.Described(Reporters.Identity), new ReporterWithdrewIssue(), new SupportAcceptedIssue(), new SupportResolvedIssue("Fixed."));
         _issue = _scenario.Instance!;
     }
 

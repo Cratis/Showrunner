@@ -36,7 +36,7 @@ The `Publishing/OutboxPublisher` reactor turns each private fact the reporter re
 
 - names the namespace as its `TenantId`;
 - keeps the private fact's correlation id, compliance subject and the time it happened;
-- never carries `ReporterSubject`. The desk learns who reported only from `IssueAttributedToReporter`, which is published when the reporter shares who they are.
+- never carries `ReportedBy`. The desk learns who reported only from `IssueAttributedToReporter`, which is published when the reporter shares who they are.
 
 Public events go only to the outbox, never to the event log.
 

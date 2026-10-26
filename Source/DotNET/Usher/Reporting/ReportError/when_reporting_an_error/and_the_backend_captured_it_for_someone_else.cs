@@ -9,7 +9,7 @@ namespace Cratis.Showrunner.Usher.Reporting.ReportError.when_reporting_an_error;
 
 public class and_the_backend_captured_it_for_someone_else : an_error_report
 {
-    void Establish() => _store.Capture(Owner with { Subject = Reporters.SomeoneElse }, _failingCommand, Captured);
+    void Establish() => _store.Capture(Owner with { Reporter = Reporters.SomeoneElsesIdentity }, _failingCommand, Captured);
 
     async Task Because() => _result = await _scenario.Execute(ReportOfTheFailingCommand());
 

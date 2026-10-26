@@ -8,7 +8,7 @@ namespace Cratis.Showrunner.Usher.Reporting.ReportError.when_reporting_an_error;
 
 public class and_the_issue_is_already_reported : an_issue_command<ReportError>
 {
-    void Establish() => Given(IssueEvents.Flagged(Reporters.Subject));
+    void Establish() => Given(IssueEvents.Flagged(Reporters.Identity));
 
     async Task Because() => _result = await _scenario.Execute(Reports.Error(_issueId));
 

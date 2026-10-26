@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Showrunner.Usher.Contracts.Identity;
+using Cratis.Showrunner.Usher.Identity;
 
 namespace Cratis.Showrunner.Usher.Access.Sessions;
 
@@ -10,6 +11,9 @@ namespace Cratis.Showrunner.Usher.Access.Sessions;
 /// </summary>
 /// <param name="IssueId">The issue the grant is for.</param>
 /// <param name="SessionId">The session.</param>
-/// <param name="Subject">The subject of the user support wants to act as.</param>
-/// <param name="Actor">The subject of the support person or agent who acts.</param>
-public record SupportSessionRequest(IssueId IssueId, SupportSessionId SessionId, IdentityProviderSubject Subject, IdentityProviderSubject Actor);
+/// <param name="Subject">
+/// The subject of the user support wants to act as. AuthProxy's token names the subject only; the issue names the
+/// identity provider, and the grant check answers with the reporter's full identity, which is what AuthProxy forwards.
+/// </param>
+/// <param name="Actor">Who the support person or agent who acts is, at their identity provider.</param>
+public record SupportSessionRequest(IssueId IssueId, SupportSessionId SessionId, IdentityProviderSubject Subject, UserIdentity Actor);

@@ -19,7 +19,7 @@ public class when_the_reporter_answers_every_open_question : a_read_model<Report
     async Task Because()
     {
         await Happened(
-            IssueEvents.Described(Reporters.Subject),
+            IssueEvents.Described(Reporters.Identity),
             new SupportAskedQuestion(_first, "Which invoice?", IssueEvents.Support),
             new SupportAskedQuestion(_second, "Which browser?", IssueEvents.Agent),
             new ReporterAnsweredQuestion(_first, "March."));

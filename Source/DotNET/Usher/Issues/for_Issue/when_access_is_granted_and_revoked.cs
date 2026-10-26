@@ -18,7 +18,7 @@ public class when_access_is_granted_and_revoked : a_read_model<Issue>
 
     async Task Because()
     {
-        await Happened(IssueEvents.Described(Reporters.Subject), new ReporterGrantedAccess(_validUntil));
+        await Happened(IssueEvents.Described(Reporters.Identity), new ReporterGrantedAccess(_validUntil));
         _grantedAfterGrant = _scenario.Instance!.AccessGranted;
         await Happened(new ReporterRevokedAccess());
         _issue = _scenario.Instance!;

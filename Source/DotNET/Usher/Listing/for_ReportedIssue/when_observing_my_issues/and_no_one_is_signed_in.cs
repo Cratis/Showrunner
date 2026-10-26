@@ -11,7 +11,7 @@ public class and_no_one_is_signed_in : a_query<ReportedIssue>
 {
     protected override ClaimsPrincipal Principal => Reporters.Anonymous();
 
-    void Establish() => Given(IssueId.New(), IssueEvents.Described(Reporters.Subject));
+    void Establish() => Given(IssueId.New(), IssueEvents.Described(Reporters.Identity));
 
     async Task Because() => _result = await _scenario.Perform(nameof(ReportedIssue.MyIssues));
 

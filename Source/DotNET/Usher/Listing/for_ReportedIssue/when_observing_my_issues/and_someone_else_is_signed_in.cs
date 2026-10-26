@@ -11,7 +11,7 @@ public class and_someone_else_is_signed_in : a_query<ReportedIssue>
 {
     protected override ClaimsPrincipal Principal => Reporters.SignedInAs(Reporters.SomeoneElse);
 
-    void Establish() => Given(IssueId.New(), IssueEvents.Described(Reporters.Subject));
+    void Establish() => Given(IssueId.New(), IssueEvents.Described(Reporters.Identity));
 
     async Task Because() => _result = await _scenario.Perform(nameof(ReportedIssue.MyIssues));
 

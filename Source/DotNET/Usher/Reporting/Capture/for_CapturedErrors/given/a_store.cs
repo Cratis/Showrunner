@@ -12,7 +12,7 @@ namespace Cratis.Showrunner.Usher.Reporting.Capture.for_CapturedErrors.given;
 /// </summary>
 public class a_store : Specification
 {
-    protected static readonly ErrorOwner Owner = new("fjord", "8c2f6a1e-reporter");
+    protected static readonly ErrorOwner Owner = new("fjord", new("entra", "8c2f6a1e-reporter"));
     protected static readonly CapturedError Error = new(
         new("Invoicing", "Invoices", "SendInvoice"),
         "System.InvalidOperationException",

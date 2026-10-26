@@ -16,7 +16,7 @@ public class when_the_desk_moves_the_issue_through_its_states : a_read_model<Rep
 
     async Task Because()
     {
-        await Record(IssueEvents.Described(Reporters.Subject));
+        await Record(IssueEvents.Described(Reporters.Identity));
         await Record(new SupportTriagedIssue());
         await Record(new SupportAcceptedIssue());
         await Record(new SupportStartedWork());

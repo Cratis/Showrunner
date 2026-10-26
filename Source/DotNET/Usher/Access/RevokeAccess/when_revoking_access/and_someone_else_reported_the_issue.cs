@@ -11,7 +11,7 @@ namespace Cratis.Showrunner.Usher.Access.RevokeAccess.when_revoking_access;
 public class and_someone_else_reported_the_issue : an_issue_command<RevokeAccess>
 {
     void Establish() => GivenReportedBy(
-        Reporters.SomeoneElse,
+        Reporters.SomeoneElsesIdentity,
         new ReporterSharedIdentity(Reporters.Reporter),
         new ReporterGrantedAccess(Now.AddHours(1)));
 

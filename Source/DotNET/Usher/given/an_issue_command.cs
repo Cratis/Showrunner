@@ -3,7 +3,7 @@
 
 #if DEBUG
 using System.Security.Claims;
-using Cratis.Showrunner.Usher.Contracts.Identity;
+using Cratis.Showrunner.Usher.Identity;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Cratis.Showrunner.Usher.given;
@@ -63,15 +63,15 @@ public class an_issue_command<TCommand> : Specification
     /// <summary>
     /// Seeds the issue as reported by a reporter, followed by other events.
     /// </summary>
-    /// <param name="reporter">The subject of the reporter who reported it.</param>
+    /// <param name="reporter">Who reported it.</param>
     /// <param name="events">The events that followed, in the order they happened.</param>
-    protected void GivenReportedBy(IdentityProviderSubject reporter, params object[] events) =>
+    protected void GivenReportedBy(UserIdentity reporter, params object[] events) =>
         Given([IssueEvents.Described(reporter), .. events]);
 
     /// <summary>
     /// Seeds the issue as reported by the reporter, followed by other events.
     /// </summary>
     /// <param name="events">The events that followed, in the order they happened.</param>
-    protected void GivenReported(params object[] events) => GivenReportedBy(Reporters.Subject, events);
+    protected void GivenReported(params object[] events) => GivenReportedBy(Reporters.Identity, events);
 }
 #endif

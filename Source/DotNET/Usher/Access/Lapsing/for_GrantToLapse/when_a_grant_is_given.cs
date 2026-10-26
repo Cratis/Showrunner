@@ -12,7 +12,7 @@ public class when_a_grant_is_given : a_read_model<GrantToLapse>
 {
     static readonly ValidUntil _validUntil = new(Start.AddHours(1));
 
-    async Task Because() => await Happened(IssueEvents.Described(Reporters.Subject), new ReporterGrantedAccess(_validUntil));
+    async Task Because() => await Happened(IssueEvents.Described(Reporters.Identity), new ReporterGrantedAccess(_validUntil));
 
     [Fact] void should_have_the_grant() => _scenario.Instance.ShouldEqual(new GrantToLapse(_issueId, _validUntil));
 }

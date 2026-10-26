@@ -16,7 +16,7 @@ public class when_the_current_grant_lapses : a_read_model<Issue>
 
     async Task Because()
     {
-        await Happened(IssueEvents.Described(Reporters.Subject), new ReporterGrantedAccess(_validUntil), new AccessGrantLapsed(_validUntil));
+        await Happened(IssueEvents.Described(Reporters.Identity), new ReporterGrantedAccess(_validUntil), new AccessGrantLapsed(_validUntil));
         _issue = _scenario.Instance!;
     }
 

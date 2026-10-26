@@ -101,7 +101,7 @@ public record ReportError(
             fingerprints.Compute(error.ApplicationVersion, error.Location, error.ErrorType, error.ErrorMessage, error.StackFrames),
             options.Value.ApplicationName,
             error.ApplicationVersion,
-            reporter.Subject);
+            reporter.Identity);
 
         if (!string.IsNullOrWhiteSpace(Details))
         {
@@ -152,9 +152,9 @@ public class ReportErrorValidator : CommandValidator<ReportError>
 /// <param name="Fingerprint">The fingerprint grouping reports of the same error; <see cref="ErrorFingerprint.NotSet"/> when not computed.</param>
 /// <param name="ApplicationName">The application, as configured in <c>AddUsher</c>.</param>
 /// <param name="ApplicationVersion">The version of the application the error happened in.</param>
-/// <param name="ReporterSubject">
-/// The reporter's subject at their identity provider. It is how the reporter finds their own issues even when they do
-/// not share who they are; it is a pseudonymous id and never published to the desk.
+/// <param name="ReportedBy">
+/// Who the reporter is at their identity provider: the provider and the subject. It is how the reporter finds their own
+/// issues even when they do not share who they are; it is a pseudonymous id and never published to the desk.
 /// </param>
 [EventType]
 public record ReporterFlaggedError(
@@ -166,4 +166,4 @@ public record ReporterFlaggedError(
     ErrorFingerprint Fingerprint,
     ApplicationName ApplicationName,
     ApplicationVersion ApplicationVersion,
-    IdentityProviderSubject ReporterSubject);
+    UserIdentity ReportedBy);

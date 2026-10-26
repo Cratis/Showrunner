@@ -71,7 +71,7 @@ public class a_desk_event_translator : Specification
     /// Lets the reporter report the issue in the tenant namespace.
     /// </summary>
     /// <returns>An awaitable task.</returns>
-    protected Task Reported() => _tenantStore.EventLog.Append(_issueId, IssueEvents.Described(Reporters.Subject));
+    protected Task Reported() => _tenantStore.EventLog.Append(_issueId, IssueEvents.Described(Reporters.Identity));
 
     /// <summary>
     /// Creates the context of a desk event in the inbox.

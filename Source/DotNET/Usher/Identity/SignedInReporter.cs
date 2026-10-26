@@ -25,6 +25,13 @@ public interface ISignedInReporter
     IdentityProviderSubject Subject { get; }
 
     /// <summary>
+    /// Gets who the reporter is at their identity provider: the provider and the subject, <see cref="UserIdentity.NotSet"/>
+    /// when no one is signed in. It is what Usher matches issues to their reporter by; a subject alone is unique only
+    /// within its provider.
+    /// </summary>
+    UserIdentity Identity { get; }
+
+    /// <summary>
     /// Gets the reporter as the desk learns them when they share who they are.
     /// </summary>
     Reporter Reporter { get; }
@@ -56,6 +63,9 @@ public class SignedInReporter(ICurrentPrincipalAccessor principals, IOnBehalfFor
 
     /// <inheritdoc/>
     public IdentityProviderSubject Subject => FirstOf("sub", ClaimTypes.NameIdentifier);
+
+    /// <inheritdoc/>
+    public UserIdentity Identity => IsSignedIn ? new(FirstOf(MicrosoftIdentityPlatformClaims.IdentityProvider), Subject) : UserIdentity.NotSet;
 
     /// <inheritdoc/>
     public Reporter Reporter => new(

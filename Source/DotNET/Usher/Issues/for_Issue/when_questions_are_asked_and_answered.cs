@@ -19,7 +19,7 @@ public class when_questions_are_asked_and_answered : a_read_model<Issue>
     async Task Because()
     {
         await Happened(
-            IssueEvents.Described(Reporters.Subject),
+            IssueEvents.Described(Reporters.Identity),
             new ReporterSharedIdentity(Reporters.Reporter),
             new SupportAskedQuestion(_answered, "Which invoice?", IssueEvents.Support),
             new SupportAskedQuestion(_open, "Which browser?", IssueEvents.Agent),

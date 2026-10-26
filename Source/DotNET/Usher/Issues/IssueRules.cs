@@ -22,7 +22,7 @@ public static class IssueRules
     /// <param name="reporter">The signed-in reporter.</param>
     /// <returns>The rule for further configuration.</returns>
     public static IRuleBuilderOptions<T, TProperty> MustBeReportedBy<T, TProperty>(this IRuleBuilder<T, TProperty> rule, Issue? issue, ISignedInReporter reporter) =>
-        rule.Must(issueId => issue is not null && reporter.IsSignedIn && issue.ReporterSubject == reporter.Subject && reporter.MayActOn(IssueIdOf(issueId)))
+        rule.Must(issueId => issue is not null && reporter.IsSignedIn && issue.ReportedBy == reporter.Identity && reporter.MayActOn(IssueIdOf(issueId)))
             .WithMessage("There is no issue you reported with this id.");
 
     /// <summary>

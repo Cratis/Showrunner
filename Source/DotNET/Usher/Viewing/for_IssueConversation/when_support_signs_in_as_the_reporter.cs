@@ -18,7 +18,7 @@ public class when_support_signs_in_as_the_reporter : a_read_model<IssueConversat
     async Task Because()
     {
         await Happened(
-            IssueEvents.Described(Reporters.Subject),
+            IssueEvents.Described(Reporters.Identity),
             new ReporterGrantedAccess(Start.AddDays(1)),
             new SupportSignedInAsReporter(_ended, IssueEvents.Support),
             new SupportSignedInAsReporter(_ended, IssueEvents.Support),

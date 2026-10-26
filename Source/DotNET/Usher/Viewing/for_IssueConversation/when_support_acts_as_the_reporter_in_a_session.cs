@@ -25,7 +25,7 @@ public class when_support_acts_as_the_reporter_in_a_session : a_read_model<Issue
 
     async Task Because()
     {
-        await HappenedCausedBy(_reporter, IssueEvents.Described(Reporters.Subject), new ReporterGrantedAccess(Start.AddDays(1)));
+        await HappenedCausedBy(_reporter, IssueEvents.Described(Reporters.Identity), new ReporterGrantedAccess(Start.AddDays(1)));
         await HappenedCausedBy(_grace, new SupportSignedInAsReporter(_graces, IssueEvents.Support));
         await HappenedCausedBy(_agent, new SupportSignedInAsReporter(_agents, _agentAuthor));
         await HappenedCausedBy(_grace, new ReporterAddedDetails("Clicked send twice."));

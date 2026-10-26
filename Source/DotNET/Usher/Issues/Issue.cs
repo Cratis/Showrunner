@@ -8,6 +8,7 @@ using Cratis.Showrunner.Usher.Contracts.Access;
 using Cratis.Showrunner.Usher.Contracts.Conversation;
 using Cratis.Showrunner.Usher.Contracts.Identity;
 using Cratis.Showrunner.Usher.Conversation.AnswerQuestion;
+using Cratis.Showrunner.Usher.Identity;
 using Cratis.Showrunner.Usher.Identity.ShareIdentity;
 using Cratis.Showrunner.Usher.Lifecycle.ReopenIssue;
 using Cratis.Showrunner.Usher.Lifecycle.WithdrawIssue;
@@ -27,7 +28,7 @@ namespace Cratis.Showrunner.Usher.Issues;
 /// Once withdrawn, an issue keeps its state: a desk event that crossed the withdrawal does not reopen it.
 /// </remarks>
 /// <param name="Id">The issue.</param>
-/// <param name="ReporterSubject">The subject of the reporter who reported the issue.</param>
+/// <param name="ReportedBy">Who reported the issue, at their identity provider.</param>
 /// <param name="State">The state the issue is in.</param>
 /// <param name="IdentityShared">Whether the reporter let support know who they are.</param>
 /// <param name="OpenQuestions">The questions support asked that the reporter has not answered.</param>
@@ -35,7 +36,7 @@ namespace Cratis.Showrunner.Usher.Issues;
 /// <param name="AccessValidUntil">The end of the last grant; <see cref="Unset.ValidUntil"/> when there was none.</param>
 public record Issue(
     IssueId Id,
-    IdentityProviderSubject ReporterSubject,
+    UserIdentity ReportedBy,
     IssueState State,
     bool IdentityShared,
     IEnumerable<QuestionId> OpenQuestions,
@@ -57,7 +58,7 @@ public record Issue(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static Issue Reduce(ReporterDescribedIssue @event, Issue? current, EventContext context) =>
-        current ?? Open(context, @event.ReporterSubject);
+        current ?? Open(context, @event.ReportedBy);
 
     /// <summary>
     /// Opens the issue from a reported error.
@@ -67,7 +68,7 @@ public record Issue(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static Issue Reduce(ReporterFlaggedError @event, Issue? current, EventContext context) =>
-        current ?? Open(context, @event.ReporterSubject);
+        current ?? Open(context, @event.ReportedBy);
 
     /// <summary>
     /// Records that the reporter shared who they are.
@@ -181,9 +182,9 @@ public record Issue(
     public static Issue? Reduce(ReporterAnsweredQuestion @event, Issue? current) =>
         current is null ? null : current with { OpenQuestions = [.. current.OpenQuestions.Where(_ => _ != @event.QuestionId)] };
 
-    static Issue Open(EventContext context, IdentityProviderSubject reporterSubject) => new(
+    static Issue Open(EventContext context, UserIdentity reportedBy) => new(
         new IssueId(Guid.Parse(context.EventSourceId.Value)),
-        reporterSubject,
+        reportedBy,
         IssueState.Reported,
         false,
         [],

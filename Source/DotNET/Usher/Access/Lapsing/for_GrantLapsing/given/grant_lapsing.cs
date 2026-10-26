@@ -45,7 +45,7 @@ public class grant_lapsing : Specification
     /// <returns>An awaitable task.</returns>
     protected async Task HappenedOn(IssueId issueId, params object[] events)
     {
-        await _eventStore.EventLog.Append(issueId, IssueEvents.Described(Reporters.Subject));
+        await _eventStore.EventLog.Append(issueId, IssueEvents.Described(Reporters.Identity));
         foreach (var @event in events)
         {
             await _eventStore.EventLog.Append(issueId, @event);

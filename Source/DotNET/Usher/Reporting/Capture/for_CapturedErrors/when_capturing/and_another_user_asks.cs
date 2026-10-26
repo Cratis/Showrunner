@@ -13,7 +13,7 @@ public class and_another_user_asks : a_store
     void Because()
     {
         _store.Capture(Owner, _correlationId, Error);
-        _found = _store.TryGet(Owner with { Subject = "d41b77c0-someone-else" }, _correlationId, out _);
+        _found = _store.TryGet(Owner with { Reporter = new("entra", "d41b77c0-someone-else") }, _correlationId, out _);
     }
 
     [Fact] void should_not_find_it() => _found.ShouldBeFalse();

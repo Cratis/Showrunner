@@ -13,8 +13,8 @@ public class and_the_reporter_reported_it : a_query<IssueConversation>
 
     void Establish()
     {
-        Given(_issueId, IssueEvents.Described(Reporters.Subject));
-        Given(IssueId.New(), IssueEvents.Described(Reporters.Subject));
+        Given(_issueId, IssueEvents.Described(Reporters.Identity));
+        Given(IssueId.New(), IssueEvents.Described(Reporters.Identity));
     }
 
     async Task Because() => _result = await _scenario.Perform(nameof(IssueConversation.ForIssue), new QueryArguments { ["issueId"] = _issueId });

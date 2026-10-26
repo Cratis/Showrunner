@@ -28,7 +28,7 @@ public class when_getting_the_owner : Specification
     }
 
     [Fact] void should_have_an_owner_when_signed_in() => _signedIn.ShouldBeTrue();
-    [Fact] void should_be_the_signed_in_user_in_the_current_tenant() => _owner.ShouldEqual(new ErrorOwner("fjord", Reporters.Subject));
+    [Fact] void should_be_the_signed_in_user_in_the_current_tenant() => _owner.ShouldEqual(new ErrorOwner("fjord", Reporters.Identity));
     [Fact] void should_have_no_owner_when_anonymous() => _anonymous.ShouldBeFalse();
 }
 #endif

@@ -8,7 +8,7 @@ namespace Cratis.Showrunner.Usher.Identity.ShareIdentity.when_sharing_identity;
 
 public class and_someone_else_reported_the_issue : an_issue_command<ShareIdentity>
 {
-    void Establish() => GivenReportedBy(Reporters.SomeoneElse);
+    void Establish() => GivenReportedBy(Reporters.SomeoneElsesIdentity);
 
     async Task Because() => _result = await _scenario.Execute(new ShareIdentity(_issueId));
 

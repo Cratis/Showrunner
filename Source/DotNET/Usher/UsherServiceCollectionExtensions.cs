@@ -2,10 +2,13 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Showrunner.Usher;
+using Cratis.Showrunner.Usher.Access.Lapsing;
 using Cratis.Showrunner.Usher.Contracts.Reporting;
 using Cratis.Showrunner.Usher.Identity;
+using Cratis.Showrunner.Usher.Receiving;
 using Cratis.Showrunner.Usher.Reporting;
 using Cratis.Showrunner.Usher.Reporting.Capture;
+using Cratis.Showrunner.Usher.Tenancy;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -39,6 +42,11 @@ public static class UsherServiceCollectionExtensions
         services.TryAddSingleton<ICapturedErrors, CapturedErrors>();
         services.TryAddTransient<ICurrentErrorOwner, CurrentErrorOwner>();
         services.TryAddTransient<CaptureFailedCommands>();
+        services.TryAddSingleton<TenantEventStores>();
+        services.TryAddSingleton<DeskEventTranslator>();
+        services.TryAddSingleton<DeskSubscriptions>();
+        services.TryAddSingleton<GrantLapsing>();
+        services.AddHostedService<UsherWorker>();
         return services;
     }
 }

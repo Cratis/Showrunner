@@ -33,5 +33,9 @@
     <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.0" />
     <PackageVersion Include="NSubstitute" Version="6.2.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.0" />
+    <!-- Integration specifications only (Integration/): a real Chronicle kernel in a container. -->
+    <PackageVersion Include="Testcontainers" Version="4.15.0" />
+    <!-- Testcontainers brings in SSH.NET 2025.1.0 (GHSA-q939-rpr3-3284); pull it forward to the patched release. -->
+    <PackageVersion Include="SSH.NET" Version="2026.0.0" />
   </ItemGroup>
 </Project>

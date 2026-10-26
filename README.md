@@ -44,6 +44,8 @@ yarn build
 
 Specifications live beside the code they specify — `for_*/when_*/` folders compiled into Debug builds only for .NET, and Vitest specs in the same layout for TypeScript.
 
+The end-to-end specifications in [`Integration`](./Integration) run Usher and a desk against a real Chronicle kernel in a container, so `dotnet test Showrunner.slnx` needs Docker. Set `USHER_CHRONICLE_IMAGE` to run them against another kernel image, and `USHER_INTEGRATION_LOG` to a file path to keep the application's log.
+
 ## Releasing
 
 Every pull request carries exactly one of the `major`, `minor`, `patch` or `no-release` labels. Merging a version-labelled pull request to `main` releases all four packages under one semantic version through [`cratis/release-action`](https://github.com/Cratis/release-action) — NuGet packages through NuGet trusted publishing and npm packages through npm trusted publishing with provenance.

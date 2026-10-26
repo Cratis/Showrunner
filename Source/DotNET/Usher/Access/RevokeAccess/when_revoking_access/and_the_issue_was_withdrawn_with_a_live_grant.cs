@@ -10,9 +10,9 @@ using Cratis.Showrunner.Usher.Lifecycle.WithdrawIssue;
 namespace Cratis.Showrunner.Usher.Access.RevokeAccess.when_revoking_access;
 
 /// <summary>
-/// Revoking only narrows what support can do, so the reporter can still take access back after withdrawing.
+/// Withdrawing the issue already ended the grant, so there is nothing left to revoke.
 /// </summary>
-public class and_the_issue_is_withdrawn_with_a_live_grant : an_issue_command<RevokeAccess>
+public class and_the_issue_was_withdrawn_with_a_live_grant : an_issue_command<RevokeAccess>
 {
     void Establish() => GivenReported(
         new ReporterSharedIdentity(Reporters.Reporter),
@@ -21,6 +21,7 @@ public class and_the_issue_is_withdrawn_with_a_live_grant : an_issue_command<Rev
 
     async Task Because() => _result = await _scenario.Execute(new RevokeAccess(_issueId));
 
-    [Fact] void should_succeed() => _result.ShouldBeSuccessful();
+    [Fact] void should_not_succeed() => _result.ShouldNotBeSuccessful();
+    [Fact] void should_not_append_anything() => _scenario.AppendedEvents.ShouldBeEmpty();
 }
 #endif

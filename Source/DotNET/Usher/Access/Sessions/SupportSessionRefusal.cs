@@ -41,5 +41,10 @@ public enum SupportSessionRefusal
     /// <summary>
     /// The issue's access kept changing while the session was being decided.
     /// </summary>
-    Contended = 6
+    Contended = 6,
+
+    /// <summary>
+    /// The reporter withdrew the issue, which ends support's access to it for good.
+    /// </summary>
+    IssueWithdrawn = 7
 }

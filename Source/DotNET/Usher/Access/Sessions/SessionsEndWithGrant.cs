@@ -5,12 +5,13 @@ using Cratis.Chronicle;
 using Cratis.Chronicle.Reactors;
 using Cratis.Showrunner.Usher.Access.Lapsing;
 using Cratis.Showrunner.Usher.Access.RevokeAccess;
+using Cratis.Showrunner.Usher.Lifecycle.WithdrawIssue;
 
 namespace Cratis.Showrunner.Usher.Access.Sessions;
 
 /// <summary>
 /// Ends the sessions in which support signed in as the reporter when the grant they ran on ends: the reporter revoked
-/// it, or it lapsed.
+/// it, it lapsed, or the reporter withdrew the issue.
 /// </summary>
 /// <remarks>
 /// AuthProxy stops a session at its next grant check, which answers not live as soon as the grant ended, and then
@@ -43,6 +44,14 @@ public class SessionsEndWithGrant(IChronicleClient client, SupportSessions sessi
     /// <param name="context">The event context.</param>
     /// <returns>An awaitable task.</returns>
     public Task GrantLapsed(AccessGrantLapsed @event, EventContext context) => EndSessions(context);
+
+    /// <summary>
+    /// Ends the open sessions when the reporter withdrew the issue: withdrawing ends the grant.
+    /// </summary>
+    /// <param name="event">The event.</param>
+    /// <param name="context">The event context.</param>
+    /// <returns>An awaitable task.</returns>
+    public Task IssueWithdrawn(ReporterWithdrewIssue @event, EventContext context) => EndSessions(context);
 
     async Task EndSessions(EventContext context)
     {

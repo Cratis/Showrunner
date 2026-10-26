@@ -14,7 +14,9 @@ The reporter grants access with `GrantAccess(IssueId, AccessDuration)`, or by ch
 - is for **one issue**; support can never use it on the reporter's other issues;
 - ends at a **fixed time**, `OneHour`, `OneDay` or `SevenDays` from when it was given, recorded as `ValidUntil` on `ReporterGrantedAccess`;
 - always **shares who the reporter is** first (`ReporterSharedIdentity`), because support can only act as someone it knows;
-- ends when the reporter **revokes** it (`RevokeAccess`, recorded as `ReporterRevokedAccess`) or when it **lapses**: Usher's background work records `AccessGrantLapsed` at most `PollingInterval` after `ValidUntil` passes. A grant is never live past `ValidUntil`, lapse recorded or not.
+- ends when the reporter **revokes** it (`RevokeAccess`, recorded as `ReporterRevokedAccess`), when it **lapses** (Usher's background work records `AccessGrantLapsed` at most `PollingInterval` after `ValidUntil` passes), or when the reporter **withdraws** the issue (`WithdrawIssue`, recorded as `ReporterWithdrewIssue`). A grant is never live past `ValidUntil`, lapse recorded or not. Withdrawing is final, so a withdrawn issue can not be granted again, nothing is left to revoke, and nothing lapses later.
+
+Withdrawing is published to the desk as `IssueWithdrawn` alone, not also as `AccessRevoked`: a desk treats a withdrawn issue as closed to support, access included, so a second public fact would tell it the same thing twice.
 
 ## Map the endpoints
 
@@ -98,7 +100,7 @@ A token that fails any check is answered with `401`. Usher logs why, never the t
 The answer is live only when, at that moment and from the issue's own events:
 
 - the user asked about reported the issue, and the actor is somebody else;
-- a grant is in effect: not revoked, not lapsed, and `ValidUntil` has not passed;
+- a grant is in effect: not revoked, not lapsed, the issue not withdrawn, and `ValidUntil` has not passed;
 - the reporter shared who they are;
 - the session asked about has not ended. An ended session never resumes, so a copied session cookie is refused everywhere.
 
@@ -129,7 +131,7 @@ AuthProxy forwards this principal as the user on every request of the session, s
 `SupportSessionEnded(SessionId)` is recorded once per session, whatever reports the end:
 
 - AuthProxy's notification, for any of its reasons, from any number of replicas;
-- the reporter revoking the grant, or the grant lapsing. Usher ends every session open on the grant itself, without waiting for AuthProxy to notice, so the reporter sees the session end with the grant. AuthProxy stops the session at its next grant check, at most `OnBehalf:RecheckInterval` later, and its notification is then acknowledged without recording anything again.
+- the reporter revoking the grant, the grant lapsing, or the reporter withdrawing the issue. Usher ends every session open on the grant itself, without waiting for AuthProxy to notice, so the reporter sees the session end with the grant. AuthProxy stops the session at its next grant check, at most `OnBehalf:RecheckInterval` later, and its notification is then acknowledged without recording anything again.
 
 The lapse of an earlier grant after a new one was given ends nothing. An end reported for a session that never started is acknowledged and not recorded.
 
@@ -141,7 +143,7 @@ During a session, AuthProxy forwards each request as the reporter with the actor
 
 The grant is for one issue, and so is what support can change:
 
-- support may act only in a **live** session. For every forwarded request, the forward check folds the issue's events, the same decision as the grant check: the grant is in effect and not past its end, and this session has not ended. A revocation, a lapse or the end of the session counts from the moment it is recorded, not at AuthProxy's next grant check;
+- support may act only in a **live** session. For every forwarded request, the forward check folds the issue's events, the same decision as the grant check: the grant is in effect and not past its end, the issue is not withdrawn, and this session has not ended. A revocation, a lapse, a withdrawal or the end of the session counts from the moment it is recorded, not at AuthProxy's next grant check;
 - every command on an existing issue (`AddDetails`, `AnswerQuestion`, `ShareIdentity`, `ReopenIssue`, `WithdrawIssue`, `RevokeAccess`) runs for support only on the issue the session is for, as AuthProxy's verified assertion states it. Any other of the reporter's issues is answered exactly like an issue that does not exist;
 - support can not report in the reporter's name: `ReportIssue` and `ReportError` are refused for support signed in as the reporter, whatever they share or grant. Only the reporter themselves can grant access, so `GrantAccess` is refused too;
 - the queries are narrowed to the session: `MyIssues` lists only the issue the session is for, and `ForIssue` answers nothing for any other issue. Once the session is no longer live both answer nothing, and an observation of `ForIssue` that outlives a revocation, a lapse or the end of the session stops showing the issue.

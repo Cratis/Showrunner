@@ -7,6 +7,7 @@ using Cratis.Chronicle.EventSequences.Concurrency;
 using Cratis.Showrunner.Usher.Access.GrantAccess;
 using Cratis.Showrunner.Usher.Access.RevokeAccess;
 using Cratis.Showrunner.Usher.Contracts.Access;
+using Cratis.Showrunner.Usher.Lifecycle.WithdrawIssue;
 using Microsoft.Extensions.Logging;
 
 namespace Cratis.Showrunner.Usher.Access.Lapsing;
@@ -36,6 +37,14 @@ public record GrantToLapse(IssueId Id, ValidUntil ValidUntil)
     /// <param name="current">The current state.</param>
     /// <returns>The next state.</returns>
     public static GrantToLapse? Reduce(ReporterRevokedAccess @event, GrantToLapse? current) => null;
+
+    /// <summary>
+    /// Ends the grant when the reporter withdraws the issue; nothing is left to lapse.
+    /// </summary>
+    /// <param name="event">The event.</param>
+    /// <param name="current">The current state.</param>
+    /// <returns>The next state.</returns>
+    public static GrantToLapse? Reduce(ReporterWithdrewIssue @event, GrantToLapse? current) => null;
 
     /// <summary>
     /// Ends the grant when the grant that lapsed is the current one; the lapse of an earlier grant leaves a later one.

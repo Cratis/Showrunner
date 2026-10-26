@@ -50,14 +50,14 @@ The commands refuse, with a validation error:
 
 - a report that reuses the id of an existing issue, a summary that is empty or longer than 120 characters, an empty description, and an error without a message;
 - any command on an issue the signed-in user did not report. Someone else's issue is answered exactly like an issue that does not exist, so an issue id reveals nothing;
-- anything after the reporter withdrew the issue, except revoking access, which only narrows what support can do;
+- anything after the reporter withdrew the issue. Withdrawing ends support's access, so there is nothing left to revoke;
 - sharing identity twice, empty details and empty answers;
 - answering a question that was never asked or is already answered;
 - reopening an issue that is not resolved, or without a reason;
 - withdrawing an issue that is already closed (resolved or won't fix);
 - granting access while a grant is live, and revoking when none is.
 
-A grant is live from when it is given until it is revoked, it lapses, or its end time passes. How support uses a grant to sign in as the reporter through AuthProxy, and the endpoints Usher maps for it, are in [Access and support sessions](./access-and-sessions.md).
+A grant is live from when it is given until it is revoked, it lapses, its end time passes, or the reporter withdraws the issue. How support uses a grant to sign in as the reporter through AuthProxy, and the endpoints Usher maps for it, are in [Access and support sessions](./access-and-sessions.md).
 
 ## Queries
 

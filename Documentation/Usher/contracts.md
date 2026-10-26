@@ -37,6 +37,7 @@ The application publishes these from its outbox. They describe what the reporter
 - An issue starts with `ErrorReported` or `IssueReported`. What the reporter writes alongside an error report follows as `DetailsAdded`.
 - `CorrelationIds` holds the correlation ids of the failing command or query and of those run just before it in the reporter's view. It can be empty. `StackFrames` is empty when the error had no stack trace, which is usual for errors raised from the frontend.
 - `Fingerprint` is computed by the application, so the same error in the same slice and version always gives the same value. A desk uses it to group duplicates and otherwise treats it as opaque.
+- `IssueWithdrawn` also ends support's access to the issue. No `AccessRevoked` follows it; a desk treats it as the end of any grant.
 - `IssueAttributedToReporter` is published only if the reporter chooses to share who they are. Until then the desk knows the issue but not the person. Granting access always shares identity first, so `IssueAttributedToReporter` comes before `AccessGranted` on the same issue.
 - `AccessExpired` is published when `ValidUntil` passes without the grant being revoked.
 

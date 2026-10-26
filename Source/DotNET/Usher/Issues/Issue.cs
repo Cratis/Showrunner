@@ -93,7 +93,8 @@ public record Issue(
     /// <param name="event">The event.</param>
     /// <param name="current">The current state.</param>
     /// <returns>The next state.</returns>
-    public static Issue? Reduce(ReporterWithdrewIssue @event, Issue? current) => Move(current, IssueState.Withdrawn);
+    public static Issue? Reduce(ReporterWithdrewIssue @event, Issue? current) =>
+        Move(current, IssueState.Withdrawn) is { } withdrawn ? withdrawn with { AccessGranted = false } : null;
 
     /// <summary>
     /// Records a grant of access.

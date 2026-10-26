@@ -10,6 +10,7 @@ using Cratis.Showrunner.Usher.Contracts.Identity;
 using Cratis.Showrunner.Usher.Identity;
 using Cratis.Showrunner.Usher.Identity.ShareIdentity;
 using Cratis.Showrunner.Usher.Issues;
+using Cratis.Showrunner.Usher.Lifecycle.WithdrawIssue;
 using Cratis.Showrunner.Usher.Reporting.ReportError;
 using Cratis.Showrunner.Usher.Reporting.ReportIssue;
 
@@ -23,11 +24,12 @@ namespace Cratis.Showrunner.Usher.Access.Sessions;
 /// It is folded from the issue's events on every decision rather than read from a read model, because a session is a
 /// security decision that must see a revocation the moment it is recorded, and because the decision's append is
 /// guarded against exactly the events it was folded from. The grant follows the same rules as <see cref="Issue"/>:
-/// a lapse of an earlier grant never ends a later one.
+/// a lapse of an earlier grant never ends a later one, and withdrawing the issue ends the grant for good.
 /// </remarks>
 /// <param name="ReportedBy">Who reported the issue, at their identity provider; <see cref="UserIdentity.NotSet"/> when it was never reported.</param>
 /// <param name="SharedIdentity">Who the reporter is, when they let support know; <see langword="null"/> until they do.</param>
-/// <param name="Granted">Whether a grant is in effect, not revoked or lapsed; it may still have passed its end.</param>
+/// <param name="Granted">Whether a grant is in effect, not revoked, lapsed or ended by withdrawing the issue; it may still have passed its end.</param>
+/// <param name="Withdrawn">Whether the reporter withdrew the issue.</param>
 /// <param name="ValidUntil">The end of the last grant; <see cref="Unset.ValidUntil"/> when there was none.</param>
 /// <param name="Sessions">The sessions support had, by identifier.</param>
 /// <param name="LastSequenceNumber">The sequence number of the last event it was folded from.</param>
@@ -35,6 +37,7 @@ public record SupportAccess(
     UserIdentity ReportedBy,
     Reporter? SharedIdentity,
     bool Granted,
+    bool Withdrawn,
     ValidUntil ValidUntil,
     ImmutableDictionary<SupportSessionId, SupportSessionFacts> Sessions,
     EventSequenceNumber LastSequenceNumber)
@@ -50,6 +53,7 @@ public record SupportAccess(
         typeof(ReporterGrantedAccess),
         typeof(ReporterRevokedAccess),
         typeof(AccessGrantLapsed),
+        typeof(ReporterWithdrewIssue),
         typeof(SupportSignedInAsReporter),
         typeof(SupportSessionEnded)
     ];
@@ -60,6 +64,7 @@ public record SupportAccess(
     public static readonly SupportAccess None = new(
         UserIdentity.NotSet,
         null,
+        false,
         false,
         Unset.ValidUntil,
         [],
@@ -133,6 +138,11 @@ public record SupportAccess(
             return SupportSessionRefusal.SessionEnded;
         }
 
+        if (Withdrawn)
+        {
+            return SupportSessionRefusal.IssueWithdrawn;
+        }
+
         if (!HasLiveGrant(now))
         {
             return SupportSessionRefusal.NoLiveGrant;
@@ -148,7 +158,8 @@ public record SupportAccess(
             ReporterDescribedIssue described when !IsReported => this with { ReportedBy = described.ReportedBy },
             ReporterFlaggedError flagged when !IsReported => this with { ReportedBy = flagged.ReportedBy },
             ReporterSharedIdentity shared => this with { SharedIdentity = shared.Reporter },
-            ReporterGrantedAccess granted => this with { Granted = true, ValidUntil = granted.ValidUntil },
+            ReporterGrantedAccess granted when !Withdrawn => this with { Granted = true, ValidUntil = granted.ValidUntil },
+            ReporterWithdrewIssue => this with { Granted = false, Withdrawn = true },
             ReporterRevokedAccess => this with { Granted = false },
             AccessGrantLapsed lapsed when lapsed.ValidUntil == ValidUntil => this with { Granted = false },
             SupportSignedInAsReporter signedIn when !HasStarted(signedIn.SessionId) =>

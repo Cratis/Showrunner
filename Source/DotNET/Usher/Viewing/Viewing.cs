@@ -142,7 +142,10 @@ public enum AccessState
     Revoked = 2,
 
     /// <summary>The grant ended by its time passing.</summary>
-    Lapsed = 3
+    Lapsed = 3,
+
+    /// <summary>The grant ended because the reporter withdrew the issue.</summary>
+    EndedByWithdrawal = 4
 }
 
 /// <summary>
@@ -390,7 +393,10 @@ public record IssueConversation(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static IssueConversation? Reduce(ReporterWithdrewIssue @event, IssueConversation? current, EventContext context) =>
-        IssueConversationTransitions.Add(current, IssueConversationTransitions.ByReporter(context, ConversationEntryKind.Withdrawn), issue => IssueConversationTransitions.Move(issue, IssueState.Withdrawn));
+        IssueConversationTransitions.Add(current, IssueConversationTransitions.ByReporter(context, ConversationEntryKind.Withdrawn), issue => IssueConversationTransitions.Move(issue, IssueState.Withdrawn) with
+        {
+            Access = issue.Access.State == AccessState.Granted ? issue.Access with { State = AccessState.EndedByWithdrawal } : issue.Access
+        });
 
     /// <summary>
     /// Records the grant of access and answers support's request for it.

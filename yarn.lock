@@ -172,9 +172,11 @@ __metadata:
   resolution: "@cratis/showrunner.usher@workspace:Source/JavaScript/Usher"
   dependencies:
     "@cratis/arc": "npm:22.143.0"
+    "@cratis/arc.react": "npm:22.143.0"
     "@cratis/fundamentals": "npm:7.27.0"
   peerDependencies:
     "@cratis/arc": ^22.143.0
+    "@cratis/arc.react": ^22.143.0
     "@cratis/fundamentals": ^7.27.0
   languageName: unknown
   linkType: soft

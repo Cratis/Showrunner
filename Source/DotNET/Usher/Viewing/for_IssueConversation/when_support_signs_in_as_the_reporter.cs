@@ -11,8 +11,8 @@ namespace Cratis.Showrunner.Usher.Viewing.for_IssueConversation;
 
 public class when_support_signs_in_as_the_reporter : a_read_model<IssueConversation>
 {
-    readonly SupportSessionId _ended = SupportSessionId.New();
-    readonly SupportSessionId _running = SupportSessionId.New();
+    readonly SupportSessionId _ended = "ended-session";
+    readonly SupportSessionId _running = "running-session";
     IssueConversation _issue;
 
     async Task Because()

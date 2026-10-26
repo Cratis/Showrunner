@@ -3,12 +3,15 @@
 
 using Cratis.Showrunner.Usher;
 using Cratis.Showrunner.Usher.Access.Lapsing;
+using Cratis.Showrunner.Usher.Access.OnBehalf;
+using Cratis.Showrunner.Usher.Access.Sessions;
 using Cratis.Showrunner.Usher.Contracts.Reporting;
 using Cratis.Showrunner.Usher.Identity;
 using Cratis.Showrunner.Usher.Receiving;
 using Cratis.Showrunner.Usher.Reporting;
 using Cratis.Showrunner.Usher.Reporting.Capture;
 using Cratis.Showrunner.Usher.Tenancy;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -34,6 +37,8 @@ public static class UsherServiceCollectionExtensions
             .Validate(options => options.ErrorCapture.Retention > TimeSpan.Zero, "Usher keeps captured errors for a while: set UsherOptions.ErrorCapture.Retention to more than zero.")
             .Validate(options => options.ErrorCapture.Capacity >= 0, "Usher keeps a number of captured errors: UsherOptions.ErrorCapture.Capacity cannot be negative.")
             .Validate(options => options.ErrorCapture.MaximumStackFrames >= 0, "Usher keeps a number of stack frames: UsherOptions.ErrorCapture.MaximumStackFrames cannot be negative.")
+            .Validate(options => options.OnBehalf.IsCompleteOrAbsent, "Usher's on-behalf sessions need an issuer, an audience and at least one signing key: set all of UsherOptions.OnBehalf.Issuer, Audience and SigningKeys, or none.")
+            .Validate(options => OnBehalfSigningKeys.AreUsable(options.OnBehalf), "Every UsherOptions.OnBehalf.SigningKeys entry needs a unique KeyId and the PEM of an RSA public key of at least 2048 bits; never a private key.")
             .ValidateOnStart();
 
         services.TryAddSingleton(TimeProvider.System);
@@ -43,9 +48,18 @@ public static class UsherServiceCollectionExtensions
         services.TryAddTransient<ICurrentErrorOwner, CurrentErrorOwner>();
         services.TryAddTransient<CaptureFailedCommands>();
         services.TryAddSingleton<TenantEventStores>();
+        services.TryAddSingleton<ITenantEventStores>(serviceProvider => serviceProvider.GetRequiredService<TenantEventStores>());
         services.TryAddSingleton<DeskEventTranslator>();
         services.TryAddSingleton<DeskSubscriptions>();
         services.TryAddSingleton<GrantLapsing>();
+        services.TryAddSingleton<SupportSessions>();
+        services.TryAddSingleton<OnBehalfTokenReplays>();
+        services.TryAddSingleton<OnBehalfTokens>();
+        services.TryAddTransient<IRepresentedPrincipals, RepresentedPrincipals>();
+        services.TryAddTransient<OnBehalfSessionCalls>();
+        services.AddHttpContextAccessor();
+        services.TryAddTransient<IOnBehalfForward, OnBehalfForward>();
+        services.TryAddEnumerable(ServiceDescriptor.Transient<IStartupFilter, OnBehalfStartupFilter>());
         services.AddHostedService<UsherWorker>();
         return services;
     }

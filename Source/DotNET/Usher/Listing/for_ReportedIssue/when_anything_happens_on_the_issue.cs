@@ -22,7 +22,7 @@ public class when_anything_happens_on_the_issue : a_read_model<ReportedIssue>
 
     async Task Because()
     {
-        var sessionId = SupportSessionId.New();
+        SupportSessionId sessionId = "a-session";
         object[] events =
         [
             IssueEvents.Described(Reporters.Subject),

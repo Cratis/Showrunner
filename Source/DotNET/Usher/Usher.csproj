@@ -16,6 +16,11 @@
         <CratisProxiesSkipOutputDeletion>true</CratisProxiesSkipOutputDeletion>
         <CratisProxiesSkipCommandNameInRoute>true</CratisProxiesSkipCommandNameInRoute>
         <CratisProxiesUseSourceFileAsOutputFile>true</CratisProxiesUseSourceFileAsOutputFile>
+
+        <!-- Read models a command's validator or Handle() takes as parameters are read fresh from the event log and
+             guard the append: the reporter rules (only the reporter acts, answer an open question, reopen only when
+             resolved, nothing after withdraw, one live grant) hold under concurrent requests. -->
+        <CratisReadProtection>On</CratisReadProtection>
     </PropertyGroup>
 
     <ItemGroup>

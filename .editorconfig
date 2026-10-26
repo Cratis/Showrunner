@@ -127,7 +127,7 @@ csharp_indent_braces = false
 # A specification is recognized by where it sits as well as by the project it is in, because a slice is specified
 # beside the source it specifies - a `when_<behavior>` folder inside the application project, not a project of its own.
 # A behavior with a single outcome is one `when_<behavior>.cs` file directly in its `for_<Unit>` folder.
-[{**/*.Specs/**/*.cs,Integration/**/*.cs,**/when_*/**.cs,**/for_*/**.cs}]
+[{**/*.Specs/**/*.cs,Integration/**/*.cs,**/when_*/**.cs,**/for_*/**.cs,**/given/**.cs}]
 dotnet_diagnostic.CA1001.severity = none
 dotnet_diagnostic.CA1008.severity = none
 dotnet_diagnostic.CA1024.severity = none
@@ -200,3 +200,13 @@ dotnet_diagnostic.MA0097.severity = none
 dotnet_diagnostic.MA0132.severity = none
 dotnet_diagnostic.MA0134.severity = none
 dotnet_diagnostic.ORLEANS0010.severity = none
+
+# Usher is built as vertical slices: one <Slice>.cs holds the slice's command, validator, events and read model
+# together, so the one-type-per-file rules do not apply to it. Usher.Contracts keeps one type per file.
+# A reducer's Reduce(event, current) dispatches on the event's type even when the transition never reads it, so unused
+# parameters are reported for non-public methods only: a public method's parameters are its dispatch contract.
+[Source/DotNET/Usher/**.cs]
+dotnet_code_quality_unused_parameters = non_public
+dotnet_diagnostic.SA1402.severity = none
+dotnet_diagnostic.SA1649.severity = none
+dotnet_diagnostic.MA0048.severity = none

@@ -1,8 +1,15 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-// Production global usings are added alongside the first slice that needs them - Release builds treat
-// an unused using (IDE0005) as an error. The spec usings below are compiled into Debug builds only.
+global using Cratis.Arc.Authorization;
+global using Cratis.Arc.Commands;
+global using Cratis.Arc.Commands.ModelBound;
+global using Cratis.Chronicle.Events;
+global using Cratis.Concepts;
+global using Cratis.Showrunner.Usher.Contracts;
+global using FluentValidation;
+
+// The spec usings below are compiled into Debug builds only.
 #if DEBUG
 global using Cratis.Arc.Chronicle.Testing.Commands;
 global using Cratis.Arc.Testing.Commands;

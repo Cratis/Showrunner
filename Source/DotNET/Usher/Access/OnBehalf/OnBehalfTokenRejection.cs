@@ -76,10 +76,5 @@ public enum OnBehalfTokenRejection
     /// <summary>
     /// The token was already used.
     /// </summary>
-    Replayed = 13,
-
-    /// <summary>
-    /// The forwarded identity headers are not the ones the assertion was issued for.
-    /// </summary>
-    WrongIdentity = 14
+    Replayed = 13
 }

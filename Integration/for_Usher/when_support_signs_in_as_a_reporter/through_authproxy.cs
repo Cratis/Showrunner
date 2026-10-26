@@ -44,6 +44,9 @@ public class through_authproxy : Specification
     JsonElement _addedDetails;
     HttpStatusCode _forgedWithoutAssertion;
     HttpStatusCode _forgedWithAnotherActor;
+    HttpStatusCode _forwardedForAnotherPath;
+    JsonElement _firstCheckOfUnstartedSession;
+    JsonElement _secondCheckOfUnstartedSession;
     JsonElement _revoked;
     JsonElement _grantAfterRevoke;
     HttpStatusCode _firstEndedStatus;
@@ -108,6 +111,11 @@ public class through_authproxy : Specification
             _startedWithoutGrantStatus = startedWithoutGrant.StatusCode;
         }
 
+        // A session AuthProxy checked but never announced is live for that one check only, on any instance.
+        var unstarted = _session with { SessionId = "session-three" };
+        _firstCheckOfUnstartedSession = await GrantAnswer(_authProxy.GrantCheck(unstarted, baseUrl));
+        _secondCheckOfUnstartedSession = await GrantAnswer(_authProxy.GrantCheck(unstarted, baseUrl));
+
         // Support acts as the reporter: AuthProxy forwards the represented user as the principal the grant check
         // answered, and the actor beside it.
         var represented = JsonSerializer.Deserialize<ForwardedUser>(_liveGrant.GetProperty("principal").GetRawText(), JsonSerializerOptions.Web)!;
@@ -117,7 +125,7 @@ public class through_authproxy : Specification
         (_, _addedDetails) = await _application.Execute("/api/conversation/add-details", addDetails, _tenant, represented, _ =>
         {
             _.Request.Headers.Add("x-cratis-on-behalf-actor", actorHeader);
-            _.Request.Headers.Add("x-cratis-on-behalf-assertion", _authProxy.Forward(_session, _.PrincipalHeader, actorHeader));
+            _.Request.Headers.Add("x-cratis-on-behalf-assertion", _authProxy.Forward(_session, _.Request, _.PrincipalHeader, actorHeader));
         });
 
         // A caller that reached the application some other way forges the forward: without AuthProxy's assertion,
@@ -127,7 +135,15 @@ public class through_authproxy : Specification
         (_forgedWithAnotherActor, _) = await _application.Execute("/api/conversation/add-details", addDetails, _tenant, represented, _ =>
         {
             _.Request.Headers.Add("x-cratis-on-behalf-actor", AuthProxy.Encode(_actor with { UserId = "somebody-else" }));
-            _.Request.Headers.Add("x-cratis-on-behalf-assertion", _authProxy.Forward(_session, _.PrincipalHeader, actorHeader));
+            _.Request.Headers.Add("x-cratis-on-behalf-assertion", _authProxy.Forward(_session, _.Request, _.PrincipalHeader, actorHeader));
+        });
+
+        // An assertion AuthProxy issued for another request is refused by Arc.
+        (_forwardedForAnotherPath, _) = await _application.Execute("/api/conversation/add-details", addDetails, _tenant, represented, _ =>
+        {
+            using var another = new HttpRequestMessage(HttpMethod.Post, "/api/conversation/answer-question");
+            _.Request.Headers.Add("x-cratis-on-behalf-actor", actorHeader);
+            _.Request.Headers.Add("x-cratis-on-behalf-assertion", _authProxy.Forward(_session, another, _.PrincipalHeader, actorHeader));
         });
 
         _signedIn = await WaitFor<SupportSignedInAsReporter>(tenant, _issueId);
@@ -184,6 +200,10 @@ public class through_authproxy : Specification
     [Fact] void should_execute_the_command_as_the_reporter() => _addedDetails.GetProperty("isSuccess").GetBoolean().ShouldBeTrue();
     [Fact] void should_refuse_a_forward_without_authproxys_assertion() => _forgedWithoutAssertion.ShouldEqual(HttpStatusCode.Unauthorized);
     [Fact] void should_refuse_a_forward_with_identities_the_assertion_is_not_for() => _forgedWithAnotherActor.ShouldEqual(HttpStatusCode.Unauthorized);
+    [Fact] void should_refuse_a_forward_with_an_assertion_for_another_request() => _forwardedForAnotherPath.ShouldEqual(HttpStatusCode.Unauthorized);
+    [Fact] void should_answer_live_for_a_session_before_it_starts() => _firstCheckOfUnstartedSession.GetProperty("live").GetBoolean().ShouldBeTrue();
+    [Fact] void should_answer_not_live_again_for_a_session_that_never_started() => _secondCheckOfUnstartedSession.GetProperty("live").GetBoolean().ShouldBeFalse();
+    [Fact] void should_answer_until_when_with_an_offset() => _liveGrant.GetProperty("validUntil").GetString()!.ShouldMatch(_ => _.EndsWith('Z') || _.EndsWith("+00:00", StringComparison.Ordinal));
     [Fact] void should_record_only_what_authproxy_vouched_for() => _detailsAddedCount.ShouldEqual(1);
     [Fact] void should_record_what_support_did_as_caused_by_the_actor() => _detailsAdded.Context.CausedBy.Subject.ShouldEqual(_actor.UserId);
     [Fact] void should_record_what_support_did_on_behalf_of_the_reporter() => _detailsAdded.Context.CausedBy.OnBehalfOf!.Subject.ShouldEqual(_reporterSubject.Value);
@@ -205,6 +225,12 @@ public class through_authproxy : Specification
         Eventually.Get(
             async () => (await store.EventLog.GetFromSequenceNumber(EventSequenceNumber.First, issueId)).FirstOrDefault(_ => _.Content is TEvent),
             $"{typeof(TEvent).Name} on {issueId}");
+
+    async Task<JsonElement> GrantAnswer(AuthProxyCall call)
+    {
+        using var response = await _application.Send(call);
+        return JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.Clone();
+    }
 
     ConversationEntry Added() => _conversation.Entries.Single(_ => _.Kind == ConversationEntryKind.DetailsAdded);
 }

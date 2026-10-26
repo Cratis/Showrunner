@@ -26,15 +26,10 @@ public class on_behalf_tokens : Specification
     {
         _authProxy = new();
         _time = new(Now);
-        _options = new()
-        {
-            Issuer = AuthProxyTokens.Issuer,
-            Audience = AuthProxyTokens.Audience,
-            SigningKeys = [new() { KeyId = AuthProxyTokens.KeyId, PublicKeyPem = _authProxy.PublicKeyPem }]
-        };
+        _options = new();
         var options = Substitute.For<IOptionsMonitor<UsherOptions>>();
         options.CurrentValue.Returns(new UsherOptions { ApplicationName = "Ledger", OnBehalf = _options });
-        _tokens = new(options, new OnBehalfTokenReplays(_time), _time);
+        _tokens = new(AuthProxyTokens.ArcOptions(_authProxy), options, new OnBehalfTokenReplays(_time), _time);
     }
 
     void Destroy() => _authProxy.Dispose();

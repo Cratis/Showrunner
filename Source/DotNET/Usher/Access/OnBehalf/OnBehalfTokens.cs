@@ -3,8 +3,9 @@
 
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
+using Cratis.Arc;
+using Cratis.Arc.Identity;
 using Cratis.Monads;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -20,10 +21,11 @@ namespace Cratis.Showrunner.Usher.Access.OnBehalf;
 /// Every check fails closed: a missing claim, an unknown key or a token Usher cannot read is a rejection, never a
 /// token taken on trust. The token itself is never logged or kept; only its identifier is remembered, until it expires.
 /// </remarks>
+/// <param name="arc">The <see cref="ArcOptions"/>, whose <see cref="ArcOptions.OnBehalfOf"/> pins AuthProxy's issuer, audience and keys.</param>
 /// <param name="options">The <see cref="UsherOptions"/>.</param>
 /// <param name="replays">The <see cref="OnBehalfTokenReplays"/>.</param>
 /// <param name="time">The clock.</param>
-public class OnBehalfTokens(IOptionsMonitor<UsherOptions> options, OnBehalfTokenReplays replays, TimeProvider time)
+public class OnBehalfTokens(IOptionsMonitor<ArcOptions> arc, IOptionsMonitor<UsherOptions> options, OnBehalfTokenReplays replays, TimeProvider time)
 {
     /// <summary>
     /// The longest lifetime Usher accepts a token with. AuthProxy issues them for at most a minute.
@@ -45,51 +47,29 @@ public class OnBehalfTokens(IOptionsMonitor<UsherOptions> options, OnBehalfToken
             return Task.FromResult<Result<OnBehalfAssertion, OnBehalfTokenRejection>>(OnBehalfTokenRejection.Missing);
         }
 
-        return Verify(authorization[BearerPrefix.Length..].Trim(), call.Purpose, (claims, settings) =>
+        return Verify(authorization[BearerPrefix.Length..].Trim(), call.Purpose, claims =>
         {
-            if (!string.Equals(Text(claims, "htm"), call.Method, StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(OnBehalfAssertionClaims.Text(claims, "htm"), call.Method, StringComparison.OrdinalIgnoreCase))
             {
                 return OnBehalfTokenRejection.WrongMethod;
             }
 
-            if (!IsBoundTo(Text(claims, "htu"), call, settings))
+            if (!IsBoundTo(OnBehalfAssertionClaims.Text(claims, "htu"), call, options.CurrentValue.OnBehalf.BaseUrl))
             {
                 return OnBehalfTokenRejection.WrongTarget;
             }
 
-            return Text(claims, "body_hash") != Digest(call.Body.Span) ? OnBehalfTokenRejection.WrongBody : null;
+            return OnBehalfAssertionClaims.Text(claims, "body_hash") != Digest(call.Body.Span) ? OnBehalfTokenRejection.WrongBody : null;
         });
-    }
-
-    /// <summary>
-    /// Verifies the assertion AuthProxy forwards beside each request of an on-behalf session, bound to the exact
-    /// values of the two identity headers.
-    /// </summary>
-    /// <param name="assertion">The value of the <c>x-cratis-on-behalf-assertion</c> header.</param>
-    /// <param name="principalHeader">The exact value of the <c>x-ms-client-principal</c> header.</param>
-    /// <param name="actorHeader">The exact value of the <c>x-cratis-on-behalf-actor</c> header.</param>
-    /// <returns>The <see cref="OnBehalfAssertion"/> the token makes, or why it was rejected.</returns>
-    public Task<Result<OnBehalfAssertion, OnBehalfTokenRejection>> VerifyForward(string? assertion, string principalHeader, string actorHeader)
-    {
-        if (string.IsNullOrWhiteSpace(assertion))
-        {
-            return Task.FromResult<Result<OnBehalfAssertion, OnBehalfTokenRejection>>(OnBehalfTokenRejection.Missing);
-        }
-
-        return Verify(assertion.Trim(), OnBehalfPaths.ForwardPurpose, (claims, _) =>
-            Text(claims, "principal_hash") == Digest(Encoding.ASCII.GetBytes(principalHeader)) &&
-            Text(claims, "actor_hash") == Digest(Encoding.ASCII.GetBytes(actorHeader))
-                ? null
-                : OnBehalfTokenRejection.WrongIdentity);
     }
 
     static string Digest(ReadOnlySpan<byte> value) => Base64UrlEncoder.Encode(SHA256.HashData(value));
 
-    static TokenValidationParameters ParametersFor(OnBehalfOptions settings) => new()
+    static TokenValidationParameters ParametersFor(OnBehalfOfOptions settings) => new()
     {
         ValidIssuer = settings.Issuer,
         ValidAudience = settings.Audience,
-        IssuerSigningKeys = OnBehalfSigningKeys.From(settings),
+        IssuerSigningKeys = OnBehalfSigningKeys.From(settings.SigningKeys),
         ValidAlgorithms = [SecurityAlgorithms.RsaSha256],
         TryAllIssuerSigningKeys = false,
         RequireSignedTokens = true,
@@ -110,42 +90,22 @@ public class OnBehalfTokens(IOptionsMonitor<UsherOptions> options, OnBehalfToken
         _ => OnBehalfTokenRejection.Malformed
     };
 
-    static bool IsBoundTo(string? target, OnBehalfCall call, OnBehalfOptions settings)
+    static bool IsBoundTo(string? target, OnBehalfCall call, Uri? baseUrl)
     {
         if (!Uri.TryCreate(target, UriKind.Absolute, out var bound))
         {
             return false;
         }
 
-        if (settings.BaseUrl is null)
+        if (baseUrl is null)
         {
             return string.Equals(bound.AbsolutePath, $"{call.PathBase}{call.Path}", StringComparison.Ordinal);
         }
 
-        var expected = new Uri($"{settings.BaseUrl.ToString().TrimEnd('/')}{call.Path}");
+        var expected = new Uri($"{baseUrl.ToString().TrimEnd('/')}{call.Path}");
         return string.Equals(bound.GetLeftPart(UriPartial.Authority), expected.GetLeftPart(UriPartial.Authority), StringComparison.OrdinalIgnoreCase)
             && string.Equals(bound.AbsolutePath, expected.AbsolutePath, StringComparison.Ordinal);
     }
-
-    static OnBehalfAssertion? AssertionFrom(JsonElement claims)
-    {
-        var subject = Text(claims, "sub");
-        var tenant = Text(claims, "tenant");
-        var issue = Text(claims, "issue");
-        var sessionId = Text(claims, "sid");
-        var actor = claims.TryGetProperty("act", out var act) && act.ValueKind == JsonValueKind.Object ? act : default;
-        var actorSubject = actor.ValueKind == JsonValueKind.Object ? Text(actor, "sub") : null;
-        if (string.IsNullOrEmpty(subject) || string.IsNullOrEmpty(tenant) || string.IsNullOrEmpty(issue) ||
-            string.IsNullOrEmpty(sessionId) || string.IsNullOrEmpty(actorSubject))
-        {
-            return null;
-        }
-
-        return new(subject, actorSubject, Text(actor, "idp") ?? string.Empty, tenant, issue, sessionId);
-    }
-
-    static string? Text(JsonElement claims, string name) =>
-        claims.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
 
     OnBehalfTokenRejection? LifetimeRejection(DateTime? notBefore, DateTime? expires, TimeSpan clockSkew)
     {
@@ -163,9 +123,9 @@ public class OnBehalfTokens(IOptionsMonitor<UsherOptions> options, OnBehalfToken
     async Task<Result<OnBehalfAssertion, OnBehalfTokenRejection>> Verify(
         string encoded,
         string purpose,
-        Func<JsonElement, OnBehalfOptions, OnBehalfTokenRejection?> binding)
+        Func<JsonElement, OnBehalfTokenRejection?> binding)
     {
-        var settings = options.CurrentValue.OnBehalf;
+        var settings = arc.CurrentValue.OnBehalfOf;
 
         // The lifetime validator runs inside validation; the box carries why it refused out of it.
         var lifetime = new StrongBox<OnBehalfTokenRejection?>();
@@ -184,17 +144,17 @@ public class OnBehalfTokens(IOptionsMonitor<UsherOptions> options, OnBehalfToken
 
         using var payload = JsonDocument.Parse(Base64UrlEncoder.DecodeBytes(token.EncodedPayload));
         var claims = payload.RootElement;
-        if (Text(claims, "purpose") != purpose)
+        if (OnBehalfAssertionClaims.Text(claims, "purpose") != purpose)
         {
             return OnBehalfTokenRejection.WrongPurpose;
         }
 
-        if (binding(claims, settings) is { } unbound)
+        if (binding(claims) is { } unbound)
         {
             return unbound;
         }
 
-        if (AssertionFrom(claims) is not { } assertion || Text(claims, "jti") is not { Length: > 0 } tokenId)
+        if (OnBehalfAssertionClaims.From(claims) is not { } assertion || OnBehalfAssertionClaims.Text(claims, "jti") is not { Length: > 0 } tokenId)
         {
             return OnBehalfTokenRejection.MissingClaims;
         }

@@ -1,8 +1,12 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Security.Claims;
+using Cratis.Arc;
+using Cratis.Arc.Identity;
 using Cratis.Showrunner.Usher.Access.Sessions;
 using Cratis.Showrunner.Usher.Tenancy;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -10,29 +14,31 @@ using Microsoft.Extensions.Options;
 namespace Cratis.Showrunner.Usher.Access.OnBehalf;
 
 /// <summary>
-/// Refuses a request forwarded as somebody else unless AuthProxy's signed assertion vouches for it: a request that
-/// carries an actor is let through only with an <c>x-cratis-on-behalf-assertion</c> that verifies and is bound to the
-/// exact identity headers and the tenant of the request.
+/// Refuses a request forwarded as somebody else unless Arc accepted it as an on-behalf forward, and decides from the
+/// issue's own events whether the session it was forwarded in is live.
 /// </summary>
 /// <remarks>
 /// <para>
-/// Arc turns the forwarded headers into the represented user with the actor beside them, but the headers are not
-/// signed. This is what keeps a caller that reached the backend some other way than through AuthProxy from forging a
-/// session. It runs only when on-behalf sessions are configured, and leaves AuthProxy's own calls, which carry a token
-/// of their own, to their endpoints.
+/// Arc verifies AuthProxy's <c>x-cratis-on-behalf-assertion</c> itself (<c>Cratis:Arc:OnBehalfOf</c>): the signature,
+/// issuer, audience, lifetime, purpose, service, method, path, the exact identity headers, the tenant and that it is used
+/// once. Usher does not verify it again. It asks Arc's authentication for the request, and a request that carries an
+/// actor or an assertion is refused with <c>401</c> unless Arc accepted it with the actor beside the represented user,
+/// so a rejected forward never reaches the application as anybody, not even anonymously.
 /// </para>
 /// <para>
-/// For a forward it lets through, it also decides from the issue's own events whether the session is live right now -
-/// the grant in effect and not past its end, the issue not withdrawn, the session not ended - and keeps the decision
-/// with the request as a <see cref="VerifiedForward"/>. Usher's commands and queries let support act only in a live
-/// session, so a revocation counts the moment it is recorded, not at AuthProxy's next grant check. The request itself
-/// is let through: the rest of the application is AuthProxy's to stop.
+/// Arc does not tell which issue and which session the request belongs to, so Usher reads those from the claims of the
+/// assertion Arc accepted. It reads them only from the exact header value Arc authenticated, after checking that the
+/// assertion names the represented user, the actor and the tenant of the request. It then decides from the issue's own
+/// events whether the session is live right now - started and not ended, the grant in effect and not past its end, the
+/// issue not withdrawn - and keeps the decision with the request as a <see cref="VerifiedForward"/>. Usher's commands
+/// and queries let support act only in a live session, so a revocation counts the moment it is recorded, not at
+/// AuthProxy's next grant check. The request itself is let through: the rest of the application is AuthProxy's to stop.
 /// </para>
 /// </remarks>
 /// <param name="next">The next middleware.</param>
-/// <param name="options">The <see cref="UsherOptions"/>.</param>
+/// <param name="arc">The <see cref="ArcOptions"/>.</param>
 /// <param name="logger">The logger.</param>
-public class OnBehalfForwards(RequestDelegate next, IOptionsMonitor<UsherOptions> options, ILogger<OnBehalfForwards> logger)
+public class OnBehalfForwards(RequestDelegate next, IOptionsMonitor<ArcOptions> arc, ILogger<OnBehalfForwards> logger)
 {
     /// <summary>
     /// The key of the <see cref="OnBehalf.VerifiedForward"/> in <see cref="HttpContext.Items"/>.
@@ -43,33 +49,40 @@ public class OnBehalfForwards(RequestDelegate next, IOptionsMonitor<UsherOptions
     /// Handles a request.
     /// </summary>
     /// <param name="http">The <see cref="HttpContext"/>.</param>
-    /// <param name="tokens">The <see cref="OnBehalfTokens"/>.</param>
     /// <param name="stores">The <see cref="ITenantEventStores"/> giving the event store of the session's tenant.</param>
     /// <param name="sessions">The <see cref="SupportSessions"/> deciding whether the session is live.</param>
     /// <returns>An awaitable task.</returns>
-    public async Task InvokeAsync(HttpContext http, OnBehalfTokens tokens, ITenantEventStores stores, SupportSessions sessions)
+    public async Task InvokeAsync(HttpContext http, ITenantEventStores stores, SupportSessions sessions)
     {
         var headers = http.Request.Headers;
         var actsOnBehalf = headers.ContainsKey(OnBehalfPaths.ActorHeader) || headers.ContainsKey(OnBehalfPaths.AssertionHeader);
-        if (!options.CurrentValue.OnBehalf.IsEnabled || !actsOnBehalf || http.Request.Path.StartsWithSegments(OnBehalfPaths.Prefix, StringComparison.Ordinal))
+        if (arc.CurrentValue.OnBehalfOf?.Enabled != true || !actsOnBehalf || http.Request.Path.StartsWithSegments(OnBehalfPaths.Prefix, StringComparison.Ordinal))
         {
             await next(http);
             return;
         }
 
-        var verified = await tokens.VerifyForward(
-            headers[OnBehalfPaths.AssertionHeader].ToString(),
-            headers[OnBehalfPaths.PrincipalHeader].ToString(),
-            headers[OnBehalfPaths.ActorHeader].ToString());
-        if (verified.TryGetError(out var rejection) || !verified.TryGetResult(out var assertion))
+        // Arc's authentication handler runs once per request: the pipeline's own authentication later gets this result.
+        var authenticated = await http.AuthenticateAsync();
+        var principal = authenticated.Succeeded ? authenticated.Principal : null;
+        if (principal?.GetActor() is not { } actor)
         {
-            logger.ForwardRefused(rejection);
+            logger.ForwardNotAccepted();
             await Refuse(http);
             return;
         }
 
-        var tenant = headers[OnBehalfPaths.TenantHeader].ToString();
-        if (!string.Equals(tenant, assertion.Tenant.Value, StringComparison.Ordinal))
+        var assertion = OnBehalfAssertionClaims.FromVerifiedForward(headers[OnBehalfPaths.AssertionHeader].ToString());
+        if (assertion is null ||
+            !string.Equals(assertion.Subject.Value, SubjectOf(principal.Identities.First(_ => _.Actor is not null)), StringComparison.Ordinal) ||
+            !string.Equals(assertion.Actor.Value, SubjectOf(actor), StringComparison.Ordinal))
+        {
+            logger.ForwardWithoutSession();
+            await Refuse(http);
+            return;
+        }
+
+        if (!string.Equals(headers[OnBehalfPaths.TenantHeader].ToString(), assertion.Tenant.Value, StringComparison.Ordinal))
         {
             logger.ForwardInAnotherTenant();
             await Refuse(http);
@@ -80,6 +93,9 @@ public class OnBehalfForwards(RequestDelegate next, IOptionsMonitor<UsherOptions
         await next(http);
     }
 
+    static string? SubjectOf(ClaimsIdentity identity) =>
+        identity.FindFirst("sub")?.Value ?? identity.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
     static async Task<SupportSessionRefusal?> RefusalFor(OnBehalfAssertion assertion, ITenantEventStores stores, SupportSessions sessions, CancellationToken cancellationToken)
     {
         if (!Guid.TryParse(assertion.Issue, out var issue) || await stores.For(assertion.Tenant, cancellationToken) is not { } eventStore)
@@ -88,8 +104,8 @@ public class OnBehalfForwards(RequestDelegate next, IOptionsMonitor<UsherOptions
         }
 
         var request = new SupportSessionRequest(issue, assertion.SessionId, assertion.Subject, new(assertion.ActorIdentityProvider, assertion.Actor));
-        var checkedGrant = await sessions.CheckSession(eventStore, request);
-        return checkedGrant.TryGetError(out var refusal) ? refusal : null;
+        var checkedSession = await sessions.CheckSession(eventStore, request);
+        return checkedSession.TryGetError(out var refusal) ? refusal : null;
     }
 
     static Task Refuse(HttpContext http)

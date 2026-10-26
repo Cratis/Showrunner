@@ -7,8 +7,8 @@ using Microsoft.AspNetCore.Hosting;
 namespace Cratis.Showrunner.Usher.Access.OnBehalf;
 
 /// <summary>
-/// Puts <see cref="OnBehalfForwards"/> first in a web application's pipeline, ahead of authentication, so no
-/// unverified on-behalf forward reaches anything that believes the forwarded identity.
+/// Puts <see cref="OnBehalfForwards"/> first in a web application's pipeline, so no on-behalf forward Arc did not
+/// accept reaches anything in the application, and every one it did carries the decision on its session.
 /// </summary>
 public class OnBehalfStartupFilter : IStartupFilter
 {

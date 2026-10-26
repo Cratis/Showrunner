@@ -60,6 +60,16 @@ public sealed class WebApplicationWithUsher(WebApplication app, EventStoreName n
                 // generated proxies call: without the three namespace segments they skip (Cratis.Showrunner.Usher)
                 // and without the command name.
                 options.TrustForwardedIdentityHeaders = true;
+                options.OnBehalfOf = new()
+                {
+                    // Arc verifies AuthProxy's assertion on every forwarded request; Usher uses the same issuer,
+                    // audience and keys for AuthProxy's calls to its on-behalf endpoints.
+                    Enabled = true,
+                    Issuer = AuthProxy.Issuer,
+                    Audience = AuthProxy.Audience,
+                    Service = AuthProxy.Service,
+                    SigningKeys = [new() { KeyId = AuthProxy.KeyId, PublicKeyPem = authProxy.PublicKeyPem }]
+                };
                 options.GeneratedApis.SegmentsToSkipForRoute = 3;
                 options.GeneratedApis.IncludeCommandNameInRoute = false;
             },
@@ -82,11 +92,8 @@ public sealed class WebApplicationWithUsher(WebApplication app, EventStoreName n
             usher.PollingInterval = TimeSpan.FromMilliseconds(500);
             usher.OnBehalf = new OnBehalfOptions
             {
-                Issuer = AuthProxy.Issuer,
-                Audience = AuthProxy.Audience,
                 BaseUrl = BaseUrl,
-                AgentIdentityProviders = ["usher-agents"],
-                SigningKeys = [new() { KeyId = AuthProxy.KeyId, PublicKeyPem = authProxy.PublicKeyPem }]
+                AgentIdentityProviders = ["usher-agents"]
             };
         });
 
@@ -138,7 +145,7 @@ public sealed class WebApplicationWithUsher(WebApplication app, EventStoreName n
     /// <param name="command">The command.</param>
     /// <param name="tenant">The tenant.</param>
     /// <param name="principal">The user, as a client principal.</param>
-    /// <param name="headers">Adds headers beside the user's, given the exact <c>x-ms-client-principal</c> value.</param>
+    /// <param name="headers">Adds headers beside the user's, given the request and the exact <c>x-ms-client-principal</c> value.</param>
     /// <returns>The status and the command result, as JSON.</returns>
     public async Task<(HttpStatusCode Status, JsonElement Result)> Execute(string route, object command, EventStoreNamespaceName tenant, ForwardedUser principal, Action<(HttpRequestMessage Request, string PrincipalHeader)> headers)
     {

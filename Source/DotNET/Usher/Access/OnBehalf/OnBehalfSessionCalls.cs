@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text.Json;
+using Cratis.Arc;
 using Cratis.Chronicle;
 using Cratis.Showrunner.Usher.Access.Sessions;
 using Cratis.Showrunner.Usher.Contracts.Conversation;
@@ -22,6 +23,7 @@ namespace Cratis.Showrunner.Usher.Access.OnBehalf;
 /// answer that keeps support out: an unknown tenant or issue is not live, and a start that cannot be recorded is not
 /// acknowledged, so AuthProxy never issues the session.
 /// </remarks>
+/// <param name="arc">The <see cref="ArcOptions"/>, whose <see cref="ArcOptions.OnBehalfOf"/> turns on-behalf sessions on.</param>
 /// <param name="options">The <see cref="UsherOptions"/>.</param>
 /// <param name="tokens">The <see cref="OnBehalfTokens"/>.</param>
 /// <param name="stores">The <see cref="ITenantEventStores"/>.</param>
@@ -29,6 +31,7 @@ namespace Cratis.Showrunner.Usher.Access.OnBehalf;
 /// <param name="principals">The <see cref="IRepresentedPrincipals"/>.</param>
 /// <param name="logger">The logger.</param>
 public class OnBehalfSessionCalls(
+    IOptionsMonitor<ArcOptions> arc,
     IOptionsMonitor<UsherOptions> options,
     OnBehalfTokens tokens,
     ITenantEventStores stores,
@@ -204,7 +207,7 @@ public class OnBehalfSessionCalls(
     async Task<(OnBehalfAssertion? Assertion, IResult? Failure)> Verify(HttpContext http, string purpose, ReadOnlyMemory<byte> body)
     {
         http.Response.Headers.CacheControl = "no-store";
-        if (!options.CurrentValue.OnBehalf.IsEnabled)
+        if (arc.CurrentValue.OnBehalfOf?.Enabled != true)
         {
             return (null, Results.NotFound());
         }

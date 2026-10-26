@@ -46,7 +46,8 @@ public class UsherOptions
 
     /// <summary>
     /// Gets or sets how Usher answers AuthProxy's on-behalf sessions, in which support signs in as a reporter under a
-    /// grant. Unconfigured, support can never sign in as a reporter.
+    /// grant. On-behalf sessions are on when Arc accepts on-behalf forwards (<c>Cratis:Arc:OnBehalfOf</c>); these are
+    /// what Usher adds to it.
     /// </summary>
     public OnBehalfOptions OnBehalf { get; set; } = new();
 }

@@ -28,6 +28,11 @@ public sealed class AuthProxy : IDisposable
     public const string Audience = "ledger";
 
     /// <summary>
+    /// The name of the application's service in AuthProxy's <c>Services</c>, written to the <c>svc</c> of a forward.
+    /// </summary>
+    public const string Service = "ledger";
+
+    /// <summary>
     /// The identifier of AuthProxy's signing key.
     /// </summary>
     public const string KeyId = "on-behalf-2026-10";
@@ -106,15 +111,20 @@ public sealed class AuthProxy : IDisposable
         });
 
     /// <summary>
-    /// Builds the assertion AuthProxy forwards beside a request of a session, bound to the exact identity headers.
+    /// Builds the assertion AuthProxy forwards beside a request of a session, bound to the service, the method and the
+    /// path of the request and to the exact identity headers.
     /// </summary>
     /// <param name="session">The <see cref="OnBehalfSession"/>.</param>
+    /// <param name="request">The request it is forwarded with.</param>
     /// <param name="principalHeader">The exact <c>x-ms-client-principal</c> value.</param>
     /// <param name="actorHeader">The exact <c>x-cratis-on-behalf-actor</c> value.</param>
     /// <returns>The signed assertion.</returns>
-    public string Forward(OnBehalfSession session, string principalHeader, string actorHeader) =>
+    public string Forward(OnBehalfSession session, HttpRequestMessage request, string principalHeader, string actorHeader) =>
         Sign("on-behalf-forward", session, new()
         {
+            ["htm"] = request.Method.Method,
+            ["htu"] = request.RequestUri!.IsAbsoluteUri ? request.RequestUri.AbsolutePath : request.RequestUri.OriginalString.Split('?')[0],
+            ["svc"] = Service,
             ["principal_hash"] = Base64UrlEncoder.Encode(SHA256.HashData(Encoding.ASCII.GetBytes(principalHeader))),
             ["actor_hash"] = Base64UrlEncoder.Encode(SHA256.HashData(Encoding.ASCII.GetBytes(actorHeader))),
         });

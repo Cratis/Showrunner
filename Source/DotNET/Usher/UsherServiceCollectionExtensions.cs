@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Arc;
 using Cratis.Showrunner.Usher;
 using Cratis.Showrunner.Usher.Access.Lapsing;
 using Cratis.Showrunner.Usher.Access.OnBehalf;
@@ -13,6 +14,7 @@ using Cratis.Showrunner.Usher.Reporting.Capture;
 using Cratis.Showrunner.Usher.Tenancy;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -37,10 +39,9 @@ public static class UsherServiceCollectionExtensions
             .Validate(options => options.ErrorCapture.Retention > TimeSpan.Zero, "Usher keeps captured errors for a while: set UsherOptions.ErrorCapture.Retention to more than zero.")
             .Validate(options => options.ErrorCapture.Capacity >= 0, "Usher keeps a number of captured errors: UsherOptions.ErrorCapture.Capacity cannot be negative.")
             .Validate(options => options.ErrorCapture.MaximumStackFrames >= 0, "Usher keeps a number of stack frames: UsherOptions.ErrorCapture.MaximumStackFrames cannot be negative.")
-            .Validate(options => options.OnBehalf.IsCompleteOrAbsent, "Usher's on-behalf sessions need an issuer, an audience and at least one signing key: set all of UsherOptions.OnBehalf.Issuer, Audience and SigningKeys, or none.")
-            .Validate(options => OnBehalfSigningKeys.AreUsable(options.OnBehalf), "Every UsherOptions.OnBehalf.SigningKeys entry needs a unique KeyId and the PEM of an RSA public key of at least 2048 bits; never a private key.")
             .ValidateOnStart();
 
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<ArcOptions>, OnBehalfConfiguration>());
         services.TryAddSingleton(TimeProvider.System);
         services.TryAddTransient<ISignedInReporter, SignedInReporter>();
         services.TryAddSingleton<IComputeErrorFingerprints, ErrorFingerprints>();

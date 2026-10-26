@@ -2,17 +2,20 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #if DEBUG
+using System.Security.Claims;
 using Cratis.Chronicle.Testing.Events;
 using Cratis.Showrunner.Usher.Access.Sessions;
 using Cratis.Showrunner.Usher.given;
 using Cratis.Showrunner.Usher.Tenancy;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Options;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Cratis.Showrunner.Usher.Access.OnBehalf.for_OnBehalfForwards.given;
 
 /// <summary>
-/// A request AuthProxy forwards in an on-behalf session on an issue reported in a tenant, with a valid assertion.
+/// A request AuthProxy forwards in an on-behalf session on an issue reported in a tenant, with an assertion Arc
+/// accepted: Arc's authentication answers with the reporter and the support person as its actor.
 /// </summary>
 public class a_forwarded_request : Specification
 {
@@ -26,8 +29,10 @@ public class a_forwarded_request : Specification
     protected EventStoreForTesting _eventStore;
     protected ITenantEventStores _stores;
     protected OnBehalfForwards _forwards;
-    protected OnBehalfTokens _tokens;
     protected SupportSessions _sessions;
+    protected IAuthenticationService _authentication;
+    protected bool _arcAccepts = true;
+    protected string _actorSubject = "support-person";
     protected IssueId _issueId;
     protected DefaultHttpContext _http;
     protected bool _passedOn;
@@ -43,23 +48,13 @@ public class a_forwarded_request : Specification
         _stores = Substitute.For<ITenantEventStores>();
         _stores.For(new TenantId(Tenant), Arg.Any<CancellationToken>()).Returns(_eventStore);
 
-        var options = Substitute.For<IOptionsMonitor<UsherOptions>>();
-        options.CurrentValue.Returns(new UsherOptions
-        {
-            ApplicationName = "Ledger",
-            OnBehalf = new()
-            {
-                Issuer = AuthProxyTokens.Issuer,
-                Audience = AuthProxyTokens.Audience,
-                SigningKeys = [new() { KeyId = AuthProxyTokens.KeyId, PublicKeyPem = _authProxy.PublicKeyPem }]
-            }
-        });
-        _tokens = new(options, new OnBehalfTokenReplays(_time), _time);
         _sessions = new(_time, new RecordingLogger<SupportSessions>());
-        _forwards = new(PassOn, options, new RecordingLogger<OnBehalfForwards>());
+        _forwards = new(PassOn, AuthProxyTokens.ArcOptions(_authProxy), new RecordingLogger<OnBehalfForwards>());
+        _authentication = Substitute.For<IAuthenticationService>();
+        _authentication.AuthenticateAsync(Arg.Any<HttpContext>(), Arg.Any<string?>()).Returns(_ => Authenticated());
 
         var session = new OnBehalfSessionFacts((string)Reporters.SessionId, Tenant, _issueId.Value.ToString(), (string)Reporters.Subject, "support-person", "aad");
-        _http = new DefaultHttpContext();
+        _http = new DefaultHttpContext { RequestServices = new ServiceCollection().AddSingleton(_authentication).BuildServiceProvider() };
         _http.Request.Path = "/api/issues";
         _http.Request.Headers[OnBehalfPaths.PrincipalHeader] = PrincipalHeader;
         _http.Request.Headers[OnBehalfPaths.ActorHeader] = ActorHeader;
@@ -81,7 +76,21 @@ public class a_forwarded_request : Specification
         }
     }
 
-    protected Task Forwarded() => _forwards.InvokeAsync(_http, _tokens, _stores, _sessions);
+    protected Task Forwarded() => _forwards.InvokeAsync(_http, _stores, _sessions);
+
+    AuthenticateResult Authenticated()
+    {
+        if (!_arcAccepts)
+        {
+            return AuthenticateResult.Fail("on-behalf assertion was not accepted");
+        }
+
+        var represented = new ClaimsIdentity([new Claim("sub", (string)Reporters.Subject)], "MicrosoftIdentityPlatform")
+        {
+            Actor = new ClaimsIdentity([new Claim("sub", _actorSubject)], "MicrosoftIdentityPlatform")
+        };
+        return AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(represented), "MicrosoftIdentityPlatform"));
+    }
 
     Task PassOn(HttpContext http)
     {

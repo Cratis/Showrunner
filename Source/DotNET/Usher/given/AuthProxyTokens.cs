@@ -3,6 +3,8 @@
 
 #if DEBUG
 using System.Security.Cryptography;
+using Cratis.Arc;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
@@ -22,6 +24,24 @@ public sealed class AuthProxyTokens : IDisposable
     readonly RSA _key = RSA.Create(2048);
 
     public string PublicKeyPem => _key.ExportSubjectPublicKeyInfoPem();
+
+    public static IOptionsMonitor<ArcOptions> ArcOptions(AuthProxyTokens authProxy)
+    {
+        var options = Substitute.For<IOptionsMonitor<ArcOptions>>();
+        options.CurrentValue.Returns(new ArcOptions
+        {
+            TrustForwardedIdentityHeaders = true,
+            OnBehalfOf = new()
+            {
+                Enabled = true,
+                Issuer = Issuer,
+                Audience = Audience,
+                ClockSkew = TimeSpan.FromSeconds(5),
+                SigningKeys = [new() { KeyId = KeyId, PublicKeyPem = authProxy.PublicKeyPem }]
+            }
+        });
+        return options;
+    }
 
     public static string Digest(byte[] value) => Base64UrlEncoder.Encode(SHA256.HashData(value));
 
@@ -49,6 +69,9 @@ public sealed class AuthProxyTokens : IDisposable
         Sign(session, issuedAt, TimeSpan.FromMinutes(1), Issuer, Audience, _key, KeyId, new(StringComparer.Ordinal)
         {
             ["purpose"] = "on-behalf-forward",
+            ["htm"] = "GET",
+            ["htu"] = "/api/issues",
+            ["svc"] = "portal",
             ["principal_hash"] = Digest(System.Text.Encoding.ASCII.GetBytes(principalHeader)),
             ["actor_hash"] = Digest(System.Text.Encoding.ASCII.GetBytes(actorHeader)),
         });

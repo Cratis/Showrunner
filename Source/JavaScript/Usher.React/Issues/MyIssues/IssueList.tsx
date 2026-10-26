@@ -40,6 +40,7 @@ export const IssueList = ({ showClosed, onOpen }: IssueListProps) => {
             failureMessage={labels.myIssues.failed}
             unauthorizedMessage={labels.myIssues.unauthorized}
             defaultFilters={showClosed ? {} : { state: { value: openStates, matchMode: DataTableFilterMatchMode.In } }}
+            selectionMode='single'
             selection={null}
             onSelectionChange={event => {
                 if (event.value) {

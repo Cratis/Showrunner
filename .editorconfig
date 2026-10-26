@@ -126,7 +126,8 @@ csharp_indent_braces = false
 
 # A specification is recognized by where it sits as well as by the project it is in, because a slice is specified
 # beside the source it specifies - a `when_<behavior>` folder inside the application project, not a project of its own.
-[{**/*.Specs/**/*.cs,Integration/**/*.cs,**/when_*/**.cs}]
+# A behavior with a single outcome is one `when_<behavior>.cs` file directly in its `for_<Unit>` folder.
+[{**/*.Specs/**/*.cs,Integration/**/*.cs,**/when_*/**.cs,**/for_*/**.cs}]
 dotnet_diagnostic.CA1001.severity = none
 dotnet_diagnostic.CA1008.severity = none
 dotnet_diagnostic.CA1024.severity = none

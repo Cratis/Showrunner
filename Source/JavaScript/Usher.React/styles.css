@@ -293,6 +293,12 @@
     padding-inline-start: 1rem;
 }
 
+.usher-sessions__activity {
+    margin: 0.125rem 0 0;
+    padding-inline-start: 1rem;
+    color: var(--cratis-text-color-secondary);
+}
+
 .usher-issue-actions {
     display: flex;
     flex-wrap: wrap;

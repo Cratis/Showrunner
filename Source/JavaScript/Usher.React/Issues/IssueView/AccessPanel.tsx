@@ -9,7 +9,8 @@ import { useId, useState } from 'react';
 import { format } from '../../Labels/index.js';
 import { useUsherContext } from '../../Provider/UsherContext.js';
 import { formatTime } from '../../Reporting/AccessChoice.js';
-import { AccessStatus, accessStatusOf } from '../accessStatus.js';
+import { AccessStatus } from '../accessStatus.js';
+import { useAccessStatus } from '../useAccessStatus.js';
 import { GrantAccessDialog } from './GrantAccessDialog.js';
 import { SupportSessions } from './SupportSessions.js';
 
@@ -32,7 +33,7 @@ export const AccessPanel = ({ issue }: AccessPanelProps) => {
     const [confirm] = useConfirmationDialog();
     const [revokeAccess] = RevokeAccess.use();
     const [requestDismissed, setRequestDismissed] = useState(false);
-    const status = accessStatusOf(issue.access, new Date());
+    const [status] = useAccessStatus(issue.access);
     const isWithdrawn = issue.state === IssueState.withdrawn;
     const showsRequest = status === AccessStatus.requested && !requestDismissed && !isWithdrawn;
     const validUntil = issue.access?.validUntil instanceof Date ? issue.access.validUntil : new Date(issue.access?.validUntil);
@@ -77,7 +78,7 @@ export const AccessPanel = ({ issue }: AccessPanelProps) => {
                     {!isWithdrawn && <Button variant='outline' size='small' label={labels.accessPanel.grant} onClick={grant} />}
                 </>
             )}
-            <SupportSessions sessions={issue.access?.sessions ?? []} />
+            <SupportSessions sessions={issue.access?.sessions ?? []} entries={issue.entries ?? []} />
             <GrantDialog />
         </section>
     );

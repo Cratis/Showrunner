@@ -244,6 +244,10 @@ export interface UsherLabels {
         sessionRunning: string;
         /** The heading of the sessions list. */
         sessionsHeading: string;
+        /** Shown under a session in which support did nothing as the reporter. */
+        sessionDidNothing: string;
+        /** What support did as the reporter in a session, by entry kind. `{text}` is the entry's text. */
+        sessionActions: SessionActionLabels;
     };
 
     /** The actions of the issue view. */
@@ -283,6 +287,24 @@ export interface UsherLabels {
         /** What a state change shows, by entry kind. `{text}` is the entry's text. */
         events: ConversationEventLabels;
     };
+}
+
+/**
+ * What support did while signed in as the reporter, as the sessions list shows it. `{text}` is the text of the entry.
+ */
+export interface SessionActionLabels {
+    /** Support added details. */
+    detailsAdded: string;
+    /** Support answered a question. */
+    questionAnswered: string;
+    /** Support shared who the reporter is. */
+    identityShared: string;
+    /** Support reopened the issue. */
+    reopened: string;
+    /** Support withdrew the issue. */
+    withdrawn: string;
+    /** Support revoked its own access. */
+    accessRevoked: string;
 }
 
 /**

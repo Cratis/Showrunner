@@ -155,4 +155,6 @@ import { IssueView } from '@cratis/showrunner.usher.react';
 
 It must be rendered inside `UsherProvider`, so that its texts and dialogs work. Without `onBack` it shows no back button.
 
+The access panel lists every session in which support signed in as the reporter, and under each what support did in it, such as the details it added or that it reopened the issue. A grant that reaches its end while the view is open is shown as over at that moment, without waiting for the backend to record that it lapsed. A work item is linked only when its address is an `https` or `http` address.
+
 The dialogs are exported too, for an application that opens them with its own `useDialog`: `ReportIssueDialog`, `ReportErrorDialog` and `MyIssuesDialog`. The report dialogs close with the id of the new issue.

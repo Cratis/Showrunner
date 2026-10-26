@@ -125,7 +125,16 @@ export const defaultUsherLabels: UsherLabels = {
         noSessions: 'No support sessions yet.',
         session: '{name} signed in as you · {start}–{end}',
         sessionRunning: 'now',
-        sessionsHeading: 'Support sessions'
+        sessionsHeading: 'Support sessions',
+        sessionDidNothing: 'Did nothing as you.',
+        sessionActions: {
+            detailsAdded: 'Added details: {text}',
+            questionAnswered: 'Answered a question: {text}',
+            identityShared: 'Shared who you are',
+            reopened: 'Reopened the issue: {text}',
+            withdrawn: 'Withdrew the issue',
+            accessRevoked: 'Revoked its access'
+        }
     },
     actions: {
         reopen: 'Reopen issue',

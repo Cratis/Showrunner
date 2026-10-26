@@ -76,6 +76,7 @@
         "@cratis/arc": "^22.143.0",
         "@cratis/arc.react": "^22.143.0",
         "@cratis/components": "^4.38.0",
+        "@cratis/fundamentals": "^7.27.0",
         "react": "^19.0.0"
     },
     "sideEffects": [

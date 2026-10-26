@@ -23,8 +23,9 @@ builder.AddUsher(usher =>
 | --- | --- | --- |
 | `ApplicationName` | none, required | The name the support desk sees on every report. A desk serves several applications and tells them apart by it. |
 | `DeskStores` | `["Direct"]` | The event stores of the support desks the application talks to. |
+| `PollingInterval` | one minute | How often Usher looks for new tenant namespaces and for grants of access whose end has passed. A grant lapses at most this long after its end. |
 
-The host fails to start when `ApplicationName` is not set. Arc discovers Usher's commands and queries, and Chronicle its events and read models, from the referenced assembly; there is nothing else to register.
+The host fails to start when `ApplicationName` is not set. Arc discovers Usher's commands and queries, and Chronicle its events, read models and reactors, from the referenced assembly; there is nothing else to register. `AddUsher` also adds a hosted service that exchanges events with the desks and lapses grants; see [Exchanging events with a desk](./desk-exchange.md).
 
 Every command and query requires a signed-in user. Usher takes who the reporter is from the signed-in identity, never from the request: the `sub` claim (or the name identifier) is the reporter's subject, the `name` and `email` claims are what support sees when the reporter shares who they are, and the identity provider comes from Arc's identity provider claim.
 
@@ -127,7 +128,7 @@ Access, recorded by the application itself:
 
 | Event | Payload |
 | --- | --- |
-| `AccessGrantLapsed` | `ValidUntil` of the grant that ended, so a late lapse of an earlier grant never ends a later one |
+| `AccessGrantLapsed` | `ValidUntil` of the grant that ended, so a late lapse of an earlier grant never ends a later one. Appended by Usher's background work when the end passes; see [Lapsing grants of access](./desk-exchange.md#lapsing-grants-of-access). |
 | `SupportSignedInAsReporter` | `SessionId`, `Author` |
 | `SupportSessionEnded` | `SessionId` |
 

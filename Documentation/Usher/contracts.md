@@ -93,8 +93,8 @@ The desk publishes these from its outbox. They describe what support did with th
 
 ## Mapping to private events
 
-:::note[In progress]
-The private events are in `Cratis.Showrunner.Usher`; see [Backend](./backend.md#private-events). The publisher and the translator are being built. These tables are the contract they implement.
+:::note
+The private events are in `Cratis.Showrunner.Usher`; see [Backend](./backend.md#private-events). How the publisher and the translator implement these tables is in [Exchanging events with a desk](./desk-exchange.md).
 :::
 
 The publisher adds `TenantId` to every public event and publishes the reporter only after `ReporterSharedIdentity`.
@@ -139,7 +139,7 @@ Nothing in the contracts package routes an observer to the other side. Each side
 1. Subscribe its own store to the other store's outbox. Chronicle forwards the listed event types into `inbox-{other store}` on the subscribing store, in the same namespace. Use the other store's name as the subscription id, and filter the union of the event types its consumers need.
 2. Observe `inbox-{other store}` with observers that name that event sequence. An observer that names no sequence reads the store's own event log and never sees the other side's events.
 
-An application gets this from `Cratis.Showrunner.Usher`: it subscribes to each store in `DeskStores` (`Direct` by default) for the desk-to-application events, and its translator observes `inbox-{desk store}`. A desk does the same for each application store it serves:
+An application gets this from `Cratis.Showrunner.Usher`: it subscribes to each store in `DeskStores` (`Direct` by default) for the desk-to-application events, and its translator observes `inbox-{desk store}`. Chronicle forwards only into namespaces the subscribing store has, so a desk opens its store in each tenant namespace of the application; see [Setting up a desk](./desk-exchange.md#setting-up-a-desk). A desk does the same for each application store it serves:
 
 ```csharp
 await store.Subscriptions.Subscribe(

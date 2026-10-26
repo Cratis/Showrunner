@@ -4,3 +4,5 @@
   href: backend.md
 - name: Contracts
   href: contracts.md
+- name: Exchanging events with a desk
+  href: desk-exchange.md

@@ -12,4 +12,4 @@ Usher is a library, not a service. The application hosts it:
 - `@cratis/showrunner.usher` is the generated TypeScript proxies for Usher's commands and queries.
 - `@cratis/showrunner.usher.react` is the React components that drive them, built on `@cratis/components`.
 
-Usher is in its earliest stage: the contracts, the backend and its generated proxies are in place; exchanging events with a desk and the React components are not built yet. This documentation grows with each slice that lands.
+Usher is in its earliest stage: the contracts, the backend, its generated proxies and the exchange of events with a desk are in place; see [Exchanging events with a desk](./desk-exchange.md). The React components are not built yet. This documentation grows with each slice that lands.

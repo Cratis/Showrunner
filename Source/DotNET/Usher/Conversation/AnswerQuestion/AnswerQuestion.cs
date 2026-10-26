@@ -5,6 +5,7 @@ using Cratis.Chronicle.EventSequences;
 using Cratis.Showrunner.Usher.Contracts.Conversation;
 using Cratis.Showrunner.Usher.Identity;
 using Cratis.Showrunner.Usher.Issues;
+using Cratis.Showrunner.Usher.Reporting;
 
 namespace Cratis.Showrunner.Usher.Conversation.AnswerQuestion;
 
@@ -43,7 +44,9 @@ public class AnswerQuestionValidator : CommandValidator<AnswerQuestion>
         RuleFor(c => c.QuestionId)
             .Must((command, _) => issue?.OpenQuestions.Contains(command.QuestionId) == true)
             .WithMessage("Support has no open question with this id on the issue.");
-        RuleFor(c => (string)c.Answer).NotEmpty().WithMessage("Write an answer.");
+        RuleFor(c => (string)c.Answer)
+            .NotEmpty().WithMessage("Write an answer.")
+            .MaximumLength(ReportLimits.TextLength).WithMessage($"Keep the answer within {ReportLimits.TextLength} characters.");
     }
 }
 

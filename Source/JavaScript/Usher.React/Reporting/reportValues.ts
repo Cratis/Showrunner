@@ -3,7 +3,8 @@
 
 import { SliceLocation as ArcSliceLocation } from '@cratis/arc/reflection';
 import { Guid } from '@cratis/fundamentals';
-import { AccessDuration, ErrorDetails, errorDetailsFromError, IReportError, IReportIssue, SliceLocation } from '@cratis/showrunner.usher';
+import { AccessDuration, ErrorDetails, errorDetailsFromError, IReportError, IReportIssue, SliceLocation, StackFrame } from '@cratis/showrunner.usher';
+import { ReportLimits } from './ReportLimits.js';
 
 /**
  * What every report carries besides what the reporter writes.
@@ -49,7 +50,7 @@ export function reportIssueValues(context: ReportContext): IReportIssue {
         summary: '',
         description: '',
         location: toReportLocation(context.location),
-        correlationIds: context.correlationIds,
+        correlationIds: context.correlationIds.slice(-ReportLimits.correlationIds),
         applicationVersion: context.applicationVersion,
         shareIdentity: context.shareIdentity,
         grantAccess: false,
@@ -67,12 +68,12 @@ export function reportIssueValues(context: ReportContext): IReportIssue {
 export function reportErrorValues(error: ErrorDetails, context: ReportContext): IReportError {
     return {
         issueId: context.issueId,
-        errorMessage: error.message,
-        errorType: error.type,
-        stackFrames: error.stackFrames,
+        errorMessage: error.message.slice(0, ReportLimits.errorMessageLength),
+        errorType: error.type.slice(0, ReportLimits.errorTypeLength),
+        stackFrames: error.stackFrames.slice(0, ReportLimits.stackFrames).map(withinLimits),
         details: '',
         location: toReportLocation(isEmptyLocation(error.location) ? context.location : error.location),
-        correlationIds: mergeCorrelationIds(error.correlationIds, context.correlationIds),
+        correlationIds: mergeCorrelationIds(error.correlationIds, context.correlationIds).slice(0, ReportLimits.correlationIds),
         applicationVersion: context.applicationVersion,
         shareIdentity: context.shareIdentity,
         grantAccess: false,
@@ -133,4 +134,17 @@ export function isErrorDetails(value: unknown): value is ErrorDetails {
  */
 export function isEmptyLocation(location: { module: string; feature: string; slice: string } | undefined): boolean {
     return !location || [location.module, location.feature, location.slice].every(part => !part);
+}
+
+/**
+ * Cuts the texts of a stack frame to what a report carries.
+ * @param frame The {@link StackFrame}.
+ * @returns The frame within the limits.
+ */
+function withinLimits(frame: StackFrame): StackFrame {
+    return {
+        ...frame,
+        method: frame.method.slice(0, ReportLimits.stackFrameTextLength),
+        file: frame.file.slice(0, ReportLimits.stackFrameTextLength)
+    };
 }

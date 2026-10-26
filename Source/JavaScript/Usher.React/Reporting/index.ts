@@ -8,6 +8,7 @@ export * from './durationOptions.js';
 export * from './formatLocation.js';
 export * from './ReportErrorDialog.js';
 export * from './ReportIssueDialog.js';
+export * from './ReportLimits.js';
 export * from './ReportSent.js';
 export * from './reportValues.js';
 export * from './SentWithReport.js';

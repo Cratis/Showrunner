@@ -5,6 +5,7 @@ using Cratis.Chronicle.EventSequences;
 using Cratis.Showrunner.Usher.Contracts.Lifecycle;
 using Cratis.Showrunner.Usher.Identity;
 using Cratis.Showrunner.Usher.Issues;
+using Cratis.Showrunner.Usher.Reporting;
 
 namespace Cratis.Showrunner.Usher.Lifecycle.ReopenIssue;
 
@@ -43,7 +44,9 @@ public class ReopenIssueValidator : CommandValidator<ReopenIssue>
             .MustNotBeWithdrawn(issue)
             .Must(_ => issue is null or { State: IssueState.Resolved or IssueState.Withdrawn })
             .WithMessage("Only a resolved issue can be reopened.");
-        RuleFor(c => (string)c.Reason).NotEmpty().WithMessage("Tell support why you reopen the issue.");
+        RuleFor(c => (string)c.Reason)
+            .NotEmpty().WithMessage("Tell support why you reopen the issue.")
+            .MaximumLength(ReportLimits.ReopenReasonLength).WithMessage($"Keep the reason within {ReportLimits.ReopenReasonLength} characters.");
     }
 }
 

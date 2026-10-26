@@ -48,7 +48,20 @@ The caller chooses the `IssueId` of a new issue, so a retried report does not op
 
 The commands refuse, with a validation error:
 
-- a report that reuses the id of an existing issue, a summary that is empty or longer than 120 characters, an empty description, and an error without a message;
+- a report that reuses the id of an existing issue, an empty summary, an empty description, and an error without a message;
+- anything over the limits in `ReportLimits`. Everything a reporter sends is stored forever, published and shown to support, so every text and list is bounded:
+
+  | Limit | Applies to |
+  | --- | --- |
+  | `SummaryLength`, 120 characters | `Summary` |
+  | `TextLength`, 4000 characters | `Description`, `Details` (with `AddDetails` and `ReportError`), `Answer` |
+  | `ReopenReasonLength`, 1000 characters | `ReopenReason` |
+  | `ErrorMessageLength`, 2000 characters | `ErrorMessage` |
+  | `ErrorTypeLength`, 500 characters | `ErrorType` |
+  | `StackFrames`, 50 frames; `StackFrameTextLength`, 1000 characters | `StackFrames`, and the method and file of each |
+  | `CorrelationIds`, 20 ids | `CorrelationIds` of `ReportIssue` and `ReportError` |
+
+  The generated proxies check the text limits before sending; the React package cuts what the application gathers itself (stack frames, correlation ids and the error's texts) to the limits, so a long stack trace never makes a report fail;
 - any command on an issue the signed-in user did not report. Someone else's issue is answered exactly like an issue that does not exist, so an issue id reveals nothing;
 - anything after the reporter withdrew the issue. Withdrawing ends support's access, so there is nothing left to revoke;
 - sharing identity twice, empty details and empty answers;

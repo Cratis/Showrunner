@@ -5,6 +5,7 @@ using Cratis.Chronicle.EventSequences;
 using Cratis.Showrunner.Usher.Contracts.Conversation;
 using Cratis.Showrunner.Usher.Identity;
 using Cratis.Showrunner.Usher.Issues;
+using Cratis.Showrunner.Usher.Reporting;
 
 namespace Cratis.Showrunner.Usher.Conversation.AddDetails;
 
@@ -39,7 +40,9 @@ public class AddDetailsValidator : CommandValidator<AddDetails>
     public AddDetailsValidator(Issue? issue, ISignedInReporter reporter)
     {
         RuleFor(c => c.IssueId).MustBeReportedBy(issue, reporter).MustNotBeWithdrawn(issue);
-        RuleFor(c => (string)c.Details).NotEmpty().WithMessage("Tell support what you want to add.");
+        RuleFor(c => (string)c.Details)
+            .NotEmpty().WithMessage("Tell support what you want to add.")
+            .MaximumLength(ReportLimits.TextLength).WithMessage($"Keep what you add within {ReportLimits.TextLength} characters.");
     }
 }
 

@@ -141,9 +141,23 @@ public class ReportErrorValidator : CommandValidator<ReportError>
         RuleFor(c => c.IssueId).Must(_ => issue is null).WithMessage("An issue with this id is already reported.");
         RuleFor(c => c.IssueId).Must(_ => reporter.IsSignedIn).WithMessage("Sign in to report an error.");
         RuleFor(c => c.IssueId).MustBeReportedByTheReporterThemselves(reporter);
-        RuleFor(c => (string)c.ErrorMessage).NotEmpty().WithMessage("The error to report has no message.");
+        RuleFor(c => (string)c.ErrorMessage)
+            .NotEmpty().WithMessage("The error to report has no message.")
+            .MaximumLength(ReportLimits.ErrorMessageLength).WithMessage($"The error message can be at most {ReportLimits.ErrorMessageLength} characters.");
+        RuleFor(c => (string)c.ErrorType)
+            .MaximumLength(ReportLimits.ErrorTypeLength).WithMessage($"The error type can be at most {ReportLimits.ErrorTypeLength} characters.");
+        RuleFor(c => (string)c.Details)
+            .MaximumLength(ReportLimits.TextLength).WithMessage($"Keep what you were doing within {ReportLimits.TextLength} characters.");
+        RuleFor(c => c.StackFrames)
+            .Must(_ => _ is null || _.Count() <= ReportLimits.StackFrames).WithMessage($"A report can carry at most {ReportLimits.StackFrames} stack frames.")
+            .Must(_ => _?.All(frame => frame is null || (Length(frame.Method?.Value) <= ReportLimits.StackFrameTextLength && Length(frame.File?.Value) <= ReportLimits.StackFrameTextLength)) != false)
+            .WithMessage($"A stack frame's method and file can be at most {ReportLimits.StackFrameTextLength} characters.");
+        RuleFor(c => c.CorrelationIds)
+            .Must(_ => _ is null || _.Count() <= ReportLimits.CorrelationIds).WithMessage($"A report can carry at most {ReportLimits.CorrelationIds} correlation ids.");
         RuleFor(c => c.AccessDuration).IsInEnum().WithMessage("Choose how long support may sign in as you.");
     }
+
+    static int Length(string? text) => text?.Length ?? 0;
 }
 
 /// <summary>

@@ -77,11 +77,6 @@ public record ReportIssue(
 public class ReportIssueValidator : CommandValidator<ReportIssue>
 {
     /// <summary>
-    /// The longest summary a reporter can give.
-    /// </summary>
-    public const int MaximumSummaryLength = 120;
-
-    /// <summary>
     /// Initializes a new instance of the <see cref="ReportIssueValidator"/> class.
     /// </summary>
     /// <param name="issue">The issue with the command's id, <see langword="null"/> when it does not exist yet.</param>
@@ -93,8 +88,12 @@ public class ReportIssueValidator : CommandValidator<ReportIssue>
         RuleFor(c => c.IssueId).MustBeReportedByTheReporterThemselves(reporter);
         RuleFor(c => (string)c.Summary)
             .NotEmpty().WithMessage("Summarize the problem.")
-            .MaximumLength(MaximumSummaryLength).WithMessage($"Keep the summary within {MaximumSummaryLength} characters.");
-        RuleFor(c => (string)c.Description).NotEmpty().WithMessage("Describe what happened.");
+            .MaximumLength(ReportLimits.SummaryLength).WithMessage($"Keep the summary within {ReportLimits.SummaryLength} characters.");
+        RuleFor(c => (string)c.Description)
+            .NotEmpty().WithMessage("Describe what happened.")
+            .MaximumLength(ReportLimits.TextLength).WithMessage($"Keep the description within {ReportLimits.TextLength} characters.");
+        RuleFor(c => c.CorrelationIds)
+            .Must(_ => _ is null || _.Count() <= ReportLimits.CorrelationIds).WithMessage($"A report can carry at most {ReportLimits.CorrelationIds} correlation ids.");
         RuleFor(c => c.AccessDuration).IsInEnum().WithMessage("Choose how long support may sign in as you.");
     }
 }

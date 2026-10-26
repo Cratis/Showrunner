@@ -24,6 +24,7 @@ builder.AddUsher(usher =>
 | `ApplicationName` | none, required | The name the support desk sees on every report. A desk serves several applications and tells them apart by it. |
 | `DeskStores` | `["Direct"]` | The event stores of the support desks the application talks to. |
 | `PollingInterval` | one minute | How often Usher looks for new tenant namespaces and for grants of access whose end has passed. A grant lapses at most this long after its end. |
+| `OnBehalf` | unset | How Usher answers AuthProxy's on-behalf sessions, in which support signs in as a reporter. Unset, support cannot. See [Access and support sessions](./access-and-sessions.md#configure-authproxy-and-usher-together). |
 
 The host fails to start when `ApplicationName` is not set. Arc discovers Usher's commands and queries, and Chronicle its events, read models and reactors, from the referenced assembly; there is nothing else to register. `AddUsher` also adds a hosted service that exchanges events with the desks and lapses grants; see [Exchanging events with a desk](./desk-exchange.md).
 
@@ -56,7 +57,7 @@ The commands refuse, with a validation error:
 - withdrawing an issue that is already closed (resolved or won't fix);
 - granting access while a grant is live, and revoking when none is.
 
-A grant is live from when it is given until it is revoked, it lapses, or its end time passes.
+A grant is live from when it is given until it is revoked, it lapses, or its end time passes. How support uses a grant to sign in as the reporter through AuthProxy, and the endpoints Usher maps for it, are in [Access and support sessions](./access-and-sessions.md).
 
 ## Queries
 
@@ -71,7 +72,7 @@ Both queries are observable: the client gets the current result and a new one ev
 
 **`IssueConversation`** has `Id`, `Title`, `State`, `Location`, `ReportedAt`, `IdentityShared`, `OpenQuestion` (the latest unanswered question), `Entries`, `Access`, `KnownIssueTitle`, `WorkItem`, `FixedInVersion` and `ReporterSubject`.
 
-- Each entry has `EntryId`, `Kind`, `Text`, `AuthorKind` (`Reporter`, `Support`, `Agent`, `System`), `AuthorName`, `At` and `QuestionId`. Questions and replies are from support or an agent, with the name the desk lets the reporter see; state changes, links, access requests, lapses and releases are from `System`.
+- Each entry has `EntryId`, `Kind`, `Text`, `AuthorKind` (`Reporter`, `Support`, `Agent`, `System`), `AuthorName`, `At`, `QuestionId`, and `ActedBy` and `Session` for what support did while signed in as the reporter (see [What the reporter sees](./access-and-sessions.md#what-the-reporter-sees)). Questions and replies are from support or an agent, with the name the desk lets the reporter see; state changes, links, access requests, lapses and releases are from `System`.
 - `Access` has `State` (`NotGranted`, `Granted`, `Revoked`, `Lapsed`), `ValidUntil`, the pending `Request` with its reason, and the `Sessions` in which support signed in as the reporter.
 
 A value that is not there is empty or `NotSet`, never null.
@@ -129,8 +130,8 @@ Access, recorded by the application itself:
 | Event | Payload |
 | --- | --- |
 | `AccessGrantLapsed` | `ValidUntil` of the grant that ended, so a late lapse of an earlier grant never ends a later one. Appended by Usher's background work when the end passes; see [Lapsing grants of access](./desk-exchange.md#lapsing-grants-of-access). |
-| `SupportSignedInAsReporter` | `SessionId`, `Author` |
-| `SupportSessionEnded` | `SessionId` |
+| `SupportSignedInAsReporter` | `SessionId` (AuthProxy's opaque session identifier), `Author` |
+| `SupportSessionEnded` | `SessionId`; recorded once per session, see [Recording sessions](./access-and-sessions.md#recording-sessions) |
 
 ### Personal data
 

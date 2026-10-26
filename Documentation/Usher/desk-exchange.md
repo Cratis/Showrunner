@@ -50,7 +50,9 @@ A translator per desk store observes that inbox in every namespace and records e
 
 - It appends the private fact to the event log of the namespace that the event's `TenantId` names, under the same issue id. A desk that serves many tenants can therefore publish from one namespace.
 - The private fact keeps the time the desk recorded the event as its `Occurred`, and the event's correlation id.
-- An event that names no tenant, a tenant namespace the application does not have, or an issue that was never reported in that tenant, is logged as a warning and skipped. It changes nothing, and failing on it would hold up the desk's later events.
+- The `TenantId` is matched to a namespace exactly, case included: `Fjord` and `fjord` are two tenants. If more than one namespace has the exact name, the event is not recorded in either.
+- An event that names no tenant, a tenant namespace the application does not have or can not tell apart, or an issue that was never reported in that tenant, is logged as a warning and skipped. It changes nothing, and failing on it would hold up the desk's later events.
+- A work item's `Url` is recorded only when it is an absolute `https` or `http` address; any other address, such as `javascript:`, is recorded as `NotSet`, so the reporter is never offered it as a link.
 - The forwarder can put the same desk event into the inbox twice. The private fact is appended with an idempotency key derived from the desk event itself (the desk store, the issue, the event type, when the desk recorded it, its correlation id and its content), so every copy records one fact. Two events the desk recorded separately are both recorded, even when their content is the same.
 
 The translator is not replayable: replaying an inbox would only translate events that are already recorded.

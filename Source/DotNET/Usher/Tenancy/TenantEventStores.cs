@@ -31,7 +31,7 @@ public class TenantEventStores(IChronicleClient client, IOptions<ChronicleClient
         var stores = new List<IEventStore> { root };
         foreach (var @namespace in await root.GetNamespaces(cancellationToken))
         {
-            if (string.Equals(@namespace.Value, EventStoreNamespaceName.Default.Value, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(@namespace.Value, EventStoreNamespaceName.Default.Value, StringComparison.Ordinal))
             {
                 continue;
             }
@@ -48,7 +48,8 @@ public class TenantEventStores(IChronicleClient client, IOptions<ChronicleClient
         var name = options.Value.EventStore;
         var root = await client.GetEventStore(name, EventStoreNamespaceName.Default).WaitAsync(cancellationToken);
         var namespaces = await root.GetNamespaces(cancellationToken);
-        var @namespace = namespaces.FirstOrDefault(_ => string.Equals(_.Value, tenant.Value, StringComparison.OrdinalIgnoreCase));
-        return @namespace is null ? null : await client.GetEventStore(name, @namespace).WaitAsync(cancellationToken);
+        return TenantNamespaces.Find(namespaces, tenant).Namespace is { } @namespace
+            ? await client.GetEventStore(name, @namespace).WaitAsync(cancellationToken)
+            : null;
     }
 }

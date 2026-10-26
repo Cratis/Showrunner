@@ -11,6 +11,7 @@ import { formatLocation } from '../../Reporting/formatLocation.js';
 import { BackIcon } from '../../Icons.js';
 import { stateBadgeFor } from '../issueStates.js';
 import { isFixReleased } from '../MyIssuesList.js';
+import { isWebAddress } from '../webAddress.js';
 
 /**
  * Props for {@link IssueHeader}.
@@ -54,7 +55,7 @@ export const IssueHeader = ({ issue, onBack }: IssueHeaderProps) => {
                     {hasWorkItem && (
                         <span>
                             {labels.issue.trackedIn}{' '}
-                            {(workItem.url ?? '').length > 0
+                            {isWebAddress(workItem.url)
                                 ? <a href={workItem.url} target='_blank' rel='noreferrer'>{workItem.reference}</a>
                                 : <strong>{workItem.reference}</strong>}
                             {' · '}

@@ -12,8 +12,8 @@ namespace Cratis.Showrunner.Usher.Tenancy;
 public interface ITenantEventStores
 {
     /// <summary>
-    /// Gets the event store of the namespace a tenant names, when the namespace exists. A tenant never creates a
-    /// namespace here.
+    /// Gets the event store of the namespace a tenant names, when exactly one namespace has its exact name; see
+    /// <see cref="TenantNamespaces"/>. A tenant never creates a namespace here.
     /// </summary>
     /// <param name="tenant">The <see cref="TenantId"/>.</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/>.</param>

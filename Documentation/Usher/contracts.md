@@ -85,7 +85,7 @@ The desk publishes these from its outbox. They describe what support did with th
 | `ReopenReason`, `WontFixReason`, `Resolution` | `Lifecycle` | Text |
 | `KnownIssueId` | `KnownIssues` | `ConceptAs<Guid>` |
 | `KnownIssueTitle` | `KnownIssues` | Text |
-| `WorkItem` | `WorkItems` | `Tracker: Tracker`; `Reference: WorkItemReference`; `Title: WorkItemTitle`; `Url: WorkItemUrl` (`NotSet` when the reporter cannot open it) |
+| `WorkItem` | `WorkItems` | `Tracker: Tracker`; `Reference: WorkItemReference`; `Title: WorkItemTitle`; `Url: WorkItemUrl` (`NotSet` when the reporter cannot open it; only an absolute `https` or `http` address is kept) |
 | `ReleaseVersion` | `WorkItems` | Text, for example `4.12.3` |
 | `ValidUntil` | `Access` | `ConceptAs<DateTimeOffset>`; the fixed end of a grant |
 | `AccessRequestReason` | `Access` | Text |

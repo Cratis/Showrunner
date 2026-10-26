@@ -7,3 +7,4 @@ export * from './issueStates.js';
 export * from './IssueView/index.js';
 export * from './MyIssues/index.js';
 export * from './MyIssuesList.js';
+export * from './webAddress.js';

@@ -49,7 +49,7 @@ public static class PrivateEvents
         ReplySent e => (e.TenantId, new SupportReplied(e.Reply, e.Author)),
         IssueLinkedToKnownIssue e => (e.TenantId, new SupportLinkedIssueToKnownIssue(e.KnownIssueId, e.Title)),
         IssueUnlinkedFromKnownIssue e => (e.TenantId, new SupportUnlinkedIssue(e.KnownIssueId)),
-        IssueLinkedToWorkItem e => (e.TenantId, new SupportLinkedIssueToWorkItem(e.WorkItem)),
+        IssueLinkedToWorkItem e => (e.TenantId, new SupportLinkedIssueToWorkItem(WithWebAddressOnly(e.WorkItem))),
         IssueUnlinkedFromWorkItem e => (e.TenantId, new SupportUnlinkedWorkItem(e.WorkItemReference)),
         WorkStarted e => (e.TenantId, new SupportStartedWork()),
         IssueResolved e => (e.TenantId, new SupportResolvedIssue(e.Resolution)),
@@ -57,4 +57,13 @@ public static class PrivateEvents
         AccessRequested e => (e.TenantId, new SupportRequestedAccess(e.Reason)),
         _ => null
     };
+
+    /// <summary>
+    /// Keeps a work item's address only when it is a web address, so nothing but an <c>https</c> or <c>http</c> link
+    /// ever reaches the reporter; any other address is recorded as <see cref="WorkItemUrl.NotSet"/>.
+    /// </summary>
+    /// <param name="workItem">The <see cref="WorkItem"/> from the desk.</param>
+    /// <returns>The work item to record.</returns>
+    public static WorkItem WithWebAddressOnly(WorkItem workItem) =>
+        workItem.Url.IsWebAddress ? workItem : workItem with { Url = WorkItemUrl.NotSet };
 }

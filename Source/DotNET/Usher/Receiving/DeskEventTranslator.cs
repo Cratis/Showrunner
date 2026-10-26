@@ -9,6 +9,7 @@ using Cratis.Chronicle;
 using Cratis.Chronicle.EventSequences;
 using Cratis.Showrunner.Usher.Reporting.ReportError;
 using Cratis.Showrunner.Usher.Reporting.ReportIssue;
+using Cratis.Showrunner.Usher.Tenancy;
 using Microsoft.Extensions.Logging;
 
 namespace Cratis.Showrunner.Usher.Receiving;
@@ -87,8 +88,14 @@ public class DeskEventTranslator(IChronicleClient client, ILogger<DeskEventTrans
 
         var inbox = await client.GetEventStore(context.EventStore, context.Namespace);
         var namespaces = await inbox.GetNamespaces();
-        var @namespace = namespaces.FirstOrDefault(_ => string.Equals(_.Value, tenantId.Value, StringComparison.OrdinalIgnoreCase));
-        if (@namespace is null)
+        var found = TenantNamespaces.Find(namespaces, tenantId);
+        if (found.Match == TenantNamespaceMatch.Ambiguous)
+        {
+            logger.AmbiguousTenant(eventType, context.EventSourceId, tenantId, deskStore);
+            return;
+        }
+
+        if (found.Namespace is not { } @namespace)
         {
             logger.UnknownTenant(eventType, context.EventSourceId, tenantId, deskStore);
             return;

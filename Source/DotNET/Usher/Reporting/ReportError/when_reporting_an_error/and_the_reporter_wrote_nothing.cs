@@ -27,7 +27,12 @@ public class and_the_reporter_wrote_nothing : an_issue_command<ReportError>
             e.ReporterSubject == Reporters.Subject);
 
     [Fact]
-    async Task should_not_have_a_fingerprint_until_fingerprinting_is_built() =>
-        await _scenario.ShouldHaveAppendedEvent<ReportError, ReporterFlaggedError>(_issueId, e => e.Fingerprint == ErrorFingerprint.NotSet);
+    async Task should_fingerprint_the_error_it_was_sent() =>
+        await _scenario.ShouldHaveAppendedEvent<ReportError, ReporterFlaggedError>(_issueId, e => e.Fingerprint == new ErrorFingerprints().Compute(
+            "1.2.3",
+            IssueEvents.Location,
+            "System.NullReferenceException",
+            "Object reference not set to an instance of an object.",
+            [new StackFrame("Ledger.Invoicing.Send", "SendInvoice.cs", 42)]));
 }
 #endif

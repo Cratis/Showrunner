@@ -5,6 +5,7 @@ using Cratis.Showrunner.Usher;
 using Cratis.Showrunner.Usher.Contracts.Reporting;
 using Cratis.Showrunner.Usher.Identity;
 using Cratis.Showrunner.Usher.Reporting;
+using Cratis.Showrunner.Usher.Reporting.Capture;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -27,11 +28,17 @@ public static class UsherServiceCollectionExtensions
             .Configure(configure)
             .Validate(options => options.ApplicationName != ApplicationName.NotSet, "Usher needs an application name: set UsherOptions.ApplicationName in AddUsher.")
             .Validate(options => options.DeskStores.Any(), "Usher needs at least one desk store: set UsherOptions.DeskStores in AddUsher.")
+            .Validate(options => options.ErrorCapture.Retention > TimeSpan.Zero, "Usher keeps captured errors for a while: set UsherOptions.ErrorCapture.Retention to more than zero.")
+            .Validate(options => options.ErrorCapture.Capacity >= 0, "Usher keeps a number of captured errors: UsherOptions.ErrorCapture.Capacity cannot be negative.")
+            .Validate(options => options.ErrorCapture.MaximumStackFrames >= 0, "Usher keeps a number of stack frames: UsherOptions.ErrorCapture.MaximumStackFrames cannot be negative.")
             .ValidateOnStart();
 
         services.TryAddSingleton(TimeProvider.System);
         services.TryAddTransient<ISignedInReporter, SignedInReporter>();
-        services.TryAddSingleton<IComputeErrorFingerprints, NotYetComputedErrorFingerprints>();
+        services.TryAddSingleton<IComputeErrorFingerprints, ErrorFingerprints>();
+        services.TryAddSingleton<ICapturedErrors, CapturedErrors>();
+        services.TryAddTransient<ICurrentErrorOwner, CurrentErrorOwner>();
+        services.TryAddTransient<CaptureFailedCommands>();
         return services;
     }
 }

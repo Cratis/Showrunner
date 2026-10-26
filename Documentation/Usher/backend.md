@@ -137,4 +137,30 @@ Access, recorded by the application itself:
 
 ### Error fingerprints
 
-`ReporterFlaggedError` carries a `Fingerprint` that lets the desk group reports of the same error. Until fingerprinting is built, every error is recorded with an unset fingerprint, which the desk treats as not grouped. An application can register its own `IComputeErrorFingerprints` before calling `AddUsher`.
+`ReporterFlaggedError` carries a `Fingerprint` that lets the desk group reports of the same error. It is a SHA-256 hash, written as 64 lowercase hexadecimal characters, of:
+
+- the application version;
+- the slice location: module, feature and slice;
+- the error type;
+- the error message, normalized: GUIDs and hexadecimal ids (`0x` numbers, and runs of eight or more hexadecimal characters with a digit in them) become `<id>`, the remaining numbers become `<n>`, and whitespace collapses to single spaces. Quoted values are kept, because they usually name the field or entity the error is about;
+- the top stack frame, when there is one: its method, the file name without its folder or URL, and its line. Without stack frames, the fingerprint is built from the rest.
+
+So `Invoice 3f2504e0-… was not found after 3 attempts` and `Invoice 9b1deb4d-… was not found after 5 attempts` in the same slice and version give the same fingerprint, and the same error in the next version gives another one. The exact input is documented on `ErrorFingerprints`; the algorithm is versioned and never changes in place, because fingerprints are stored forever. An application can register its own `IComputeErrorFingerprints` before calling `AddUsher`.
+
+## Error capture
+
+When a command fails with an exception, Usher captures the error as the backend saw it: the command's slice location, the error type and message, the stack frames from the .NET runtime and the application version. It keeps the error for a short while under the command's correlation id, for the signed-in user in the current tenant. When that user then reports the error with `ReportError` and the failing command's correlation id is among the `CorrelationIds`, the error is recorded as the backend captured it, and its fingerprint is computed from that, instead of from what the client sends. The correlation ids themselves are recorded as sent.
+
+- Only the same user in the same tenant can use a captured error; for anyone else, and when nothing was captured, the report is recorded from what the client sends, as it is without capture. Errors of anonymous requests are not captured.
+- Capturing never changes how a command fails: Usher observes the exception and leaves the result to Arc. If capturing itself fails, it is logged and the command fails with its own exception. A command whose exception another `ICommandExceptionMapper` maps is not captured.
+- Captured errors live in memory in the process that ran the command. A report handled by another instance finds nothing and is recorded from what the client sends.
+- Nothing more reaches the client than Arc already returns for a failing command: the stack frames stay on the server until the user reports the error.
+- Failing queries are not captured: Arc gives an application no hook into the exception of a query. A query error is reported from what the client sends.
+
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `ApplicationVersion` | the informational version of the entry assembly, without build metadata | The version recorded with captured errors. |
+| `ErrorCapture.Enabled` | `true` | Whether failing commands are captured. |
+| `ErrorCapture.Retention` | 15 minutes | How long a captured error is kept for a report to use. |
+| `ErrorCapture.Capacity` | 1000 | How many captured errors are kept at most, across all tenants and users; the oldest go first. |
+| `ErrorCapture.MaximumStackFrames` | 50 | How many stack frames, from the top, are kept. |

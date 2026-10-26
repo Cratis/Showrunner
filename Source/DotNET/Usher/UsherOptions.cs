@@ -3,6 +3,7 @@
 
 using Cratis.Chronicle;
 using Cratis.Showrunner.Usher.Contracts.Reporting;
+using Cratis.Showrunner.Usher.Reporting.Capture;
 
 namespace Cratis.Showrunner.Usher;
 
@@ -22,4 +23,17 @@ public class UsherOptions
     /// <c>Direct</c>.
     /// </summary>
     public IEnumerable<EventStoreName> DeskStores { get; set; } = ["Direct"];
+
+    /// <summary>
+    /// Gets or sets the version of the application, recorded with errors the backend captures. Defaults to
+    /// <see cref="ApplicationVersion.NotSet"/>, which means the informational version of the entry assembly, without
+    /// its build metadata (the part after <c>+</c>).
+    /// </summary>
+    public ApplicationVersion ApplicationVersion { get; set; } = ApplicationVersion.NotSet;
+
+    /// <summary>
+    /// Gets or sets how Usher captures the errors of failing commands, so a report of one can be recorded from what the
+    /// backend saw rather than from what the client sends.
+    /// </summary>
+    public ErrorCaptureOptions ErrorCapture { get; set; } = new();
 }

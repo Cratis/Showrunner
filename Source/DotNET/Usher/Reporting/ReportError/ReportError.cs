@@ -10,6 +10,7 @@ using Cratis.Showrunner.Usher.Conversation.AddDetails;
 using Cratis.Showrunner.Usher.Identity;
 using Cratis.Showrunner.Usher.Identity.ShareIdentity;
 using Cratis.Showrunner.Usher.Issues;
+using Cratis.Showrunner.Usher.Reporting.Capture;
 using Microsoft.Extensions.Options;
 
 namespace Cratis.Showrunner.Usher.Reporting.ReportError;
@@ -18,6 +19,11 @@ namespace Cratis.Showrunner.Usher.Reporting.ReportError;
 /// The reporter reports an error they hit, optionally saying what they were doing. They can let support know who they
 /// are and let support sign in as them for a while; granting access always shares who they are.
 /// </summary>
+/// <remarks>
+/// When the backend captured the error of a failing command for one of <paramref name="CorrelationIds"/>, for the same
+/// reporter in the same tenant, the error is recorded as the backend saw it - location, type, message, stack frames and
+/// application version - and the values the client sent for those are not used.
+/// </remarks>
 /// <param name="IssueId">The id of the new issue, chosen by the caller so a retried report does not open a second issue.</param>
 /// <param name="Location">Where in the application the error happened.</param>
 /// <param name="CorrelationIds">The correlation ids of the failing command or query and those run just before it; may be empty.</param>
@@ -45,8 +51,32 @@ public record ReportError(
     AccessDuration AccessDuration)
 {
     /// <summary>
+    /// Provides the error to record: the one the backend captured for one of the command's correlation ids, for the
+    /// signed-in reporter in the current tenant, or, when it captured none, the error as the command describes it.
+    /// </summary>
+    /// <param name="capturedErrors">The <see cref="ICapturedErrors"/> holding errors the backend captured.</param>
+    /// <param name="owner">The <see cref="ICurrentErrorOwner"/> whose captured errors the command may use.</param>
+    /// <returns>The <see cref="CapturedError"/> to record.</returns>
+    public CapturedError Provide(ICapturedErrors capturedErrors, ICurrentErrorOwner owner)
+    {
+        if (owner.TryGet(out var errorOwner))
+        {
+            foreach (var correlationId in CorrelationIds)
+            {
+                if (capturedErrors.TryGet(errorOwner, correlationId, out var captured))
+                {
+                    return captured;
+                }
+            }
+        }
+
+        return new(Location, ErrorType, ErrorMessage, StackFrames, ApplicationVersion);
+    }
+
+    /// <summary>
     /// Handles the command.
     /// </summary>
+    /// <param name="error">The error to record, from <see cref="Provide"/>.</param>
     /// <param name="reporter">The signed-in reporter.</param>
     /// <param name="options">The <see cref="UsherOptions"/> naming the application.</param>
     /// <param name="fingerprints">The <see cref="IComputeErrorFingerprints"/> computing the error's fingerprint.</param>
@@ -56,20 +86,21 @@ public record ReportError(
     /// and <see cref="ReporterGrantedAccess"/> when present.
     /// </returns>
     public IEnumerable<object> Handle(
+        CapturedError error,
         ISignedInReporter reporter,
         IOptions<UsherOptions> options,
         IComputeErrorFingerprints fingerprints,
         TimeProvider clock)
     {
         yield return new ReporterFlaggedError(
-            Location,
+            error.Location,
             CorrelationIds,
-            StackFrames,
-            ErrorMessage,
-            ErrorType,
-            fingerprints.Compute(ApplicationVersion, Location, ErrorType, ErrorMessage, StackFrames),
+            error.StackFrames,
+            error.ErrorMessage,
+            error.ErrorType,
+            fingerprints.Compute(error.ApplicationVersion, error.Location, error.ErrorType, error.ErrorMessage, error.StackFrames),
             options.Value.ApplicationName,
-            ApplicationVersion,
+            error.ApplicationVersion,
             reporter.Subject);
 
         if (!string.IsNullOrWhiteSpace(Details))
@@ -119,7 +150,7 @@ public class ReportErrorValidator : CommandValidator<ReportError>
 /// <param name="ErrorType">The type of the error.</param>
 /// <param name="Fingerprint">The fingerprint grouping reports of the same error; <see cref="ErrorFingerprint.NotSet"/> when not computed.</param>
 /// <param name="ApplicationName">The application, as configured in <c>AddUsher</c>.</param>
-/// <param name="ApplicationVersion">The version of the application the reporter runs.</param>
+/// <param name="ApplicationVersion">The version of the application the error happened in.</param>
 /// <param name="ReporterSubject">
 /// The reporter's subject at their identity provider. It is how the reporter finds their own issues even when they do
 /// not share who they are; it is a pseudonymous id and never published to the desk.

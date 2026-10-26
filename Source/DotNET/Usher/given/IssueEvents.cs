@@ -53,6 +53,11 @@ public static class IssueEvents
         "Something went wrong.");
 
     /// <summary>
+    /// Who the person at the desk is at their identity provider.
+    /// </summary>
+    public static readonly UserIdentity SupportPerson = new("entra", "support-person");
+
+    /// <summary>
     /// A person at the desk.
     /// </summary>
     public static readonly SupportAuthor Support = new("Grace", SupportAuthorKind.Person);

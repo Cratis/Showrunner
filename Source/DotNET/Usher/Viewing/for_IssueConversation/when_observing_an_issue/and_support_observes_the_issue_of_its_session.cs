@@ -24,7 +24,7 @@ public class and_support_observes_the_issue_of_its_session : a_query<IssueConver
         IssueEvents.Described(Reporters.Identity),
         new ReporterSharedIdentity(Reporters.Reporter),
         new ReporterGrantedAccess(DateTimeOffset.UtcNow.AddHours(1)),
-        new SupportSignedInAsReporter(Reporters.SessionId, IssueEvents.Support));
+        new SupportSignedInAsReporter(Reporters.SessionId, IssueEvents.Support, IssueEvents.SupportPerson));
 
     async Task Because() => _result = await _scenario.Perform(nameof(IssueConversation.ForIssue), new QueryArguments { ["issueId"] = _issueId });
 

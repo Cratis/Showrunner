@@ -20,7 +20,7 @@ public class and_the_grant_is_live : support_sessions
     }
 
     [Fact] void should_start_it() => Start().ShouldEqual(SupportSessionStart.Started);
-    [Fact] void should_record_who_signed_in() => _events[^1].Content.ShouldEqual(new SupportSignedInAsReporter(SessionId, IssueEvents.Support));
+    [Fact] void should_record_who_signed_in() => _events[^1].Content.ShouldEqual(new SupportSignedInAsReporter(SessionId, IssueEvents.Support, Actor));
 
     SupportSessionStart Start()
     {

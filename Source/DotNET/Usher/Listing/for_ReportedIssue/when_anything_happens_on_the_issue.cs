@@ -30,7 +30,7 @@ public class when_anything_happens_on_the_issue : a_read_model<ReportedIssue>
             new ReporterAddedDetails("Every Monday."),
             new SupportRequestedAccess("To see the invoice."),
             new ReporterGrantedAccess(Start.AddHours(1)),
-            new SupportSignedInAsReporter(sessionId, IssueEvents.Support),
+            new SupportSignedInAsReporter(sessionId, IssueEvents.Support, IssueEvents.SupportPerson),
             new SupportSessionEnded(sessionId),
             new ReporterRevokedAccess(),
             new ReporterGrantedAccess(Start.AddHours(2)),

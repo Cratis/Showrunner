@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Showrunner.Usher.Contracts.Conversation;
+using Cratis.Showrunner.Usher.Identity;
 
 namespace Cratis.Showrunner.Usher.Access.Sessions;
 
@@ -31,8 +32,9 @@ public record SupportSessionId(string Value) : ConceptAs<string>(Value)
 /// </summary>
 /// <param name="SessionId">The session.</param>
 /// <param name="Author">Who signed in, as the reporter is shown them.</param>
+/// <param name="Actor">Who signed in, at their identity provider, as AuthProxy's verified assertion names them.</param>
 [EventType]
-public record SupportSignedInAsReporter(SupportSessionId SessionId, SupportAuthor Author);
+public record SupportSignedInAsReporter(SupportSessionId SessionId, SupportAuthor Author, UserIdentity Actor);
 
 /// <summary>
 /// A session in which support signed in as the reporter ended, because support signed out, the grant was revoked or

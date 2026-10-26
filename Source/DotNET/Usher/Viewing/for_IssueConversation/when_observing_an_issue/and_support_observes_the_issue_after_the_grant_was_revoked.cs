@@ -29,7 +29,7 @@ public class and_support_observes_the_issue_after_the_grant_was_revoked : a_quer
         IssueEvents.Described(Reporters.Identity),
         new ReporterSharedIdentity(Reporters.Reporter),
         new ReporterGrantedAccess(DateTimeOffset.UtcNow.AddHours(1)),
-        new SupportSignedInAsReporter(Reporters.SessionId, IssueEvents.Support),
+        new SupportSignedInAsReporter(Reporters.SessionId, IssueEvents.Support, IssueEvents.SupportPerson),
         new ReporterRevokedAccess());
 
     async Task Because() => _result = await _scenario.Perform(nameof(IssueConversation.ForIssue), new QueryArguments { ["issueId"] = _issueId });

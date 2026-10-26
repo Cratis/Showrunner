@@ -18,7 +18,7 @@ public class after_the_session_ended : a_forwarded_request
             IssueEvents.Described(Reporters.Identity),
             new ReporterSharedIdentity(Reporters.Reporter),
             new ReporterGrantedAccess(Now.AddHours(1)),
-            new SupportSignedInAsReporter(Reporters.SessionId, IssueEvents.Support),
+            new SupportSignedInAsReporter(Reporters.SessionId, IssueEvents.Support, IssueEvents.SupportPerson),
             new SupportSessionEnded(Reporters.SessionId));
         await Forwarded();
     }

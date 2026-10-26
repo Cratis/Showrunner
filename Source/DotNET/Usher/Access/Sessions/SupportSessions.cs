@@ -87,7 +87,7 @@ public class SupportSessions(TimeProvider time, ILogger<SupportSessions> logger)
 
             var result = await eventStore.EventLog.AppendOnce(
                 request.IssueId,
-                new SupportSignedInAsReporter(request.SessionId, author),
+                new SupportSignedInAsReporter(request.SessionId, author, request.Actor),
                 KeyFor("started", request.IssueId, request.SessionId),
                 concurrencyScope: new ConcurrencyScope(access.LastSequenceNumber, request.IssueId, EventTypes: eventTypes));
 

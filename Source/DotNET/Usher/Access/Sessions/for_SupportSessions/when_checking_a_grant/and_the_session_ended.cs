@@ -11,7 +11,7 @@ public class and_the_session_ended : a_refusal
     async Task Because()
     {
         await Granted();
-        await Happened(new SupportSignedInAsReporter(SessionId, IssueEvents.Support), new SupportSessionEnded(SessionId));
+        await Happened(new SupportSignedInAsReporter(SessionId, IssueEvents.Support, IssueEvents.SupportPerson), new SupportSessionEnded(SessionId));
         _result = await _sessions.Check(_eventStore, Request);
     }
 

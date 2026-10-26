@@ -178,7 +178,7 @@ public class through_authproxy : Specification
     [Fact] void should_acknowledge_the_start() => ((int)_startedStatus).ShouldBeInRange(200, 299);
     [Fact] void should_refuse_a_start_without_a_live_grant() => _startedWithoutGrantStatus.ShouldEqual(HttpStatusCode.Forbidden);
     [Fact] void should_not_record_a_session_without_a_live_grant() => _eventsOnAnotherIssue.ShouldNotContain(_ => _.Content is SupportSignedInAsReporter);
-    [Fact] void should_record_who_signed_in() => ((SupportSignedInAsReporter)_signedIn.Content).ShouldEqual(new SupportSignedInAsReporter("session-one", new(_actor.UserDetails, SupportAuthorKind.Person)));
+    [Fact] void should_record_who_signed_in() => ((SupportSignedInAsReporter)_signedIn.Content).ShouldEqual(new SupportSignedInAsReporter("session-one", new(_actor.UserDetails, SupportAuthorKind.Person), new(_actor.IdentityProvider, _actor.UserId)));
     [Fact] void should_record_the_start_as_caused_by_the_actor() => _signedIn.Context.CausedBy.Subject.ShouldEqual(_actor.UserId);
     [Fact] void should_record_the_start_on_behalf_of_the_reporter() => _signedIn.Context.CausedBy.OnBehalfOf!.Subject.ShouldEqual(_reporterSubject.Value);
     [Fact] void should_execute_the_command_as_the_reporter() => _addedDetails.GetProperty("isSuccess").GetBoolean().ShouldBeTrue();

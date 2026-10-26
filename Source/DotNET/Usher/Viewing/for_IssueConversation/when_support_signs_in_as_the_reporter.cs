@@ -20,19 +20,19 @@ public class when_support_signs_in_as_the_reporter : a_read_model<IssueConversat
         await Happened(
             IssueEvents.Described(Reporters.Identity),
             new ReporterGrantedAccess(Start.AddDays(1)),
-            new SupportSignedInAsReporter(_ended, IssueEvents.Support),
-            new SupportSignedInAsReporter(_ended, IssueEvents.Support),
+            new SupportSignedInAsReporter(_ended, IssueEvents.Support, IssueEvents.SupportPerson),
+            new SupportSignedInAsReporter(_ended, IssueEvents.Support, IssueEvents.SupportPerson),
             new SupportSessionEnded(_ended),
             new SupportSessionEnded(_ended),
-            new SupportSignedInAsReporter(_running, IssueEvents.Agent));
+            new SupportSignedInAsReporter(_running, IssueEvents.Agent, new("entra", "support-agent")));
         _issue = _scenario.Instance!;
     }
 
     [Fact]
     void should_have_each_session_once() => _issue.Access.Sessions.ShouldEqual(
     [
-        new SupportSession(_ended, IssueEvents.Support, At(2), true, At(4)),
-        new SupportSession(_running, IssueEvents.Agent, At(6), false, Unset.Time)
+        new SupportSession(_ended, IssueEvents.Support, At(2), true, At(4), SupportActorKey.For("support-person")),
+        new SupportSession(_running, IssueEvents.Agent, At(6), false, Unset.Time, SupportActorKey.For("support-agent"))
     ]);
 
     [Fact]

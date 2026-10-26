@@ -126,7 +126,7 @@ AuthProxy forwards this principal as the user on every request of the session, s
 
 ## Recording sessions
 
-`SupportSignedInAsReporter(SessionId, Author)` is recorded when AuthProxy announces a session, only after the same checks as the grant check, and guarded by a concurrency scope on the issue's access events: a grant revoked between the check and the append refuses the start. The session identifier is AuthProxy's opaque `sessionId`. `Author` is the actor's `userDetails` and whether they are a `Person` or an `Agent`: an actor from one of `OnBehalf:AgentIdentityProviders` is an agent, everybody else a person.
+`SupportSignedInAsReporter(SessionId, Author, Actor)` is recorded when AuthProxy announces a session, only after the same checks as the grant check, and guarded by a concurrency scope on the issue's access events: a grant revoked between the check and the append refuses the start. The session identifier is AuthProxy's opaque `sessionId`. `Author` is the actor's `userDetails` and whether they are a `Person` or an `Agent`: an actor from one of `OnBehalf:AgentIdentityProviders` is an agent, everybody else a person. `Actor` is who signed in at their identity provider, the `act` subject and `idp` of AuthProxy's assertion.
 
 `SupportSessionEnded(SessionId)` is recorded once per session, whatever reports the end:
 
@@ -157,10 +157,10 @@ The `IssueConversation` query shows the reporter, in `Access.Sessions`, every se
 | `ActedBy` | The support person or agent who did it while signed in as the reporter. Empty when the reporter, the desk or Usher did it. |
 | `Session` | The session it was done in, when it was done on this issue in an open session of that actor. |
 
-Usher attributes an entry from the identity that caused the event: when it acts on behalf of somebody, the actor's user name (Arc takes it from the `userDetails` AuthProxy forwards, the same name the session was recorded with) is `ActedBy`, and the actor's most recently started open session on the issue is `Session`. Events record who caused them, not the session, so:
+Usher attributes an entry from the identity that caused the event: when it acts on behalf of somebody, the actor's user name (Arc takes it from the `userDetails` AuthProxy forwards) is `ActedBy`, and the open session on the issue of the actor with the same subject is `Session`. The session is matched by subject, not by name, because two people can share a display name; the causation names no identity provider, so the subject is all both sides have. The read model holds a one-way hash of the subject (`ActorKey`), not the subject itself. Events record who caused them, not the session, so:
 
 - an action on another of the reporter's issues names who acted but no session on that issue;
-- when one actor holds two sessions on the same issue at once, the most recent is credited;
+- when two open sessions on the same issue have actors with the same subject, no session is credited;
 - an action that lands after the session's end was recorded names who acted but no session.
 
 ## Security notes

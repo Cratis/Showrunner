@@ -236,7 +236,31 @@ public record AccessRequest(bool Pending, AccessRequestReason Reason)
 /// <param name="StartedAt">When they signed in.</param>
 /// <param name="Ended">Whether the session ended.</param>
 /// <param name="EndedAt">When it ended; <see cref="Unset.Time"/> while it runs.</param>
-public record SupportSession(SupportSessionId SessionId, SupportAuthor Author, DateTimeOffset StartedAt, bool Ended, DateTimeOffset EndedAt);
+/// <param name="ActorKey">
+/// What tells the actor of the session apart in the causation of what they do: a one-way hash of their subject, so the
+/// reporter is not shown the support person's id at their identity provider.
+/// </param>
+public record SupportSession(SupportSessionId SessionId, SupportAuthor Author, DateTimeOffset StartedAt, bool Ended, DateTimeOffset EndedAt, SupportActorKey ActorKey);
+
+/// <summary>
+/// Tells a support person or agent apart in the causation of what they do in a session: a one-way hash of their subject.
+/// </summary>
+/// <param name="Value">The underlying value.</param>
+public record SupportActorKey(string Value) : ConceptAs<string>(Value)
+{
+    /// <summary>
+    /// Represents no actor.
+    /// </summary>
+    public static readonly SupportActorKey NotSet = new(string.Empty);
+
+    /// <summary>
+    /// Gets the key of an actor's subject.
+    /// </summary>
+    /// <param name="subject">The subject of the actor at their identity provider.</param>
+    /// <returns>The <see cref="SupportActorKey"/>; <see cref="NotSet"/> for no subject.</returns>
+    public static SupportActorKey For(string subject) =>
+        string.IsNullOrEmpty(subject) ? NotSet : new(Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(subject))));
+}
 
 /// <summary>
 /// Support's access to sign in as the reporter on an issue.
@@ -353,7 +377,7 @@ public record IssueConversation(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static IssueConversation? Reduce(ReporterSharedIdentity @event, IssueConversation? current, EventContext context) =>
-        IssueConversationTransitions.Add(current, IssueConversationTransitions.ByReporter(context, ConversationEntryKind.IdentityShared), issue => issue with { IdentityShared = true });
+        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.ByReporter(context, ConversationEntryKind.IdentityShared), issue => issue with { IdentityShared = true });
 
     /// <summary>
     /// Adds the details the reporter added.
@@ -363,7 +387,7 @@ public record IssueConversation(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static IssueConversation? Reduce(ReporterAddedDetails @event, IssueConversation? current, EventContext context) =>
-        IssueConversationTransitions.Add(current, IssueConversationTransitions.ByReporter(context, ConversationEntryKind.DetailsAdded, (string)@event.Details));
+        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.ByReporter(context, ConversationEntryKind.DetailsAdded, (string)@event.Details));
 
     /// <summary>
     /// Adds the reporter's answer and moves the open question to the next unanswered one.
@@ -373,7 +397,7 @@ public record IssueConversation(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static IssueConversation? Reduce(ReporterAnsweredQuestion @event, IssueConversation? current, EventContext context) =>
-        IssueConversationTransitions.Add(current, IssueConversationTransitions.ByReporter(context, ConversationEntryKind.QuestionAnswered, (string)@event.Answer) with { QuestionId = @event.QuestionId });
+        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.ByReporter(context, ConversationEntryKind.QuestionAnswered, (string)@event.Answer) with { QuestionId = @event.QuestionId });
 
     /// <summary>
     /// Returns the issue to reported and clears the release that did not fix it.
@@ -383,7 +407,7 @@ public record IssueConversation(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static IssueConversation? Reduce(ReporterReopenedIssue @event, IssueConversation? current, EventContext context) =>
-        IssueConversationTransitions.Add(current, IssueConversationTransitions.ByReporter(context, ConversationEntryKind.Reopened, (string)@event.Reason), issue => IssueConversationTransitions.Move(issue, IssueState.Reported) with { FixedInVersion = ReleaseVersion.NotSet });
+        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.ByReporter(context, ConversationEntryKind.Reopened, (string)@event.Reason), issue => IssueConversationTransitions.Move(issue, IssueState.Reported) with { FixedInVersion = ReleaseVersion.NotSet });
 
     /// <summary>
     /// Withdraws the issue.
@@ -393,7 +417,7 @@ public record IssueConversation(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static IssueConversation? Reduce(ReporterWithdrewIssue @event, IssueConversation? current, EventContext context) =>
-        IssueConversationTransitions.Add(current, IssueConversationTransitions.ByReporter(context, ConversationEntryKind.Withdrawn), issue => IssueConversationTransitions.Move(issue, IssueState.Withdrawn) with
+        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.ByReporter(context, ConversationEntryKind.Withdrawn), issue => IssueConversationTransitions.Move(issue, IssueState.Withdrawn) with
         {
             Access = issue.Access.State == AccessState.Granted ? issue.Access with { State = AccessState.EndedByWithdrawal } : issue.Access
         });
@@ -406,7 +430,7 @@ public record IssueConversation(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static IssueConversation? Reduce(ReporterGrantedAccess @event, IssueConversation? current, EventContext context) =>
-        IssueConversationTransitions.Add(current, IssueConversationTransitions.ByReporter(context, ConversationEntryKind.AccessGranted), issue => issue with
+        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.ByReporter(context, ConversationEntryKind.AccessGranted), issue => issue with
         {
             Access = issue.Access with { State = AccessState.Granted, ValidUntil = @event.ValidUntil, Request = AccessRequest.None }
         });
@@ -419,7 +443,7 @@ public record IssueConversation(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static IssueConversation? Reduce(ReporterRevokedAccess @event, IssueConversation? current, EventContext context) =>
-        IssueConversationTransitions.Add(current, IssueConversationTransitions.ByReporter(context, ConversationEntryKind.AccessRevoked), issue => issue with
+        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.ByReporter(context, ConversationEntryKind.AccessRevoked), issue => issue with
         {
             Access = issue.Access with { State = AccessState.Revoked }
         });
@@ -434,7 +458,7 @@ public record IssueConversation(
     public static IssueConversation? Reduce(AccessGrantLapsed @event, IssueConversation? current, EventContext context) =>
         current is null || current.Access.State != AccessState.Granted || current.Access.ValidUntil != @event.ValidUntil
             ? current
-            : IssueConversationTransitions.Add(current, IssueConversationTransitions.BySystem(context, ConversationEntryKind.AccessLapsed), issue => issue with
+            : IssueConversationTransitions.Add(current, context, IssueConversationTransitions.BySystem(context, ConversationEntryKind.AccessLapsed), issue => issue with
             {
                 Access = issue.Access with { State = AccessState.Lapsed }
             });
@@ -447,7 +471,7 @@ public record IssueConversation(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static IssueConversation? Reduce(SupportTriagedIssue @event, IssueConversation? current, EventContext context) =>
-        IssueConversationTransitions.Add(current, IssueConversationTransitions.BySystem(context, ConversationEntryKind.Triaged), issue => IssueConversationTransitions.Move(issue, IssueState.Triaged));
+        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.BySystem(context, ConversationEntryKind.Triaged), issue => IssueConversationTransitions.Move(issue, IssueState.Triaged));
 
     /// <summary>
     /// Records that the desk accepted the issue.
@@ -457,7 +481,7 @@ public record IssueConversation(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static IssueConversation? Reduce(SupportAcceptedIssue @event, IssueConversation? current, EventContext context) =>
-        IssueConversationTransitions.Add(current, IssueConversationTransitions.BySystem(context, ConversationEntryKind.Accepted), issue => IssueConversationTransitions.Move(issue, IssueState.Accepted));
+        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.BySystem(context, ConversationEntryKind.Accepted), issue => IssueConversationTransitions.Move(issue, IssueState.Accepted));
 
     /// <summary>
     /// Records that the desk will not fix the issue.
@@ -467,7 +491,7 @@ public record IssueConversation(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static IssueConversation? Reduce(SupportDeclinedToFix @event, IssueConversation? current, EventContext context) =>
-        IssueConversationTransitions.Add(current, IssueConversationTransitions.BySystem(context, ConversationEntryKind.DeclinedToFix, (string)@event.Reason), issue => IssueConversationTransitions.Move(issue, IssueState.WontFix));
+        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.BySystem(context, ConversationEntryKind.DeclinedToFix, (string)@event.Reason), issue => IssueConversationTransitions.Move(issue, IssueState.WontFix));
 
     /// <summary>
     /// Adds the question support asked.
@@ -479,7 +503,7 @@ public record IssueConversation(
     public static IssueConversation? Reduce(SupportAskedQuestion @event, IssueConversation? current, EventContext context) =>
         current?.Entries.Any(entry => entry.Kind == ConversationEntryKind.QuestionAsked && entry.QuestionId == @event.QuestionId) != false
             ? current
-            : IssueConversationTransitions.Add(current, IssueConversationTransitions.BySupport(context, ConversationEntryKind.QuestionAsked, (string)@event.Question, @event.Author) with { QuestionId = @event.QuestionId });
+            : IssueConversationTransitions.Add(current, context, IssueConversationTransitions.BySupport(context, ConversationEntryKind.QuestionAsked, (string)@event.Question, @event.Author) with { QuestionId = @event.QuestionId });
 
     /// <summary>
     /// Adds the reply support sent.
@@ -489,7 +513,7 @@ public record IssueConversation(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static IssueConversation? Reduce(SupportReplied @event, IssueConversation? current, EventContext context) =>
-        IssueConversationTransitions.Add(current, IssueConversationTransitions.BySupport(context, ConversationEntryKind.Replied, (string)@event.Reply, @event.Author));
+        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.BySupport(context, ConversationEntryKind.Replied, (string)@event.Reply, @event.Author));
 
     /// <summary>
     /// Links the issue to a known issue.
@@ -499,7 +523,7 @@ public record IssueConversation(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static IssueConversation? Reduce(SupportLinkedIssueToKnownIssue @event, IssueConversation? current, EventContext context) =>
-        IssueConversationTransitions.Add(current, IssueConversationTransitions.BySystem(context, ConversationEntryKind.LinkedToKnownIssue, (string)@event.Title), issue => issue with { KnownIssueTitle = @event.Title });
+        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.BySystem(context, ConversationEntryKind.LinkedToKnownIssue, (string)@event.Title), issue => issue with { KnownIssueTitle = @event.Title });
 
     /// <summary>
     /// Unlinks the issue from its known issue.
@@ -509,7 +533,7 @@ public record IssueConversation(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static IssueConversation? Reduce(SupportUnlinkedIssue @event, IssueConversation? current, EventContext context) =>
-        IssueConversationTransitions.Add(current, IssueConversationTransitions.BySystem(context, ConversationEntryKind.UnlinkedFromKnownIssue), issue => issue with { KnownIssueTitle = KnownIssueTitle.NotSet });
+        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.BySystem(context, ConversationEntryKind.UnlinkedFromKnownIssue), issue => issue with { KnownIssueTitle = KnownIssueTitle.NotSet });
 
     /// <summary>
     /// Links the issue to a work item.
@@ -519,7 +543,7 @@ public record IssueConversation(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static IssueConversation? Reduce(SupportLinkedIssueToWorkItem @event, IssueConversation? current, EventContext context) =>
-        IssueConversationTransitions.Add(current, IssueConversationTransitions.BySystem(context, ConversationEntryKind.LinkedToWorkItem, (string)@event.WorkItem.Title), issue => issue with { WorkItem = @event.WorkItem });
+        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.BySystem(context, ConversationEntryKind.LinkedToWorkItem, (string)@event.WorkItem.Title), issue => issue with { WorkItem = @event.WorkItem });
 
     /// <summary>
     /// Unlinks the issue from the work item, when it is the one it is linked to.
@@ -529,7 +553,7 @@ public record IssueConversation(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static IssueConversation? Reduce(SupportUnlinkedWorkItem @event, IssueConversation? current, EventContext context) =>
-        IssueConversationTransitions.Add(current, IssueConversationTransitions.BySystem(context, ConversationEntryKind.UnlinkedFromWorkItem, (string)@event.WorkItemReference), issue =>
+        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.BySystem(context, ConversationEntryKind.UnlinkedFromWorkItem, (string)@event.WorkItemReference), issue =>
             issue.WorkItem.Reference == @event.WorkItemReference ? issue with { WorkItem = Unset.WorkItem } : issue);
 
     /// <summary>
@@ -540,7 +564,7 @@ public record IssueConversation(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static IssueConversation? Reduce(SupportStartedWork @event, IssueConversation? current, EventContext context) =>
-        IssueConversationTransitions.Add(current, IssueConversationTransitions.BySystem(context, ConversationEntryKind.WorkStarted), issue => IssueConversationTransitions.Move(issue, IssueState.InProgress));
+        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.BySystem(context, ConversationEntryKind.WorkStarted), issue => IssueConversationTransitions.Move(issue, IssueState.InProgress));
 
     /// <summary>
     /// Records that the desk resolved the issue.
@@ -550,7 +574,7 @@ public record IssueConversation(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static IssueConversation? Reduce(SupportResolvedIssue @event, IssueConversation? current, EventContext context) =>
-        IssueConversationTransitions.Add(current, IssueConversationTransitions.BySystem(context, ConversationEntryKind.Resolved, (string)@event.Resolution), issue => IssueConversationTransitions.Move(issue, IssueState.Resolved));
+        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.BySystem(context, ConversationEntryKind.Resolved, (string)@event.Resolution), issue => IssueConversationTransitions.Move(issue, IssueState.Resolved));
 
     /// <summary>
     /// Records support's request for access.
@@ -560,7 +584,7 @@ public record IssueConversation(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static IssueConversation? Reduce(SupportRequestedAccess @event, IssueConversation? current, EventContext context) =>
-        IssueConversationTransitions.Add(current, IssueConversationTransitions.BySystem(context, ConversationEntryKind.AccessRequested, (string)@event.Reason), issue => issue with
+        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.BySystem(context, ConversationEntryKind.AccessRequested, (string)@event.Reason), issue => issue with
         {
             Access = issue.Access with { Request = new(true, @event.Reason) }
         });
@@ -575,11 +599,11 @@ public record IssueConversation(
     public static IssueConversation? Reduce(SupportSignedInAsReporter @event, IssueConversation? current, EventContext context) =>
         current?.Access.Sessions.Any(session => session.SessionId == @event.SessionId) != false
             ? current
-            : IssueConversationTransitions.Add(current, IssueConversationTransitions.BySupport(context, ConversationEntryKind.SupportSignedIn, ConversationEntryText.NotSet, @event.Author) with { Session = @event.SessionId }, issue => issue with
+            : IssueConversationTransitions.Add(current, context, IssueConversationTransitions.BySupport(context, ConversationEntryKind.SupportSignedIn, ConversationEntryText.NotSet, @event.Author) with { Session = @event.SessionId }, issue => issue with
             {
                 Access = issue.Access with
                 {
-                    Sessions = [.. issue.Access.Sessions, new SupportSession(@event.SessionId, @event.Author, context.Occurred, false, Unset.Time)]
+                    Sessions = [.. issue.Access.Sessions, new SupportSession(@event.SessionId, @event.Author, context.Occurred, false, Unset.Time, SupportActorKey.For(@event.Actor.Subject))]
                 }
             });
 
@@ -599,7 +623,7 @@ public record IssueConversation(
         }
 
         var entry = IssueConversationTransitions.BySupport(context, ConversationEntryKind.SupportSessionEnded, ConversationEntryText.NotSet, session.Author) with { Session = @event.SessionId };
-        return IssueConversationTransitions.Add(current, entry, issue => issue with
+        return IssueConversationTransitions.Add(current, context, entry, issue => issue with
         {
             Access = issue.Access with
             {
@@ -616,7 +640,7 @@ public record IssueConversation(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static IssueConversation? Reduce(ReleaseShippedFix @event, IssueConversation? current, EventContext context) =>
-        IssueConversationTransitions.Add(current, IssueConversationTransitions.BySystem(context, ConversationEntryKind.FixReleased, (string)@event.ReleaseVersion), issue => issue with { FixedInVersion = @event.ReleaseVersion });
+        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.BySystem(context, ConversationEntryKind.FixReleased, (string)@event.ReleaseVersion), issue => issue with { FixedInVersion = @event.ReleaseVersion });
 }
 
 /// <summary>
@@ -661,10 +685,11 @@ internal static class IssueConversationTransitions
     /// does not exist stays absent.
     /// </summary>
     /// <param name="current">The current state.</param>
+    /// <param name="context">The context of the event the entry records.</param>
     /// <param name="entry">The entry to add.</param>
     /// <param name="change">The change, if the event changes more than the entries.</param>
     /// <returns>The next state.</returns>
-    internal static IssueConversation? Add(IssueConversation? current, ConversationEntry entry, Func<IssueConversation, IssueConversation>? change = null)
+    internal static IssueConversation? Add(IssueConversation? current, EventContext context, ConversationEntry entry, Func<IssueConversation, IssueConversation>? change = null)
     {
         if (current is null)
         {
@@ -672,7 +697,7 @@ internal static class IssueConversationTransitions
         }
 
         var changed = (change ?? (issue => issue))(current);
-        var next = changed with { Entries = [.. current.Entries, InSession(changed, entry)] };
+        var next = changed with { Entries = [.. current.Entries, InSession(changed, entry, ActorOf(context))] };
         return next with { OpenQuestion = OpenQuestionOf(next.Entries) };
     }
 
@@ -740,23 +765,34 @@ internal static class IssueConversationTransitions
     /// </summary>
     /// <param name="issue">The issue, with the sessions as they are when the entry is added.</param>
     /// <param name="entry">The entry.</param>
+    /// <param name="actor">The key of who caused the event on the reporter's behalf.</param>
     /// <returns>The entry, with its session when it was done in one.</returns>
     /// <remarks>
     /// An event records who caused it, not the session; Arc records the actor first and the reporter second for
-    /// everything done on the reporter's behalf. The actor is matched to a session by the name AuthProxy gives both,
-    /// the actor's <c>userDetails</c>. When the actor has no open session on the issue, for instance when they act on
-    /// another issue of the reporter's, the entry names who acted but no session.
+    /// everything done on the reporter's behalf. The actor is matched to a session by their subject, the one thing both
+    /// AuthProxy's assertion and the causation name: a display name can be the same for two people, and the causation
+    /// names no identity provider. When the actor has no open session on the issue, for instance when they act on
+    /// another issue of the reporter's, or two open sessions have actors with the same subject, the entry names who
+    /// acted but no session.
     /// </remarks>
-    static ConversationEntry InSession(IssueConversation issue, ConversationEntry entry)
+    static ConversationEntry InSession(IssueConversation issue, ConversationEntry entry, SupportActorKey actor)
     {
-        if (entry.ActedBy == SupportAuthorName.NotSet || entry.Session != SupportSessionId.NotSet)
+        if (actor == SupportActorKey.NotSet || entry.Session != SupportSessionId.NotSet)
         {
             return entry;
         }
 
-        var session = issue.Access.Sessions.LastOrDefault(_ => !_.Ended && _.Author.Name == entry.ActedBy);
-        return session is null ? entry : entry with { Session = session.SessionId };
+        var sessions = issue.Access.Sessions.Where(_ => !_.Ended && _.ActorKey == actor).Take(2).ToArray();
+        return sessions.Length == 1 ? entry with { Session = sessions[0].SessionId } : entry;
     }
+
+    /// <summary>
+    /// Gets the key of who caused an event on the reporter's behalf.
+    /// </summary>
+    /// <param name="context">The context of the event.</param>
+    /// <returns>The <see cref="SupportActorKey"/>; <see cref="SupportActorKey.NotSet"/> when nobody acted on behalf of anybody.</returns>
+    static SupportActorKey ActorOf(EventContext context) =>
+        context.CausedBy is { OnBehalfOf: not null } causedBy ? SupportActorKey.For(causedBy.Subject) : SupportActorKey.NotSet;
 
     /// <summary>
     /// Gets who caused an event on the reporter's behalf: the head of an identity chain that acts on behalf of somebody.

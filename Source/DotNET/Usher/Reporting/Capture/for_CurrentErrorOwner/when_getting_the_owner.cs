@@ -23,8 +23,8 @@ public class when_getting_the_owner : Specification
 
     void Because()
     {
-        _signedIn = new CurrentErrorOwner(new SignedInReporter(new FixedPrincipal(Reporters.SignedInAs(Reporters.Subject))), _tenants).TryGet(out _owner);
-        _anonymous = new CurrentErrorOwner(new SignedInReporter(new FixedPrincipal(Reporters.Anonymous())), _tenants).TryGet(out _);
+        _signedIn = new CurrentErrorOwner(new SignedInReporter(new FixedPrincipal(Reporters.SignedInAs(Reporters.Subject)), Substitute.For<Access.OnBehalf.IOnBehalfForward>()), _tenants).TryGet(out _owner);
+        _anonymous = new CurrentErrorOwner(new SignedInReporter(new FixedPrincipal(Reporters.Anonymous()), Substitute.For<Access.OnBehalf.IOnBehalfForward>()), _tenants).TryGet(out _);
     }
 
     [Fact] void should_have_an_owner_when_signed_in() => _signedIn.ShouldBeTrue();

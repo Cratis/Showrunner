@@ -136,6 +136,7 @@ public class ReportErrorValidator : CommandValidator<ReportError>
         RuleFor(c => c.IssueId).Must(_ => reporter.IsSignedIn).WithMessage("Sign in to report an error.");
         RuleFor(c => (string)c.ErrorMessage).NotEmpty().WithMessage("The error to report has no message.");
         RuleFor(c => c.AccessDuration).IsInEnum().WithMessage("Choose how long support may sign in as you.");
+        RuleFor(c => c.GrantAccess).MustBeTheReporterThemselves(reporter).When(c => c.GrantAccess);
     }
 }
 

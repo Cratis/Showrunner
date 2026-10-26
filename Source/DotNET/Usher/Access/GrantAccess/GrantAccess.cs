@@ -52,6 +52,7 @@ public class GrantAccessValidator : CommandValidator<GrantAccess>
         RuleFor(c => c.IssueId)
             .MustBeReportedBy(issue, reporter)
             .MustNotBeWithdrawn(issue)
+            .MustBeTheReporterThemselves(reporter)
             .Must(_ => issue?.HasLiveGrant(clock.GetUtcNow()) != true)
             .WithMessage("Support already has access to this issue. Revoke it before granting it again.");
         RuleFor(c => c.AccessDuration).IsInEnum().WithMessage("Choose how long support may sign in as you.");

@@ -17,7 +17,7 @@ namespace Cratis.Showrunner.Usher.Tenancy;
 /// </remarks>
 /// <param name="client">The Chronicle client.</param>
 /// <param name="options">The Chronicle client options, which name the application's event store.</param>
-public class TenantEventStores(IChronicleClient client, IOptions<ChronicleClientOptions> options)
+public class TenantEventStores(IChronicleClient client, IOptions<ChronicleClientOptions> options) : ITenantEventStores
 {
     /// <summary>
     /// Opens the event store in the default namespace and every other namespace it has.
@@ -40,5 +40,15 @@ public class TenantEventStores(IChronicleClient client, IOptions<ChronicleClient
         }
 
         return stores;
+    }
+
+    /// <inheritdoc/>
+    public async Task<IEventStore?> For(TenantId tenant, CancellationToken cancellationToken = default)
+    {
+        var name = options.Value.EventStore;
+        var root = await client.GetEventStore(name, EventStoreNamespaceName.Default).WaitAsync(cancellationToken);
+        var namespaces = await root.GetNamespaces(cancellationToken);
+        var @namespace = namespaces.FirstOrDefault(_ => string.Equals(_.Value, tenant.Value, StringComparison.OrdinalIgnoreCase));
+        return @namespace is null ? null : await client.GetEventStore(name, @namespace).WaitAsync(cancellationToken);
     }
 }

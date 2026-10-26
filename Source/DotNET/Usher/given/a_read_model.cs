@@ -4,6 +4,7 @@
 #if DEBUG
 using Cratis.Chronicle;
 using Cratis.Execution;
+using ChronicleIdentity = Cratis.Chronicle.Identities.Identity;
 
 namespace Cratis.Showrunner.Usher.given;
 
@@ -51,7 +52,11 @@ public class a_read_model<TReadModel> : Specification
     /// <param name="issueId">The issue.</param>
     /// <param name="events">The events, in the order they happen.</param>
     /// <returns>An awaitable task.</returns>
-    protected Task HappenedOn(IssueId issueId, params object[] events) =>
+    protected Task HappenedOn(IssueId issueId, params object[] events) => HappenedOn(issueId, null, events);
+
+    protected Task HappenedCausedBy(ChronicleIdentity causedBy, params object[] events) => HappenedOn(_issueId, causedBy, events);
+
+    protected Task HappenedOn(IssueId issueId, ChronicleIdentity? causedBy, params object[] events) =>
         _scenario.ProcessAppendedEvents([.. events.Select(@event =>
         {
             var sequenceNumber = _sequenceNumber++;
@@ -66,7 +71,7 @@ public class a_read_model<TReadModel> : Specification
                 sequenceNumber,
                 CorrelationId.New(),
                 At(sequenceNumber));
-            return new AppendedEvent(context, @event);
+            return new AppendedEvent(causedBy is null ? context : context with { CausedBy = causedBy }, @event);
         })]);
 }
 #endif

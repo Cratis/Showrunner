@@ -6,27 +6,22 @@ using Cratis.Showrunner.Usher.Contracts.Conversation;
 namespace Cratis.Showrunner.Usher.Access.Sessions;
 
 /// <summary>
-/// Identifies one session in which support signed in as a reporter.
+/// Identifies one session in which support signed in as a reporter. The identifier is the one AuthProxy gives the
+/// on-behalf session: an opaque value Usher never interprets, only records and compares.
 /// </summary>
 /// <param name="Value">The underlying value.</param>
-public record SupportSessionId(Guid Value) : ConceptAs<Guid>(Value), IGeneratable<SupportSessionId>
+public record SupportSessionId(string Value) : ConceptAs<string>(Value)
 {
     /// <summary>
     /// Represents an unset <see cref="SupportSessionId"/>.
     /// </summary>
-    public static readonly SupportSessionId NotSet = new(Guid.Empty);
+    public static readonly SupportSessionId NotSet = new(string.Empty);
 
     /// <summary>
-    /// Implicitly converts a <see cref="Guid"/> to a <see cref="SupportSessionId"/>.
+    /// Implicitly converts a <see cref="string"/> to a <see cref="SupportSessionId"/>.
     /// </summary>
     /// <param name="value">The value to convert from.</param>
-    public static implicit operator SupportSessionId(Guid value) => new(value);
-
-    /// <summary>
-    /// Creates a new <see cref="SupportSessionId"/>.
-    /// </summary>
-    /// <returns>A new <see cref="SupportSessionId"/>.</returns>
-    public static SupportSessionId New() => new(GenerateValue.Uuid());
+    public static implicit operator SupportSessionId(string value) => new(value);
 }
 
 /// <summary>
@@ -41,7 +36,8 @@ public record SupportSignedInAsReporter(SupportSessionId SessionId, SupportAutho
 
 /// <summary>
 /// A session in which support signed in as the reporter ended, because support signed out, the grant was revoked or
-/// it lapsed (Cratis/Showrunner#7). It has no public event.
+/// it lapsed (Cratis/Showrunner#7). It is recorded once per session, however many times the end is reported. It has
+/// no public event.
 /// </summary>
 /// <param name="SessionId">The session that ended.</param>
 [EventType]

@@ -47,6 +47,23 @@ public static class Reporters
     /// </summary>
     /// <returns>The principal.</returns>
     public static ClaimsPrincipal Anonymous() => new(new ClaimsIdentity());
+
+    public static ClaimsPrincipal SupportSignedInAs(IdentityProviderSubject subject)
+    {
+        var principal = SignedInAs(subject);
+        ((ClaimsIdentity)principal.Identity!).Actor = new ClaimsIdentity(
+            [
+                new Claim("sub", "support-person"),
+                new Claim(ClaimTypes.Name, "grace@support.example.com")
+            ],
+            "Specifications");
+        return principal;
+    }
+}
+
+public class FixedForward(Func<Access.OnBehalf.OnBehalfAssertion?> session) : Access.OnBehalf.IOnBehalfForward
+{
+    public Access.OnBehalf.OnBehalfAssertion? Current => session();
 }
 
 /// <summary>

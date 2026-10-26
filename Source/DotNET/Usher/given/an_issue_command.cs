@@ -29,11 +29,25 @@ public class an_issue_command<TCommand> : Specification
     /// </summary>
     protected virtual ClaimsPrincipal Principal => Reporters.SignedInAs(Reporters.Subject);
 
+    /// <summary>
+    /// Gets the support session AuthProxy vouched for the request being forwarded in; none by default.
+    /// </summary>
+    protected virtual Access.OnBehalf.OnBehalfAssertion? Session => null;
+
+    /// <summary>
+    /// Gets a support session on the issue, as AuthProxy vouches for it.
+    /// </summary>
+    /// <param name="issueId">The issue the session is for.</param>
+    /// <returns>The session.</returns>
+    protected Access.OnBehalf.OnBehalfAssertion SessionOn(IssueId issueId) =>
+        new(Reporters.Subject, "support-person", "entra", "tenant", issueId.Value.ToString(), "a-session");
+
     void Establish()
     {
         _issueId = IssueId.New();
         _scenario = new();
         _scenario.Services.AddSingleton<ICurrentPrincipalAccessor>(new FixedPrincipal(Principal));
+        _scenario.Services.AddSingleton<Access.OnBehalf.IOnBehalfForward>(new FixedForward(() => Session));
         _scenario.Services.AddUsher(usher => usher.ApplicationName = "Ledger");
         _scenario.Clock(Now);
     }

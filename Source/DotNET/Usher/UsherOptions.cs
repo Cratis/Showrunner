@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Chronicle;
+using Cratis.Showrunner.Usher.Access.OnBehalf;
 using Cratis.Showrunner.Usher.Contracts.Reporting;
 using Cratis.Showrunner.Usher.Reporting.Capture;
 
@@ -42,4 +43,10 @@ public class UsherOptions
     /// has passed. A grant lapses at most this long after its end. Defaults to one minute.
     /// </summary>
     public TimeSpan PollingInterval { get; set; } = TimeSpan.FromMinutes(1);
+
+    /// <summary>
+    /// Gets or sets how Usher answers AuthProxy's on-behalf sessions, in which support signs in as a reporter under a
+    /// grant. Unconfigured, support can never sign in as a reporter.
+    /// </summary>
+    public OnBehalfOptions OnBehalf { get; set; } = new();
 }

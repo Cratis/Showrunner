@@ -94,7 +94,7 @@ The desk publishes these from its outbox. They describe what support did with th
 ## Mapping to private events
 
 :::note[In progress]
-The private events, the publisher and the translator are being built in `Cratis.Showrunner.Usher`. These tables are the contract they implement.
+The private events are in `Cratis.Showrunner.Usher`; see [Backend](./backend.md#private-events). The publisher and the translator are being built. These tables are the contract they implement.
 :::
 
 The publisher adds `TenantId` to every public event and publishes the reporter only after `ReporterSharedIdentity`.

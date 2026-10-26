@@ -6,5 +6,7 @@
   href: contracts.md
 - name: Frontend proxies
   href: frontend-proxies.md
+- name: React components
+  href: react.md
 - name: Exchanging events with a desk
   href: desk-exchange.md

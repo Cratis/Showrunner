@@ -3,7 +3,7 @@ title: Frontend proxies
 description: The @cratis/showrunner.usher package - the generated TypeScript proxies for Usher's commands and queries, their slice location, and the helpers that turn an error into what a report sends.
 ---
 
-`@cratis/showrunner.usher` is the TypeScript side of `Cratis.Showrunner.Usher`: the proxies Arc generates for Usher's commands and queries, and a few helpers for reporting errors. It has no components; `@cratis/showrunner.usher.react` builds the dialogs on top of it.
+`@cratis/showrunner.usher` is the TypeScript side of `Cratis.Showrunner.Usher`: the proxies Arc generates for Usher's commands and queries, and a few helpers for reporting errors. It has no components; `@cratis/showrunner.usher.react` builds the dialogs on top of it; see [React components](./react.md).
 
 ## Install
 

@@ -8,8 +8,8 @@ Usher is the support part of Showrunner. It lets the users of an application rep
 Usher is a library, not a service. The application hosts it:
 
 - `Cratis.Showrunner.Usher` adds Usher's commands, queries and events to the application's Arc host and Chronicle event store.
-- `Cratis.Showrunner.Usher.Contracts` holds Usher's event contracts, for an application that reacts to what Usher records.
+- `Cratis.Showrunner.Usher.Contracts` holds the public events an application and a support desk exchange; see [Contracts](./contracts.md).
 - `@cratis/showrunner.usher` is the generated TypeScript proxies for Usher's commands and queries.
 - `@cratis/showrunner.usher.react` is the React components that drive them, built on `@cratis/components`.
 
-Usher is in its earliest stage: the packages exist but carry no behavior yet. This documentation grows with each slice that lands.
+Usher is in its earliest stage: the contracts are defined, and the other packages carry no behavior yet. This documentation grows with each slice that lands.

@@ -10,9 +10,11 @@ const manifest = JSON.parse(readFileSync(join(packageRoot, 'package.json'), 'utf
     name: string;
     dependencies?: Record<string, string>;
     peerDependencies?: Record<string, string>;
+    files: string[];
 };
 
 describe('when reading the manifest', () => {
     it('should be the usher proxies package', () => manifest.name.should.equal('@cratis/showrunner.usher'));
     it('should not depend on a UI framework', () => Object.keys({ ...manifest.dependencies, ...manifest.peerDependencies }).should.not.include('react'));
+    it('should leave specifications out of the package', () => manifest.files.should.include.members(['!**/for_*/**', '!**/given/**']));
 });

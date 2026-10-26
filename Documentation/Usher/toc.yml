@@ -4,3 +4,5 @@
   href: backend.md
 - name: Contracts
   href: contracts.md
+- name: Frontend proxies
+  href: frontend-proxies.md

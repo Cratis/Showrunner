@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #if DEBUG
+using Cratis.Showrunner.Usher.given;
 using Cratis.Showrunner.Usher.Reporting.ReportError.given;
 
 namespace Cratis.Showrunner.Usher.Reporting.ReportError.when_reporting_an_error;
@@ -22,6 +23,10 @@ public class and_the_backend_captured_the_error : an_error_report
             e.ErrorMessage == Captured.ErrorMessage &&
             e.StackFrames.SequenceEqual(Captured.StackFrames) &&
             e.ApplicationVersion == Captured.ApplicationVersion);
+
+    [Fact]
+    async Task should_keep_the_message_the_reporter_saw_for_the_reporter() =>
+        await _scenario.ShouldHaveAppendedEvent<ReportError, ReporterFlaggedError>(_issueId, e => e.SeenMessage == Reports.Error(_issueId).ErrorMessage);
 
     [Fact]
     async Task should_keep_the_correlation_ids_the_client_sent() =>

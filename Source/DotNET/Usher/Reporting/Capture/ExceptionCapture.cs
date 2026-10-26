@@ -59,6 +59,15 @@ public static class ExceptionCapture
             .ToArray();
     }
 
+    /// <summary>
+    /// Gets the file name of a path, without its folders. The path is where the server was built, which says nothing
+    /// the desk needs and can say things about the build machine, so it is never stored or published. A path built on
+    /// another operating system than the one the server runs on is cut at either separator.
+    /// </summary>
+    /// <param name="path">The path of the source file.</param>
+    /// <returns>The file name.</returns>
+    internal static StackFrameFile FileNameOf(string path) => path[(path.LastIndexOfAny(['/', '\\']) + 1)..];
+
     static UsherStackFrame? ToStackFrame(System.Diagnostics.StackFrame frame)
     {
         if (DiagnosticMethodInfo.Create(frame) is not { } method)
@@ -71,7 +80,7 @@ public static class ExceptionCapture
         var line = frame.GetFileLineNumber();
         return new(
             name,
-            string.IsNullOrEmpty(file) ? StackFrameFile.NotSet : file,
+            string.IsNullOrEmpty(file) ? StackFrameFile.NotSet : FileNameOf(file),
             line > 0 ? line : StackFrameLine.NotSet);
     }
 

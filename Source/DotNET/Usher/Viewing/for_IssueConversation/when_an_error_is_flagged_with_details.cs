@@ -18,12 +18,12 @@ public class when_an_error_is_flagged_with_details : a_read_model<IssueConversat
         _issue = _scenario.Instance!;
     }
 
-    [Fact] void should_have_the_error_message_as_title() => _issue.Title.ShouldEqual(new IssueTitle("Object reference not set to an instance of an object."));
+    [Fact] void should_have_the_message_the_reporter_saw_as_title() => _issue.Title.ShouldEqual(new IssueTitle("Something went wrong."));
 
     [Fact]
     void should_have_the_error_then_the_details() => _issue.Entries.Select(_ => (_.Kind, _.Text, _.AuthorKind)).ShouldEqual(
     [
-        (ConversationEntryKind.ErrorReported, new ConversationEntryText("Object reference not set to an instance of an object."), ConversationAuthorKind.Reporter),
+        (ConversationEntryKind.ErrorReported, new ConversationEntryText("Something went wrong."), ConversationAuthorKind.Reporter),
         (ConversationEntryKind.DetailsAdded, new ConversationEntryText("I was sending the March invoice."), ConversationAuthorKind.Reporter)
     ]);
 }

@@ -343,7 +343,7 @@ public record IssueConversation(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static IssueConversation Reduce(ReporterFlaggedError @event, IssueConversation? current, EventContext context) =>
-        current ?? IssueConversationTransitions.Open(context, (string)@event.ErrorMessage, @event.Location, @event.ReportedBy, ConversationEntryKind.ErrorReported, (string)@event.ErrorMessage);
+        current ?? IssueConversationTransitions.Open(context, (string)@event.SeenMessage, @event.Location, @event.ReportedBy, ConversationEntryKind.ErrorReported, (string)@event.SeenMessage);
 
     /// <summary>
     /// Records that the reporter shared who they are.

@@ -23,7 +23,9 @@ namespace Cratis.Showrunner.Usher.Reporting.ReportError;
 /// <remarks>
 /// When the backend captured the error of a failing command for one of <paramref name="CorrelationIds"/>, for the same
 /// reporter in the same tenant, the error is recorded as the backend saw it - location, type, message, stack frames and
-/// application version - and the values the client sent for those are not used.
+/// application version - and the values the client sent for those are not used for the desk or the fingerprint. The
+/// reporter is still shown the message they saw, <paramref name="ErrorMessage"/>: a server's exception message can say
+/// things about the backend the reporter was never shown.
 /// </remarks>
 /// <param name="IssueId">The id of the new issue, chosen by the caller so a retried report does not open a second issue.</param>
 /// <param name="Location">Where in the application the error happened.</param>
@@ -102,7 +104,8 @@ public record ReportError(
             fingerprints.Compute(error.ApplicationVersion, error.Location, error.ErrorType, error.ErrorMessage, error.StackFrames),
             options.Value.ApplicationName,
             error.ApplicationVersion,
-            reporter.Identity));
+            reporter.Identity,
+            ErrorMessage));
 
         if (!string.IsNullOrWhiteSpace(Details))
         {
@@ -159,6 +162,10 @@ public class ReportErrorValidator : CommandValidator<ReportError>
 /// Who the reporter is at their identity provider: the provider and the subject. It is how the reporter finds their own
 /// issues even when they do not share who they are; it is a pseudonymous id and never published to the desk.
 /// </param>
+/// <param name="SeenMessage">
+/// The message the reporter saw, as the client sent it. The reporter is shown it as the issue's title; it differs from
+/// <paramref name="ErrorMessage"/> when the backend captured the error, and is never published to the desk.
+/// </param>
 [EventType]
 public record ReporterFlaggedError(
     SliceLocation Location,
@@ -169,4 +176,5 @@ public record ReporterFlaggedError(
     ErrorFingerprint Fingerprint,
     ApplicationName ApplicationName,
     ApplicationVersion ApplicationVersion,
-    UserIdentity ReportedBy);
+    UserIdentity ReportedBy,
+    ErrorMessage SeenMessage);

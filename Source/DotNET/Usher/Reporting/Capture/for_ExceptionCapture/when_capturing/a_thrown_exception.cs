@@ -19,7 +19,7 @@ public class a_thrown_exception : Specification
     [Fact] void should_have_the_message() => _error.ErrorMessage.Value.ShouldEqual(Thrower.Message);
     [Fact] void should_have_the_version() => _error.ApplicationVersion.Value.ShouldEqual("4.12.1");
     [Fact] void should_have_the_throwing_method_as_the_top_frame() => _error.StackFrames.First().Method.Value.ShouldEqual($"{typeof(Thrower).FullName}.Throw");
-    [Fact] void should_have_the_file_of_the_top_frame() => _error.StackFrames.First().File.Value.ShouldMatch(file => file.EndsWith("Thrower.cs", StringComparison.Ordinal));
+    [Fact] void should_have_the_file_name_of_the_top_frame_without_its_server_path() => _error.StackFrames.First().File.Value.ShouldEqual("Thrower.cs");
     [Fact] void should_have_the_line_of_the_top_frame() => _error.StackFrames.First().Line.Value.ShouldBeGreaterThan(0);
     [Fact] void should_have_the_catching_method_below() => _error.StackFrames.Skip(1).First().Method.Value.ShouldEqual($"{typeof(Thrower).FullName}.Thrown");
 }

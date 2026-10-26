@@ -114,7 +114,7 @@ The reporter's side, recorded by the commands:
 | Event | Payload |
 | --- | --- |
 | `ReporterDescribedIssue` | `Location`, `CorrelationIds`, `Summary`, `Description`, `ApplicationName`, `ApplicationVersion`, `ReportedBy` |
-| `ReporterFlaggedError` | `Location`, `CorrelationIds`, `StackFrames`, `ErrorMessage`, `ErrorType`, `Fingerprint`, `ApplicationName`, `ApplicationVersion`, `ReportedBy` |
+| `ReporterFlaggedError` | `Location`, `CorrelationIds`, `StackFrames`, `ErrorMessage`, `ErrorType`, `Fingerprint`, `ApplicationName`, `ApplicationVersion`, `ReportedBy`, `SeenMessage` |
 | `ReporterSharedIdentity` | `Reporter` |
 | `ReporterAddedDetails` | `Details` |
 | `ReporterAnsweredQuestion` | `QuestionId`, `Answer` |
@@ -157,6 +157,8 @@ When a command fails with an exception, Usher captures the error as the backend 
 - Capturing never changes how a command fails: Usher observes the exception and leaves the result to Arc. If capturing itself fails, it is logged and the command fails with its own exception. A command whose exception another `ICommandExceptionMapper` maps is not captured.
 - Captured errors live in memory in the process that ran the command. A report handled by another instance finds nothing and is recorded from what the client sends.
 - Nothing more reaches the client than Arc already returns for a failing command: the stack frames stay on the server until the user reports the error.
+- A captured stack frame keeps only the file name of its source file, never the path it was built from, so no server path is stored or published.
+- The reporter is shown the message they saw. `ReporterFlaggedError` records the message the backend captured as `ErrorMessage`, which the desk receives and the fingerprint is computed from, and the message the client sent as `SeenMessage`, which is the issue's title in `MyIssues` and `ForIssue`. A server's exception message can say things about the backend the reporter was never shown, so it never reaches the reporter's views.
 - Failing queries are not captured: Arc gives an application no hook into the exception of a query. A query error is reported from what the client sends.
 
 | Option | Default | Meaning |

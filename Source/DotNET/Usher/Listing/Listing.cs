@@ -111,7 +111,7 @@ public record ReportedIssue(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static ReportedIssue Reduce(ReporterFlaggedError @event, ReportedIssue? current, EventContext context) =>
-        current ?? ReportedIssueTransitions.Open(context, IssueKind.Error, (string)@event.ErrorMessage, @event.ReportedBy);
+        current ?? ReportedIssueTransitions.Open(context, IssueKind.Error, (string)@event.SeenMessage, @event.ReportedBy);
 
     /// <summary>
     /// Records activity when the reporter shares who they are.

@@ -49,7 +49,8 @@ public static class IssueEvents
         ErrorFingerprint.NotSet,
         "Ledger",
         "1.2.3",
-        reporter);
+        reporter,
+        "Something went wrong.");
 
     /// <summary>
     /// A person at the desk.

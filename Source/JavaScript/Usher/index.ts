@@ -9,6 +9,7 @@ export * from './Contracts/Reporting';
 export * from './Contracts/WorkItems';
 export * from './Conversation/AddDetails';
 export * from './Conversation/AnswerQuestion';
+export * from './Errors';
 export * from './Identity/ShareIdentity';
 export * from './Issues';
 export * from './Lifecycle/ReopenIssue';

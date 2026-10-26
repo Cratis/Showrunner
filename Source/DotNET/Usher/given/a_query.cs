@@ -24,10 +24,16 @@ public class a_query<TReadModel> : Specification
     /// </summary>
     protected virtual ClaimsPrincipal Principal => Reporters.SignedInAs(Reporters.Subject);
 
+    /// <summary>
+    /// Gets the support session AuthProxy vouched for the request being forwarded in; none by default.
+    /// </summary>
+    protected virtual Access.OnBehalf.VerifiedForward? Session => null;
+
     void Establish()
     {
         _scenario = new();
         _scenario.Services.AddSingleton<ICurrentPrincipalAccessor>(new FixedPrincipal(Principal));
+        _scenario.Services.AddSingleton<Access.OnBehalf.IOnBehalfForward>(new FixedForward(() => Session));
         _scenario.Services.AddUsher(usher => usher.ApplicationName = "Ledger");
     }
 

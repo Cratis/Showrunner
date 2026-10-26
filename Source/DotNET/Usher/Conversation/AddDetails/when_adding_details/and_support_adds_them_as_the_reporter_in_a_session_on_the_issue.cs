@@ -11,7 +11,7 @@ namespace Cratis.Showrunner.Usher.Conversation.AddDetails.when_adding_details;
 public class and_support_adds_them_as_the_reporter_in_a_session_on_the_issue : an_issue_command<AddDetails>
 {
     protected override ClaimsPrincipal Principal => Reporters.SupportSignedInAs(Reporters.Subject);
-    protected override OnBehalfAssertion? Session => SessionOn(_issueId);
+    protected override VerifiedForward? Session => SessionOn(_issueId);
 
     void Establish() => GivenReported();
 

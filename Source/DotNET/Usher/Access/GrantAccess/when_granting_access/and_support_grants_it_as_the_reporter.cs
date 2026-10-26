@@ -11,7 +11,7 @@ namespace Cratis.Showrunner.Usher.Access.GrantAccess.when_granting_access;
 public class and_support_grants_it_as_the_reporter : an_issue_command<GrantAccess>
 {
     protected override ClaimsPrincipal Principal => Reporters.SupportSignedInAs(Reporters.Subject);
-    protected override OnBehalfAssertion? Session => SessionOn(_issueId);
+    protected override VerifiedForward? Session => SessionOn(_issueId);
 
     void Establish() => GivenReported();
 

@@ -16,6 +16,6 @@ public class and_someone_else_reported_it : a_query<IssueConversation>
     async Task Because() => _result = await _scenario.Perform(nameof(IssueConversation.ForIssue), new QueryArguments { ["issueId"] = _issueId });
 
     [Fact] void should_succeed() => _result.IsSuccess.ShouldBeTrue();
-    [Fact] void should_return_nothing() => _result.Data.ShouldBeNull();
+    [Fact] void should_return_nothing() => ((IEnumerable<IssueConversation>)_result.Data).ShouldBeEmpty();
 }
 #endif

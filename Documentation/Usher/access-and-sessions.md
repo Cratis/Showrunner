@@ -141,10 +141,10 @@ During a session, AuthProxy forwards each request as the reporter with the actor
 
 The grant is for one issue, and so is what support can change:
 
+- support may act only in a **live** session. For every forwarded request, the forward check folds the issue's events, the same decision as the grant check: the grant is in effect and not past its end, and this session has not ended. A revocation, a lapse or the end of the session counts from the moment it is recorded, not at AuthProxy's next grant check;
 - every command on an existing issue (`AddDetails`, `AnswerQuestion`, `ShareIdentity`, `ReopenIssue`, `WithdrawIssue`, `RevokeAccess`) runs for support only on the issue the session is for, as AuthProxy's verified assertion states it. Any other of the reporter's issues is answered exactly like an issue that does not exist;
-- only the reporter themselves can grant access: `GrantAccess`, and `ReportIssue` or `ReportError` with `GrantAccess` chosen, are refused for support signed in as the reporter, so support can never give itself access or more of it;
-- support can report a new issue as the reporter, without granting access, to reproduce a problem;
-- the queries are not narrowed: support signed in as the reporter sees the reporter's list of issues and their conversations, as the reporter would.
+- support can not report in the reporter's name: `ReportIssue` and `ReportError` are refused for support signed in as the reporter, whatever they share or grant. Only the reporter themselves can grant access, so `GrantAccess` is refused too;
+- the queries are narrowed to the session: `MyIssues` lists only the issue the session is for, and `ForIssue` answers nothing for any other issue. Once the session is no longer live both answer nothing, and an observation of `ForIssue` that outlives a revocation, a lapse or the end of the session stops showing the issue.
 
 ## What the reporter sees
 
@@ -163,8 +163,8 @@ Usher attributes an entry from the identity that caused the event: when it acts 
 
 ## Security notes
 
-- **Usher decides from events, every time.** Nothing about a grant is cached: each check folds the issue's events, so a revocation counts from the moment it is recorded.
-- **Revocation is bounded by AuthProxy's re-check interval.** AuthProxy honors its last live answer for at most `OnBehalf:RecheckInterval`, per instance. Keep it short.
+- **Usher decides from events, every time.** Nothing about a grant is cached: each check, and each forwarded request, folds the issue's events, so a revocation counts in Usher from the moment it is recorded.
+- **Outside Usher, revocation is bounded by AuthProxy's re-check interval.** AuthProxy honors its last live answer for at most `OnBehalf:RecheckInterval`, per instance, and keeps forwarding the session to the rest of the application until then. Keep it short.
 - **Replay is refused per process.** A `jti` is remembered by the instance that accepted it. A token replayed to another replica within its lifetime is still bound to its call, its body and its purpose, and every call is idempotent: a second start or end records nothing new.
 - **Keep the backend reachable only through AuthProxy.** The forward check refuses unsigned on-behalf forwards, but a host that trusts forwarded identity headers believes a plain `x-ms-client-principal` from anybody who can reach it.
 - **Personal data.** Sessions record the actor's name, and the grant check returns the reporter's name and email. They are the reporter's and support's data, recorded in the tenant's namespace; see [Personal data](./backend.md#personal-data).

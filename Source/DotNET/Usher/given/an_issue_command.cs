@@ -32,15 +32,14 @@ public class an_issue_command<TCommand> : Specification
     /// <summary>
     /// Gets the support session AuthProxy vouched for the request being forwarded in; none by default.
     /// </summary>
-    protected virtual Access.OnBehalf.OnBehalfAssertion? Session => null;
+    protected virtual Access.OnBehalf.VerifiedForward? Session => null;
 
     /// <summary>
-    /// Gets a support session on the issue, as AuthProxy vouches for it.
+    /// Gets a live support session on an issue, as AuthProxy vouches for it.
     /// </summary>
     /// <param name="issueId">The issue the session is for.</param>
     /// <returns>The session.</returns>
-    protected Access.OnBehalf.OnBehalfAssertion SessionOn(IssueId issueId) =>
-        new(Reporters.Subject, "support-person", "entra", "tenant", issueId.Value.ToString(), "a-session");
+    protected static Access.OnBehalf.VerifiedForward SessionOn(IssueId issueId) => Reporters.LiveSessionOn(issueId);
 
     void Establish()
     {

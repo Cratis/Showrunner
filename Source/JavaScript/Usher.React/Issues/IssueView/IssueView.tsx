@@ -40,7 +40,10 @@ export const IssueView = (props: IssueViewProps) => (
 const IssueViewContent = ({ issueId, onBack }: IssueViewProps) => {
     const labels = useUsherLabels();
     const [result] = ForIssue.use({ issueId });
-    const issue = result.data;
+
+    // The query answers with the issue or with nothing: an issue the reporter did not report, or one support's session
+    // is not for, is never sent.
+    const issue = result.data?.[0];
     const isLoaded = result.hasData && issue?.id !== undefined;
 
     if (!isLoaded) {

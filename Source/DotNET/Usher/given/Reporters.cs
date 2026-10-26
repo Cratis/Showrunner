@@ -75,6 +75,27 @@ public static class Reporters
     /// <returns>The principal.</returns>
     public static ClaimsPrincipal Anonymous() => new(new ClaimsIdentity());
 
+    /// <summary>
+    /// The session support signs in as the reporter in.
+    /// </summary>
+    public static readonly Access.Sessions.SupportSessionId SessionId = "a-session";
+
+    /// <summary>
+    /// Gets a support session on an issue as AuthProxy vouches for it, and as the issue's events decide it.
+    /// </summary>
+    /// <param name="issueId">The issue the session is for.</param>
+    /// <param name="refusal">Why the session is not live; <see langword="null"/> for a live session.</param>
+    /// <returns>The session.</returns>
+    public static Access.OnBehalf.VerifiedForward SessionOn(IssueId issueId, Access.Sessions.SupportSessionRefusal? refusal) =>
+        new(new(Subject, "support-person", IdentityProvider, "tenant", issueId.Value.ToString(), SessionId), refusal);
+
+    /// <summary>
+    /// Gets a live support session on an issue.
+    /// </summary>
+    /// <param name="issueId">The issue the session is for.</param>
+    /// <returns>The session.</returns>
+    public static Access.OnBehalf.VerifiedForward LiveSessionOn(IssueId issueId) => SessionOn(issueId, null);
+
     public static ClaimsPrincipal SupportSignedInAs(IdentityProviderSubject subject)
     {
         var principal = SignedInAs(subject);
@@ -88,9 +109,9 @@ public static class Reporters
     }
 }
 
-public class FixedForward(Func<Access.OnBehalf.OnBehalfAssertion?> session) : Access.OnBehalf.IOnBehalfForward
+public class FixedForward(Func<Access.OnBehalf.VerifiedForward?> session) : Access.OnBehalf.IOnBehalfForward
 {
-    public Access.OnBehalf.OnBehalfAssertion? Current => session();
+    public Access.OnBehalf.VerifiedForward? Current => session();
 }
 
 /// <summary>

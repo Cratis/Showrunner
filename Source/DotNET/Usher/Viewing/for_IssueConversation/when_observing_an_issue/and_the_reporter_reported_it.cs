@@ -20,6 +20,6 @@ public class and_the_reporter_reported_it : a_query<IssueConversation>
     async Task Because() => _result = await _scenario.Perform(nameof(IssueConversation.ForIssue), new QueryArguments { ["issueId"] = _issueId });
 
     [Fact] void should_succeed() => _result.IsSuccess.ShouldBeTrue();
-    [Fact] void should_return_the_issue() => ((IssueConversation)_result.Data).Id.ShouldEqual(_issueId);
+    [Fact] void should_return_only_the_issue() => ((IEnumerable<IssueConversation>)_result.Data).Select(_ => _.Id).ShouldContainOnly(_issueId);
 }
 #endif

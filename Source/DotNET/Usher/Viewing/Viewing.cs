@@ -288,25 +288,38 @@ public record IssueConversation(
     UserIdentity ReportedBy)
 {
     /// <summary>
-    /// Observes one issue the signed-in reporter reported, in the current tenant. An issue someone else reported is
-    /// never emitted; like an issue that does not exist, it is emitted as nothing.
+    /// Observes one issue the signed-in reporter reported, in the current tenant, as a collection that holds the issue
+    /// or nothing. An issue someone else reported is never emitted; like an issue that does not exist, it is emitted
+    /// as an empty collection.
     /// </summary>
+    /// <remarks>
+    /// Support signed in as the reporter sees only the issue its session is for, and only while the session is live:
+    /// once the grant is revoked, lapses or passes its end, or the session ends, the issue is emitted as nothing.
+    /// </remarks>
     /// <param name="issueId">The issue.</param>
     /// <param name="readModels">The <see cref="IReadModels"/> of the current tenant's event store namespace.</param>
     /// <param name="reporter">The signed-in reporter.</param>
-    /// <returns>The issue, again every time it changes.</returns>
+    /// <param name="clock">The <see cref="TimeProvider"/> a grant's end is checked against.</param>
+    /// <returns>The issue, or nothing, again every time it changes.</returns>
     [Authorize]
-    public static ISubject<IssueConversation> ForIssue(IssueId issueId, IReadModels readModels, ISignedInReporter reporter)
+    public static ISubject<IEnumerable<IssueConversation>> ForIssue(IssueId issueId, IReadModels readModels, ISignedInReporter reporter, TimeProvider clock)
     {
-        if (!reporter.IsSignedIn)
+        if (!reporter.IsSignedIn || !reporter.MayActOn(issueId))
         {
-            return new BehaviorSubject<IssueConversation>(null!);
+            return new BehaviorSubject<IEnumerable<IssueConversation>>([]);
         }
 
         var identity = reporter.Identity;
+        var observed = readModels.Observe<IssueConversation>(issue => issue.Id == issueId && issue.ReportedBy == identity);
+        if (!reporter.TryGetLiveSupportSession(out var session))
+        {
+            return observed;
+        }
+
+        var sessionId = session.SessionId;
         return ObservedQueries.Map(
-            readModels.Observe<IssueConversation>(issue => issue.Id == issueId && issue.ReportedBy == identity),
-            issues => issues.FirstOrDefault()!);
+            observed,
+            issues => (IEnumerable<IssueConversation>)[.. issues.Where(issue => IssueConversationTransitions.SupportMayStillSee(issue, sessionId, clock.GetUtcNow()))]);
     }
 
     /// <summary>
@@ -656,6 +669,19 @@ internal static class IssueConversationTransitions
         var next = changed with { Entries = [.. current.Entries, InSession(changed, entry)] };
         return next with { OpenQuestion = OpenQuestionOf(next.Entries) };
     }
+
+    /// <summary>
+    /// Gets whether support signed in as the reporter in a session may still see the issue: the grant is in effect and
+    /// has not passed its end, and the session has not ended.
+    /// </summary>
+    /// <param name="issue">The issue.</param>
+    /// <param name="sessionId">The session support acts in.</param>
+    /// <param name="now">What time it is.</param>
+    /// <returns>True while support may see it.</returns>
+    internal static bool SupportMayStillSee(IssueConversation issue, SupportSessionId sessionId, DateTimeOffset now) =>
+        issue.Access.State == AccessState.Granted &&
+        issue.Access.ValidUntil.Value > now &&
+        !issue.Access.Sessions.Any(_ => _.SessionId == sessionId && _.Ended);
 
     /// <summary>
     /// Moves the issue to a state, unless it is withdrawn.

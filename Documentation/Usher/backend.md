@@ -66,7 +66,7 @@ Both queries are observable: the client gets the current result and a new one ev
 | Slice | Query | Returns |
 | --- | --- | --- |
 | `Listing` | `ReportedIssue.MyIssues()` | The signed-in reporter's issues, most recent activity first |
-| `Viewing` | `IssueConversation.ForIssue(issueId)` | One of the signed-in reporter's issues with everything that happened on it; nothing for an issue they did not report |
+| `Viewing` | `IssueConversation.ForIssue(issueId)` | One of the signed-in reporter's issues with everything that happened on it, as a collection holding the issue or nothing: empty for an issue they did not report |
 
 **`ReportedIssue`** has `Id`, `Kind` (`Error`, `Manual`), `Title` (the summary, or the error message), `State`, `ReportedAt`, `LastActivityAt`, `WaitingOnReporter` (support asked something not yet answered), `KnownIssueTitle`, `WorkItem`, `FixedInVersion`, `ReportedBy` and `OpenQuestions`.
 

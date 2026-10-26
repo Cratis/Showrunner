@@ -39,6 +39,19 @@ public static class IssueRules
             .WithMessage("Only the reporter can grant support access.");
 
     /// <summary>
+    /// Requires that the reporter themselves, not support signed in as them, reports. A session is for looking into one
+    /// issue the reporter granted access to; opening new issues in the reporter's name is not part of that permission.
+    /// </summary>
+    /// <typeparam name="T">The type of the command.</typeparam>
+    /// <typeparam name="TProperty">The type of the property the rule is for.</typeparam>
+    /// <param name="rule">The rule.</param>
+    /// <param name="reporter">The signed-in reporter.</param>
+    /// <returns>The rule for continuation.</returns>
+    public static IRuleBuilderOptions<T, TProperty> MustBeReportedByTheReporterThemselves<T, TProperty>(this IRuleBuilder<T, TProperty> rule, ISignedInReporter reporter) =>
+        rule.Must(_ => !reporter.IsSupportActingAsReporter)
+            .WithMessage("Support signed in as the reporter can not report in the reporter's name.");
+
+    /// <summary>
     /// The issue must not be withdrawn: nothing changes an issue after its reporter withdrew it.
     /// </summary>
     /// <typeparam name="T">The command type.</typeparam>

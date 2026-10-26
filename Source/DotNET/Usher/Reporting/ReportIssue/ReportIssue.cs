@@ -87,12 +87,12 @@ public class ReportIssueValidator : CommandValidator<ReportIssue>
     {
         RuleFor(c => c.IssueId).Must(_ => issue is null).WithMessage("An issue with this id is already reported.");
         RuleFor(c => c.IssueId).Must(_ => reporter.IsSignedIn).WithMessage("Sign in to report an issue.");
+        RuleFor(c => c.IssueId).MustBeReportedByTheReporterThemselves(reporter);
         RuleFor(c => (string)c.Summary)
             .NotEmpty().WithMessage("Summarize the problem.")
             .MaximumLength(MaximumSummaryLength).WithMessage($"Keep the summary within {MaximumSummaryLength} characters.");
         RuleFor(c => (string)c.Description).NotEmpty().WithMessage("Describe what happened.");
         RuleFor(c => c.AccessDuration).IsInEnum().WithMessage("Choose how long support may sign in as you.");
-        RuleFor(c => c.GrantAccess).MustBeTheReporterThemselves(reporter).When(c => c.GrantAccess);
     }
 }
 

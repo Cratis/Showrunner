@@ -76,6 +76,18 @@ public record ReportedIssue(
         }
 
         var identity = reporter.Identity;
+        if (reporter.IsSupportActingAsReporter)
+        {
+            // Support signed in as the reporter sees only the issue its session is for, and only while it is live.
+            if (!reporter.TryGetLiveSupportSession(out var session))
+            {
+                return new BehaviorSubject<IEnumerable<ReportedIssue>>([]);
+            }
+
+            var sessionIssue = session.IssueId;
+            return readModels.Observe<ReportedIssue>(issue => issue.ReportedBy == identity && issue.Id == sessionIssue);
+        }
+
         return ObservedQueries.Map(
             readModels.Observe<ReportedIssue>(issue => issue.ReportedBy == identity),
             issues => (IEnumerable<ReportedIssue>)[.. issues.OrderByDescending(issue => issue.LastActivityAt)]);

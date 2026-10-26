@@ -1,9 +1,11 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Claims;
 using Cratis.Arc.Identity;
 using Cratis.Showrunner.Usher.Access.OnBehalf;
+using Cratis.Showrunner.Usher.Access.Sessions;
 using Cratis.Showrunner.Usher.Contracts.Identity;
 
 namespace Cratis.Showrunner.Usher.Identity;
@@ -43,8 +45,16 @@ public interface ISignedInReporter
     bool IsSupportActingAsReporter { get; }
 
     /// <summary>
+    /// Gets the session support acts as the reporter in, when it is live: AuthProxy vouched for it, it is for this
+    /// reporter, the grant is in effect and the session has not ended.
+    /// </summary>
+    /// <param name="session">The <see cref="LiveSupportSession"/>, when there is one.</param>
+    /// <returns>True when support acts as the reporter in a live session.</returns>
+    bool TryGetLiveSupportSession([NotNullWhen(true)] out LiveSupportSession? session);
+
+    /// <summary>
     /// Gets whether the signed-in reporter may act on an issue they reported: always for the reporter, and for support
-    /// only on the issue the reporter granted access to and the session was started for.
+    /// only on the issue the session is for, while the grant is live and the session has not ended.
     /// </summary>
     /// <param name="issueId">The issue.</param>
     /// <returns>True when the issue may be acted on.</returns>
@@ -80,19 +90,22 @@ public class SignedInReporter(ICurrentPrincipalAccessor principals, IOnBehalfFor
     ClaimsPrincipal? Principal => principals.Current;
 
     /// <inheritdoc/>
-    public bool MayActOn(IssueId issueId)
+    public bool TryGetLiveSupportSession([NotNullWhen(true)] out LiveSupportSession? session)
     {
-        if (!IsSupportActingAsReporter)
-        {
-            return true;
-        }
-
-        // Without AuthProxy's verified assertion nothing says which issue the session is for, so support may act on none.
-        return forward.Current is { } session &&
-            session.Subject == Subject &&
-            Guid.TryParse(session.Issue, out var issue) &&
-            issue == issueId.Value;
+        // Without AuthProxy's verified assertion nothing says which issue the session is for, and without a live grant
+        // and an open session the reporter's permission is gone, so support may act on none.
+        session = IsSupportActingAsReporter &&
+            forward.Current is { IsLive: true, Assertion: var assertion } &&
+            assertion.Subject == Subject &&
+            Guid.TryParse(assertion.Issue, out var issue)
+                ? new LiveSupportSession(issue, assertion.SessionId)
+                : null;
+        return session is not null;
     }
+
+    /// <inheritdoc/>
+    public bool MayActOn(IssueId issueId) =>
+        !IsSupportActingAsReporter || (TryGetLiveSupportSession(out var session) && session.IssueId == issueId);
 
     string FirstOf(params string[] claimTypes)
     {

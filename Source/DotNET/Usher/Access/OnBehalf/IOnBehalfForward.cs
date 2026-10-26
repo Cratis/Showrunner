@@ -9,8 +9,9 @@ namespace Cratis.Showrunner.Usher.Access.OnBehalf;
 public interface IOnBehalfForward
 {
     /// <summary>
-    /// Gets what AuthProxy's verified assertion says about the session of the current request; <see langword="null"/>
-    /// when the request was not forwarded on behalf of anybody, or its assertion was not verified.
+    /// Gets what AuthProxy's verified assertion says about the session of the current request, and whether the session
+    /// is live; <see langword="null"/> when the request was not forwarded on behalf of anybody, or its assertion was not
+    /// verified.
     /// </summary>
-    OnBehalfAssertion? Current { get; }
+    VerifiedForward? Current { get; }
 }

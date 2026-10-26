@@ -179,6 +179,15 @@ public record ConversationEntryText(string Value) : ConceptAs<string>(Value)
 /// <param name="AuthorName">The name of the support person or agent, <see cref="SupportAuthorName.NotSet"/> when the desk hides it or the entry is not from support.</param>
 /// <param name="At">When it happened.</param>
 /// <param name="QuestionId">The question a question or an answer is about; <see cref="Unset.QuestionId"/> for other entries.</param>
+/// <param name="ActedBy">
+/// The support person or agent who did it while signed in as the reporter; <see cref="SupportAuthorName.NotSet"/> when
+/// the reporter, the desk or Usher did it. It names the actor the event records as having caused it on the reporter's
+/// behalf.
+/// </param>
+/// <param name="Session">
+/// The session in which support did it while signed in as the reporter; <see cref="SupportSessionId.NotSet"/> when it
+/// was not done in a session on this issue.
+/// </param>
 public record ConversationEntry(
     ConversationEntryId EntryId,
     ConversationEntryKind Kind,
@@ -186,7 +195,9 @@ public record ConversationEntry(
     ConversationAuthorKind AuthorKind,
     SupportAuthorName AuthorName,
     DateTimeOffset At,
-    QuestionId QuestionId);
+    QuestionId QuestionId,
+    SupportAuthorName ActedBy,
+    SupportSessionId Session);
 
 /// <summary>
 /// The question support waits for the reporter to answer.
@@ -545,7 +556,7 @@ public record IssueConversation(
     public static IssueConversation? Reduce(SupportSignedInAsReporter @event, IssueConversation? current, EventContext context) =>
         current?.Access.Sessions.Any(session => session.SessionId == @event.SessionId) != false
             ? current
-            : IssueConversationTransitions.Add(current, IssueConversationTransitions.BySupport(context, ConversationEntryKind.SupportSignedIn, ConversationEntryText.NotSet, @event.Author), issue => issue with
+            : IssueConversationTransitions.Add(current, IssueConversationTransitions.BySupport(context, ConversationEntryKind.SupportSignedIn, ConversationEntryText.NotSet, @event.Author) with { Session = @event.SessionId }, issue => issue with
             {
                 Access = issue.Access with
                 {
@@ -568,7 +579,7 @@ public record IssueConversation(
             return current;
         }
 
-        var entry = IssueConversationTransitions.BySupport(context, ConversationEntryKind.SupportSessionEnded, ConversationEntryText.NotSet, session.Author);
+        var entry = IssueConversationTransitions.BySupport(context, ConversationEntryKind.SupportSessionEnded, ConversationEntryText.NotSet, session.Author) with { Session = @event.SessionId };
         return IssueConversationTransitions.Add(current, entry, issue => issue with
         {
             Access = issue.Access with
@@ -641,7 +652,8 @@ internal static class IssueConversationTransitions
             return null;
         }
 
-        var next = (change ?? (issue => issue))(current) with { Entries = [.. current.Entries, entry] };
+        var changed = (change ?? (issue => issue))(current);
+        var next = changed with { Entries = [.. current.Entries, InSession(changed, entry)] };
         return next with { OpenQuestion = OpenQuestionOf(next.Entries) };
     }
 
@@ -690,6 +702,51 @@ internal static class IssueConversationTransitions
             author.Kind == SupportAuthorKind.Agent ? ConversationAuthorKind.Agent : ConversationAuthorKind.Support,
             author.Name);
 
+    /// <summary>
+    /// Attributes an entry support did while signed in as the reporter to the session it was done in: the most recently
+    /// started open session of the support person or agent who did it.
+    /// </summary>
+    /// <param name="issue">The issue, with the sessions as they are when the entry is added.</param>
+    /// <param name="entry">The entry.</param>
+    /// <returns>The entry, with its session when it was done in one.</returns>
+    /// <remarks>
+    /// An event records who caused it, not the session; Arc records the actor first and the reporter second for
+    /// everything done on the reporter's behalf. The actor is matched to a session by the name AuthProxy gives both,
+    /// the actor's <c>userDetails</c>. When the actor has no open session on the issue, for instance when they act on
+    /// another issue of the reporter's, the entry names who acted but no session.
+    /// </remarks>
+    static ConversationEntry InSession(IssueConversation issue, ConversationEntry entry)
+    {
+        if (entry.ActedBy == SupportAuthorName.NotSet || entry.Session != SupportSessionId.NotSet)
+        {
+            return entry;
+        }
+
+        var session = issue.Access.Sessions.LastOrDefault(_ => !_.Ended && _.Author.Name == entry.ActedBy);
+        return session is null ? entry : entry with { Session = session.SessionId };
+    }
+
+    /// <summary>
+    /// Gets who caused an event on the reporter's behalf: the head of an identity chain that acts on behalf of somebody.
+    /// </summary>
+    /// <param name="context">The context of the event.</param>
+    /// <returns>The actor's user name, else their name or subject; <see cref="SupportAuthorName.NotSet"/> when nobody acted on behalf of anybody.</returns>
+    /// <remarks>
+    /// The user name comes first because it is what Arc takes from the <c>userDetails</c> AuthProxy forwards for the
+    /// actor, which is also the name the session was recorded with.
+    /// </remarks>
+    static SupportAuthorName ActedBy(EventContext context)
+    {
+        var causedBy = context.CausedBy;
+        if (causedBy?.OnBehalfOf is null)
+        {
+            return SupportAuthorName.NotSet;
+        }
+
+        var names = new[] { causedBy.UserName, causedBy.Name, causedBy.Subject };
+        return names.FirstOrDefault(name => !string.IsNullOrWhiteSpace(name)) ?? SupportAuthorName.NotSet;
+    }
+
     static OpenQuestion OpenQuestionOf(IEnumerable<ConversationEntry> entries)
     {
         var answered = entries.Where(entry => entry.Kind == ConversationEntryKind.QuestionAnswered).Select(entry => entry.QuestionId).ToHashSet();
@@ -703,5 +760,5 @@ internal static class IssueConversationTransitions
         ConversationEntryText text,
         ConversationAuthorKind authorKind,
         SupportAuthorName authorName) =>
-        new(new(context.SequenceNumber.Value), kind, text, authorKind, authorName, context.Occurred, Unset.QuestionId);
+        new(new(context.SequenceNumber.Value), kind, text, authorKind, authorName, context.Occurred, Unset.QuestionId, ActedBy(context), SupportSessionId.NotSet);
 }

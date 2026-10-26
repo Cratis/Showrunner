@@ -22,4 +22,10 @@ public class UsherOptions
     /// <c>Direct</c>.
     /// </summary>
     public IEnumerable<EventStoreName> DeskStores { get; set; } = ["Direct"];
+
+    /// <summary>
+    /// Gets or sets how often Usher looks for tenant namespaces it does not serve yet and for grants of access whose end
+    /// has passed. A grant lapses at most this long after its end. Defaults to one minute.
+    /// </summary>
+    public TimeSpan PollingInterval { get; set; } = TimeSpan.FromMinutes(1);
 }

@@ -74,7 +74,8 @@ console.log('');
 const workspaceNames = Object.keys(workspaces);
 let workspaceNamesToRun = workspaceNames;
 let publishDependencies = new Map();
-if (task === 'publish-version' && args.length === 1) {
+const isVersioningTask = task === 'publish-version' || task === 'pack-version';
+if (isVersioningTask && (task === 'pack-version' ? args.length === 2 : args.length === 1)) {
     try {
         const getPublishPlan = require('./scripts/workspace-publish-order.cjs');
         const plan = getPublishPlan(workspacePackages);
@@ -120,7 +121,37 @@ for (const workspaceName of workspaceNamesToRun) {
             continue;
         }
 
-        if (task === 'publish-version') {
+        if (task === 'pack-version') {
+            // Sets the released version, packs a tarball into the destination and records the order to publish in. The
+            // workspaces are built beforehand (yarn build), so packing runs no lifecycle scripts.
+            // Publishing happens in a separate job (scripts/publish-tarballs.cjs) that holds the OIDC token, so no
+            // build or install script ever runs with publishing rights.
+            if (args.length === 2) {
+                const [version, destination] = args;
+                file.set('version', version);
+                updateDependencyVersionsFromLocalWorkspaces(file, packageJson, version);
+                file.save();
+
+                const targetReadMe = path.join(workspaceAbsoluteLocation, 'README.md');
+                if (!fs.existsSync(targetReadMe)) {
+                    fs.copyFileSync(path.join(process.cwd(), "README.md"), targetReadMe);
+                }
+
+                fs.mkdirSync(destination, { recursive: true });
+                console.log(`Packing workspace '${workspaceName}' at '${workspaceRelativeLocation}'`);
+                const result = spawn('npm', ['pack', '--json', '--ignore-scripts', '--pack-destination', path.resolve(destination)], { cwd: workspaceAbsoluteLocation });
+                console.log(result.stderr?.toString() ?? '');
+                if (result.status !== 0) {
+                    if (result.error) console.log(result.error.message);
+                    console.log(`Error packing workspace '${workspaceName}'`);
+                    process.exit(1);
+                    return;
+                }
+
+                const [packed] = JSON.parse(result.stdout.toString());
+                fs.appendFileSync(path.join(destination, 'publish-order.txt'), `${workspaceName}\t${version}\t${packed.filename}\n`);
+            }
+        } else if (task === 'publish-version') {
             if (args.length === 1) {
                 const failedDependencies = publishDependencies.get(workspaceName).filter(_ => blockedPublishes.has(_));
                 if (failedDependencies.length > 0) {

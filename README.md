@@ -48,7 +48,7 @@ The end-to-end specifications in [`Integration`](./Integration) run Usher and a 
 
 ## Releasing
 
-Every pull request carries exactly one of the `major`, `minor`, `patch` or `no-release` labels. Merging a version-labelled pull request to `main` releases all four packages under one semantic version through [`cratis/release-action`](https://github.com/Cratis/release-action) — NuGet packages through NuGet trusted publishing and npm packages through npm trusted publishing with provenance.
+Every pull request carries exactly one of the `major`, `minor`, `patch` or `no-release` labels. Merging a version-labelled pull request to `main` releases all four packages under one semantic version through [`cratis/release-action`](https://github.com/Cratis/release-action) — NuGet packages through NuGet trusted publishing and npm packages through npm trusted publishing with provenance. The packages are built and packed in jobs without publishing rights; separate jobs that run no build or install script hold the short-lived OIDC token and only push what was packed.
 
 ## Part of the Cratis ecosystem
 

@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0",
+  "harnesses": [
+    "claude",
+    "codex",
+    "copilot",
+    "pi"
+  ],
+  "profiles": [
+    "cratis/application",
+    "cratis/application/csharp",
+    "cratis/application/typescript",
+    "cratis/chronicle",
+    "cratis/chronicle/client-dotnet",
+    "cratis/chronicle/compliance",
+    "cratis/chronicle/multi-tenancy",
+    "cratis/engineering",
+    "cratis/engineering/csharp",
+    "cratis/engineering/react",
+    "cratis/engineering/typescript",
+    "cratis/language/csharp",
+    "cratis/language/typescript",
+    "cratis/specifications",
+    "cratis/specifications/dotnet",
+    "cratis/specifications/typescript"
+  ],
+  "languages": [
+    "csharp",
+    "typescript"
+  ]
+}

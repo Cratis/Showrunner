@@ -5,11 +5,11 @@
   <ItemGroup>
     <!-- Cratis — keep the public Cratis / Arc family aligned so generated proxies and runtime
          contracts are built against the same Chronicle contract generation. Cratis.Arc.Chronicle
-         22.143.0 requires Cratis.Chronicle >= 19.110.1 and Cratis.Fundamentals >= 7.26.1. -->
-    <PackageVersion Include="Cratis.Arc" Version="22.143.0" />
-    <PackageVersion Include="Cratis.Arc.Chronicle" Version="22.143.0" />
-    <PackageVersion Include="Cratis.Arc.ProxyGenerator.Build" Version="22.143.0" />
-    <PackageVersion Include="Cratis.Arc.Chronicle.Testing" Version="22.143.0" />
+         22.146.0 requires Cratis.Chronicle >= 19.110.1 and Cratis.Fundamentals >= 7.26.1. -->
+    <PackageVersion Include="Cratis.Arc" Version="22.146.0" />
+    <PackageVersion Include="Cratis.Arc.Chronicle" Version="22.146.0" />
+    <PackageVersion Include="Cratis.Arc.ProxyGenerator.Build" Version="22.146.0" />
+    <PackageVersion Include="Cratis.Arc.Chronicle.Testing" Version="22.146.0" />
     <PackageVersion Include="Cratis.Fundamentals" Version="7.27.0" />
     <!-- Keep Chronicle clients and testing support on the same release. -->
     <PackageVersion Include="Cratis.Chronicle" Version="19.111.0" />

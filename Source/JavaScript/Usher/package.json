@@ -59,13 +59,13 @@
         "up": "yarn g:up"
     },
     "devDependencies": {
-        "@cratis/arc": "22.143.0",
-        "@cratis/arc.react": "22.143.0",
+        "@cratis/arc": "22.146.0",
+        "@cratis/arc.react": "22.146.0",
         "@cratis/fundamentals": "7.27.0"
     },
     "peerDependencies": {
-        "@cratis/arc": "^22.143.0",
-        "@cratis/arc.react": "^22.143.0",
+        "@cratis/arc": "^22.146.0",
+        "@cratis/arc.react": "^22.146.0",
         "@cratis/fundamentals": "^7.27.0"
     }
 }

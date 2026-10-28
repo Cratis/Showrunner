@@ -1,0 +1,320 @@
+/* Copyright (c) Cratis. All rights reserved.
+   Licensed under the MIT license. See LICENSE file in the project root for full license information. */
+
+/*
+ * The styles of the Usher components. Import once, after the Cratis Components stylesheets:
+ *   @import '@cratis/showrunner.usher.react/styles';
+ * Every color comes from the --cratis-* tokens, so the Cratis Components theme and dark mode apply.
+ */
+
+.usher-icon {
+    flex-shrink: 0;
+}
+
+/* Report dialogs */
+
+.usher-report-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.usher-sent-with-report {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--cratis-border-radius);
+    background: var(--cratis-surface-section);
+    color: var(--cratis-text-color-secondary);
+    font-size: 0.875rem;
+}
+
+.usher-sent-with-report__heading {
+    font-weight: 600;
+    color: var(--cratis-text-color);
+}
+
+.usher-access-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.usher-access-fields__choice {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.usher-access-fields__description {
+    margin: 0;
+    padding-inline-start: 1.75rem;
+    color: var(--cratis-text-color-secondary);
+    font-size: 0.875rem;
+}
+
+.usher-access-fields__duration {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-inline-start: 1.75rem;
+}
+
+.usher-technical-details {
+    border: 1px solid var(--cratis-surface-border);
+    border-radius: var(--cratis-border-radius);
+    padding: 0.5rem 0.75rem;
+}
+
+.usher-technical-details__summary {
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.usher-technical-details__summary:focus-visible {
+    outline: 2px solid var(--cratis-focus-ring);
+    outline-offset: 2px;
+}
+
+.usher-technical-details__list {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.25rem 1rem;
+    margin: 0.5rem 0 0;
+    font-size: 0.875rem;
+}
+
+.usher-technical-details__list dt {
+    color: var(--cratis-text-color-secondary);
+}
+
+.usher-technical-details__list dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.usher-technical-details__frames {
+    margin: 0;
+    padding-inline-start: 1.25rem;
+}
+
+.usher-dialog-text {
+    margin: 0;
+}
+
+/* My issues */
+
+.usher-my-issues {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.usher-my-issues__toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.usher-issue-list__title {
+    display: flex;
+    flex-direction: column;
+}
+
+.usher-issue-list__kind {
+    color: var(--cratis-text-color-secondary);
+    font-size: 0.8125rem;
+}
+
+.usher-issue-list__state {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+/* Issue view */
+
+.usher-issue-view {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.usher-issue-view__body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 15rem;
+    gap: 1rem;
+    align-items: start;
+}
+
+@media (max-width: 720px) {
+    .usher-issue-view__body {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.usher-issue-view__side {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.usher-issue-header {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+}
+
+.usher-issue-header__title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.usher-issue-header__title {
+    margin: 0;
+    font-size: 1.125rem;
+}
+
+.usher-issue-header__meta,
+.usher-issue-header__links {
+    margin: 0;
+    color: var(--cratis-text-color-secondary);
+    font-size: 0.875rem;
+}
+
+.usher-issue-header__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+}
+
+.usher-status-strip {
+    display: flex;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    gap: 0.25rem;
+}
+
+.usher-status-strip__step {
+    flex: 1;
+    padding: 0.25rem 0.5rem;
+    border-top: 3px solid var(--cratis-surface-border);
+    color: var(--cratis-text-color-secondary);
+    font-size: 0.8125rem;
+}
+
+.usher-status-strip__step[data-reached] {
+    border-top-color: var(--cratis-primary-color);
+}
+
+.usher-status-strip__step[data-current] {
+    color: var(--cratis-text-color);
+    font-weight: 600;
+}
+
+.usher-conversation {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-height: 20rem;
+}
+
+.usher-conversation__fieldset {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.usher-conversation__fieldset:disabled {
+    opacity: 0.6;
+}
+
+.usher-conversation__question-state {
+    display: inline-flex;
+    margin-top: 0.25rem;
+}
+
+.usher-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border: 1px solid var(--cratis-surface-border);
+    border-radius: var(--cratis-border-radius);
+    background: var(--cratis-surface-card);
+}
+
+.usher-panel[data-highlighted] {
+    border-color: var(--cratis-warning-text);
+    background: var(--cratis-warning-background);
+}
+
+.usher-panel__heading {
+    margin: 0;
+    font-size: 0.9375rem;
+}
+
+.usher-panel__text {
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+.usher-panel__text--secondary {
+    color: var(--cratis-text-color-secondary);
+}
+
+.usher-panel__actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.usher-sessions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.8125rem;
+}
+
+.usher-sessions__heading {
+    color: var(--cratis-text-color-secondary);
+}
+
+.usher-sessions__list {
+    margin: 0;
+    padding-inline-start: 1rem;
+}
+
+.usher-sessions__activity {
+    margin: 0.125rem 0 0;
+    padding-inline-start: 1rem;
+    color: var(--cratis-text-color-secondary);
+}
+
+.usher-issue-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+/* Buttons */
+
+.usher-my-issues-button {
+    position: relative;
+    display: inline-flex;
+}
+
+.usher-my-issues-button__badge {
+    position: absolute;
+    top: -0.375rem;
+    inset-inline-end: -0.375rem;
+    pointer-events: none;
+}

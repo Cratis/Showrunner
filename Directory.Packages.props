@@ -1,0 +1,45 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Cratis — keep the public Cratis / Arc family aligned so generated proxies and runtime
+         contracts are built against the same Chronicle contract generation. Cratis.Arc.Chronicle
+         22.146.0 requires Cratis.Chronicle >= 19.110.1 and Cratis.Fundamentals >= 7.26.1. -->
+    <PackageVersion Include="Cratis.Arc" Version="22.146.0" />
+    <PackageVersion Include="Cratis.Arc.Chronicle" Version="22.146.0" />
+    <PackageVersion Include="Cratis.Arc.ProxyGenerator.Build" Version="22.146.0" />
+    <PackageVersion Include="Cratis.Arc.Chronicle.Testing" Version="22.146.0" />
+    <PackageVersion Include="Cratis.Fundamentals" Version="7.27.0" />
+    <!-- Keep Chronicle clients and testing support on the same release. -->
+    <PackageVersion Include="Cratis.Chronicle" Version="19.111.0" />
+    <PackageVersion Include="Cratis.Chronicle.Testing" Version="19.111.0" />
+    <!-- Serves the integration specifications' web host in memory. -->
+    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.14" />
+    <!-- Verifies the RS256 tokens AuthProxy signs its on-behalf calls with; the same library AuthProxy signs them with. -->
+    <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.23.0" />
+    <!-- Compiler toolset — pinned to match the Roslyn version Cratis.Arc.Core's and Cratis.Chronicle's
+         analyzers were built against (CS9057 otherwise). Requires .NET SDK 10.0.400+ (global.json). -->
+    <PackageVersion Include="Microsoft.Net.Compilers.Toolset" Version="5.9.0" />
+    <!-- Referenced directly (Debug-only, see Source/DotNET/Directory.Build.props) so the version lands in
+         the test output directory: Cratis's generated type-discovery provider loads
+         Microsoft.CodeAnalysis.CSharp at runtime, and without a direct reference it is absent from
+         bin/Debug, which throws FileNotFoundException the moment a CommandScenario spec runs. -->
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.9.0" />
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.401" />
+    <!-- Analysis -->
+    <PackageVersion Include="StyleCop.Analyzers" Version="1.2.0-beta.556" NoWarn="NU5104" />
+    <PackageVersion Include="Roslynator.Analyzers" Version="5.0.0" />
+    <PackageVersion Include="Meziantou.Analyzer" Version="3.0.253" />
+    <!-- Testing & Specifications -->
+    <PackageVersion Include="Cratis.Specifications.XUnit" Version="4.1.0" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.0" />
+    <PackageVersion Include="NSubstitute" Version="6.2.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.0" />
+    <!-- Integration specifications only (Integration/): a real Chronicle kernel in a container. -->
+    <PackageVersion Include="Testcontainers" Version="4.15.0" />
+    <!-- Testcontainers brings in SSH.NET 2025.1.0 (GHSA-q939-rpr3-3284); pull it forward to the patched release. -->
+    <PackageVersion Include="SSH.NET" Version="2026.0.0" />
+  </ItemGroup>
+</Project>

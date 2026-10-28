@@ -1,0 +1,71 @@
+{
+    "type": "module",
+    "name": "@cratis/showrunner.usher",
+    "version": "1.0.0",
+    "description": "Generated TypeScript proxies for Usher — the Showrunner support part for issue reporting and support conversations, built on Cratis Arc.",
+    "keywords": [
+        "cratis",
+        "showrunner",
+        "usher",
+        "support",
+        "arc",
+        "proxies",
+        "typescript"
+    ],
+    "homepage": "https://github.com/Cratis/Showrunner",
+    "author": "Cratis",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Cratis/Showrunner.git"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "files": [
+        "dist",
+        "**/*.ts",
+        "**/*.tsx",
+        "!**/for_*/**",
+        "!**/given/**",
+        "!**/*.tsbuildinfo"
+    ],
+    "main": "dist/cjs/index.js",
+    "module": "dist/esm/index.js",
+    "types": "dist/esm/index.d.ts",
+    "exports": {
+        "./package.json": "./package.json",
+        ".": {
+            "import": {
+                "types": "./dist/esm/index.d.ts",
+                "default": "./dist/esm/index.js"
+            },
+            "require": {
+                "types": "./dist/cjs/index.d.ts",
+                "default": "./dist/cjs/index.js"
+            }
+        }
+    },
+    "scripts": {
+        "prepare": "yarn g:build",
+        "clean": "yarn g:clean",
+        "compile": "yarn g:compile",
+        "build": "yarn g:build",
+        "lint": "yarn g:lint",
+        "lint:ci": "yarn g:lint:ci",
+        "test": "yarn g:test",
+        "test:watch": "yarn g:test:watch",
+        "ci": "yarn g:ci",
+        "up": "yarn g:up"
+    },
+    "devDependencies": {
+        "@cratis/arc": "22.146.0",
+        "@cratis/arc.react": "22.146.0",
+        "@cratis/fundamentals": "7.27.0"
+    },
+    "peerDependencies": {
+        "@cratis/arc": "^22.146.0",
+        "@cratis/arc.react": "^22.146.0",
+        "@cratis/fundamentals": "^7.27.0"
+    }
+}

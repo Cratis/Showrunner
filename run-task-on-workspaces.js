@@ -148,7 +148,16 @@ for (const workspaceName of workspaceNamesToRun) {
                     return;
                 }
 
-                const [packed] = JSON.parse(result.stdout.toString());
+                // Lifecycle output can precede the JSON on some npm versions; parse from the array itself.
+                const packOutput = result.stdout.toString();
+                const jsonStart = packOutput.search(/^\[/m);
+                if (jsonStart < 0) {
+                    console.log(packOutput);
+                    console.log(`Error packing workspace '${workspaceName}' - npm pack printed no JSON result`);
+                    process.exit(1);
+                    return;
+                }
+                const [packed] = JSON.parse(packOutput.slice(jsonStart));
                 fs.appendFileSync(path.join(destination, 'publish-order.txt'), `${workspaceName}\t${version}\t${packed.filename}\n`);
             }
         } else if (task === 'publish-version') {

@@ -207,6 +207,14 @@ jobs:
       - name: Yarn install
         run: yarn install --immutable
 
+      # npm 10 (bundled with Node 22) runs the prepare script during npm pack even with
+      # --ignore-scripts, which mixes build output into npm pack --json. Pack with the same pinned
+      # npm the publish job uses.
+      - name: Install npm for packing
+        run: |
+          npm install -g --ignore-scripts "npm@$NPM_VERSION"
+          echo "Installed npm $(npm --version)"
+
       - name: Build and pack npm packages
         env:
           VERSION: ${{ needs.release.outputs.version }}

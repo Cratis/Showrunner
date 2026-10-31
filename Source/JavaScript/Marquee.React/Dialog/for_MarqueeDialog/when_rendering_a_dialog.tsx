@@ -3,8 +3,9 @@
 
 import { CratisComponentsProvider } from '@cratis/components';
 import { Display, Importance } from '@cratis/showrunner.marquee';
-import { cleanup, fireEvent, render, RenderResult, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, RenderResult } from '@testing-library/react';
 import sinon from 'sinon';
+import { vi } from 'vitest';
 import { anAnnouncement } from '../../given/an_announcement.js';
 import { defaultMarqueeLabels } from '../../Labels/index.js';
 import { MarqueeDialog } from '../MarqueeDialog.js';
@@ -52,9 +53,12 @@ describe('when rendering a dialog', () => {
 
     describe('and focus is placed', () => {
         beforeEach(async () => {
+            vi.useFakeTimers();
             result = renderDialog(false, onClose);
-            await waitFor(() => result.getByRole('dialog').contains(document.activeElement).should.be.true, { timeout: 15000 });
+            await vi.advanceTimersByTimeAsync(20);
         });
+
+        afterEach(() => vi.useRealTimers());
 
         it('should not be on the button that closes it', () => (document.activeElement === result.getByRole('button', { name: 'Got it' })).should.be.false);
         it('should be inside the dialog', () => result.getByRole('dialog').contains(document.activeElement).should.be.true);

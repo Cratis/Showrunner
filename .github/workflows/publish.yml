@@ -130,7 +130,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  # Cratis.Showrunner.Usher, Cratis.Showrunner.Usher.Contracts and Cratis.Showrunner.BoxOffice.Contracts via NuGet.org trusted publishing
+  # Every Cratis.Showrunner.* package (Usher, Marquee, Box Office and their contracts) via NuGet.org trusted publishing
   # (OIDC) - no long-lived API key secret to hold or rotate. The trusted-publishing policy on
   # nuget.org is bound to this workflow file (publish.yml) by name, so the job must live here rather
   # than in a separately named workflow. It checks out and builds nothing: it pushes what pack-nuget
@@ -232,7 +232,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  # @cratis/showrunner.usher and @cratis/showrunner.usher.react via npm trusted publishing (OIDC) with
+  # Every @cratis/showrunner.* package (usher, usher.react, marquee, marquee.authoring) via npm trusted publishing (OIDC) with
   # provenance - no long-lived npm token. It installs and builds nothing: publish-tarballs.cjs
   # publishes the tarballs pack-npm packed, in dependency order, with lifecycle scripts disabled.
   publish-npm:

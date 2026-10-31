@@ -2,3 +2,11 @@
   href: index.md
 - name: Contracts
   href: contracts.md
+- name: Authoring
+  href: authoring.md
+- name: Receiving
+  href: receiving.md
+- name: Acknowledging
+  href: acknowledging.md
+- name: Frontend proxies
+  href: frontend-proxies.md

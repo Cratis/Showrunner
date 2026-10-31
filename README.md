@@ -24,7 +24,11 @@ Usher is in its earliest stage: the packages are scaffolded and published, but c
 | `Cratis.Showrunner.BoxOffice.Contracts` | NuGet | Box Office's event contracts: what an operator decides about a tenant and what a product reports back |
 | `Cratis.Showrunner.Usher.Contracts` | NuGet | Usher's event contracts, for hosts that react to what Usher records |
 | `Cratis.Showrunner.Marquee.Contracts` | NuGet | Marquee's event contracts: the public events a product receives announcements through |
+| `Cratis.Showrunner.Marquee.Authoring` | NuGet | Marquee's authoring backend — commands, query and outbox for writing announcements, built on Arc and Chronicle |
+| `Cratis.Showrunner.Marquee` | NuGet | Marquee's backend for products — receives announcements once, shows each tenant what its audience matches and records acknowledgements |
 | `Cratis.Showrunner.Usher` | NuGet | Usher's backend — Arc commands and queries over Chronicle |
+| `@cratis/showrunner.marquee` | npm | The generated TypeScript proxies for Marquee's receiving commands and queries; no UI framework dependency |
+| `@cratis/showrunner.marquee.authoring` | npm | The generated TypeScript proxies for Marquee's authoring commands and query; no UI framework dependency |
 | `@cratis/showrunner.usher` | npm | The generated TypeScript proxies for Usher's commands and queries; no UI framework dependency |
 | `@cratis/showrunner.usher.react` | npm | React components for Usher, built on `@cratis/arc.react` and `@cratis/components` |
 

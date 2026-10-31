@@ -20,4 +20,11 @@ public class BoxOfficeOptions
     /// Gets or sets how often Box Office looks for tenant namespaces it does not serve yet. Defaults to one minute.
     /// </summary>
     public TimeSpan PollingInterval { get; set; } = TimeSpan.FromMinutes(1);
+
+    /// <summary>
+    /// Gets or sets whether commands, queries and reactors of a module the tenant does not have are refused. On by default;
+    /// turning it off is the operational escape hatch for a deployment whose tenants have not been given their entitlements
+    /// yet, and nothing else.
+    /// </summary>
+    public bool EnforceModules { get; set; } = true;
 }

@@ -33,5 +33,6 @@
 
     <ItemGroup>
         <ProjectReference Include="../BoxOffice.Contracts/BoxOffice.Contracts.csproj" />
+        <ProjectReference Include="../BoxOffice.Offering/BoxOffice.Offering.csproj" />
     </ItemGroup>
 </Project>

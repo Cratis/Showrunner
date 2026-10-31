@@ -1,4 +1,6 @@
 - name: Overview
   href: index.md
+- name: Box Office
+  href: BoxOffice/toc.yml
 - name: Usher
   href: Usher/toc.yml

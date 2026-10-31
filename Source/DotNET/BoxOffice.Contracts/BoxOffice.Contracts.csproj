@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <!-- Must match PackageId below. See Usher.Contracts.csproj for why: Cratis.Types resolves a referenced
+             project by the library name recorded in deps.json, and a mismatch silently drops every event type
+             in this assembly from discovery. -->
+        <AssemblyName>Cratis.Showrunner.BoxOffice.Contracts</AssemblyName>
+        <RootNamespace>Cratis.Showrunner.BoxOffice.Contracts</RootNamespace>
+        <PackageId>Cratis.Showrunner.BoxOffice.Contracts</PackageId>
+        <Description>The event contracts for Box Office — what a product's operator decides about a tenant (trials, seats, modules, allowances, suspension) and what the product reports back.</Description>
+        <PackageTags>cratis;showrunner;boxoffice;licensing;entitlements;event-sourcing;chronicle</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Cratis.Chronicle" />
+    </ItemGroup>
+</Project>

@@ -10,3 +10,4 @@ Showrunner is a set of ready-made product parts for applications built on [Crati
 | Part | What it does |
 | --- | --- |
 | [Usher](./Usher/index.md) | Support: issue reporting and support conversations between an application's users and the people running it |
+| [Box Office](./BoxOffice/index.md) | Licensing: trials, seats, modules, compute allowances and suspension of a managed product's tenants |

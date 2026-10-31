@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>Cratis.Showrunner.BoxOffice</AssemblyName>
+        <RootNamespace>Cratis.Showrunner.BoxOffice</RootNamespace>
+        <PackageId>Cratis.Showrunner.BoxOffice</PackageId>
+        <Description>Box Office — the Showrunner part a managed product runs to honor what its operator decides about a tenant: trials, seats, modules, allowances and suspension, built on Cratis Arc and Chronicle.</Description>
+        <PackageTags>cratis;showrunner;boxoffice;licensing;entitlements;arc;chronicle;event-sourcing</PackageTags>
+
+        <!-- The TypeScript proxies for Box Office's commands and queries are generated into the
+             @cratis/showrunner.boxoffice npm package. The Cratis.Showrunner.BoxOffice namespace segments are
+             skipped so a slice in Cratis.Showrunner.BoxOffice.<Feature>.<Slice> lands in <Feature>/<Slice>/.
+             Release builds clear CratisProxiesOutputPath (-p:CratisProxiesOutputPath=) so generation only
+             runs from the Debug build. -->
+        <CratisProxiesOutputPath>$(MSBuildThisFileDirectory)../../JavaScript/BoxOffice</CratisProxiesOutputPath>
+        <CratisProxiesSegmentsToSkip>3</CratisProxiesSegmentsToSkip>
+        <CratisProxiesSkipOutputDeletion>true</CratisProxiesSkipOutputDeletion>
+        <CratisProxiesSkipCommandNameInRoute>true</CratisProxiesSkipCommandNameInRoute>
+        <CratisProxiesUseSourceFileAsOutputFile>true</CratisProxiesUseSourceFileAsOutputFile>
+
+        <!-- Read models a command's validator or Handle() takes as parameters are read fresh from the event log and
+             guard the append: two assignments of the last seat cannot both succeed. -->
+        <CratisReadProtection>On</CratisReadProtection>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Cratis.Arc" />
+        <PackageReference Include="Cratis.Arc.Chronicle" />
+        <PackageReference Include="Cratis.Arc.ProxyGenerator.Build">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../BoxOffice.Contracts/BoxOffice.Contracts.csproj" />
+    </ItemGroup>
+</Project>

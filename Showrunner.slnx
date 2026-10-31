@@ -2,6 +2,8 @@
   <Folder Name="/Source/DotNET/">
     <Project Path="Source/DotNET/BoxOffice.Catalog/BoxOffice.Catalog.csproj" />
     <Project Path="Source/DotNET/BoxOffice.Contracts/BoxOffice.Contracts.csproj" />
+    <Project Path="Source/DotNET/BoxOffice/BoxOffice.csproj" />
+    <Project Path="Source/DotNET/BoxOffice.Offering/BoxOffice.Offering.csproj" />
     <Project Path="Source/DotNET/Marquee.Authoring/Marquee.Authoring.csproj" />
     <Project Path="Source/DotNET/Marquee.Contracts/Marquee.Contracts.csproj" />
     <Project Path="Source/DotNET/Marquee/Marquee.csproj" />
@@ -9,6 +11,7 @@
     <Project Path="Source/DotNET/Usher/Usher.csproj" />
   </Folder>
   <Folder Name="/Integration/">
+    <Project Path="Integration.BoxOffice/BoxOffice.Integration.Specs.csproj" />
     <Project Path="Integration/Usher.Integration.Specs.csproj" />
   </Folder>
 </Solution>

@@ -2,5 +2,17 @@
   href: index.md
 - name: Contracts
   href: contracts.md
+- name: Receiving and entitlements
+  href: entitlements.md
+- name: Suspension and read-only tenants
+  href: suspension.md
+- name: Seat licensing
+  href: seats.md
+- name: Frontend proxies
+  href: frontend-proxies.md
 - name: Catalog
   href: catalog.md
+- name: Offering
+  href: offering.md
+- name: Metering compute
+  href: metering.md

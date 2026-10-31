@@ -147,6 +147,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@cratis/showrunner.boxoffice@workspace:Source/JavaScript/BoxOffice":
+  version: 0.0.0-use.local
+  resolution: "@cratis/showrunner.boxoffice@workspace:Source/JavaScript/BoxOffice"
+  dependencies:
+    "@cratis/arc": "npm:22.146.0"
+    "@cratis/arc.react": "npm:22.146.0"
+    "@cratis/fundamentals": "npm:7.27.0"
+  peerDependencies:
+    "@cratis/arc": ^22.146.0
+    "@cratis/arc.react": ^22.146.0
+    "@cratis/fundamentals": ^7.27.0
+  languageName: unknown
+  linkType: soft
+
 "@cratis/showrunner.marquee.authoring@workspace:Source/JavaScript/Marquee.Authoring":
   version: 0.0.0-use.local
   resolution: "@cratis/showrunner.marquee.authoring@workspace:Source/JavaScript/Marquee.Authoring"

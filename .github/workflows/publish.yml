@@ -232,7 +232,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  # Every @cratis/showrunner.* package (usher, usher.react, marquee, marquee.authoring, boxoffice, boxoffice.react) via npm trusted publishing (OIDC) with
+  # Every @cratis/showrunner.* package (usher, usher.react, marquee, marquee.authoring, marquee.react, boxoffice, boxoffice.react) via npm trusted publishing (OIDC) with
   # provenance - no long-lived npm token. It installs and builds nothing: publish-tarballs.cjs
   # publishes the tarballs pack-npm packed, in dependency order, with lifecycle scripts disabled.
   publish-npm:

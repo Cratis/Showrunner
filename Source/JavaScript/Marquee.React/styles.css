@@ -1,0 +1,129 @@
+/* Copyright (c) Cratis. All rights reserved.
+   Licensed under the MIT license. See LICENSE file in the project root for full license information. */
+
+/*
+ * The styles of the Marquee components. Import once, after the Cratis Components stylesheets:
+ *   @import '@cratis/showrunner.marquee.react/styles';
+ * Every color comes from the --cratis-* tokens, so the Cratis Components theme and dark mode apply.
+ */
+
+.marquee-icon {
+    flex-shrink: 0;
+    color: var(--cratis-primary-color, currentColor);
+}
+
+.marquee-icon--warning {
+    color: var(--cratis-orange-500, #f59e0b);
+}
+
+.marquee-icon--critical {
+    color: var(--cratis-red-500, #ef4444);
+}
+
+/* Banners: one row for each announcement, at the top of the flow of the page, above what the shell draws below it. */
+
+.marquee-banner {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--cratis-surface-card, canvas);
+}
+
+.marquee-banner__item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 0.6rem 1.25rem;
+    background-color: color-mix(in srgb, var(--cratis-primary-color, #3b82f6) 16%, var(--cratis-surface-card, canvas));
+    border-bottom: 1px solid var(--cratis-surface-border, currentColor);
+    color: var(--cratis-text-color, inherit);
+}
+
+.marquee-banner__item--warning {
+    background-color: color-mix(in srgb, var(--cratis-orange-500, #f59e0b) 16%, var(--cratis-surface-card, canvas));
+    border-bottom-color: var(--cratis-orange-500, #f59e0b);
+}
+
+.marquee-banner__item--critical {
+    background-color: color-mix(in srgb, var(--cratis-red-500, #ef4444) 16%, var(--cratis-surface-card, canvas));
+    border-bottom-color: var(--cratis-red-500, #ef4444);
+}
+
+.marquee-banner__item .marquee-icon {
+    font-size: 1.1rem;
+}
+
+.marquee-banner__text {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.marquee-banner__title {
+    font-weight: 600;
+}
+
+.marquee-banner__body {
+    color: var(--cratis-text-color-secondary, inherit);
+}
+
+/* Dialog */
+
+.marquee-dialog {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.marquee-dialog__importance {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    font-size: 1.1rem;
+    background-color: color-mix(in srgb, var(--cratis-primary-color, #3b82f6) 15%, transparent);
+}
+
+.marquee-dialog__importance--warning {
+    background-color: color-mix(in srgb, var(--cratis-orange-500, #f59e0b) 20%, transparent);
+}
+
+.marquee-dialog__importance--critical {
+    background-color: color-mix(in srgb, var(--cratis-red-500, #ef4444) 20%, transparent);
+}
+
+/* Markdown */
+
+.marquee-markdown a {
+    color: var(--cratis-primary-color, inherit);
+    text-decoration: underline;
+}
+
+.marquee-markdown a:hover {
+    text-decoration: none;
+}
+
+.marquee-markdown > :first-child {
+    margin-top: 0;
+}
+
+.marquee-markdown > :last-child {
+    margin-bottom: 0;
+}
+
+.marquee-markdown--compact,
+.marquee-markdown--compact p {
+    display: inline;
+    margin: 0;
+}
+
+.marquee-markdown--compact p + p::before {
+    content: ' ';
+}

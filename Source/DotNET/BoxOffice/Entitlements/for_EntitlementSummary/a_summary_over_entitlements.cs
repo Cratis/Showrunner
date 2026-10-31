@@ -18,9 +18,10 @@ public class a_summary_over_entitlements : some_entitlements
         _portal = Substitute.For<ICustomerPortal>();
         _offering = new ProductOfferingBuilder()
             .Product(ProductId.New())
-            .Module("core", "Core", module => module.Availability(Cratis.Showrunner.BoxOffice.Offering.Declaration.ModuleAvailability.Included))
+            .Module("core", "Core", module => module.Availability(ModuleAvailability.Included))
             .Module("analytics", "Analytics", module => module.Requires("core"))
             .Module("agents", "Agents")
+            .Module("reports", "Reports")
             .Build();
     }
 

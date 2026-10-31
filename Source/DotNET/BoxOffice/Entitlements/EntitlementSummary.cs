@@ -67,6 +67,11 @@ public record EntitlementSummary(
 
     static ModuleStanding StandingOf(ModuleDefinition definition, ModuleEntitlements? modules, DateOnly today)
     {
+        if (definition.Availability == Offering.Declaration.ModuleAvailability.Included)
+        {
+            return new(definition.Id, definition.Name, ModuleAccess.Full, null);
+        }
+
         var entitlement = modules?.Modules.FirstOrDefault(_ => _.Module == definition.Id);
         var access = entitlement?.On(today) ?? ModuleAccess.None;
         return new(definition.Id, definition.Name, access, access == ModuleAccess.None || entitlement is null ? null : EndOf(entitlement.Until));

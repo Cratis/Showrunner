@@ -4,6 +4,7 @@
 #if DEBUG
 using Cratis.Execution;
 using Cratis.Showrunner.BoxOffice.Entitlements;
+using Cratis.Showrunner.BoxOffice.Seats;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Cratis.Showrunner.BoxOffice.Suspension.for_TenantAccessFilter.given;
@@ -14,6 +15,7 @@ namespace Cratis.Showrunner.BoxOffice.Suspension.for_TenantAccessFilter.given;
 public class a_tenant_access_filter : Specification
 {
     protected IEntitlements _entitlements;
+    protected ICurrentSeatHolder _holder;
     protected TenantAccessFilter _filter;
     protected CommandResult _result;
     ServiceProvider _services;
@@ -27,10 +29,12 @@ public class a_tenant_access_filter : Specification
     {
         _entitlements = Substitute.For<IEntitlements>();
         _entitlements.WhyReadOnly().Returns(ReadOnlyReason.None);
+        _holder = Substitute.For<ICurrentSeatHolder>();
         var services = new ServiceCollection();
         if (BoxOfficeIsAdded)
         {
             services.AddSingleton(_entitlements);
+            services.AddSingleton(_holder);
         }
 
         _services = services.BuildServiceProvider();

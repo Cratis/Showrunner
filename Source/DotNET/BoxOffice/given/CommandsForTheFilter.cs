@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #if DEBUG
+using Cratis.Showrunner.BoxOffice.Seats;
 using Cratis.Showrunner.BoxOffice.Suspension;
 
 namespace Cratis.Showrunner.BoxOffice.given;
@@ -16,4 +17,17 @@ public class AnOrdinaryChange;
 /// </summary>
 [AllowedWhileSuspended]
 public class ReportingAProblem;
+
+/// <summary>
+/// A command only a user with a seat may execute.
+/// </summary>
+[RequiresSeat]
+public class ChangingSettings;
+
+/// <summary>
+/// A command only a user with a seat may execute, which a read-only tenant may still execute.
+/// </summary>
+[RequiresSeat]
+[AllowedWhileSuspended]
+public class ExportingData;
 #endif

@@ -3,6 +3,7 @@
 
 global using Cratis.Arc.Authorization;
 global using Cratis.Arc.Commands;
+global using Cratis.Arc.Commands.ModelBound;
 global using Cratis.Chronicle.Events;
 global using Cratis.Showrunner.BoxOffice.Contracts;
 global using Cratis.Showrunner.BoxOffice.Contracts.Compute;

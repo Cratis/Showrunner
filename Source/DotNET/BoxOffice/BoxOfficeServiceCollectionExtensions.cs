@@ -5,6 +5,7 @@ using Cratis.Showrunner.BoxOffice;
 using Cratis.Showrunner.BoxOffice.Entitlements;
 using Cratis.Showrunner.BoxOffice.Offers;
 using Cratis.Showrunner.BoxOffice.Receiving;
+using Cratis.Showrunner.BoxOffice.Seats;
 using Cratis.Showrunner.BoxOffice.Tenancy;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -36,6 +37,7 @@ public static class BoxOfficeServiceCollectionExtensions
         services.TryAddSingleton<OperatorSubscriptions>();
         services.TryAddSingleton<ProductOffers>();
         services.TryAddScoped<IEntitlements, TenantEntitlements>();
+        services.TryAddTransient<ICurrentSeatHolder, CurrentSeatHolder>();
         services.AddHostedService<BoxOfficeWorker>();
         return services;
     }

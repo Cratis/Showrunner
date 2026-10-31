@@ -1,6 +1,9 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Arc.Queries.ModelBound;
+using Cratis.Chronicle.ReadModels;
+
 namespace Cratis.Showrunner.BoxOffice.Seats;
 
 /// <summary>
@@ -9,6 +12,7 @@ namespace Cratis.Showrunner.BoxOffice.Seats;
 /// </summary>
 /// <param name="Id">The id of the tenant's stream.</param>
 /// <param name="Holdings">The seats that are held, in the order they were assigned.</param>
+[ReadModel]
 public record SeatRoster(string Id, IEnumerable<SeatHolding> Holdings)
 {
     /// <summary>
@@ -38,6 +42,15 @@ public record SeatRoster(string Id, IEnumerable<SeatHolding> Holdings)
     /// <param name="capacity">The seats the tenant may use.</param>
     /// <returns><see langword="true"/> when they hold a seat the capacity covers.</returns>
     public bool IsLicensed(SeatHolder holder, int capacity) => Licensed(capacity).Any(_ => SeatHolder.Of(_.Holder) == holder);
+
+    /// <summary>
+    /// Gets who holds the tenant's seats, for the product's maintainers.
+    /// </summary>
+    /// <param name="readModels">The <see cref="IReadModels"/> of the current tenant.</param>
+    /// <returns>The roster, empty when no seat was ever assigned.</returns>
+    [Authorize(Policy = BoxOfficePolicies.ManageSeats)]
+    public static async Task<SeatRoster> CurrentRoster(IReadModels readModels) =>
+        await readModels.GetInstanceById<SeatRoster>(TenantStream.Id.Value) ?? new(TenantStream.Id.Value, []);
 
     /// <summary>
     /// Folds <see cref="SeatAssigned"/> into the state.

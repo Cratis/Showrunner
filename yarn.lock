@@ -311,7 +311,28 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@cratis/showrunner.boxoffice@workspace:Source/JavaScript/BoxOffice":
+"@cratis/showrunner.boxoffice.react@workspace:Source/JavaScript/BoxOffice.React":
+  version: 0.0.0-use.local
+  resolution: "@cratis/showrunner.boxoffice.react@workspace:Source/JavaScript/BoxOffice.React"
+  dependencies:
+    "@cratis/arc": "npm:22.146.0"
+    "@cratis/arc.react": "npm:22.146.0"
+    "@cratis/components": "npm:4.38.0"
+    "@cratis/fundamentals": "npm:7.27.0"
+    "@cratis/showrunner.boxoffice": "npm:1.0.0"
+    react: "npm:^19.3.1"
+    react-dom: "npm:^19.3.1"
+    reflect-metadata: "npm:0.2.2"
+  peerDependencies:
+    "@cratis/arc": ^22.146.0
+    "@cratis/arc.react": ^22.146.0
+    "@cratis/components": ^4.38.0
+    "@cratis/fundamentals": ^7.27.0
+    react: ^19.0.0
+  languageName: unknown
+  linkType: soft
+
+"@cratis/showrunner.boxoffice@npm:1.0.0, @cratis/showrunner.boxoffice@workspace:Source/JavaScript/BoxOffice":
   version: 0.0.0-use.local
   resolution: "@cratis/showrunner.boxoffice@workspace:Source/JavaScript/BoxOffice"
   dependencies:

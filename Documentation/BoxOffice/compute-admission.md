@@ -93,3 +93,8 @@ The product's maintainers set a tenant's budgets and concurrency limits with two
 | `SetComputeConcurrencyLimit(Meter, Limit)` | Sets how many units of work of the meter the tenant may run at once. The meter must be declared with a concurrency limit, and the limit at least one. |
 
 Setting what is already set appends nothing. If the operator later lowers the allowance below a budget, the allowance is what turns work away. The `CurrentLimits` query returns the tenant's `ComputeLimits` for the product's maintainers, one `MeterLimit` per meter with its `Budget` and `ConcurrencyLimit`; see [Frontend proxies](./frontend-proxies.md).
+
+## Reading where a tenant stands
+
+The `CurrentUsage` query returns one `MeterStanding` per meter the product declares, ordered by name, for the product's maintainers; it is authorized by `BoxOffice.ManageCompute` like the commands above. Each carries what the tenant has used since its allowance period began, the allowance and its period, what happens beyond it (`Block` or `Park`), the first day of the next period, the budget and concurrency limit when they are set, and whether the meter has a concurrency limit at all. It reads what [metering](./metering.md) has measured, the same figures admission decides from, so it trails running work in the same way. The [usage page](./react.md#pages) shows it.
+

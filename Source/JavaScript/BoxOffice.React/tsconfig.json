@@ -1,0 +1,23 @@
+{
+    "extends": "../../../tsconfig.json",
+    "compilerOptions": {
+        "rootDir": ".",
+        "outDir": "dist/esm"
+    },
+    "files": [
+        "../../../test.d.ts"
+    ],
+    "include": [
+        "**/*.ts",
+        "**/*.tsx"
+    ],
+    "references": [
+        {
+            "path": "../BoxOffice"
+        }
+    ],
+    "exclude": [
+        "dist",
+        "vite.config.mts"
+    ]
+}

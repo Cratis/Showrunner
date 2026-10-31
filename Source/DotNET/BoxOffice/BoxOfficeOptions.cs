@@ -34,4 +34,21 @@ public class BoxOfficeOptions
     /// at most seven days.
     /// </summary>
     public TimeSpan MaximumWorkDuration { get; set; } = TimeSpan.FromHours(12);
+
+    /// <summary>
+    /// Gets or sets where the operator's customer portal is, which "Buy", "Try" and "Change plan" open. Without it the
+    /// product has no customer portal, and the frontend does not offer to open one.
+    /// </summary>
+    public Uri? CustomerPortalUrl { get; set; }
+
+    /// <summary>
+    /// Gets or sets the key shared with the customer portal, which every link to it is signed with. Keep it in a secret
+    /// store, never in source. Required when <see cref="CustomerPortalUrl"/> is set.
+    /// </summary>
+    public string? CustomerPortalSigningKey { get; set; }
+
+    /// <summary>
+    /// Gets or sets how long a link to the customer portal works. Defaults to fifteen minutes.
+    /// </summary>
+    public TimeSpan CustomerPortalLinkLifetime { get; set; } = TimeSpan.FromMinutes(15);
 }

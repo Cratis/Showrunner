@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <!--
+        End-to-end specifications for the parts of Box Office that need a real database: the MongoDB store that
+        keeps metering buckets, reported days and the right to measure. Needs Docker. Run with:
+
+            dotnet test Integration.BoxOffice/BoxOffice.Integration.Specs.csproj
+
+        Set BOXOFFICE_MONGO_IMAGE to run against another MongoDB image.
+    -->
+    <PropertyGroup>
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <OutputType>Exe</OutputType>
+        <AssemblyName>Cratis.Showrunner.BoxOffice.Integration.Specs</AssemblyName>
+        <RootNamespace>Cratis.Showrunner.BoxOffice.Integration</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <!-- One Establish/Because per spec class, as in the inline specs. -->
+        <Compile Include="../Source/DotNET/SharedSpecificationInstance.cs" Link="SharedSpecificationInstance.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../Source/DotNET/BoxOffice.Offering/BoxOffice.Offering.csproj" />
+        <ProjectReference Include="../Source/DotNET/BoxOffice.Contracts/BoxOffice.Contracts.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Cratis.Fundamentals" />
+        <PackageReference Include="MongoDB.Driver" />
+        <PackageReference Include="xunit" />
+        <PackageReference Include="xunit.runner.visualstudio">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" />
+        <PackageReference Include="Cratis.Specifications.XUnit" />
+        <PackageReference Include="Testcontainers" />
+        <PackageReference Include="SSH.NET" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Update="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+</Project>

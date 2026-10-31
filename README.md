@@ -15,6 +15,8 @@ Usher is in its earliest stage: the packages are scaffolded and published, but c
 
 **Box Office** is the licensing part: trials, seats, modules, compute allowances and suspension, decided by the operator of a managed product and honored by the product. Its event contracts, its catalog of offers and prices, and a product's offering declaration and compute metering are in place; see [Documentation](./Documentation/BoxOffice/index.md).
 
+**Marquee** is the announcements part: the people running a product write an announcement with an audience, a display and an exact window, and the product shows it to the people it reaches, as a banner or a dialog. Drop `<Marquee />` into the application shell and it brings its own queries and commands; see [Documentation](./Documentation/Marquee/index.md).
+
 ## Packages
 
 | Package | Registry | What it is |
@@ -29,6 +31,7 @@ Usher is in its earliest stage: the packages are scaffolded and published, but c
 | `Cratis.Showrunner.Usher` | NuGet | Usher's backend — Arc commands and queries over Chronicle |
 | `@cratis/showrunner.marquee` | npm | The generated TypeScript proxies for Marquee's receiving commands and queries; no UI framework dependency |
 | `@cratis/showrunner.marquee.authoring` | npm | The generated TypeScript proxies for Marquee's authoring commands and query; no UI framework dependency |
+| `@cratis/showrunner.marquee.react` | npm | The Marquee drop-in React component: banners and dialogs for a product's announcements, built on `@cratis/arc.react` and `@cratis/components` |
 | `@cratis/showrunner.usher` | npm | The generated TypeScript proxies for Usher's commands and queries; no UI framework dependency |
 | `@cratis/showrunner.usher.react` | npm | React components for Usher, built on `@cratis/arc.react` and `@cratis/components` |
 

@@ -26,3 +26,5 @@ await acknowledge.execute();
 ```
 
 The proxies are generated from the C# code on a Debug build; never edit them. CI rebuilds in Debug and fails when the committed proxies differ.
+
+The components that use the receiving proxies are in `@cratis/showrunner.marquee.react`; see [Add announcements to a product](./add-announcements-to-a-product.md).

@@ -1,5 +1,13 @@
 - name: Overview
   href: index.md
+- name: How Marquee works
+  href: how-marquee-works.md
+- name: Add announcements to a product
+  href: add-announcements-to-a-product.md
+- name: Author without Direct
+  href: author-without-direct.md
+- name: Replace the banner or the dialog
+  href: replace-the-banner-or-the-dialog.md
 - name: Contracts
   href: contracts.md
 - name: Authoring
@@ -10,3 +18,5 @@
   href: acknowledging.md
 - name: Frontend proxies
   href: frontend-proxies.md
+- name: Event reference
+  href: event-reference.md

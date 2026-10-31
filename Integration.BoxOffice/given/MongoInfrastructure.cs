@@ -18,6 +18,8 @@ public sealed class MongoInfrastructure : IAsyncLifetime
     public const string DefaultImage = "mongo:8.2.6";
 
     const ushort MongoDBPort = 27017;
+    const int MaxStartAttempts = 3;
+
     IContainer? _container;
 
     /// <summary>
@@ -50,12 +52,22 @@ public sealed class MongoInfrastructure : IAsyncLifetime
     /// <inheritdoc/>
     public async Task InitializeAsync()
     {
-        _container = new ContainerBuilder(Image)
-            .WithPortBinding(MongoDBPort, true)
-            .WithLabel("cratis.showrunner.integration", "true")
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(MongoDBPort))
-            .Build();
-        await _container.StartAsync();
+        // The image pull that Testcontainers performs as part of starting the container can lose a race against
+        // the Docker daemon on a GitHub-hosted runner, surfacing as "No such image" even though the image exists.
+        for (var attempt = 1; ; attempt++)
+        {
+            var container = CreateContainer();
+            try
+            {
+                await container.StartAsync();
+                _container = container;
+                break;
+            }
+            catch (Exception exception) when (attempt < MaxStartAttempts && IsImagePullFailure(exception))
+            {
+                await container.DisposeAsync();
+            }
+        }
 
         Client = new MongoClient($"mongodb://{_container.Hostname}:{_container.GetMappedPublicPort(MongoDBPort)}/?directConnection=true");
         for (var attempt = 0; ; attempt++)
@@ -82,4 +94,18 @@ public sealed class MongoInfrastructure : IAsyncLifetime
             await _container.DisposeAsync();
         }
     }
+
+    static bool IsImagePullFailure(Exception exception)
+    {
+        var description = exception.ToString();
+        return description.Contains("No such image", StringComparison.OrdinalIgnoreCase) ||
+            description.Contains("DockerImageNotFoundException", StringComparison.OrdinalIgnoreCase);
+    }
+
+    IContainer CreateContainer() =>
+        new ContainerBuilder(Image)
+            .WithPortBinding(MongoDBPort, true)
+            .WithLabel("cratis.showrunner.integration", "true")
+            .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(MongoDBPort))
+            .Build();
 }

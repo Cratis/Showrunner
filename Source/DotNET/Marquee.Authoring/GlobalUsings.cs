@@ -5,7 +5,6 @@ global using Cratis.Arc.Authorization;
 global using Cratis.Arc.Commands;
 global using Cratis.Arc.Commands.ModelBound;
 global using Cratis.Chronicle.Events;
-global using Cratis.Concepts;
 global using Cratis.Showrunner.Marquee.Authoring.Announcements;
 global using Cratis.Showrunner.Marquee.Contracts.Announcements;
 global using Cratis.Showrunner.Marquee.Contracts.Audiences;

@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>Cratis.Showrunner.Marquee</AssemblyName>
+        <RootNamespace>Cratis.Showrunner.Marquee</RootNamespace>
+        <PackageId>Cratis.Showrunner.Marquee</PackageId>
+        <Description>Marquee — the Showrunner announcements part for products: receive announcements once, show each tenant what its audience matches and record who has seen a dialog, built on Cratis Arc and Chronicle.</Description>
+        <PackageTags>cratis;showrunner;marquee;announcements;arc;chronicle;event-sourcing</PackageTags>
+
+        <!-- The TypeScript proxies for the commands and queries are generated into the
+             @cratis/showrunner.marquee npm package. The Cratis.Showrunner.Marquee namespace segments are
+             skipped so a slice in Cratis.Showrunner.Marquee.<Feature>.<Slice> lands in <Feature>/<Slice>/. Release
+             builds clear CratisProxiesOutputPath so generation only runs from the Debug build. -->
+        <CratisProxiesOutputPath>$(MSBuildThisFileDirectory)../../JavaScript/Marquee</CratisProxiesOutputPath>
+        <CratisProxiesSegmentsToSkip>3</CratisProxiesSegmentsToSkip>
+        <CratisProxiesSkipOutputDeletion>true</CratisProxiesSkipOutputDeletion>
+        <CratisProxiesSkipCommandNameInRoute>true</CratisProxiesSkipCommandNameInRoute>
+        <CratisProxiesUseSourceFileAsOutputFile>true</CratisProxiesUseSourceFileAsOutputFile>
+
+        <!-- Read models a command's Provide() or Handle() takes as parameters are read fresh from the event log and
+             guard the append: a person acknowledges an announcement once, also under concurrent requests. -->
+        <CratisReadProtection>On</CratisReadProtection>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Cratis.Arc" />
+        <PackageReference Include="Cratis.Arc.Chronicle" />
+        <PackageReference Include="Cratis.Arc.ProxyGenerator.Build">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../Marquee.Contracts/Marquee.Contracts.csproj" />
+    </ItemGroup>
+</Project>

@@ -1,0 +1,21 @@
+{
+    "extends": "../../../tsconfig.json",
+    "compilerOptions": {
+        "rootDir": ".",
+        "outDir": "dist/esm",
+        "module": "ESNext",
+        "moduleResolution": "Bundler"
+    },
+    "references": [],
+    "files": [
+        "../../../test.d.ts"
+    ],
+    "include": [
+        "**/*.ts",
+        "**/*.tsx"
+    ],
+    "exclude": [
+        "dist",
+        "vite.config.mts"
+    ]
+}

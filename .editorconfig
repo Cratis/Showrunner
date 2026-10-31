@@ -201,12 +201,12 @@ dotnet_diagnostic.MA0132.severity = none
 dotnet_diagnostic.MA0134.severity = none
 dotnet_diagnostic.ORLEANS0010.severity = none
 
-# Usher and the Box Office catalog are built as vertical slices: one <Slice>.cs holds the slice's command, validator,
+# Usher, the Box Office catalog and Marquee are built as vertical slices: one <Slice>.cs holds the slice's command, validator,
 # events and read model together, so the one-type-per-file rules do not apply to them. The contracts projects keep one
 # type per file.
 # A reducer's Reduce(event, current) dispatches on the event's type even when the transition never reads it, so unused
 # parameters are reported for non-public methods only: a public method's parameters are its dispatch contract.
-[Source/DotNET/{Usher,BoxOffice.Catalog}/**.cs]
+[Source/DotNET/{Usher,BoxOffice.Catalog,Marquee.Authoring,Marquee}/**.cs]
 dotnet_code_quality_unused_parameters = non_public
 dotnet_diagnostic.SA1402.severity = none
 dotnet_diagnostic.SA1649.severity = none

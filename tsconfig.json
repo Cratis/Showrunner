@@ -48,6 +48,12 @@
     ],
     "references": [
         {
+            "path": "./Source/JavaScript/Marquee"
+        },
+        {
+            "path": "./Source/JavaScript/Marquee.Authoring"
+        },
+        {
             "path": "./Source/JavaScript/Usher"
         },
         {

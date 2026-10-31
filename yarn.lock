@@ -161,6 +161,34 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@cratis/showrunner.marquee.authoring@workspace:Source/JavaScript/Marquee.Authoring":
+  version: 0.0.0-use.local
+  resolution: "@cratis/showrunner.marquee.authoring@workspace:Source/JavaScript/Marquee.Authoring"
+  dependencies:
+    "@cratis/arc": "npm:22.146.0"
+    "@cratis/arc.react": "npm:22.146.0"
+    "@cratis/fundamentals": "npm:7.27.0"
+  peerDependencies:
+    "@cratis/arc": ^22.146.0
+    "@cratis/arc.react": ^22.146.0
+    "@cratis/fundamentals": ^7.27.0
+  languageName: unknown
+  linkType: soft
+
+"@cratis/showrunner.marquee@workspace:Source/JavaScript/Marquee":
+  version: 0.0.0-use.local
+  resolution: "@cratis/showrunner.marquee@workspace:Source/JavaScript/Marquee"
+  dependencies:
+    "@cratis/arc": "npm:22.146.0"
+    "@cratis/arc.react": "npm:22.146.0"
+    "@cratis/fundamentals": "npm:7.27.0"
+  peerDependencies:
+    "@cratis/arc": ^22.146.0
+    "@cratis/arc.react": ^22.146.0
+    "@cratis/fundamentals": ^7.27.0
+  languageName: unknown
+  linkType: soft
+
 "@cratis/showrunner.usher.react@workspace:Source/JavaScript/Usher.React":
   version: 0.0.0-use.local
   resolution: "@cratis/showrunner.usher.react@workspace:Source/JavaScript/Usher.React"

@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>Cratis.Showrunner.Marquee.Authoring</AssemblyName>
+        <RootNamespace>Cratis.Showrunner.Marquee.Authoring</RootNamespace>
+        <PackageId>Cratis.Showrunner.Marquee.Authoring</PackageId>
+        <Description>Marquee authoring — the commands, events and outbox for writing announcements that products show to their audience, built on Cratis Arc and Chronicle.</Description>
+        <PackageTags>cratis;showrunner;marquee;announcements;authoring;arc;chronicle;event-sourcing</PackageTags>
+
+        <!-- The TypeScript proxies for the authoring commands and query are generated into the
+             @cratis/showrunner.marquee.authoring npm package, which is separate from the one for products because
+             two generators cannot share an output folder. The Cratis.Showrunner.Marquee.Authoring namespace segments
+             are skipped so a slice in Cratis.Showrunner.Marquee.Authoring.<Slice> lands in <Slice>/. Release builds
+             clear CratisProxiesOutputPath so generation only runs from the Debug build. -->
+        <CratisProxiesOutputPath>$(MSBuildThisFileDirectory)../../JavaScript/Marquee.Authoring</CratisProxiesOutputPath>
+        <CratisProxiesSegmentsToSkip>4</CratisProxiesSegmentsToSkip>
+        <CratisProxiesSkipOutputDeletion>true</CratisProxiesSkipOutputDeletion>
+        <CratisProxiesSkipCommandNameInRoute>true</CratisProxiesSkipCommandNameInRoute>
+        <CratisProxiesUseSourceFileAsOutputFile>true</CratisProxiesUseSourceFileAsOutputFile>
+
+        <!-- Read models a command's validator or Handle() takes as parameters are read fresh from the event log and
+             guard the append: only an authored announcement changes, and nothing changes once it is withdrawn, also
+             under concurrent requests. -->
+        <CratisReadProtection>On</CratisReadProtection>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Cratis.Arc" />
+        <PackageReference Include="Cratis.Arc.Chronicle" />
+        <PackageReference Include="Cratis.Arc.ProxyGenerator.Build">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../Marquee.Contracts/Marquee.Contracts.csproj" />
+    </ItemGroup>
+</Project>

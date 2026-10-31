@@ -1,0 +1,16 @@
+<Project>
+
+    <!-- Imported after every project's own PropertyGroup, so this always wins over a project
+         setting CratisProxiesOutputPath. The Cratis.Arc.ProxyGenerator.Build MSBuild task loads
+         the built assembly through a MetadataLoadContext that only resolves types from the
+         runtime, the ASP.NET Core shared framework, and the assembly's own output directory.
+         Release does not copy referenced package assemblies (e.g. Cratis.Arc.Core.dll) next to
+         the output, so running the generator there crashes with a FileNotFoundException —
+         regardless of which package versions are referenced. Clearing the path here means every
+         caller gets a working Release build without having to remember to pass
+         -p:CratisProxiesOutputPath= on the command line. -->
+    <PropertyGroup Condition="'$(Configuration)'=='Release'">
+        <CratisProxiesOutputPath></CratisProxiesOutputPath>
+    </PropertyGroup>
+
+</Project>

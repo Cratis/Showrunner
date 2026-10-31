@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <!-- Must match PackageId below. Cratis.Types' project-reference discovery (used to find
+             [EventType] records for Chronicle) resolves a referenced project by the library name
+             recorded in deps.json, which is the PackageId for a packable project - a mismatched
+             AssemblyName makes that resolution fail and silently drops every type in this assembly
+             from discovery, both at runtime and in specs. -->
+        <AssemblyName>Cratis.Showrunner.Marquee.Contracts</AssemblyName>
+        <RootNamespace>Cratis.Showrunner.Marquee.Contracts</RootNamespace>
+        <PackageId>Cratis.Showrunner.Marquee.Contracts</PackageId>
+        <Description>The event contracts for Marquee — the Showrunner announcements part: the public events a product receives announcements through.</Description>
+        <PackageTags>cratis;showrunner;marquee;announcements;event-sourcing;chronicle</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Cratis.Chronicle" />
+    </ItemGroup>
+</Project>

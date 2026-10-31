@@ -1,0 +1,672 @@
+{
+  "ActivitySummarized:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "day": {
+        "type": "string",
+        "format": "date"
+      },
+      "activeUsers": {
+        "type": "integer",
+        "format": "int32"
+      },
+      "sessions": {
+        "type": "integer",
+        "format": "int32"
+      },
+      "signIns": {
+        "type": "integer",
+        "format": "int32"
+      }
+    },
+    "required": [
+      "tenantId",
+      "day",
+      "activeUsers",
+      "sessions",
+      "signIns"
+    ],
+    "title": "ActivitySummarized"
+  },
+  "AllowanceExhausted:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "meter": {
+        "type": "string"
+      },
+      "day": {
+        "type": "string",
+        "format": "date"
+      },
+      "overage": {
+        "type": "integer",
+        "enum": [
+          0,
+          1
+        ],
+        "x-enumNames": [
+          "Block",
+          "Park"
+        ]
+      }
+    },
+    "required": [
+      "tenantId",
+      "meter",
+      "day",
+      "overage"
+    ],
+    "title": "AllowanceExhausted"
+  },
+  "AllowanceSet:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "meter": {
+        "type": "string"
+      },
+      "quantity": {
+        "type": "integer",
+        "format": "int64"
+      },
+      "period": {
+        "type": "integer",
+        "enum": [
+          0,
+          1
+        ],
+        "x-enumNames": [
+          "Day",
+          "Month"
+        ]
+      },
+      "overage": {
+        "type": "integer",
+        "enum": [
+          0,
+          1
+        ],
+        "x-enumNames": [
+          "Block",
+          "Park"
+        ]
+      }
+    },
+    "required": [
+      "tenantId",
+      "meter",
+      "quantity",
+      "period",
+      "overage"
+    ],
+    "title": "AllowanceSet"
+  },
+  "ComputeDayClosed:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "day": {
+        "type": "string",
+        "format": "date"
+      },
+      "usage": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "meter": {
+              "type": "string"
+            },
+            "quantity": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "required": [
+            "meter",
+            "quantity"
+          ],
+          "title": "MeterUsage"
+        }
+      }
+    },
+    "required": [
+      "tenantId",
+      "day",
+      "usage"
+    ],
+    "title": "ComputeDayClosed"
+  },
+  "ComputeDayCorrected:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "day": {
+        "type": "string",
+        "format": "date"
+      },
+      "usage": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "meter": {
+              "type": "string"
+            },
+            "quantity": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "required": [
+            "meter",
+            "quantity"
+          ],
+          "title": "MeterUsage"
+        }
+      }
+    },
+    "required": [
+      "tenantId",
+      "day",
+      "usage"
+    ],
+    "title": "ComputeDayCorrected"
+  },
+  "ModuleGranted:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "module": {
+        "type": "string"
+      },
+      "until": {
+        "type": "string",
+        "format": "date"
+      }
+    },
+    "required": [
+      "tenantId",
+      "module",
+      "until"
+    ],
+    "title": "ModuleGranted"
+  },
+  "ModulePreviewOpened:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "module": {
+        "type": "string"
+      },
+      "until": {
+        "type": "string",
+        "format": "date"
+      }
+    },
+    "required": [
+      "tenantId",
+      "module",
+      "until"
+    ],
+    "title": "ModulePreviewOpened"
+  },
+  "ModuleRevoked:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "module": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "tenantId",
+      "module"
+    ],
+    "title": "ModuleRevoked"
+  },
+  "ModuleTrialGranted:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "module": {
+        "type": "string"
+      },
+      "ends": {
+        "type": "string",
+        "format": "date"
+      }
+    },
+    "required": [
+      "tenantId",
+      "module",
+      "ends"
+    ],
+    "title": "ModuleTrialGranted"
+  },
+  "OfferingDeclared:1": {
+    "type": "object",
+    "properties": {
+      "modules": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "name"
+          ],
+          "title": "ModuleDeclaration"
+        }
+      },
+      "meters": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "unit": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "unit"
+          ],
+          "title": "MeterDeclaration"
+        }
+      },
+      "seats": {
+        "type": "integer",
+        "enum": [
+          0,
+          1
+        ],
+        "x-enumNames": [
+          "NotLicensed",
+          "PerUser"
+        ]
+      }
+    },
+    "required": [
+      "modules",
+      "meters",
+      "seats"
+    ],
+    "title": "OfferingDeclared"
+  },
+  "OfferPublished:1": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string"
+      },
+      "modules": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "includedSeats": {
+        "type": "integer",
+        "format": "int32"
+      },
+      "prices": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "interval": {
+              "type": "integer",
+              "enum": [
+                0,
+                1
+              ],
+              "x-enumNames": [
+                "Monthly",
+                "Yearly"
+              ]
+            },
+            "amount": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "currency": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "interval",
+            "amount",
+            "currency"
+          ],
+          "title": "OfferPrice"
+        }
+      }
+    },
+    "required": [
+      "name",
+      "modules",
+      "includedSeats",
+      "prices"
+    ],
+    "title": "OfferPublished"
+  },
+  "OfferWithdrawn:1": {
+    "type": "object",
+    "title": "OfferWithdrawn"
+  },
+  "SeatCapacitySet:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "capacity": {
+        "type": "integer",
+        "format": "int32"
+      },
+      "until": {
+        "type": "string",
+        "format": "date"
+      },
+      "source": {
+        "type": "integer",
+        "enum": [
+          0,
+          1
+        ],
+        "x-enumNames": [
+          "Grant",
+          "Purchase"
+        ]
+      }
+    },
+    "required": [
+      "tenantId",
+      "capacity",
+      "until",
+      "source"
+    ],
+    "title": "SeatCapacitySet"
+  },
+  "SeatReleased:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "holder": {
+        "type": "object",
+        "properties": {
+          "identityProvider": {
+            "type": "string"
+          },
+          "identityProviderSubject": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "identityProvider",
+          "identityProviderSubject",
+          "name",
+          "email"
+        ],
+        "title": "Person"
+      }
+    },
+    "required": [
+      "tenantId",
+      "holder"
+    ],
+    "title": "SeatReleased"
+  },
+  "SeatTaken:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "holder": {
+        "type": "object",
+        "properties": {
+          "identityProvider": {
+            "type": "string"
+          },
+          "identityProviderSubject": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "identityProvider",
+          "identityProviderSubject",
+          "name",
+          "email"
+        ],
+        "title": "Person"
+      }
+    },
+    "required": [
+      "tenantId",
+      "holder"
+    ],
+    "title": "SeatTaken"
+  },
+  "TenantClosing:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "tenantId"
+    ],
+    "title": "TenantClosing"
+  },
+  "TenantProvisioned:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "tenantId"
+    ],
+    "title": "TenantProvisioned"
+  },
+  "TenantRegistered:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "name": {
+        "type": "string"
+      },
+      "creator": {
+        "type": "object",
+        "properties": {
+          "identityProvider": {
+            "type": "string"
+          },
+          "identityProviderSubject": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "identityProvider",
+          "identityProviderSubject",
+          "name",
+          "email"
+        ],
+        "title": "Person"
+      },
+      "creatorRole": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "tenantId",
+      "name",
+      "creator",
+      "creatorRole"
+    ],
+    "title": "TenantRegistered"
+  },
+  "TenantReinstated:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "tenantId"
+    ],
+    "title": "TenantReinstated"
+  },
+  "TenantSuspended:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "cause": {
+        "type": "integer",
+        "enum": [
+          0,
+          1,
+          2
+        ],
+        "x-enumNames": [
+          "TrialEndedWithoutSeats",
+          "PaymentOverdue",
+          "AdministratorDecision"
+        ]
+      }
+    },
+    "required": [
+      "tenantId",
+      "cause"
+    ],
+    "title": "TenantSuspended"
+  },
+  "TrialClosed:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "closure": {
+        "type": "integer",
+        "enum": [
+          0,
+          1,
+          2
+        ],
+        "x-enumNames": [
+          "Expired",
+          "EndedEarly",
+          "Converted"
+        ]
+      }
+    },
+    "required": [
+      "tenantId",
+      "closure"
+    ],
+    "title": "TrialClosed"
+  },
+  "TrialEndMoved:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "ends": {
+        "type": "string",
+        "format": "date"
+      }
+    },
+    "required": [
+      "tenantId",
+      "ends"
+    ],
+    "title": "TrialEndMoved"
+  },
+  "TrialOpened:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "ends": {
+        "type": "string",
+        "format": "date"
+      },
+      "seats": {
+        "type": "integer",
+        "format": "int32"
+      }
+    },
+    "required": [
+      "tenantId",
+      "ends",
+      "seats"
+    ],
+    "title": "TrialOpened"
+  }
+}

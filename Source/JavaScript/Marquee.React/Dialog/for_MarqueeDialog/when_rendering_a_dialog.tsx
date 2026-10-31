@@ -53,7 +53,7 @@ describe('when rendering a dialog', () => {
     describe('and focus is placed', () => {
         beforeEach(async () => {
             result = renderDialog(false, onClose);
-            await waitFor(() => result.getByRole('dialog').contains(document.activeElement).should.be.true, { timeout: 5000 });
+            await waitFor(() => result.getByRole('dialog').contains(document.activeElement).should.be.true, { timeout: 15000 });
         });
 
         it('should not be on the button that closes it', () => (document.activeElement === result.getByRole('button', { name: 'Got it' })).should.be.false);

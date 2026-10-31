@@ -7,6 +7,7 @@ Box Office is the licensing part of Showrunner. The operator of a managed produc
 
 Box Office is a library set, not a service. The operator and the product exchange public events through Chronicle:
 
-- `Cratis.Showrunner.BoxOffice.Contracts` holds the public events both sides exchange; see [Contracts](./contracts.md). It is the first Box Office package and ships with every Showrunner release.
+- `Cratis.Showrunner.BoxOffice.Contracts` holds the public events both sides exchange; see [Contracts](./contracts.md).
+- `Cratis.Showrunner.BoxOffice.Catalog` holds the offers the operator sells, their prices and the pricing arithmetic, and publishes the catalog to products; see [Catalog](./catalog.md).
 
 This documentation grows with each part of Box Office that lands.

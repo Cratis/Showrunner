@@ -13,12 +13,13 @@
 
 Usher is in its earliest stage: the packages are scaffolded and published, but carry no behavior yet. See [Documentation](./Documentation/index.md).
 
-**Box Office** is the licensing part: trials, seats, modules, compute allowances and suspension, decided by the operator of a managed product and honored by the product. Its event contracts are the first package; see [Documentation](./Documentation/BoxOffice/index.md).
+**Box Office** is the licensing part: trials, seats, modules, compute allowances and suspension, decided by the operator of a managed product and honored by the product. Its event contracts and its catalog of offers and prices are in place; see [Documentation](./Documentation/BoxOffice/index.md).
 
 ## Packages
 
 | Package | Registry | What it is |
 | --- | --- | --- |
+| `Cratis.Showrunner.BoxOffice.Catalog` | NuGet | Box Office's catalog — offers (seat plans, modules, compute packs), prices and the pricing arithmetic, published to products |
 | `Cratis.Showrunner.BoxOffice.Contracts` | NuGet | Box Office's event contracts: what an operator decides about a tenant and what a product reports back |
 | `Cratis.Showrunner.Usher.Contracts` | NuGet | Usher's event contracts, for hosts that react to what Usher records |
 | `Cratis.Showrunner.Marquee.Contracts` | NuGet | Marquee's event contracts: the public events a product receives announcements through |

@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>Cratis.Showrunner.BoxOffice.Catalog</AssemblyName>
+        <RootNamespace>Cratis.Showrunner.BoxOffice.Catalog</RootNamespace>
+        <PackageId>Cratis.Showrunner.BoxOffice.Catalog</PackageId>
+        <Description>The Box Office catalog — the offers a managed product sells (seat plans, modules, compute packs), their prices and the pricing arithmetic, built on Cratis Arc and Chronicle.</Description>
+        <PackageTags>cratis;showrunner;boxoffice;catalog;pricing;arc;chronicle;event-sourcing</PackageTags>
+
+        <!-- Read models a command's validator takes as parameters are read fresh from the event log and guard the
+             append: an offer is defined once, only a defined offer changes, and nothing changes once it is retired,
+             also under concurrent requests. -->
+        <CratisReadProtection>On</CratisReadProtection>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Cratis.Arc" />
+        <PackageReference Include="Cratis.Arc.Chronicle" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../BoxOffice.Contracts/BoxOffice.Contracts.csproj" />
+    </ItemGroup>
+</Project>

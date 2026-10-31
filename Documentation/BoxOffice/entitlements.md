@@ -19,8 +19,10 @@ builder.AddBoxOffice(boxOffice => boxOffice.OperatorStores = ["Direct"]);
 | --- | --- | --- |
 | `OperatorStores` | `["Direct"]` | The event stores of the operators whose decisions the product honors. |
 | `PollingInterval` | one minute | How often Box Office looks for tenant namespaces it does not serve yet. |
+| `EnforceModules` | `true` | Whether commands, queries and reactors of a module the tenant does not have are refused; see [Module gating](./gating.md). |
+| `MaximumWorkDuration` | 12 hours | How long admitted work holds a concurrency slot when nobody ends it; see [Compute admission](./compute-admission.md). |
 
-The host fails to start when `OperatorStores` is empty or the interval is not more than zero. Arc discovers the commands, queries and command filter, and Chronicle the events, read models and reactors, from the referenced assembly; there is nothing else to register.
+The host fails to start when `OperatorStores` is empty, the interval is not more than zero or `MaximumWorkDuration` is not more than zero and at most seven days. Arc discovers the commands, queries and command filter, and Chronicle the events, read models and reactors, from the referenced assembly; there is nothing else to register.
 
 ## How a decision reaches the tenant
 

@@ -1,6 +1,9 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+export * from './Compute';
+export * from './Compute/SetBudget';
+export * from './Compute/SetConcurrencyLimit';
 export * from './Contracts/Offers';
 export * from './Contracts/People';
 export * from './Contracts/Tenants';

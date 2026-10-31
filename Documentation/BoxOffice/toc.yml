@@ -6,6 +6,8 @@
   href: entitlements.md
 - name: Suspension and read-only tenants
   href: suspension.md
+- name: Module gating
+  href: gating.md
 - name: Seat licensing
   href: seats.md
 - name: Frontend proxies
@@ -16,3 +18,5 @@
   href: offering.md
 - name: Metering compute
   href: metering.md
+- name: Compute admission
+  href: compute-admission.md

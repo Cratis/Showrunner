@@ -37,6 +37,10 @@ A UTC day closes 6 hours after midnight (`MeteringOptions.CloseDelay`). The firs
 
 A session that ends after its day closed still counts for the day it started. Box Office adds it to the bucket and appends `ComputeDayCorrected` with the corrected totals of the day, not the difference, as [the contracts](./contracts.md) say. Each late session produces one correction, and a late session that is read twice produces it once.
 
+## Admission reads the buckets
+
+The buckets are what [compute admission](./compute-admission.md) compares with a tenant's allowance before it lets work start.
+
 ## Metrics
 
 Metering exposes counters under the meter named after `Cratis.Showrunner.BoxOffice.Offering.Metering.TenantMetering`. Subscribe to it with `AddMeter` in the OpenTelemetry setup.

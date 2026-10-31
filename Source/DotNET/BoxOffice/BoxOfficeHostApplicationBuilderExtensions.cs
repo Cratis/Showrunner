@@ -17,7 +17,7 @@ public static class BoxOfficeHostApplicationBuilderExtensions
     /// Arc discovers Box Office's commands, queries and command filter, and Chronicle its events and reducers, from the
     /// <c>Cratis.Showrunner.BoxOffice</c> assembly the application references: Cratis type discovery includes referenced
     /// packages whose names start with <c>Cratis</c>. Call it next to <c>AddCratis</c>; the order does not matter. The
-    /// product defines the <c>BoxOffice.ManageSeats</c> authorization policy to say who may assign and release seats.
+    /// product defines the <c>BoxOffice.ManageSeats</c> and <c>BoxOffice.ManageCompute</c> authorization policies to say who may assign and release seats and who may set compute budgets and concurrency limits.
     /// </remarks>
     /// <typeparam name="TBuilder">The type of host application builder.</typeparam>
     /// <param name="builder">The builder to add Box Office to.</param>

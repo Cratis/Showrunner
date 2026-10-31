@@ -28,6 +28,7 @@ public class a_seat_command<TCommand> : Specification
         _scenario = new();
         _scenario.Services.AddSingleton<ICurrentPrincipalAccessor>(new FixedPrincipal(Principal));
         _scenario.Services.AddArcAuthorizationPolicy<TheProductsMaintainers>(BoxOfficePolicies.ManageSeats);
+        _scenario.Services.AddArcAuthorizationPolicy<TheProductsMaintainers>(BoxOfficePolicies.ManageCompute);
         _scenario.Services.AddBoxOffice();
         _scenario.Clock(Tenants.Now);
     }
@@ -35,7 +36,7 @@ public class a_seat_command<TCommand> : Specification
     void Destroy() => _scenario.Dispose();
 
     /// <summary>
-    /// The product's policy for who may manage seats: whoever is signed in.
+    /// The product's policy for who may manage seats and compute: whoever is signed in.
     /// </summary>
     protected class TheProductsMaintainers : IAuthorizationPolicy
     {

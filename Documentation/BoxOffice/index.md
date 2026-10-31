@@ -9,5 +9,6 @@ Box Office is a library set, not a service. The operator and the product exchang
 
 - `Cratis.Showrunner.BoxOffice.Contracts` holds the public events both sides exchange; see [Contracts](./contracts.md).
 - `Cratis.Showrunner.BoxOffice.Catalog` holds the offers the operator sells, their prices and the pricing arithmetic, and publishes the catalog to products; see [Catalog](./catalog.md).
+- `Cratis.Showrunner.BoxOffice.Offering` is what a product references: it declares what the product sells and reports it to the operator, see [Offering](./offering.md), and it measures compute per tenant and day, see [Metering compute](./metering.md).
 
 This documentation grows with each part of Box Office that lands.

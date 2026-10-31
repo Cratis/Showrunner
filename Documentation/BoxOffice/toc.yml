@@ -12,6 +12,10 @@
   href: seats.md
 - name: Frontend proxies
   href: frontend-proxies.md
+- name: React components
+  href: react.md
+- name: The customer portal
+  href: portal.md
 - name: Catalog
   href: catalog.md
 - name: Offering

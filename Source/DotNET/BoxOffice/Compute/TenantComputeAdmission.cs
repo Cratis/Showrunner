@@ -105,14 +105,10 @@ public class TenantComputeAdmission(
 
     static EventSourceId WorkStream(MeterId meter, DateOnly day) => new($"compute-{meter.Value}-{day:yyyy-MM}");
 
-    static DateTimeOffset NextPeriodStart(AllowancePeriod period, DateOnly today)
-    {
-        var start = period == AllowancePeriod.Month ? new DateOnly(today.Year, today.Month, 1).AddMonths(1) : today.AddDays(1);
-        return new DateTimeOffset(start.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
-    }
+    static DateTimeOffset NextPeriodStart(AllowancePeriod period, DateOnly today) =>
+        new(MeterConsumption.NextPeriodStart(period, today).ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
 
-    static DateOnly PeriodStart(AllowancePeriod period, DateOnly today) =>
-        period == AllowancePeriod.Month ? new DateOnly(today.Year, today.Month, 1) : today;
+    static DateOnly PeriodStart(AllowancePeriod period, DateOnly today) => MeterConsumption.PeriodStart(period, today);
 
     static int Running(IEnumerable<AppendedEvent> facts, MeterId meter, DateTimeOffset now)
     {
@@ -158,13 +154,8 @@ public class TenantComputeAdmission(
         return (budget, limit);
     }
 
-    async Task<long> UsedInPeriod(MeterId meter, AllowancePeriod period, DateOnly today)
-    {
-        var from = PeriodStart(period, today);
-        var days = Enumerable.Range(0, today.DayNumber - from.DayNumber + 1).Select(offset => new ComputeDay(from.AddDays(offset)));
-        var buckets = await Task.WhenAll(days.Select(day => metering.Get(Tenant, day)));
-        return buckets.Sum(_ => _ is not null && _.Quantities.TryGetValue(meter, out var quantity) ? quantity.Value : 0L);
-    }
+    Task<long> UsedInPeriod(MeterId meter, AllowancePeriod period, DateOnly today) =>
+        MeterConsumption.UsedInPeriod(metering, Tenant, meter, period, today);
 
     async Task RecordAllowanceReached(MeterId meter, DateOnly today, MeterAllowance allowance)
     {

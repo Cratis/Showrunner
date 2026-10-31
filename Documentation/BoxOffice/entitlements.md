@@ -21,8 +21,10 @@ builder.AddBoxOffice(boxOffice => boxOffice.OperatorStores = ["Direct"]);
 | `PollingInterval` | one minute | How often Box Office looks for tenant namespaces it does not serve yet. |
 | `EnforceModules` | `true` | Whether commands, queries and reactors of a module the tenant does not have are refused; see [Module gating](./gating.md). |
 | `MaximumWorkDuration` | 12 hours | How long admitted work holds a concurrency slot when nobody ends it; see [Compute admission](./compute-admission.md). |
+| `CustomerPortalUrl`, `CustomerPortalSigningKey` | none | Where the operator's customer portal is and the key links to it are signed with; see [The customer portal](./portal.md). |
+| `CustomerPortalLinkLifetime` | 15 minutes | How long a link to the customer portal works. |
 
-The host fails to start when `OperatorStores` is empty, the interval is not more than zero or `MaximumWorkDuration` is not more than zero and at most seven days. Arc discovers the commands, queries and command filter, and Chronicle the events, read models and reactors, from the referenced assembly; there is nothing else to register.
+The host fails to start when `OperatorStores` is empty, the interval is not more than zero or `MaximumWorkDuration` is not more than zero and at most seven days, or only one of `CustomerPortalUrl` and `CustomerPortalSigningKey` is set. Arc discovers the commands, queries and command filter, and Chronicle the events, read models and reactors, from the referenced assembly; there is nothing else to register.
 
 ## How a decision reaches the tenant
 

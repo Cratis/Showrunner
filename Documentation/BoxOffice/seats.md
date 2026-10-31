@@ -46,3 +46,8 @@ It also carries the capacity, the number held and why the tenant is read-only, w
 ## Telling the operator
 
 Each assignment and release is reported to the operator as `SeatTaken` and `SeatReleased` in the outbox, under the operator's organization for the tenant. The report is keyed on the delivery of the fact, so a repeated delivery is reported once. A seat that is assigned before Box Office knows which organization the tenant is fails and is retried until the operator's first decision has arrived.
+
+## Showing seats in the frontend
+
+The [seats page](./react.md#pages) of `@cratis/showrunner.boxoffice.react` lists the roster, assigns and releases seats, and marks the holders the tenant's seats do not cover; `NoLicense` tells a user from their `SeatStanding` why they cannot use the product.
+

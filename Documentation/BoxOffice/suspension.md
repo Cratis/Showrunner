@@ -45,3 +45,6 @@ if (standing.data?.readOnlyReason !== ReadOnlyReason.none) {
 ```
 
 A command that was refused answers with an unauthorized result carrying the reason, which the frontend can also use to explain a refused action.
+
+`SuspensionBanner` and `NoLicense` in [React components](./react.md#banners) show this to the user, and the components refuse nothing themselves: the backend does.
+

@@ -48,6 +48,12 @@
     ],
     "references": [
         {
+            "path": "./Source/JavaScript/BoxOffice"
+        },
+        {
+            "path": "./Source/JavaScript/BoxOffice.React"
+        },
+        {
             "path": "./Source/JavaScript/Marquee"
         },
         {

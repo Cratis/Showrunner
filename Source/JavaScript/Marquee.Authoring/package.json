@@ -29,6 +29,7 @@
         "**/*.tsx",
         "!**/for_*/**",
         "!**/given/**",
+        "!Examples/**",
         "!**/*.tsbuildinfo"
     ],
     "main": "dist/cjs/index.js",

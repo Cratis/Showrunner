@@ -27,4 +27,11 @@ public class BoxOfficeOptions
     /// yet, and nothing else.
     /// </summary>
     public bool EnforceModules { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets how long a unit of work that was admitted against a concurrency limit counts as running when nobody
+    /// ends it, so work that crashed does not hold its slot forever. Defaults to 12 hours, and must be more than zero and
+    /// at most seven days.
+    /// </summary>
+    public TimeSpan MaximumWorkDuration { get; set; } = TimeSpan.FromHours(12);
 }

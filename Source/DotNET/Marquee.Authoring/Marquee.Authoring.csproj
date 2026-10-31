@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>Cratis.Showrunner.Marquee.Authoring</AssemblyName>
+        <RootNamespace>Cratis.Showrunner.Marquee.Authoring</RootNamespace>
+        <PackageId>Cratis.Showrunner.Marquee.Authoring</PackageId>
+        <Description>Marquee authoring — the commands, events and outbox for writing announcements that products show to their audience, built on Cratis Arc and Chronicle.</Description>
+        <PackageTags>cratis;showrunner;marquee;announcements;authoring;arc;chronicle;event-sourcing</PackageTags>
+
+        <!-- Read models a command's validator or Handle() takes as parameters are read fresh from the event log and
+             guard the append: only an authored announcement changes, and nothing changes once it is withdrawn, also
+             under concurrent requests. -->
+        <CratisReadProtection>On</CratisReadProtection>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Cratis.Arc" />
+        <PackageReference Include="Cratis.Arc.Chronicle" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../Marquee.Contracts/Marquee.Contracts.csproj" />
+    </ItemGroup>
+</Project>

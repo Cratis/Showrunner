@@ -4,11 +4,13 @@
 namespace Cratis.Showrunner.Marquee.Contracts.Announcements;
 
 /// <summary>
-/// Identifies one announcement. Announcements of a product share one product-wide stream, so the id is a payload field
-/// on every announcement event, not the event source id. It is a <see cref="ConceptAs{T}"/> over a GUID.
+/// Identifies one announcement. On the contract events, which every announcement of a product shares one product-wide
+/// stream for, the id is a payload field, not the event source id. It is an <see cref="EventSourceId{T}"/> over a GUID
+/// because it is the identity of the announcement's own stream where the announcement is authored, received and
+/// acknowledged.
 /// </summary>
 /// <param name="Value">The underlying value.</param>
-public record AnnouncementId(Guid Value) : ConceptAs<Guid>(Value), IGeneratable<AnnouncementId>
+public record AnnouncementId(Guid Value) : EventSourceId<Guid>(Value), IGeneratable<AnnouncementId>
 {
     /// <summary>
     /// Implicitly converts a <see cref="Guid"/> to an <see cref="AnnouncementId"/>.

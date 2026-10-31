@@ -11,6 +11,11 @@ namespace Cratis.Showrunner.Marquee.Contracts.Announcements;
 public record ActiveFrom(DateTimeOffset Value) : ConceptAs<DateTimeOffset>(Value)
 {
     /// <summary>
+    /// Represents an announcement that is active from the moment it is published.
+    /// </summary>
+    public static readonly ActiveFrom Immediately = new(DateTimeOffset.MinValue);
+
+    /// <summary>
     /// Implicitly converts a <see cref="DateTimeOffset"/> to an <see cref="ActiveFrom"/>.
     /// </summary>
     /// <param name="value">The value to convert from.</param>

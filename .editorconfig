@@ -210,3 +210,11 @@ dotnet_code_quality_unused_parameters = non_public
 dotnet_diagnostic.SA1402.severity = none
 dotnet_diagnostic.SA1649.severity = none
 dotnet_diagnostic.MA0048.severity = none
+
+# Box Office follows Usher's shape: a slice holds its command, validator, events and read model in one file, and a
+# reducer's Reduce(event, current) dispatches on the event's type even when the transition never reads it.
+[Source/DotNET/BoxOffice/**.cs]
+dotnet_code_quality_unused_parameters = non_public
+dotnet_diagnostic.SA1402.severity = none
+dotnet_diagnostic.SA1649.severity = none
+dotnet_diagnostic.MA0048.severity = none

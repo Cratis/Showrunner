@@ -14,4 +14,10 @@ public static class BoxOfficePolicies
     /// Core, and the application does not start until it has. Box Office grants nobody by default.
     /// </summary>
     public const string ManageSeats = "BoxOffice.ManageSeats";
+
+    /// <summary>
+    /// Who may set a tenant's compute budgets and concurrency limits. Like <see cref="ManageSeats"/> the policy is the
+    /// product's: the product registers a policy of this name and the application does not start until it has.
+    /// </summary>
+    public const string ManageCompute = "BoxOffice.ManageCompute";
 }

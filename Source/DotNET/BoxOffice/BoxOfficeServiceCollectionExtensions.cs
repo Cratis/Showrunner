@@ -1,8 +1,11 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Metrics;
 using Cratis.Showrunner.BoxOffice;
+using Cratis.Showrunner.BoxOffice.Compute;
 using Cratis.Showrunner.BoxOffice.Entitlements;
+using Cratis.Showrunner.BoxOffice.Gating;
 using Cratis.Showrunner.BoxOffice.Offers;
 using Cratis.Showrunner.BoxOffice.Receiving;
 using Cratis.Showrunner.BoxOffice.Seats;
@@ -29,6 +32,7 @@ public static class BoxOfficeServiceCollectionExtensions
             .Configure(options => configure?.Invoke(options))
             .Validate(options => options.OperatorStores.Any(), "Box Office needs at least one operator store: set BoxOfficeOptions.OperatorStores in AddBoxOffice.")
             .Validate(options => options.PollingInterval > TimeSpan.Zero, "Box Office looks for new tenants at an interval: BoxOfficeOptions.PollingInterval must be more than zero.")
+            .Validate(options => options.MaximumWorkDuration > TimeSpan.Zero && options.MaximumWorkDuration <= TimeSpan.FromDays(7), "Work admitted against a concurrency limit counts as running for at most a while: BoxOfficeOptions.MaximumWorkDuration must be more than zero and at most seven days.")
             .ValidateOnStart();
 
         services.TryAddSingleton(TimeProvider.System);
@@ -36,7 +40,10 @@ public static class BoxOfficeServiceCollectionExtensions
         services.TryAddSingleton<OperatorEventTranslator>();
         services.TryAddSingleton<OperatorSubscriptions>();
         services.TryAddSingleton<ProductOffers>();
+        services.TryAddSingleton(typeof(IMeter<>), typeof(UnkeyedMeter<>));
         services.TryAddScoped<IEntitlements, TenantEntitlements>();
+        services.TryAddScoped<IModuleGate, ModuleGate>();
+        services.TryAddScoped<IComputeAdmission, TenantComputeAdmission>();
         services.TryAddTransient<ICurrentSeatHolder, CurrentSeatHolder>();
         services.AddHostedService<BoxOfficeWorker>();
         return services;

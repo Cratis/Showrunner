@@ -20,4 +20,18 @@ public class BoxOfficeOptions
     /// Gets or sets how often Box Office looks for tenant namespaces it does not serve yet. Defaults to one minute.
     /// </summary>
     public TimeSpan PollingInterval { get; set; } = TimeSpan.FromMinutes(1);
+
+    /// <summary>
+    /// Gets or sets whether commands, queries and reactors of a module the tenant does not have are refused. On by default;
+    /// turning it off is the operational escape hatch for a deployment whose tenants have not been given their entitlements
+    /// yet, and nothing else.
+    /// </summary>
+    public bool EnforceModules { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets how long a unit of work that was admitted against a concurrency limit counts as running when nobody
+    /// ends it, so work that crashed does not hold its slot forever. Defaults to 12 hours, and must be more than zero and
+    /// at most seven days.
+    /// </summary>
+    public TimeSpan MaximumWorkDuration { get; set; } = TimeSpan.FromHours(12);
 }

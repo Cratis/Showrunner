@@ -1,7 +1,12 @@
 <Solution>
   <Folder Name="/Source/DotNET/">
+    <Project Path="Source/DotNET/BoxOffice.Catalog/BoxOffice.Catalog.csproj" />
     <Project Path="Source/DotNET/BoxOffice.Contracts/BoxOffice.Contracts.csproj" />
+<<<<<<< HEAD
     <Project Path="Source/DotNET/BoxOffice.Offering/BoxOffice.Offering.csproj" />
+=======
+    <Project Path="Source/DotNET/Marquee.Contracts/Marquee.Contracts.csproj" />
+>>>>>>> origin/main
     <Project Path="Source/DotNET/Usher.Contracts/Usher.Contracts.csproj" />
     <Project Path="Source/DotNET/Usher/Usher.csproj" />
   </Folder>

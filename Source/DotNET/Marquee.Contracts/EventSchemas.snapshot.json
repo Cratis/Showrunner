@@ -1,0 +1,228 @@
+{
+  "AnnouncementAudienceChanged:1": {
+    "type": "object",
+    "properties": {
+      "announcementId": {
+        "type": "string",
+        "format": "guid"
+      },
+      "product": {
+        "type": "string"
+      },
+      "audience": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "integer",
+            "enum": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "x-enumNames": [
+              "Everyone",
+              "Tenants",
+              "HoldersOfModule",
+              "OnPlan"
+            ]
+          },
+          "tenantIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "module": {
+            "type": "string"
+          },
+          "plan": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "tenantIds",
+          "module",
+          "plan"
+        ],
+        "title": "Audience"
+      }
+    },
+    "required": [
+      "announcementId",
+      "product",
+      "audience"
+    ],
+    "title": "AnnouncementAudienceChanged"
+  },
+  "AnnouncementPublished:1": {
+    "type": "object",
+    "properties": {
+      "announcementId": {
+        "type": "string",
+        "format": "guid"
+      },
+      "product": {
+        "type": "string"
+      },
+      "audience": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "integer",
+            "enum": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "x-enumNames": [
+              "Everyone",
+              "Tenants",
+              "HoldersOfModule",
+              "OnPlan"
+            ]
+          },
+          "tenantIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "module": {
+            "type": "string"
+          },
+          "plan": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "tenantIds",
+          "module",
+          "plan"
+        ],
+        "title": "Audience"
+      },
+      "title": {
+        "type": "string"
+      },
+      "body": {
+        "type": "string"
+      },
+      "display": {
+        "type": "integer",
+        "enum": [
+          0,
+          1,
+          2
+        ],
+        "x-enumNames": [
+          "Banner",
+          "DialogOnce",
+          "DialogEverySession"
+        ]
+      },
+      "importance": {
+        "type": "integer",
+        "enum": [
+          0,
+          1,
+          2
+        ],
+        "x-enumNames": [
+          "Information",
+          "Warning",
+          "Critical"
+        ]
+      },
+      "activeFrom": {
+        "type": "string",
+        "format": "date-time-offset"
+      },
+      "activeUntil": {
+        "type": "string",
+        "format": "date-time-offset"
+      }
+    },
+    "required": [
+      "announcementId",
+      "product",
+      "audience",
+      "title",
+      "body",
+      "display",
+      "importance",
+      "activeFrom",
+      "activeUntil"
+    ],
+    "title": "AnnouncementPublished"
+  },
+  "AnnouncementRetracted:1": {
+    "type": "object",
+    "properties": {
+      "announcementId": {
+        "type": "string",
+        "format": "guid"
+      },
+      "product": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "announcementId",
+      "product"
+    ],
+    "title": "AnnouncementRetracted"
+  },
+  "AnnouncementRevised:1": {
+    "type": "object",
+    "properties": {
+      "announcementId": {
+        "type": "string",
+        "format": "guid"
+      },
+      "product": {
+        "type": "string"
+      },
+      "title": {
+        "type": "string"
+      },
+      "body": {
+        "type": "string"
+      },
+      "importance": {
+        "type": "integer",
+        "enum": [
+          0,
+          1,
+          2
+        ],
+        "x-enumNames": [
+          "Information",
+          "Warning",
+          "Critical"
+        ]
+      },
+      "activeFrom": {
+        "type": "string",
+        "format": "date-time-offset"
+      },
+      "activeUntil": {
+        "type": "string",
+        "format": "date-time-offset"
+      }
+    },
+    "required": [
+      "announcementId",
+      "product",
+      "title",
+      "body",
+      "importance",
+      "activeFrom",
+      "activeUntil"
+    ],
+    "title": "AnnouncementRevised"
+  }
+}

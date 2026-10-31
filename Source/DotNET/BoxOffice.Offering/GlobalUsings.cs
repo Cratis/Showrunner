@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 global using Cratis.Chronicle.Events;
-global using Cratis.Concepts;
 global using Cratis.Showrunner.BoxOffice.Contracts;
 global using Cratis.Showrunner.BoxOffice.Contracts.Compute;
 global using Cratis.Showrunner.BoxOffice.Contracts.Entitlements;

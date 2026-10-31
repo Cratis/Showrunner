@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>Cratis.Showrunner.BoxOffice.Offering</AssemblyName>
+        <RootNamespace>Cratis.Showrunner.BoxOffice.Offering</RootNamespace>
+        <PackageId>Cratis.Showrunner.BoxOffice.Offering</PackageId>
+        <Description>Box Office for a product - declare what the product sells (modules, meters, seat licensing) and meter its compute per tenant and day, reporting both to the operator.</Description>
+        <PackageTags>cratis;showrunner;boxoffice;licensing;metering;event-sourcing;chronicle</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Cratis.Chronicle" />
+        <PackageReference Include="Cratis.Metrics.Roslyn">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="MongoDB.Driver" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../BoxOffice.Contracts/BoxOffice.Contracts.csproj" />
+    </ItemGroup>
+</Project>

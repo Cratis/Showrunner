@@ -110,7 +110,7 @@ jobs:
       # Release carries none of the Debug-only spec dependencies (see Source/DotNET/Directory.Build.props).
       # CratisProxiesOutputPath is cleared so the proxy generator's MSBuild target no-ops for this Release
       # build instead of rewriting the committed proxies (they were verified fresh by build.yml before
-      # this merged). Packing the solution packs both projects under the same version, so Usher's
+      # this merged). Packing the solution packs every project under the same version, so Usher's
       # dependency on Usher.Contracts carries the released version.
       - name: Pack NuGet packages
         env:
@@ -130,7 +130,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  # Cratis.Showrunner.Usher and Cratis.Showrunner.Usher.Contracts via NuGet.org trusted publishing
+  # Cratis.Showrunner.Usher, Cratis.Showrunner.Usher.Contracts and Cratis.Showrunner.BoxOffice.Contracts via NuGet.org trusted publishing
   # (OIDC) - no long-lived API key secret to hold or rotate. The trusted-publishing policy on
   # nuget.org is bound to this workflow file (publish.yml) by name, so the job must live here rather
   # than in a separately named workflow. It checks out and builds nothing: it pushes what pack-nuget

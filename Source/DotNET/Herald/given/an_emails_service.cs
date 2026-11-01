@@ -6,7 +6,6 @@ using Cratis.Chronicle;
 using Cratis.Chronicle.EventSequences;
 using Cratis.Chronicle.Testing.Events;
 using Cratis.Showrunner.Herald.Sending;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace Cratis.Showrunner.Herald.given;
@@ -33,7 +32,7 @@ public class an_emails_service : a_templates_folder
         var client = Substitute.For<IChronicleClient>();
         client.GetEventStore(Arg.Any<EventStoreName>(), Arg.Any<EventStoreNamespaceName?>()).Returns(_eventStore);
         var wrapped = Options.Create(_options);
-        _emails = new(client, new Sending.HeraldEventStore(new ServiceCollection().BuildServiceProvider().GetRequiredService<IServiceScopeFactory>(), Options.Create(new ChronicleClientOptions()), wrapped), wrapped, _renderer, TimeProvider.System);
+        _emails = new(client, Options.Create(new ChronicleClientOptions()), wrapped, _renderer, TimeProvider.System);
     }
 
     void Destroy() => _eventStore.Dispose();

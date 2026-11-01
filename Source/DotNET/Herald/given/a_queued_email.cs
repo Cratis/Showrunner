@@ -6,7 +6,6 @@ using Cratis.Chronicle;
 using Cratis.Chronicle.EventSequences;
 using Cratis.Chronicle.Testing.Events;
 using Cratis.Showrunner.Herald.Sending;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace Cratis.Showrunner.Herald.given;
@@ -45,7 +44,7 @@ public class a_queued_email : a_templates_folder
         var wrapped = Options.Create(_options);
         var templates = new Rendering.TemplateStore(wrapped);
         var renderer = new Rendering.EmailRenderer(templates, new Rendering.EmailImages(wrapped), wrapped);
-        _delivery = new(client, new Sending.HeraldEventStore(new ServiceCollection().BuildServiceProvider().GetRequiredService<IServiceScopeFactory>(), Options.Create(new ChronicleClientOptions()), wrapped), wrapped, renderer, _transport, new FailureReasons(wrapped), _time, Microsoft.Extensions.Logging.Abstractions.NullLogger<EmailDelivery>.Instance);
+        _delivery = new(client, Options.Create(new ChronicleClientOptions()), wrapped, renderer, _transport, new FailureReasons(wrapped), _time, Microsoft.Extensions.Logging.Abstractions.NullLogger<EmailDelivery>.Instance);
 
         _id = EmailId.New();
         _eventStore.EventLog.Append(

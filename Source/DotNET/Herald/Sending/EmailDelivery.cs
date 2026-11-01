@@ -20,7 +20,7 @@ namespace Cratis.Showrunner.Herald.Sending;
 /// once; run Herald's worker in one instance of the application.
 /// </remarks>
 /// <param name="client">The <see cref="IChronicleClient"/>.</param>
-/// <param name="eventStores">The <see cref="HeraldEventStore"/>.</param>
+/// <param name="chronicle">The <see cref="ChronicleClientOptions"/>, which name the event store when nothing else does.</param>
 /// <param name="options">The <see cref="HeraldOptions"/>.</param>
 /// <param name="renderer">The <see cref="EmailRenderer"/>.</param>
 /// <param name="transport">The <see cref="IEmailTransport"/>.</param>
@@ -29,7 +29,7 @@ namespace Cratis.Showrunner.Herald.Sending;
 /// <param name="logger">The logger.</param>
 public class EmailDelivery(
     IChronicleClient client,
-    HeraldEventStore eventStores,
+    IOptions<ChronicleClientOptions> chronicle,
     IOptions<HeraldOptions> options,
     EmailRenderer renderer,
     IEmailTransport transport,
@@ -38,13 +38,39 @@ public class EmailDelivery(
     ILogger<EmailDelivery> logger)
 {
     /// <summary>
+    /// Initializes a new instance of the <see cref="EmailDelivery"/> class.
+    /// </summary>
+    /// <param name="client">The <see cref="IChronicleClient"/>.</param>
+    /// <param name="chronicle">The <see cref="ChronicleClientOptions"/>.</param>
+    /// <param name="options">The <see cref="HeraldOptions"/>.</param>
+    /// <param name="renderer">The <see cref="EmailRenderer"/>.</param>
+    /// <param name="transport">The <see cref="IEmailTransport"/>.</param>
+    /// <param name="reasons">The <see cref="FailureReasons"/>.</param>
+    /// <param name="time">The <see cref="TimeProvider"/>.</param>
+    /// <param name="logger">The logger.</param>
+    /// <param name="eventStores">The <see cref="HeraldEventStore"/> naming the application's event store.</param>
+    public EmailDelivery(
+        IChronicleClient client,
+        IOptions<ChronicleClientOptions> chronicle,
+        IOptions<HeraldOptions> options,
+        EmailRenderer renderer,
+        IEmailTransport transport,
+        FailureReasons reasons,
+        TimeProvider time,
+        ILogger<EmailDelivery> logger,
+        HeraldEventStore eventStores)
+        : this(client, chronicle, options, renderer, transport, reasons, time, logger) => EventStores = eventStores;
+
+    HeraldEventStore EventStores { get => field ??= HeraldEventStore.ForClientOptions(chronicle, options); init; }
+
+    /// <summary>
     /// Delivers every queued email that is due.
     /// </summary>
     /// <param name="cancellationToken">Cancels the delivery.</param>
     /// <returns>How many emails were looked at.</returns>
     public async Task<int> DeliverDue(CancellationToken cancellationToken = default)
     {
-        var store = await client.GetEventStore(eventStores.Name, options.Value.Namespace).WaitAsync(cancellationToken);
+        var store = await client.GetEventStore(EventStores.Name, options.Value.Namespace).WaitAsync(cancellationToken);
         var queued = (await store.ReadModels.GetInstances<QueuedEmail>()).ToArray();
         foreach (var email in queued.OrderBy(email => email.QueuedAt))
         {

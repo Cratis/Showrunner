@@ -31,6 +31,16 @@ public class HeraldEventStore(
     /// </summary>
     public EventStoreName Name => _name.Value;
 
+    /// <summary>
+    /// Gets a resolver that knows only the Chronicle client options, which is what the code written before the
+    /// application's event store was resolved knew.
+    /// </summary>
+    /// <param name="chronicle">The <see cref="ChronicleClientOptions"/>.</param>
+    /// <param name="options">The <see cref="HeraldOptions"/>.</param>
+    /// <returns>The resolver.</returns>
+    public static HeraldEventStore ForClientOptions(IOptions<ChronicleClientOptions> chronicle, IOptions<HeraldOptions> options) =>
+        new(new ServiceCollection().BuildServiceProvider().GetRequiredService<IServiceScopeFactory>(), chronicle, options);
+
     static EventStoreName Resolve(IServiceScopeFactory scopes, ChronicleClientOptions chronicle, HeraldOptions options)
     {
         if (options.EventStore != EventStoreName.NotSet)

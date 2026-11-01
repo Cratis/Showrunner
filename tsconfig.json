@@ -60,6 +60,9 @@
             "path": "./Source/JavaScript/Marquee.Authoring"
         },
         {
+            "path": "./Source/JavaScript/Notes"
+        },
+        {
             "path": "./Source/JavaScript/Usher"
         },
         {

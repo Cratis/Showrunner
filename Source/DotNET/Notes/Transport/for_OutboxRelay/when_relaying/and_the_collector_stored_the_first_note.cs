@@ -15,7 +15,7 @@ public class and_the_collector_stored_the_first_note : an_outbox_relay
 
     async Task Because()
     {
-        _collector.Position = 0;
+        _collector.StoredPosition = 0;
         await Publish(NoteId.New());
         await Publish(NoteId.New());
         _sent = await _relay.Relay(_eventStore);

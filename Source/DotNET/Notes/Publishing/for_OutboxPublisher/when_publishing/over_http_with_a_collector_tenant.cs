@@ -2,9 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #if DEBUG
-using Cratis.Showrunner.Notes.Publishing.for_OutboxPublisher.given;
 using Cratis.Showrunner.Notes.given;
 using Cratis.Showrunner.Notes.Giving.GiveNoteOnContext;
+using Cratis.Showrunner.Notes.Publishing.for_OutboxPublisher.given;
 
 namespace Cratis.Showrunner.Notes.Publishing.for_OutboxPublisher.when_publishing;
 

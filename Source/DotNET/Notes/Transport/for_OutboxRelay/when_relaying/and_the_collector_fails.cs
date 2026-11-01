@@ -21,12 +21,12 @@ public class and_the_collector_fails : an_outbox_relay
         _collector.FailWith = new CollectorRequestFailed(System.Net.HttpStatusCode.InternalServerError);
         _failure = await Record.ExceptionAsync(() => _relay.Relay(_eventStore));
         _collector.FailWith = null;
-        _collector.Position = 0;
+        _collector.StoredPosition = 0;
         await _relay.Relay(_eventStore);
     }
 
     [Fact] void should_report_the_failure() => _failure.ShouldBeOfExactType<CollectorRequestFailed>();
     [Fact] void should_ask_for_the_position_again() => _collector.PositionAsked.ShouldEqual(2);
-    [Fact] void should_send_the_note_after_the_stored_position() => _collector.AllNotes.Last().SequenceNumber.ShouldEqual(1ul);
+    [Fact] void should_send_the_note_after_the_stored_position() => _collector.AllNotes[^1].SequenceNumber.ShouldEqual(1ul);
 }
 #endif

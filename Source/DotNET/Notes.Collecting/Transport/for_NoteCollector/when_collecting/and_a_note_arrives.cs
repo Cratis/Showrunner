@@ -3,8 +3,8 @@
 
 #if DEBUG
 using Cratis.Chronicle;
-using Cratis.Showrunner.Notes.Collecting.Receiving;
 using Cratis.Showrunner.Notes.Collecting.given;
+using Cratis.Showrunner.Notes.Collecting.Receiving;
 using Cratis.Showrunner.Notes.Collecting.Transport.given;
 
 namespace Cratis.Showrunner.Notes.Collecting.Transport.for_NoteCollector.when_collecting;
@@ -29,7 +29,7 @@ public class and_a_note_arrives : a_note_collector
     [Fact] void should_record_the_same_fact_as_the_translator_does() => Json(_recorded.Content).ShouldEqual(Json(ReceivedNotes.OnContext));
     [Fact] void should_say_which_application_it_came_from() => ((NoteOnContextReceived)_recorded.Content).AppStore.ShouldEqual(new AppStoreName("Ledger"));
     [Fact] void should_keep_when_it_happened() => _recorded.Context.Occurred.ShouldEqual(Occurred);
-    [Fact] void should_keep_the_correlation_id() => _recorded.Context.CorrelationId.Value.ShouldEqual(Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"));
+    [Fact] void should_keep_the_correlation_id() => _recorded.Context.CorrelationId.Value.ShouldEqual(new Guid(0xaaaaaaaa, 0xbbbb, 0xcccc, 0xdd, 0xdd, 0xee, 0xee, 0xee, 0xee, 0xee, 0xee));
     [Fact] void should_keep_the_compliance_subject() => _recorded.Context.Subject.ShouldEqual(new Subject("notes-giver-abc"));
 }
 #endif

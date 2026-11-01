@@ -23,7 +23,7 @@ public class when_round_tripping_contract_events : Specification
         "/billing/invoices",
         NoteDialog.NoDialog,
         new Dictionary<string, string> { ["event-model"] = "billing" },
-        new Usher.Contracts.Reporting.CorrelationId(Guid.Parse("11111111-2222-3333-4444-555555555555")));
+        new Usher.Contracts.Reporting.CorrelationId(new Guid(0x11111111, 0x2222, 0x3333, 0x44, 0x44, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55)));
 
     object[] _events = [];
     object[] _read = [];

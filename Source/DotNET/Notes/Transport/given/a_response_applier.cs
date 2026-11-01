@@ -4,8 +4,8 @@
 #if DEBUG
 using Cratis.Chronicle;
 using Cratis.Chronicle.Testing.Events;
-using Cratis.Showrunner.Notes.given;
 using Cratis.Showrunner.Notes.Contracts.Transport;
+using Cratis.Showrunner.Notes.given;
 using Cratis.Showrunner.Notes.Tenancy;
 using Microsoft.Extensions.Options;
 

@@ -7,9 +7,9 @@ using System.Text.Json;
 using Cratis.Chronicle;
 using Cratis.Chronicle.Events;
 using Cratis.Chronicle.Testing.Events;
+using Cratis.Showrunner.Notes.Collecting.given;
 using Cratis.Showrunner.Notes.Collecting.Receiving;
 using Cratis.Showrunner.Notes.Contracts.Transport;
-using Cratis.Showrunner.Notes.Collecting.given;
 using Microsoft.Extensions.Options;
 
 namespace Cratis.Showrunner.Notes.Collecting.Transport.given;
@@ -98,7 +98,7 @@ public class a_note_collector : Specification
             Occurred,
             (noteId ?? _noteId).Value.ToString(),
             JsonSerializer.SerializeToElement(publicEvent, publicEvent.GetType(), NotesTransportJson.Options),
-            Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+            new Guid(0xaaaaaaaa, 0xbbbb, 0xcccc, 0xdd, 0xdd, 0xee, 0xee, 0xee, 0xee, 0xee, 0xee),
             "notes-giver-abc");
     }
 

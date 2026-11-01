@@ -16,7 +16,7 @@ public class RecordingCollector : ICollectorClient
     /// <summary>
     /// Gets or sets the position the collector reports.
     /// </summary>
-    public ulong? Position { get; set; }
+    public ulong? StoredPosition { get; set; }
 
     /// <summary>
     /// Gets or sets what to fail every call with.
@@ -47,7 +47,7 @@ public class RecordingCollector : ICollectorClient
     public Task<ulong?> GetPosition(string source, CancellationToken cancellationToken = default)
     {
         PositionAsked++;
-        return FailWith is { } failure ? Task.FromException<ulong?>(failure) : Task.FromResult(Position);
+        return FailWith is { } failure ? Task.FromException<ulong?>(failure) : Task.FromResult(StoredPosition);
     }
 
     /// <inheritdoc/>

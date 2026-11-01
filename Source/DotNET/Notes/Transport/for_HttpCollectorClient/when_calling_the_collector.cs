@@ -20,13 +20,21 @@ public class when_calling_the_collector : Specification
     IReadOnlyList<NoteResponse> _responses;
     Exception _refused;
 
+    static HttpResponseMessage Answer(HttpRequestMessage request)
+    {
+        if (request.Method != HttpMethod.Get)
+        {
+            return new(HttpStatusCode.Unauthorized);
+        }
+
+        return request.RequestUri!.AbsolutePath.EndsWith("/responses", StringComparison.Ordinal)
+            ? StubHandler.Json("[{\"cursor\":4,\"noteId\":\"" + Guid.Empty + "\",\"kind\":\"Addressed\",\"occurred\":\"2026-10-26T14:15:00+00:00\",\"version\":\"2.0.0\"}]")
+            : StubHandler.Json("{\"sequenceNumber\":41}");
+    }
+
     void Establish()
     {
-        _handler = new(request => request.Method == HttpMethod.Get && request.RequestUri!.AbsolutePath.EndsWith("/responses", StringComparison.Ordinal)
-            ? StubHandler.Json("[{\"cursor\":4,\"noteId\":\"" + Guid.Empty + "\",\"kind\":\"Addressed\",\"occurred\":\"2026-10-26T14:15:00+00:00\",\"version\":\"2.0.0\"}]")
-            : request.Method == HttpMethod.Get
-                ? StubHandler.Json("{\"sequenceNumber\":41}")
-                : new(HttpStatusCode.Unauthorized));
+        _handler = new(Answer);
         var options = Options.Create(new NotesOptions
         {
             Transport = NotesTransport.Http,

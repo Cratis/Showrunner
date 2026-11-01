@@ -28,6 +28,6 @@ public class and_the_application_restarts_after_the_note_changed_its_mind : a_re
     }
 
     [Fact] void should_record_each_answer_once() => _recorded.Count(_ => _ is ReceiverAddressedNote or ReceiverDeclinedNote).ShouldEqual(3);
-    [Fact] void should_end_where_the_last_answer_left_it() => _recorded.Last().ShouldBeOfExactType<ReceiverAddressedNote>();
+    [Fact] void should_end_where_the_last_answer_left_it() => _recorded[^1].ShouldBeOfExactType<ReceiverAddressedNote>();
 }
 #endif

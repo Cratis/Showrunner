@@ -65,7 +65,7 @@ public class when_the_collector_keeps_failing : Specification
         _stopped = await Record.ExceptionAsync(() => _worker.StopAsync(CancellationToken.None));
     }
 
-    [Fact] void should_log_the_failure_as_a_warning() => _logger.Messages.First().Level.ShouldEqual(LogLevel.Warning);
+    [Fact] void should_log_the_failure_as_a_warning() => _logger.Messages[0].Level.ShouldEqual(LogLevel.Warning);
     [Fact] void should_stop_cleanly() => _stopped.ShouldBeNull();
     [Fact] void should_not_log_the_secret() => _logger.Messages.Any(_ => _.Text.Contains(Secret, StringComparison.Ordinal)).ShouldBeFalse();
     [Fact] void should_wait_longer_after_each_failure() => _worker.DelayAfter(3).ShouldBeGreaterThan(_worker.DelayAfter(1));

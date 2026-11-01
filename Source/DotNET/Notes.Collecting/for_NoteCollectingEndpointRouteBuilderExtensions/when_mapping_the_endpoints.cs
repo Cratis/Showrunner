@@ -24,11 +24,11 @@ public class when_mapping_the_endpoints : Specification
         builder.Services.Configure<ChronicleClientOptions>(_ => _.EventStore = "Studio");
         builder.Services.AddSingleton(Substitute.For<IResolveNotesPublications>());
         var app = builder.Build();
-        ((IEndpointRouteBuilder)app).MapNoteCollecting();
+        app.MapNoteCollecting();
         _endpoints = [.. ((IEndpointRouteBuilder)app).DataSources.SelectMany(_ => _.Endpoints).OfType<RouteEndpoint>()];
 
         var bare = WebApplication.CreateBuilder().Build();
-        _withoutAResolver = Record.Exception(() => ((IEndpointRouteBuilder)bare).MapNoteCollecting());
+        _withoutAResolver = Record.Exception(bare.MapNoteCollecting);
     }
 
     [Fact] void should_map_the_three_endpoints() => _endpoints.Select(_ => _.RoutePattern.RawText).ShouldContainOnly(

@@ -124,6 +124,7 @@ public static class ApplicationObjectBuilder
             Ports = [new V1ContainerPort { Name = ApplicationNames.ProxyPortName, ContainerPort = authentication.Port, Protocol = "TCP" }],
             Env =
             [
+
                 // Everything else the proxy needs (providers, the upstream service, cookie domain) comes from the
                 // publisher's configuration secret, which knows the proxy it chose.
                 new() { Name = "ASPNETCORE_URLS", Value = $"http://0.0.0.0:{authentication.Port}" }

@@ -69,8 +69,8 @@
         "react-markdown": "10.1.0"
     },
     "devDependencies": {
-        "@cratis/arc": "22.146.0",
-        "@cratis/arc.react": "22.146.0",
+        "@cratis/arc": "22.155.0",
+        "@cratis/arc.react": "22.155.0",
         "@cratis/components": "4.38.0",
         "@cratis/fundamentals": "7.27.0",
         "@storybook/react-vite": "^10.5.10",
@@ -80,8 +80,8 @@
         "storybook": "^10.5.10"
     },
     "peerDependencies": {
-        "@cratis/arc": "^22.146.0",
-        "@cratis/arc.react": "^22.146.0",
+        "@cratis/arc": "^22.155.0",
+        "@cratis/arc.react": "^22.155.0",
         "@cratis/components": "^4.38.0",
         "@cratis/fundamentals": "^7.27.0",
         "react": "^19.0.0"

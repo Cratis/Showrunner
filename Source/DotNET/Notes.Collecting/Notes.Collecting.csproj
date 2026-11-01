@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>Cratis.Showrunner.Notes.Collecting</AssemblyName>
+        <RootNamespace>Cratis.Showrunner.Notes.Collecting</RootNamespace>
+        <PackageId>Cratis.Showrunner.Notes.Collecting</PackageId>
+        <Description>Notes collecting — the receiving side of Showrunner product feedback, hosted by the builder of an application: reads the applications' outbox into an inbox, records each note as a private fact in the tenant's namespace and answers with acknowledgements and resolutions, built on Cratis Arc and Chronicle.</Description>
+        <PackageTags>cratis;showrunner;notes;feedback;arc;chronicle;event-sourcing</PackageTags>
+
+        <!-- Read models a command's validator takes as parameters are read fresh from the event log and guard the
+             append: a note is acknowledged, addressed and declined only while it is open, also under concurrent
+             requests. -->
+        <CratisReadProtection>On</CratisReadProtection>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Cratis.Arc" />
+        <PackageReference Include="Cratis.Arc.Chronicle" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../Notes.Contracts/Notes.Contracts.csproj" />
+    </ItemGroup>
+</Project>

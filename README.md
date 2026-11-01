@@ -29,6 +29,8 @@ Usher is in its earliest stage: the packages are scaffolded and published, but c
 | `Cratis.Showrunner.Marquee.Authoring` | NuGet | Marquee's authoring backend — commands, query and outbox for writing announcements, built on Arc and Chronicle |
 | `Cratis.Showrunner.Marquee` | NuGet | Marquee's backend for products — receives announcements once, shows each tenant what its audience matches and records acknowledgements |
 | `Cratis.Showrunner.Usher` | NuGet | Usher's backend — Arc commands and queries over Chronicle |
+| `ghcr.io/cratis/showrunner-stage-operator` | Container image | The Stage operator: a Kubernetes operator that runs published Stage applications permanently or for a period; see [Documentation](./Documentation/StageOperator/index.md) |
+| `stage-operator` | Helm chart (OCI, `ghcr.io/cratis/charts`) | Installs the Stage operator with the `StageApplication` custom resource definition |
 | `@cratis/showrunner.marquee` | npm | The generated TypeScript proxies for Marquee's receiving commands and queries; no UI framework dependency |
 | `@cratis/showrunner.marquee.authoring` | npm | The generated TypeScript proxies for Marquee's authoring commands and query; no UI framework dependency |
 | `@cratis/showrunner.marquee.react` | npm | The Marquee drop-in React component: banners and dialogs for a product's announcements, built on `@cratis/arc.react` and `@cratis/components` |

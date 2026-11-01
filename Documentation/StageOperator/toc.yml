@@ -1,0 +1,8 @@
+- name: Overview
+  href: index.md
+- name: The StageApplication resource
+  href: resource-reference.md
+- name: Configuration
+  href: configuration.md
+- name: Security boundary
+  href: security-boundary.md

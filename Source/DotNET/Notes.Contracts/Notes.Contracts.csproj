@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <!-- Must match PackageId below. Cratis.Types' project-reference discovery (used to find
+             [EventType] records for Chronicle) resolves a referenced project by the library name
+             recorded in deps.json, which is the PackageId for a packable project - a mismatched
+             AssemblyName makes that resolution fail and silently drops every type in this assembly
+             from discovery, both at runtime and in specs. -->
+        <AssemblyName>Cratis.Showrunner.Notes.Contracts</AssemblyName>
+        <RootNamespace>Cratis.Showrunner.Notes.Contracts</RootNamespace>
+        <PackageId>Cratis.Showrunner.Notes.Contracts</PackageId>
+        <Description>The event contracts for Notes — the Showrunner product feedback part: notes the users of an application give about what they see, and what the people building it answer.</Description>
+        <PackageTags>cratis;showrunner;notes;feedback;event-sourcing;chronicle</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Cratis.Chronicle" />
+    </ItemGroup>
+
+    <!-- A note names where in the application it was given with Usher's SliceLocation, and tells the application
+         and its correlation with Usher's ApplicationName, ApplicationVersion and CorrelationId, so both parts
+         describe a place and an application the same way. -->
+    <ItemGroup>
+        <ProjectReference Include="../Usher.Contracts/Usher.Contracts.csproj" />
+    </ItemGroup>
+</Project>

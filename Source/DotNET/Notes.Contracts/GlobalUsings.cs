@@ -13,6 +13,7 @@ global using Cratis.Showrunner.Usher.Contracts.Reporting;
 #if DEBUG
 global using Cratis.Chronicle.Testing;
 global using Cratis.Chronicle.Testing.EventSequences;
+global using Cratis.Showrunner.Notes.Contracts.Giving;
 global using Cratis.Specifications;
 global using NSubstitute;
 global using Xunit;

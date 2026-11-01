@@ -1,17 +1,22 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Chronicle;
 using Cratis.Metrics;
 using Cratis.Showrunner.BoxOffice;
 using Cratis.Showrunner.BoxOffice.Compute;
 using Cratis.Showrunner.BoxOffice.Entitlements;
 using Cratis.Showrunner.BoxOffice.Gating;
+using Cratis.Showrunner.BoxOffice.Offering;
+using Cratis.Showrunner.BoxOffice.Offering.Declaration;
+using Cratis.Showrunner.BoxOffice.Offering.Starting;
 using Cratis.Showrunner.BoxOffice.Offers;
 using Cratis.Showrunner.BoxOffice.Portal;
 using Cratis.Showrunner.BoxOffice.Receiving;
 using Cratis.Showrunner.BoxOffice.Seats;
 using Cratis.Showrunner.BoxOffice.Tenancy;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -38,11 +43,22 @@ public static class BoxOfficeServiceCollectionExtensions
             .Validate(options => options.CustomerPortalLinkLifetime > TimeSpan.Zero && options.CustomerPortalLinkLifetime <= TimeSpan.FromDays(1), "A link to the customer portal works for a while: BoxOfficeOptions.CustomerPortalLinkLifetime must be more than zero and at most a day.")
             .ValidateOnStart();
 
+        services
+            .AddOptions<OfferingOptions>()
+            .Configure<IOptions<BoxOfficeOptions>>((offering, boxOffice) =>
+            {
+                if (offering.EventStore == EventStoreName.NotSet)
+                {
+                    offering.EventStore = boxOffice.Value.EventStore;
+                }
+            });
+        services.TryAddSingleton<BoxOfficeEventStore>();
         services.TryAddSingleton(TimeProvider.System);
         services.TryAddSingleton<TenantEventStores>();
         services.TryAddSingleton<OperatorEventTranslator>();
         services.TryAddSingleton<OperatorSubscriptions>();
         services.TryAddSingleton<ProductOffers>();
+        services.TryAddSingleton<IPublishedOffers>(provider => provider.GetRequiredService<ProductOffers>());
         services.TryAddSingleton(typeof(IMeter<>), typeof(UnkeyedMeter<>));
         services.TryAddScoped<IEntitlements, TenantEntitlements>();
         services.TryAddScoped<ICustomerPortal, SignedCustomerPortal>();

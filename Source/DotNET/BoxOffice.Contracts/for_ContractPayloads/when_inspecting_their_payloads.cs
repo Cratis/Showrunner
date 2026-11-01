@@ -11,7 +11,7 @@ namespace Cratis.Showrunner.BoxOffice.Contracts.for_ContractPayloads;
 /// </summary>
 public class when_inspecting_their_payloads : Specification
 {
-    static readonly string[] _productWide = [nameof(OfferingDeclared), nameof(OfferPublished), nameof(OfferWithdrawn)];
+    static readonly string[] _productWide = [nameof(OfferingDeclared), nameof(DefaultOfferingDeclared), nameof(OfferPublished), nameof(OfferWithdrawn)];
 
     Type[] _tenantScoped = [];
     Type[] _productWideTypes = [];
@@ -24,7 +24,7 @@ public class when_inspecting_their_payloads : Specification
         _productWideTypes = [.. _all.Where(type => _productWide.Contains(type.Name))];
     }
 
-    [Fact] void should_have_three_product_wide_contracts() => Assert.Equal(3, _productWideTypes.Length);
+    [Fact] void should_have_four_product_wide_contracts() => Assert.Equal(4, _productWideTypes.Length);
     [Fact] void should_carry_the_tenant_in_every_tenant_scoped_contract() => Assert.DoesNotContain(_tenantScoped, type => type.GetProperty(nameof(TenantId)) is null);
     [Fact] void should_not_carry_a_tenant_in_a_product_wide_contract() => Assert.DoesNotContain(_productWideTypes, type => type.GetProperty(nameof(TenantId)) is not null);
     [Fact] void should_not_repeat_an_event_source_id_in_any_payload() => Assert.DoesNotContain(_all, type => type.GetProperties().Any(property => typeof(EventSourceId).IsAssignableFrom(property.PropertyType)));

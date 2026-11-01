@@ -64,4 +64,44 @@ public class OfferingReporter(ProductOffering offering, ILogger<OfferingReporter
         logger.OfferingReported(offering.Product, declaration.Modules.Count(), declaration.Meters.Count());
         return OfferingReport.Reported;
     }
+
+    /// <summary>
+    /// Reports the default offering to the outbox of an event store as <see cref="DefaultOfferingDeclared"/>, unless it
+    /// already reports exactly this or the product declares none.
+    /// </summary>
+    /// <param name="eventStore">The event store, in the namespace the operator reads the product's outbox from.</param>
+    /// <returns>Whether anything was reported.</returns>
+    /// <exception cref="OfferingNotReported">Thrown when the event store refuses the declaration.</exception>
+    public async Task<OfferingReport> ReportDefaultOffering(IEventStore eventStore)
+    {
+        if (offering.DefaultOffer is not { } offer)
+        {
+            return OfferingReport.Unchanged;
+        }
+
+        var outbox = eventStore.GetEventSequence(EventSequenceId.Outbox);
+        var declared = eventStore.EventTypes.GetEventTypeFor(typeof(DefaultOfferingDeclared));
+        var reported = await outbox.GetForEventSourceIdAndEventTypes(offering.Product, [declared]);
+        var last = reported.Count > 0 ? reported[^1] : null;
+        if (last?.Content is DefaultOfferingDeclared previous && string.Equals(previous.Offer.Value, offer.Value, StringComparison.Ordinal))
+        {
+            logger.OfferingUnchanged(offering.Product);
+            return OfferingReport.Unchanged;
+        }
+
+        var key = new IdempotencyKey($"boxoffice-default-offering-declared-{Uri.EscapeDataString(offer.Value)}-{last?.Context.SequenceNumber.Value.ToString() ?? "first"}");
+        var result = await outbox.AppendOnce(offering.Product, new DefaultOfferingDeclared(offer), key);
+        if (result.HasIdempotencyConflicts)
+        {
+            return OfferingReport.Unchanged;
+        }
+
+        if (!result.IsSuccess)
+        {
+            throw new OfferingNotReported(offering.Product, result);
+        }
+
+        logger.DefaultOfferingReported(offering.Product, offer);
+        return OfferingReport.Reported;
+    }
 }

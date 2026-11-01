@@ -21,7 +21,7 @@ public static class OfferingProblems
             yield return "The product has no identity: call Product(...) with the id the operator knows it by.";
         }
 
-        foreach (var problem in InModules(offering).Concat(InMeters(offering)).Concat(InSeats(offering)))
+        foreach (var problem in InModules(offering).Concat(InMeters(offering)).Concat(InSeats(offering)).Concat(InDefaultOffer(offering)))
         {
             yield return problem;
         }
@@ -163,6 +163,14 @@ public static class OfferingProblems
         if (offering.Seats.Licensing == SeatLicensing.NotLicensed && offering.Seats.Roles.Any())
         {
             yield return "Seats name roles that need one, but the product does not license seats.";
+        }
+    }
+
+    static IEnumerable<string> InDefaultOffer(ProductOffering offering)
+    {
+        if (offering.DefaultOffer is { } offer && string.IsNullOrWhiteSpace(offer.Value))
+        {
+            yield return "The default offering has no name: call DefaultOffering(...) with the name of an offer in the operator's catalog.";
         }
     }
 }

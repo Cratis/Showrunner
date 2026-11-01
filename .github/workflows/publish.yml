@@ -15,6 +15,7 @@ env:
   NPM_VERSION: "11.6.2"
   NUGET_OUTPUT: ./Artifacts/NuGet
   NPM_OUTPUT: ./Artifacts/npm
+  IMAGE_OUTPUT: ./Artifacts/image
 
 on:
   workflow_dispatch:
@@ -281,6 +282,114 @@ jobs:
 
       - name: Publish npm packages
         run: node scripts/publish-tarballs.cjs "$NPM_OUTPUT"
+
+  # The Stage operator image. Building runs the .NET build, so the job that builds holds no publishing rights; the
+  # image goes to the next job as a one-day artifact.
+  build-operator-image:
+    name: Build the Stage operator image
+    if: needs.release.outputs.publish == 'true'
+    needs: [release]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Validate the version
+        env:
+          VERSION: ${{ needs.release.outputs.version }}
+        run: |
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::'$VERSION' is not a semantic version"
+            exit 1
+          fi
+
+      - name: Build the image
+        env:
+          VERSION: ${{ needs.release.outputs.version }}
+        run: |
+          docker build \
+            --file Source/DotNET/StageOperator/Dockerfile \
+            --build-arg "VERSION=$VERSION" \
+            --tag "showrunner-stage-operator:$VERSION" .
+          mkdir -p "$IMAGE_OUTPUT"
+          docker save "showrunner-stage-operator:$VERSION" --output "$IMAGE_OUTPUT/stage-operator.tar"
+
+      - name: Upload the image
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: stage-operator-image
+          path: ${{ env.IMAGE_OUTPUT }}/stage-operator.tar
+          if-no-files-found: error
+          retention-days: 1
+
+  # Pushes the image to ghcr.io/cratis/showrunner-stage-operator. It builds nothing: it pushes what the job above built.
+  publish-operator-image:
+    name: Push the Stage operator image
+    needs: [release, build-operator-image]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Download the image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: stage-operator-image
+          path: ${{ env.IMAGE_OUTPUT }}
+
+      - name: Push the image
+        env:
+          VERSION: ${{ needs.release.outputs.version }}
+          PRERELEASE: ${{ needs.release.outputs.prerelease }}
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REGISTRY_USER: ${{ github.actor }}
+        run: |
+          docker load --input "$IMAGE_OUTPUT/stage-operator.tar"
+          echo "$REGISTRY_TOKEN" | docker login ghcr.io --username "$REGISTRY_USER" --password-stdin
+          image="ghcr.io/cratis/showrunner-stage-operator"
+          docker tag "showrunner-stage-operator:$VERSION" "$image:$VERSION"
+          docker push "$image:$VERSION"
+          if [ "$PRERELEASE" != "true" ]; then
+            docker tag "showrunner-stage-operator:$VERSION" "$image:latest"
+            docker push "$image:latest"
+          fi
+
+  # The Helm chart, pushed as an OCI artifact to ghcr.io/cratis/charts/stage-operator at the released version. The chart
+  # defaults to the image of the same version, so it is pushed after the image.
+  publish-helm-chart:
+    name: Push the Stage operator Helm chart
+    needs: [release, publish-operator-image]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout the chart
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          sparse-checkout: Deployment/Helm
+          sparse-checkout-cone-mode: true
+
+      - name: Package and push the chart
+        env:
+          VERSION: ${{ needs.release.outputs.version }}
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REGISTRY_USER: ${{ github.actor }}
+        run: |
+          echo "$REGISTRY_TOKEN" | helm registry login ghcr.io --username "$REGISTRY_USER" --password-stdin
+          helm package Deployment/Helm/stage-operator --version "$VERSION" --app-version "$VERSION" --destination ./Artifacts/Helm
+          helm push "./Artifacts/Helm/stage-operator-$VERSION.tgz" oci://ghcr.io/cratis/charts
 
   # A merged pull request that publishes nothing is the failure mode that silently costs a release:
   # the release job succeeds, every publish job is skipped for want of should-publish, and the

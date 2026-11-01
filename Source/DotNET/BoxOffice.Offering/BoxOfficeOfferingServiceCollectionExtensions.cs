@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Showrunner.BoxOffice.Offering.Declaration;
+using Cratis.Showrunner.BoxOffice.Offering.Starting;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -16,7 +17,7 @@ public static class BoxOfficeOfferingServiceCollectionExtensions
     /// already has exactly this declaration.
     /// </summary>
     /// <param name="services">The <see cref="IServiceCollection"/> to add to.</param>
-    /// <param name="declare">Declares the modules, meters and seat licensing.</param>
+    /// <param name="declare">Declares the modules, meters, seat licensing and, when new tenants start on one, the default offering.</param>
     /// <returns>The service collection for continuation.</returns>
     /// <exception cref="InvalidOffering">Thrown when the declaration cannot be sold, for example a module requires one the product does not declare. The product does not start.</exception>
     public static IServiceCollection AddBoxOfficeOffering(this IServiceCollection services, Action<ProductOfferingBuilder> declare)
@@ -28,6 +29,7 @@ public static class BoxOfficeOfferingServiceCollectionExtensions
         services.TryAddSingleton(offering);
         services.TryAddSingleton(TimeProvider.System);
         services.TryAddSingleton<OfferingReporter>();
+        services.TryAddSingleton<IDefaultOffering, DefaultOffering>();
         services.AddOptions<OfferingOptions>();
         services.AddHostedService<OfferingReportingService>();
         return services;

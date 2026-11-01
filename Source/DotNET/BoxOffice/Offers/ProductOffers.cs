@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Chronicle;
+using Cratis.Showrunner.BoxOffice.Offering.Starting;
 using Microsoft.Extensions.Options;
 
 namespace Cratis.Showrunner.BoxOffice.Offers;
@@ -12,7 +13,7 @@ namespace Cratis.Showrunner.BoxOffice.Offers;
 /// </summary>
 /// <param name="client">The <see cref="IChronicleClient"/>.</param>
 /// <param name="options">The <see cref="ChronicleClientOptions"/> naming the application's event store.</param>
-public class ProductOffers(IChronicleClient client, IOptions<ChronicleClientOptions> options)
+public class ProductOffers(IChronicleClient client, IOptions<ChronicleClientOptions> options) : IPublishedOffers
 {
     /// <summary>
     /// Gets every offer, withdrawn or not.
@@ -23,4 +24,8 @@ public class ProductOffers(IChronicleClient client, IOptions<ChronicleClientOpti
         var store = await client.GetEventStore(options.Value.EventStore, EventStoreNamespaceName.Default);
         return await store.ReadModels.GetInstances<Offer>();
     }
+
+    /// <inheritdoc/>
+    async Task<IEnumerable<PublishedOffer>> IPublishedOffers.All(CancellationToken cancellationToken) =>
+        [.. (await All()).Select(_ => new PublishedOffer(_.Id, _.Name, _.Modules, _.IncludedSeats, _.Withdrawn))];
 }

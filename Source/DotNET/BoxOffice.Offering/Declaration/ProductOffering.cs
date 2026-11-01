@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Showrunner.BoxOffice.Contracts.Offers;
+
 namespace Cratis.Showrunner.BoxOffice.Offering.Declaration;
 
 /// <summary>
@@ -17,6 +19,12 @@ public record ProductOffering(
     IReadOnlyList<MeterDefinition> Meters,
     SeatPolicy Seats)
 {
+    /// <summary>
+    /// Gets the name of the offer of the operator's catalog a new tenant starts on without an operator decision, or
+    /// <see langword="null"/> when the product declares none.
+    /// </summary>
+    public OfferName? DefaultOffer { get; init; }
+
     /// <summary>
     /// Finds the module that owns a code namespace: the one that owns the longest namespace the given one is, or is inside of.
     /// </summary>

@@ -8,8 +8,8 @@ description: The public events Box Office exchanges between an operator such as 
 ## Rules every contract follows
 
 - **The organization is the event source.** Every tenant-scoped event, in both directions, is appended under the organization's `OrganizationId`: a GUID in its lowercase, hyphenated `D` form. It is the operator's own identity for the organization, and it is event context, not a field in the payload. The product answers under the same id it received.
-- **Product-wide events have their own event source.** `OfferingDeclared` is appended under the product's `ProductId`. `OfferPublished` and `OfferWithdrawn` are appended under the offer's `OfferId`. Neither id is in a payload.
-- **Every tenant-scoped payload carries `TenantId`.** It is the name of the tenant's Chronicle namespace in the product. In Direct it is the lobby's tenant name. The operator serves many tenants, and the product appends each event in the namespace `TenantId` names. The three product-wide events have no tenant.
+- **Product-wide events have their own event source.** `OfferingDeclared` and `DefaultOfferingDeclared` are appended under the product's `ProductId`. `OfferPublished` and `OfferWithdrawn` are appended under the offer's `OfferId`. Neither id is in a payload.
+- **Every tenant-scoped payload carries `TenantId`.** It is the name of the tenant's Chronicle namespace in the product. In Direct it is the lobby's tenant name. The operator serves many tenants, and the product appends each event in the namespace `TenantId` names. The product-wide events have no tenant.
 - **Nothing is nullable.** An optional collection is empty, and an unknown value is the concept's `NotSet`. An entitlement without an end date uses `EntitlementEnd.Never`.
 - **No timestamps that repeat the event's own time.** When something happened is the event's `Occurred`. The only dates in payloads are business dates: a trial's last day, an entitlement's last day, and the metered or summarized day.
 - **Every event is `[Public]`, and none names an origin store.** No contract shares a name with a private event. Direct's private events keep their `Customer…` names. Both sides subscribe explicitly to the store they read from.
@@ -56,7 +56,9 @@ An `OfferPrice` is an `Interval: BillingInterval` (`Monthly`, `Yearly`), an `Amo
 | Event | Namespace | Event source | Payload |
 | --- | --- | --- | --- |
 | `OfferingDeclared` | `Offering` | `ProductId` | `Modules: IEnumerable<ModuleDeclaration>`; `Meters: IEnumerable<MeterDeclaration>`; `Seats: SeatLicensing` (`NotLicensed`, `PerUser`) |
+| `DefaultOfferingDeclared` | `Offering` | `ProductId` | `Offer: OfferName` |
 | `TenantProvisioned` | `Tenants` | `OrganizationId` | `TenantId` |
+| `TenantStartedOnOffer` | `Tenants` | `OrganizationId` | `TenantId`; `Offer: OfferName`; `Seats: SeatCount`; `Modules: IEnumerable<ModuleId>` |
 | `SeatTaken` | `Seats` | `OrganizationId` | `TenantId`; `Holder: Person` |
 | `SeatReleased` | `Seats` | `OrganizationId` | `TenantId`; `Holder: Person` |
 | `ActivitySummarized` | `Activity` | `OrganizationId` | `TenantId`; `Day: ActivityDay`; `ActiveUsers: ActiveUserCount`; `Sessions: SessionCount`; `SignIns: SignInCount` |
@@ -65,6 +67,8 @@ An `OfferPrice` is an `Interval: BillingInterval` (`Monthly`, `Yearly`), an `Amo
 | `AllowanceExhausted` | `Compute` | `OrganizationId` | `TenantId`; `Meter: MeterId`; `Day: ComputeDay`; `Overage: OverageBehavior` |
 
 - A product publishes `OfferingDeclared` once per change to what it sells, not on every start.
+- `DefaultOfferingDeclared` names the offer of the catalog a new tenant starts on, and is published once per change, next to `OfferingDeclared`. A product that has no default publishes none.
+- `TenantStartedOnOffer` says the product started a tenant on its default offering by itself, with the seats and modules that offer includes. The operator does not confirm it; it may change what the tenant has afterwards. Starting the same tenant again publishes it once. See [Offering](./offering.md#starting-a-tenant-on-the-default-offering).
 - `Usage` is empty when nothing was used. A `MeterUsage` pairs a `MeterId` with a `MeterQuantity` in the meter's unit.
 - `ComputeDayCorrected` replaces the usage of `ComputeDayClosed` for the same day; it carries the corrected totals, not a difference.
 - `ActivitySummarized` is published once a day per tenant.

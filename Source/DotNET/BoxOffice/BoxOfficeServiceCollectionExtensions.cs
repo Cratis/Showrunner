@@ -6,6 +6,7 @@ using Cratis.Showrunner.BoxOffice;
 using Cratis.Showrunner.BoxOffice.Compute;
 using Cratis.Showrunner.BoxOffice.Entitlements;
 using Cratis.Showrunner.BoxOffice.Gating;
+using Cratis.Showrunner.BoxOffice.Offering.Starting;
 using Cratis.Showrunner.BoxOffice.Offers;
 using Cratis.Showrunner.BoxOffice.Portal;
 using Cratis.Showrunner.BoxOffice.Receiving;
@@ -43,6 +44,7 @@ public static class BoxOfficeServiceCollectionExtensions
         services.TryAddSingleton<OperatorEventTranslator>();
         services.TryAddSingleton<OperatorSubscriptions>();
         services.TryAddSingleton<ProductOffers>();
+        services.TryAddSingleton<IPublishedOffers>(provider => provider.GetRequiredService<ProductOffers>());
         services.TryAddSingleton(typeof(IMeter<>), typeof(UnkeyedMeter<>));
         services.TryAddScoped<IEntitlements, TenantEntitlements>();
         services.TryAddScoped<ICustomerPortal, SignedCustomerPortal>();

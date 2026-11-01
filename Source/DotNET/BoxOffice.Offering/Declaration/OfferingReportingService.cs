@@ -34,6 +34,7 @@ public class OfferingReportingService(
             {
                 var eventStore = await client.GetEventStore(clientOptions.Value.EventStore, EventStoreNamespaceName.Default).WaitAsync(stoppingToken);
                 await reporter.Report(eventStore);
+                await reporter.ReportDefaultOffering(eventStore);
                 return;
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)

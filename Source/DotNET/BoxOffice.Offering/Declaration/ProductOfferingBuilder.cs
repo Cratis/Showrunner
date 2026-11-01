@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Showrunner.BoxOffice.Contracts.Offers;
+
 namespace Cratis.Showrunner.BoxOffice.Offering.Declaration;
 
 /// <summary>
@@ -13,7 +15,8 @@ namespace Cratis.Showrunner.BoxOffice.Offering.Declaration;
 ///     .Module("core", "Core", module => module.Availability(ModuleAvailability.Included).Owns("Acme.Core"))
 ///     .Module("analytics", "Analytics", module => module.Requires("core").Owns("Acme.Analytics").TrialDays(14))
 ///     .Meter("compute", "Compute", "minutes")
-///     .Seats(SeatLicensing.PerUser));
+///     .Seats(SeatLicensing.PerUser)
+///     .DefaultOffering("Starter"));
 /// </code>
 /// </example>
 public class ProductOfferingBuilder
@@ -22,6 +25,7 @@ public class ProductOfferingBuilder
     readonly List<MeterDefinition> _meters = [];
     ProductId? _product;
     SeatPolicy _seats = SeatPolicy.NotLicensed;
+    OfferName? _defaultOffer;
 
     /// <summary>
     /// Sets the product's identity, the event source its declaration is reported under.
@@ -76,6 +80,18 @@ public class ProductOfferingBuilder
     }
 
     /// <summary>
+    /// Declares the offer of the operator's catalog a new tenant starts on, without an operator decision. The product starts
+    /// a tenant on it with <c>IDefaultOffering.StartTenant</c>.
+    /// </summary>
+    /// <param name="offer">The name of the offer, as the operator publishes it.</param>
+    /// <returns>The builder for continuation.</returns>
+    public ProductOfferingBuilder DefaultOffering(OfferName offer)
+    {
+        _defaultOffer = offer;
+        return this;
+    }
+
+    /// <summary>
     /// Builds the offering, checking it first.
     /// </summary>
     /// <returns>The <see cref="ProductOffering"/>.</returns>
@@ -86,7 +102,10 @@ public class ProductOfferingBuilder
             _product ?? ProductId.New(),
             [.. _modules.Select(_ => _.Build())],
             [.. _meters],
-            _seats);
+            _seats)
+        {
+            DefaultOffer = _defaultOffer
+        };
 
         var problems = OfferingProblems.In(offering, _product is not null).ToArray();
         if (problems.Length > 0)

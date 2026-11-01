@@ -21,6 +21,7 @@ public class that_is_valid : Specification
     }
 
     [Fact] void should_make_the_offering_available() => _provider.GetRequiredService<ProductOffering>().Modules.Count.ShouldEqual(1);
+    [Fact] void should_let_the_host_start_tenants_on_the_default_offering() => _services.ShouldContain(_ => _.ServiceType == typeof(Starting.IDefaultOffering) && _.ImplementationType == typeof(Starting.DefaultOffering));
     [Fact] void should_report_it_when_the_product_starts() => _services.ShouldContain(_ => _.ImplementationType == typeof(OfferingReportingService));
 }
 #endif

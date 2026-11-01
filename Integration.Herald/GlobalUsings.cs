@@ -3,7 +3,6 @@
 
 global using Cratis.Chronicle;
 global using Cratis.Chronicle.Events;
-global using Cratis.Chronicle.EventSequences;
 global using Cratis.Showrunner.Herald.Contracts.Emails;
 global using Cratis.Specifications;
 global using Xunit;

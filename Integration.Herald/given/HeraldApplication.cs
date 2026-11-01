@@ -2,9 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Chronicle.Registrations;
+using Cratis.Showrunner.Herald.Sending;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Cratis.Showrunner.Herald.Sending;
 
 namespace Cratis.Showrunner.Herald.Integration.given;
 
@@ -77,10 +77,10 @@ public sealed class HeraldApplication(IHost host, EventStoreName name) : IAsyncD
     /// Waits for a fact about an email in the event log.
     /// </summary>
     /// <typeparam name="TEvent">The fact.</typeparam>
-    /// <param name="about">Whatever the email is about.</param>
+    /// <param name="about">The event source the email is recorded against.</param>
     /// <param name="emailId">The email.</param>
     /// <param name="matches">Narrows to the fact wanted; null for any.</param>
-    /// <returns>The fact.</returns>
+    /// <returns>The fact as the event log holds it.</returns>
     public async Task<TEvent> WaitFor<TEvent>(EventSourceId about, EmailId emailId, Func<TEvent, bool>? matches = null)
         where TEvent : class
     {
@@ -107,7 +107,7 @@ public sealed class HeraldApplication(IHost host, EventStoreName name) : IAsyncD
     /// <summary>
     /// Gets every fact recorded against something.
     /// </summary>
-    /// <param name="about">Whatever the emails are about.</param>
+    /// <param name="about">The event source the emails are about, which holds their facts.</param>
     /// <returns>The facts.</returns>
     public async Task<IReadOnlyList<object>> Facts(EventSourceId about)
     {

@@ -29,7 +29,7 @@ public class an_email_with_an_image : given.a_templates_folder
     [Fact] void should_set_where_replies_go() => Assert.Equal("help@ledger.example.com", _message.ReplyTo.Mailboxes.Single().Address);
     [Fact] void should_carry_the_plain_text_alternative() => Assert.Contains("Accept (", _message.TextBody);
     [Fact] void should_carry_the_html_alternative() => Assert.Contains("<a ", _message.HtmlBody);
-    [Fact] void should_embed_the_image() => Assert.Single(_message.BodyParts.Where(part => part.ContentType.MimeType == "image/png"));
+    [Fact] void should_embed_the_image() => Assert.Single(_message.BodyParts, part => part.ContentType.MimeType == "image/png");
     [Fact] void should_refer_to_the_embedded_image_by_content_id() => Assert.Contains($"cid:{_message.BodyParts.First(part => part.ContentType.MimeType == "image/png").ContentId}", _message.HtmlBody);
 }
 #endif

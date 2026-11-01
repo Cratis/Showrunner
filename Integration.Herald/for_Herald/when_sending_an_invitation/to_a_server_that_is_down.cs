@@ -12,7 +12,7 @@ namespace Cratis.Showrunner.Herald.Integration.for_Herald.when_sending_an_invita
 [Collection(ChronicleCollection.Name)]
 public class to_a_server_that_is_down : Specification
 {
-    static readonly EventSourceId Invitation = "invitation-2";
+    static readonly EventSourceId _invitation = "invitation-2";
 
     AnInvitationTemplate _files;
     CapturingSmtpServer _server;
@@ -30,14 +30,14 @@ public class to_a_server_that_is_down : Specification
 
         _id = await _application.Emails.Send(new EmailRequest(
             "invitation",
-            Invitation,
+            _invitation,
             "grace@example.com",
             new Dictionary<string, string> { ["invitation.link"] = "https://ledger.example.com/join", ["inviter.name"] = "Ada" }));
 
-        _failedAttempt = await _application.WaitFor<EmailAttemptFailed>(Invitation, _id);
+        _failedAttempt = await _application.WaitFor<EmailAttemptFailed>(_invitation, _id);
         _server.Start();
-        _sent = await _application.WaitFor<EmailSent>(Invitation, _id);
-        _facts = await _application.Facts(Invitation);
+        _sent = await _application.WaitFor<EmailSent>(_invitation, _id);
+        _facts = await _application.Facts(_invitation);
     }
 
     async Task Destroy()

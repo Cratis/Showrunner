@@ -15,22 +15,17 @@ namespace Cratis.Showrunner.Herald.Integration.given;
 /// <summary>
 /// A mail server running inside the test process that keeps what it is sent.
 /// </summary>
-public sealed class CapturingSmtpServer : IAsyncDisposable
+/// <param name="port">The port to listen on; zero picks a free one.</param>
+public sealed class CapturingSmtpServer(int port = 0) : IAsyncDisposable
 {
     readonly CancellationTokenSource _stop = new();
     readonly ConcurrentQueue<MimeMessage> _received = new();
     Task? _running;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="CapturingSmtpServer"/> class.
-    /// </summary>
-    /// <param name="port">The port to listen on; zero picks a free one.</param>
-    public CapturingSmtpServer(int port = 0) => Port = port == 0 ? FreePort() : port;
-
-    /// <summary>
     /// Gets the port the server listens on.
     /// </summary>
-    public int Port { get; }
+    public int Port { get; } = port == 0 ? FreePort() : port;
 
     /// <summary>
     /// Gets the messages the server was sent.

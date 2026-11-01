@@ -24,15 +24,16 @@ public static class ApplicationObjectBuilder
     /// <param name="replicas">The number of replicas: 1 to run, 0 to stop.</param>
     /// <param name="exposed">Whether the Ingress exists.</param>
     /// <param name="options">The operator configuration.</param>
+    /// <param name="package">The ConfigMap that delivers the package archive, or null when the image carries the package.</param>
     /// <returns>The objects.</returns>
     /// <exception cref="InvalidOperationException">The application has no authentication; it must be refused before objects are built.</exception>
-    public static DesiredObjects Build(StageApplication application, string image, int replicas, bool exposed, StageOperatorOptions options)
+    public static DesiredObjects Build(StageApplication application, string image, int replicas, bool exposed, StageOperatorOptions options, string? package = null)
     {
         var authentication = application.Spec.Authentication
             ?? throw new InvalidOperationException("An application without authentication must be refused before objects are built.");
 
         return new DesiredObjects(
-            BuildDeployment(application, image, replicas, authentication, options),
+            BuildDeployment(application, image, replicas, authentication, options, package),
             BuildMongoStatefulSet(application, replicas, options),
             BuildService(application),
             BuildMongoService(application),
@@ -78,7 +79,7 @@ public static class ApplicationObjectBuilder
         ]
     };
 
-    static V1Deployment BuildDeployment(StageApplication application, string image, int replicas, StageApplicationAuthentication authentication, StageOperatorOptions options)
+    static V1Deployment BuildDeployment(StageApplication application, string image, int replicas, StageApplicationAuthentication authentication, StageOperatorOptions options, string? package)
     {
         var selector = SelectorLabels(application, ApplicationNames.AppComponent);
         var host = ApplicationNames.Host(application, options.BaseDomain);
@@ -98,6 +99,49 @@ public static class ApplicationObjectBuilder
             new() { Name = "ASPNETCORE_URLS", Value = $"http://127.0.0.1:{ApplicationNames.StagePort}" }
         ];
 
+        List<V1Volume> volumes = [];
+        List<V1VolumeMount> mounts = [];
+
+        if (!string.IsNullOrEmpty(package))
+        {
+            // Mounting a ConfigMap needs no rights for the operator; the kubelet does it. Only the archive key is projected.
+            volumes.Add(new V1Volume
+            {
+                Name = ApplicationNames.PackageVolume,
+                ConfigMap = new V1ConfigMapVolumeSource
+                {
+                    Name = package,
+                    Items = [new V1KeyToPath { Key = ApplicationNames.PackageArchiveFile, Path = ApplicationNames.PackageArchiveFile }]
+                }
+            });
+            mounts.Add(new V1VolumeMount { Name = ApplicationNames.PackageVolume, MountPath = ApplicationNames.PackageMountPath, ReadOnlyProperty = true });
+            stageEnvironment.Add(new V1EnvVar { Name = "Stage__Published__PackagePath", Value = $"{ApplicationNames.PackageMountPath}/{ApplicationNames.PackageArchiveFile}" });
+        }
+
+        if (HasCollector(notes))
+        {
+            // The secret is only referenced by name; the kubelet mounts it and Notes reads the file on every use.
+            volumes.Add(new V1Volume
+            {
+                Name = ApplicationNames.NotesTokenVolume,
+                Secret = new V1SecretVolumeSource
+                {
+                    SecretName = notes!.CollectorTokenSecretRef,
+                    Items = [new V1KeyToPath { Key = ApplicationNames.NotesTokenKey, Path = ApplicationNames.NotesTokenKey }]
+                }
+            });
+            mounts.Add(new V1VolumeMount { Name = ApplicationNames.NotesTokenVolume, MountPath = ApplicationNames.NotesTokenMountPath, ReadOnlyProperty = true });
+            stageEnvironment.AddRange(
+            [
+                new V1EnvVar { Name = "Notes__Transport", Value = "Http" },
+                new V1EnvVar { Name = "Notes__CollectorUrl", Value = notes.CollectorUrl },
+                new V1EnvVar { Name = "Notes__CollectorTokenFile", Value = $"{ApplicationNames.NotesTokenMountPath}/{ApplicationNames.NotesTokenKey}" },
+                new V1EnvVar { Name = "Notes__PublicationId", Value = application.Spec.PublicationId },
+                new V1EnvVar { Name = "Notes__CollectorTenantId", Value = application.Spec.Organization },
+                new V1EnvVar { Name = "Notes__ApplicationName", Value = application.Spec.PublishedName }
+            ]);
+        }
+
         var stage = new V1Container
         {
             Name = ApplicationNames.StageContainer,
@@ -108,6 +152,7 @@ public static class ApplicationObjectBuilder
             Env = stageEnvironment,
             EnvFrom = string.IsNullOrEmpty(notes?.ConfigSecretRef) ? null : [SecretSource(notes.ConfigSecretRef)],
             Resources = BuildResources(application.Spec.Resources),
+            VolumeMounts = mounts.Count == 0 ? null : mounts,
             SecurityContext = SecurityContext(),
             ReadinessProbe = new V1Probe
             {
@@ -163,12 +208,16 @@ public static class ApplicationObjectBuilder
                     Spec = new V1PodSpec
                     {
                         AutomountServiceAccountToken = false,
-                        Containers = [stage, proxy]
+                        Containers = [stage, proxy],
+                        Volumes = volumes.Count == 0 ? null : volumes
                     }
                 }
             }
         };
     }
+
+    static bool HasCollector(StageApplicationNotes? notes) =>
+        notes is { Enabled: true } && !string.IsNullOrWhiteSpace(notes.CollectorUrl) && !string.IsNullOrWhiteSpace(notes.CollectorTokenSecretRef);
 
     static V1EnvFromSource SecretSource(string secret) => new() { SecretRef = new V1SecretEnvSource { Name = secret } };
 

@@ -20,6 +20,10 @@ public record StageApplicationStatus
     [JsonPropertyName("runningImage")]
     public string? RunningImage { get; init; }
 
+    /// <summary>Gets the package ConfigMap that is running, or null when the image carries the package.</summary>
+    [JsonPropertyName("runningPackage")]
+    public string? RunningPackage { get; init; }
+
     /// <summary>Gets the public URL.</summary>
     [JsonPropertyName("url")]
     public string? Url { get; init; }

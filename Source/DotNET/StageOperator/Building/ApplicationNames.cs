@@ -47,6 +47,24 @@ public static class ApplicationNames
     /// <summary>The port the Service listens on.</summary>
     public const int ServicePort = 80;
 
+    /// <summary>The name of the volume that carries the package archive.</summary>
+    public const string PackageVolume = "package-archive";
+
+    /// <summary>The directory the package archive volume is mounted at.</summary>
+    public const string PackageMountPath = "/stage/package-archive";
+
+    /// <summary>The ConfigMap key, and the file name, of the package archive.</summary>
+    public const string PackageArchiveFile = "package.tar.gz";
+
+    /// <summary>The name of the volume that carries the Notes collector token.</summary>
+    public const string NotesTokenVolume = "notes-token";
+
+    /// <summary>The directory the Notes collector token is mounted at.</summary>
+    public const string NotesTokenMountPath = "/stage/notes";
+
+    /// <summary>The secret key, and the file name, of the Notes collector token.</summary>
+    public const string NotesTokenKey = "token";
+
     /// <summary>The paths that must never be reachable through the ingress.</summary>
     public static readonly string[] DeniedPaths =
     [

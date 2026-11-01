@@ -15,4 +15,12 @@ public record StageApplicationNotes
     /// <summary>Gets the optional name of a secret with extra environment for the Notes backend.</summary>
     [JsonPropertyName("configSecretRef")]
     public string? ConfigSecretRef { get; init; }
+
+    /// <summary>Gets the URL of the Notes collector the application sends its notes to over HTTP.</summary>
+    [JsonPropertyName("collectorUrl")]
+    public string? CollectorUrl { get; init; }
+
+    /// <summary>Gets the name of the secret whose key <c>token</c> holds the collector bearer secret.</summary>
+    [JsonPropertyName("collectorTokenSecretRef")]
+    public string? CollectorTokenSecretRef { get; init; }
 }

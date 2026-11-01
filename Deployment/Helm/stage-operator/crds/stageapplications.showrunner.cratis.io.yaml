@@ -79,8 +79,17 @@ spec:
                   minLength: 1
                 image:
                   type: string
-                  description: The exported Stage application image, with the package baked in.
+                  description: The exported Stage application image with the package baked in, or the generic Stage runtime image when package.configMapRef is set.
                   minLength: 1
+                package:
+                  type: object
+                  description: Delivers the package archive through a ConfigMap instead of the image.
+                  properties:
+                    configMapRef:
+                      type: string
+                      description: A ConfigMap in the same namespace whose key package.tar.gz holds the package archive. Mounted read-only at /stage/package-archive/.
+                      minLength: 1
+                      maxLength: 253
                 lifetime:
                   type: object
                   description: How long the application runs. Exactly one of permanent or until.
@@ -122,6 +131,15 @@ spec:
                       type: boolean
                     configSecretRef:
                       type: string
+                    collectorUrl:
+                      type: string
+                      description: The Notes collector the application sends its notes to over HTTP.
+                    collectorTokenSecretRef:
+                      type: string
+                      description: A secret whose key token holds the collector bearer secret. Mounted at /stage/notes/token.
+                  x-kubernetes-validations:
+                    - rule: "has(self.collectorUrl) == has(self.collectorTokenSecretRef)"
+                      message: "set collectorUrl and collectorTokenSecretRef together"
                 resources:
                   type: object
                   description: Resources of the Stage container.
@@ -159,6 +177,8 @@ spec:
                   type: string
                 runningImage:
                   type: string
+                runningPackage:
+                  type: string
                 url:
                   type: string
                 expiresAt:
@@ -192,6 +212,8 @@ spec:
                       version:
                         type: string
                       image:
+                        type: string
+                      package:
                         type: string
                       rolledOutAt:
                         type: string

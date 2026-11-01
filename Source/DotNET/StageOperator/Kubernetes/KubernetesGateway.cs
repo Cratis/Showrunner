@@ -93,7 +93,8 @@ public class KubernetesGateway : IKubernetesGateway
                 deployment.Status?.UpdatedReplicas ?? 0,
                 deployment.Metadata?.Generation ?? 0,
                 deployment.Status?.ObservedGeneration ?? 0,
-                deployment.Status?.Conditions?.Any(c => c.Type == "Progressing" && c.Reason == "ProgressDeadlineExceeded") == true);
+                deployment.Status?.Conditions?.Any(c => c.Type == "Progressing" && c.Reason == "ProgressDeadlineExceeded") == true,
+                deployment.Spec?.Template?.Spec?.Volumes?.FirstOrDefault(v => v.Name == ApplicationNames.PackageVolume)?.ConfigMap?.Name);
         }
 
         return new ObservedState(observed, statefulSet is not null || claims.Items.Count > 0);

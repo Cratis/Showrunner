@@ -31,15 +31,16 @@ public static class ActivePlanner
             return HoldAtLastGood(context, lastGood);
         }
 
-        if (previous.RunningVersion == spec.Version && previous.RunningImage == spec.Image)
+        if (previous.RunningVersion == spec.Version && previous.RunningImage == spec.Image && previous.RunningPackage == PackageOf(spec))
         {
-            return Steady(context, spec.Image, spec.Version);
+            return Steady(context, spec.Image, spec.Version, PackageOf(spec));
         }
 
         var started = new StageApplicationRollout
         {
             TargetVersion = spec.Version,
             TargetImage = spec.Image,
+            TargetPackage = PackageOf(spec),
             StartedAt = Rfc3339.Format(context.Now),
             IsRollback = false
         };
@@ -50,7 +51,7 @@ public static class ActivePlanner
     static bool RolloutStillWanted(StageApplicationStatus previous, StageApplicationSpec spec, StageApplicationRollout rollout) =>
         rollout.IsRollback
             ? IsHeldBack(previous, spec)
-            : rollout.TargetVersion == spec.Version && rollout.TargetImage == spec.Image;
+            : rollout.TargetVersion == spec.Version && rollout.TargetImage == spec.Image && rollout.TargetPackage == PackageOf(spec);
 
     /// <summary>
     /// A version that failed and was rolled back (or failed with nothing to roll back to) stays held back until the
@@ -68,7 +69,7 @@ public static class ActivePlanner
 
         var last = previous.Versions[^1];
         var failed = last.Outcome == StageRolloutOutcomes.RolledBack || last.Outcome == StageRolloutOutcomes.Failed;
-        return failed && last.Version == spec.Version && last.Image == spec.Image;
+        return failed && last.Version == spec.Version && last.Image == spec.Image && last.Package == PackageOf(spec);
     }
 
     static string PhaseOf(PlanningContext context, StageApplicationRollout rollout)
@@ -84,14 +85,14 @@ public static class ActivePlanner
     static ReconcilePlan ContinueRollout(PlanningContext context, StageApplicationRollout rollout, StageApplicationVersion? lastGood)
     {
         var observed = context.Observed.Deployment;
-        if (observed?.IsRolledOutAt(rollout.TargetImage) == true)
+        if (observed?.IsRolledOutAt(rollout.TargetImage, rollout.TargetPackage) == true)
         {
             return CompleteRollout(context, rollout);
         }
 
         var startedAt = Rfc3339.Parse(rollout.StartedAt) ?? context.Now;
         var timedOut = context.Now - startedAt > context.Options.RolloutTimeout
-            || (observed?.ProgressDeadlineExceeded == true && observed.StageImage == rollout.TargetImage);
+            || (observed?.ProgressDeadlineExceeded == true && observed.StageImage == rollout.TargetImage && observed.StagePackage == rollout.TargetPackage);
 
         if (!timedOut)
         {
@@ -113,6 +114,7 @@ public static class ActivePlanner
             {
                 Version = rollout.TargetVersion,
                 Image = rollout.TargetImage,
+                Package = rollout.TargetPackage,
                 RolledOutAt = Rfc3339.Format(context.Now),
                 Outcome = StageRolloutOutcomes.RolledOut
             });
@@ -130,12 +132,13 @@ public static class ActivePlanner
             Phase = StageApplicationPhases.Running,
             RunningVersion = rollout.TargetVersion,
             RunningImage = rollout.TargetImage,
+            RunningPackage = rollout.TargetPackage,
             Rollout = null,
             Versions = versions,
             Conditions = conditions.Build()
         };
 
-        return new ReconcilePlan(status, Apply: Desired(context, rollout.TargetImage));
+        return new ReconcilePlan(status, Apply: Desired(context, rollout.TargetImage, rollout.TargetPackage));
     }
 
     static ReconcilePlan FailRollout(PlanningContext context, StageApplicationRollout rollout, StageApplicationVersion? lastGood)
@@ -147,6 +150,7 @@ public static class ActivePlanner
             {
                 Version = rollout.TargetVersion,
                 Image = rollout.TargetImage,
+                Package = rollout.TargetPackage,
                 RolledOutAt = Rfc3339.Format(context.Now),
                 Outcome = StageRolloutOutcomes.Failed,
                 Reason = reason
@@ -158,13 +162,14 @@ public static class ActivePlanner
 
             return new ReconcilePlan(
                 context.Carry() with { Phase = StageApplicationPhases.Failed, Rollout = null, Versions = failed, Conditions = failedConditions },
-                Apply: Desired(context, rollout.TargetImage));
+                Apply: Desired(context, rollout.TargetImage, rollout.TargetPackage));
         }
 
         var versions = Append(context.Previous.Versions, new StageApplicationVersion
         {
             Version = rollout.TargetVersion,
             Image = rollout.TargetImage,
+            Package = rollout.TargetPackage,
             RolledOutAt = Rfc3339.Format(context.Now),
             Outcome = StageRolloutOutcomes.RolledBack,
             Reason = reason
@@ -174,6 +179,7 @@ public static class ActivePlanner
         {
             TargetVersion = lastGood.Version,
             TargetImage = lastGood.Image,
+            TargetPackage = lastGood.Package,
             StartedAt = Rfc3339.Format(context.Now),
             IsRollback = true
         };
@@ -190,7 +196,7 @@ public static class ActivePlanner
 
         return new ReconcilePlan(
             context.Carry() with { Phase = StageApplicationPhases.Failed, Rollout = null, Conditions = conditions },
-            Apply: Desired(context, rollout.TargetImage));
+            Apply: Desired(context, rollout.TargetImage, rollout.TargetPackage));
     }
 
     static ReconcilePlan InProgress(PlanningContext context, StageApplicationRollout rollout, IReadOnlyList<StageApplicationVersion> versions)
@@ -218,7 +224,7 @@ public static class ActivePlanner
             Conditions = conditions.Build()
         };
 
-        return new ReconcilePlan(status, Apply: Desired(context, rollout.TargetImage), RequeueAfter: _rolloutPoll);
+        return new ReconcilePlan(status, Apply: Desired(context, rollout.TargetImage, rollout.TargetPackage), RequeueAfter: _rolloutPoll);
     }
 
     static ReconcilePlan HoldAtLastGood(PlanningContext context, StageApplicationVersion? lastGood)
@@ -231,37 +237,40 @@ public static class ActivePlanner
                 .Build();
             return new ReconcilePlan(
                 context.Carry() with { Phase = StageApplicationPhases.Failed, Conditions = failedConditions },
-                Apply: Desired(context, context.Spec.Image));
+                Apply: Desired(context, context.Spec.Image, PackageOf(context.Spec)));
         }
 
-        var ready = context.Observed.Deployment?.IsRolledOutAt(lastGood.Image) == true;
+        var ready = context.Observed.Deployment?.IsRolledOutAt(lastGood.Image, lastGood.Package) == true;
         var conditions = context.Conditions()
             .Set(ConditionTypes.Ready, ready, ready ? "RolledBack" : "NotReady", $"Version {lastGood.Version} is running; version {context.Spec.Version} was rolled back.")
             .Set(ConditionTypes.Degraded, true, "RolledBack", last.Reason ?? "The requested version did not become ready and was rolled back.")
             .Build();
 
         return new ReconcilePlan(
-            context.Carry() with { Phase = StageApplicationPhases.Running, RunningVersion = lastGood.Version, RunningImage = lastGood.Image, Rollout = null, Conditions = conditions },
-            Apply: Desired(context, lastGood.Image));
+            context.Carry() with { Phase = StageApplicationPhases.Running, RunningVersion = lastGood.Version, RunningImage = lastGood.Image, RunningPackage = lastGood.Package, Rollout = null, Conditions = conditions },
+            Apply: Desired(context, lastGood.Image, lastGood.Package));
     }
 
-    static ReconcilePlan Steady(PlanningContext context, string image, string version)
+    static ReconcilePlan Steady(PlanningContext context, string image, string version, string? package)
     {
-        var ready = context.Observed.Deployment?.IsRolledOutAt(image) == true;
+        var ready = context.Observed.Deployment?.IsRolledOutAt(image, package) == true;
         var conditions = context.Conditions()
             .Set(ConditionTypes.Ready, ready, ready ? "RolledOut" : "NotReady", ready ? $"Version {version} is running." : $"Version {version} has no ready pod.")
             .Build();
 
         return new ReconcilePlan(
-            context.Carry() with { Phase = StageApplicationPhases.Running, RunningVersion = version, RunningImage = image, Rollout = null, Conditions = conditions },
-            Apply: Desired(context, image),
+            context.Carry() with { Phase = StageApplicationPhases.Running, RunningVersion = version, RunningImage = image, RunningPackage = package, Rollout = null, Conditions = conditions },
+            Apply: Desired(context, image, package),
             RequeueAfter: UntilExpiry(context));
     }
 
     static TimeSpan? UntilExpiry(PlanningContext context) => context.Until is { } until ? until - context.Now : null;
 
-    static DesiredObjects Desired(PlanningContext context, string image) =>
-        ApplicationObjectBuilder.Build(context.Application, image, 1, true, context.Options);
+    static string? PackageOf(StageApplicationSpec spec) =>
+        string.IsNullOrWhiteSpace(spec.Package?.ConfigMapRef) ? null : spec.Package.ConfigMapRef;
+
+    static DesiredObjects Desired(PlanningContext context, string image, string? package) =>
+        ApplicationObjectBuilder.Build(context.Application, image, 1, true, context.Options, package);
 
     static List<StageApplicationVersion> Append(IReadOnlyList<StageApplicationVersion> versions, StageApplicationVersion entry)
     {

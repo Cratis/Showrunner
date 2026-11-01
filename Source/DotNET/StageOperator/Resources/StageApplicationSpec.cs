@@ -24,9 +24,13 @@ public record StageApplicationSpec
     [JsonPropertyName("version")]
     public string Version { get; init; } = string.Empty;
 
-    /// <summary>Gets the exported Stage application image, with the package baked in.</summary>
+    /// <summary>Gets the exported Stage application image, with the package baked in, or the generic Stage runtime when <c>package</c> is set.</summary>
     [JsonPropertyName("image")]
     public string Image { get; init; } = string.Empty;
+
+    /// <summary>Gets where the package comes from when the image does not carry it.</summary>
+    [JsonPropertyName("package")]
+    public StageApplicationPackage? Package { get; init; }
 
     /// <summary>Gets how long the application runs.</summary>
     [JsonPropertyName("lifetime")]

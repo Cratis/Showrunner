@@ -16,6 +16,10 @@ public record StageApplicationVersion
     [JsonPropertyName("image")]
     public string Image { get; init; } = string.Empty;
 
+    /// <summary>Gets the package ConfigMap, or null when the image carries the package.</summary>
+    [JsonPropertyName("package")]
+    public string? Package { get; init; }
+
     /// <summary>Gets when the rollout ended, as an RFC 3339 timestamp.</summary>
     [JsonPropertyName("rolledOutAt")]
     public string RolledOutAt { get; init; } = string.Empty;

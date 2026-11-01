@@ -11,6 +11,7 @@ namespace Cratis.Showrunner.StageOperator.Reconciling;
 /// <param name="Generation">The generation of the Deployment.</param>
 /// <param name="ObservedGeneration">The generation the Deployment controller has seen.</param>
 /// <param name="ProgressDeadlineExceeded">Whether Kubernetes gave up on the rollout.</param>
+/// <param name="StagePackage">The ConfigMap the package archive volume of the pod template reads from, or null when there is none.</param>
 public record ObservedDeployment(
     string? StageImage,
     int Replicas,
@@ -18,13 +19,16 @@ public record ObservedDeployment(
     int UpdatedReplicas,
     long Generation,
     long ObservedGeneration,
-    bool ProgressDeadlineExceeded)
+    bool ProgressDeadlineExceeded,
+    string? StagePackage = null)
 {
-    /// <summary>Decides whether the Deployment runs only the given image and every pod is ready.</summary>
+    /// <summary>Decides whether the Deployment runs only the given image and package and every pod is ready.</summary>
     /// <param name="image">The image.</param>
+    /// <param name="package">The package ConfigMap, or null when the image carries the package.</param>
     /// <returns>True when the rollout has completed.</returns>
-    public bool IsRolledOutAt(string image) =>
+    public bool IsRolledOutAt(string image, string? package = null) =>
         StageImage == image
+        && StagePackage == package
         && ObservedGeneration >= Generation
         && Replicas == 1
         && UpdatedReplicas == 1

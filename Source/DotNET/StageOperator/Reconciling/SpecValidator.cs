@@ -19,6 +19,9 @@ public static partial class SpecValidator
     [GeneratedRegex("^[a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?$", RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex DnsLabel { get; }
 
+    [GeneratedRegex("^[a-z0-9]([-a-z0-9.]{0,251}[a-z0-9])?$", RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex DnsSubdomain { get; }
+
     /// <summary>Finds everything that is wrong with a resource.</summary>
     /// <param name="application">The application.</param>
     /// <returns>The problems; empty when the resource may run.</returns>
@@ -54,6 +57,17 @@ public static partial class SpecValidator
         if (string.IsNullOrWhiteSpace(spec.Version))
         {
             problems.Add(new(InvalidSpec, "spec.version is required."));
+        }
+
+        if (spec.Package is { ConfigMapRef: not null } package && !DnsSubdomain.IsMatch(package.ConfigMapRef))
+        {
+            problems.Add(new(InvalidSpec, "spec.package.configMapRef must be a valid ConfigMap name."));
+        }
+
+        var notes = spec.Notes;
+        if (notes is { Enabled: true } && string.IsNullOrWhiteSpace(notes.CollectorUrl) != string.IsNullOrWhiteSpace(notes.CollectorTokenSecretRef))
+        {
+            problems.Add(new(InvalidSpec, "spec.notes.collectorUrl and spec.notes.collectorTokenSecretRef must be set together."));
         }
 
         var lifetime = spec.Lifetime;

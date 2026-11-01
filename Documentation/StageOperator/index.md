@@ -19,8 +19,8 @@ The operator is a .NET application, delivered as the `ghcr.io/cratis/showrunner-
 | Behavior | How |
 | --- | --- |
 | Run a version | Applies the generated objects with server-side apply, so reconciling is idempotent and repairs drift. |
-| Roll forward | A change of `spec.image` or `spec.version` is a rolling update: the new pod must be ready before the old one goes. The data volume is kept. |
-| Roll back | A version that is not ready within `RolloutTimeout`, or that Kubernetes gives up on, is rolled back to the previous image. The history records `RolledBack`, and the failed version stays held back until the spec asks for another one. |
+| Roll forward | A change of `spec.image`, `spec.package.configMapRef` or `spec.version` is a rolling update: the new pod must be ready before the old one goes. The data volume is kept. |
+| Roll back | A version that is not ready within `RolloutTimeout`, or that Kubernetes gives up on, is rolled back to the previous image and package ConfigMap, which the history remembers together. The history records `RolledBack`, and the failed version stays held back until the spec asks for another one. |
 | Honor the lifetime | At `spec.lifetime.until` the application is scaled to zero, the ingress is removed and the phase is `Expired`. The data is kept for `ExpiredDataRetention`, then removed. |
 | Delete | Deleting the resource stops the application at once and keeps its data for `ExpiredDataRetention` (a finalizer holds the resource), then removes everything. |
 | Refuse | A resource without `spec.authentication` is refused (`Failed`, reason `AuthenticationMissing`) and nothing is created. |

@@ -26,7 +26,8 @@ public static class Applications
         DateTimeOffset? until = null,
         bool withAuthentication = true,
         DateTimeOffset? deletedAt = null,
-        bool withFinalizer = true) => new()
+        bool withFinalizer = true,
+        string? package = null) => new()
         {
             Metadata = new V1ObjectMeta
             {
@@ -44,21 +45,23 @@ public static class Applications
                 PublishedName = "orders",
                 Version = version,
                 Image = image,
+                Package = package is null ? null : new StageApplicationPackage { ConfigMapRef = package },
                 Lifetime = permanent ? new StageApplicationLifetime { Permanent = true } : new StageApplicationLifetime { Until = Rfc3339.Format(until ?? Now.AddDays(1)) },
                 Authentication = withAuthentication ? new StageApplicationAuthentication { ProxyImage = "registry.example.invalid/proxy:1", ConfigSecretRef = "orders-auth", Port = 8080 } : null
             },
             Status = status
         };
 
-    public static StageApplicationStatus Running(string version = "1.0.0", string image = OldImage) => new()
+    public static StageApplicationStatus Running(string version = "1.0.0", string image = OldImage, string? package = null) => new()
     {
         Phase = StageApplicationPhases.Running,
         RunningVersion = version,
         RunningImage = image,
-        Versions = [new StageApplicationVersion { Version = version, Image = image, Outcome = StageRolloutOutcomes.RolledOut, RolledOutAt = Rfc3339.Format(Now.AddDays(-1)) }]
+        RunningPackage = package,
+        Versions = [new StageApplicationVersion { Version = version, Image = image, Package = package, Outcome = StageRolloutOutcomes.RolledOut, RolledOutAt = Rfc3339.Format(Now.AddDays(-1)) }]
     };
 
-    public static ObservedState Ready(string image) => new(new ObservedDeployment(image, 1, 1, 1, 5, 5, false), true);
+    public static ObservedState Ready(string image, string? package = null) => new(new ObservedDeployment(image, 1, 1, 1, 5, 5, false, package), true);
 
     public static ObservedState Updating(string newImage) => new(new ObservedDeployment(newImage, 2, 1, 1, 6, 6, false), true);
 

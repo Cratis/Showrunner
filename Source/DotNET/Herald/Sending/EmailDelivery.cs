@@ -20,7 +20,7 @@ namespace Cratis.Showrunner.Herald.Sending;
 /// once; run Herald's worker in one instance of the application.
 /// </remarks>
 /// <param name="client">The <see cref="IChronicleClient"/>.</param>
-/// <param name="chronicle">The <see cref="ChronicleClientOptions"/>.</param>
+/// <param name="eventStores">The <see cref="HeraldEventStore"/>.</param>
 /// <param name="options">The <see cref="HeraldOptions"/>.</param>
 /// <param name="renderer">The <see cref="EmailRenderer"/>.</param>
 /// <param name="transport">The <see cref="IEmailTransport"/>.</param>
@@ -29,7 +29,7 @@ namespace Cratis.Showrunner.Herald.Sending;
 /// <param name="logger">The logger.</param>
 public class EmailDelivery(
     IChronicleClient client,
-    IOptions<ChronicleClientOptions> chronicle,
+    HeraldEventStore eventStores,
     IOptions<HeraldOptions> options,
     EmailRenderer renderer,
     IEmailTransport transport,
@@ -44,7 +44,7 @@ public class EmailDelivery(
     /// <returns>How many emails were looked at.</returns>
     public async Task<int> DeliverDue(CancellationToken cancellationToken = default)
     {
-        var store = await client.GetEventStore(chronicle.Value.EventStore, options.Value.Namespace).WaitAsync(cancellationToken);
+        var store = await client.GetEventStore(eventStores.Name, options.Value.Namespace).WaitAsync(cancellationToken);
         var queued = (await store.ReadModels.GetInstances<QueuedEmail>()).ToArray();
         foreach (var email in queued.OrderBy(email => email.QueuedAt))
         {

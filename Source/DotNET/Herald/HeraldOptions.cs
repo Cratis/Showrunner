@@ -70,4 +70,11 @@ public class HeraldOptions
     /// Gets or sets the event store namespace the facts are recorded in. Defaults to the default namespace.
     /// </summary>
     public EventStoreNamespaceName Namespace { get; set; } = EventStoreNamespaceName.Default;
+
+    /// <summary>
+    /// Gets or sets the event store the facts are recorded in. Defaults to <see cref="EventStoreName.NotSet"/>, which
+    /// means the application's own event store: the one its Cratis or Chronicle setup registers. Set it only when Herald
+    /// should record in another event store.
+    /// </summary>
+    public EventStoreName EventStore { get; set; } = EventStoreName.NotSet;
 }

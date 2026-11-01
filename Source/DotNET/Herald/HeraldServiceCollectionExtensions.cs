@@ -53,6 +53,7 @@ public static class HeraldServiceCollectionExtensions
             var options = provider.GetRequiredService<Options.IOptions<HeraldOptions>>();
             return options.Value.Transport == EmailTransportKind.Folder ? new FolderEmailTransport(options) : new SmtpEmailTransport(options);
         });
+        services.TryAddSingleton<HeraldEventStore>();
         services.TryAddSingleton<IEmails, Emails>();
         services.TryAddSingleton<EmailDelivery>();
         services.AddHostedService<HeraldWorker>();

@@ -3,7 +3,7 @@ title: Add Herald to an application
 description: Reference the Herald package, call AddHerald with the templates folder, the sender and the mail server, and lay out the template and image files.
 ---
 
-Herald needs the application to be a Chronicle client, because it records its facts in the application's event store. Reference `Cratis.Showrunner.Herald` and call `AddHerald` next to `AddCratis` (or `AddCratisChronicle`). The order does not matter.
+Herald needs the application to be a Chronicle client, because it records its facts in the application's event store. Reference `Cratis.Showrunner.Herald` and call `AddHerald` next to `AddCratis` (or `AddCratisChronicle`). The order does not matter. Herald records in the event store the host registers, without you naming it again; set `EventStore` in the options only to use another one.
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -48,6 +48,7 @@ Adding Herald registers [`IEmails`](./sending.md), which the application sends w
 | `Retry.InitialDelay`, `Retry.MaxDelay` | 30 seconds, 1 hour | The wait after the first failure, doubling after each next one up to the longest. |
 | `PollingInterval` | 5 seconds | How often Herald looks for queued emails that are due. |
 | `Namespace` | the default namespace | The event store namespace the facts are recorded in. |
+| `EventStore` | the application's own event store | The event store the facts are recorded in. Herald uses the event store of the application's `AddCratis` or `AddCratisChronicle` setup; set it only to record in another one. |
 
 The password is a secret. Read it from the environment or the application's secret store, as the example does, and never from a file in the repository.
 

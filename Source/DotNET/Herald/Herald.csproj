@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>Cratis.Showrunner.Herald</AssemblyName>
+        <RootNamespace>Cratis.Showrunner.Herald</RootNamespace>
+        <PackageId>Cratis.Showrunner.Herald</PackageId>
+        <Description>Herald — the Showrunner email part for applications: templated, email-safe messages with images, sent over SMTP, queued and retried when the server fails, and recorded as facts in the application's event log. Built on Chronicle.</Description>
+        <PackageTags>cratis;showrunner;herald;email;smtp;templates;chronicle;event-sourcing</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Cratis.Chronicle" />
+        <PackageReference Include="MailKit" />
+        <PackageReference Include="Handlebars.Net" />
+        <PackageReference Include="PreMailer.Net" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../Herald.Contracts/Herald.Contracts.csproj" />
+    </ItemGroup>
+</Project>

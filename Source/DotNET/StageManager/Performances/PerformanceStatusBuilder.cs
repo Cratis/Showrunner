@@ -17,6 +17,8 @@ public class PerformanceStatusBuilder(Performance performance, TimeProvider time
         .GroupBy(condition => condition.Type, StringComparer.Ordinal)
         .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
 
+    bool _expired;
+
     /// <summary>
     /// Gets the phase the Performance ends up in.
     /// </summary>
@@ -64,6 +66,17 @@ public class PerformanceStatusBuilder(Performance performance, TimeProvider time
     }
 
     /// <summary>
+    /// Ends the reconciliation after the lifetime ended: the workloads are stopped and the route is removed.
+    /// </summary>
+    public void Expire()
+    {
+        _expired = true;
+        Phase = PerformancePhase.Expired;
+        performance.Status.MissingEnvironmentKeys = [];
+        Set("Expired", true, "LifetimeEnded", "The lifetime ended. The workloads are stopped and the public route is removed.");
+    }
+
+    /// <summary>
     /// Writes the collected conditions and the phase to the status.
     /// </summary>
     public void Write()
@@ -71,7 +84,9 @@ public class PerformanceStatusBuilder(Performance performance, TimeProvider time
         var status = performance.Status;
         status.Phase = Phase;
         status.ObservedGeneration = performance.Metadata.Generation ?? 0;
-        status.PublicUrl = PublicEndpoint.AddressOf(performance.Spec);
+        status.PublicUrl = _expired ? string.Empty : PublicEndpoint.AddressOf(performance.Spec);
+        status.ExpiresAt = LifetimeClock.ExpiresAt(performance.Spec);
+        status.DataRetainedUntil = _expired && status.ExpiresAt is { } expiresAt ? expiresAt.AddDays(performance.Spec.Lifetime!.DataRetentionDays) : null;
         status.Conditions = [.. _conditions];
     }
 }

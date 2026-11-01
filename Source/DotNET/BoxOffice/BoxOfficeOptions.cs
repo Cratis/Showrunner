@@ -51,4 +51,11 @@ public class BoxOfficeOptions
     /// Gets or sets how long a link to the customer portal works. Defaults to fifteen minutes.
     /// </summary>
     public TimeSpan CustomerPortalLinkLifetime { get; set; } = TimeSpan.FromMinutes(15);
+
+    /// <summary>
+    /// Gets or sets the event store Box Office reads and records in. Defaults to <see cref="EventStoreName.NotSet"/>, which
+    /// means the application's own event store: the one its Cratis or Chronicle setup registers. Set it only to use
+    /// another one.
+    /// </summary>
+    public EventStoreName EventStore { get; set; } = EventStoreName.NotSet;
 }

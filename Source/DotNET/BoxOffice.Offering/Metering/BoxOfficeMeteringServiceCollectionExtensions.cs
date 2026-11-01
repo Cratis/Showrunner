@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Metrics;
+using Cratis.Showrunner.BoxOffice.Offering;
 using Cratis.Showrunner.BoxOffice.Offering.Metering;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -27,6 +28,8 @@ public static class BoxOfficeMeteringServiceCollectionExtensions
         services.TryAddSingleton<IMeteringStore, MongoMeteringStore>();
         services.TryAddSingleton<TenantMetering>();
         services.AddOptions<MeteringOptions>();
+        services.AddOptions<Cratis.Showrunner.BoxOffice.Offering.Declaration.OfferingOptions>();
+        services.TryAddSingleton<BoxOfficeEventStore>();
         if (configure is not null)
         {
             services.Configure(configure);

@@ -20,7 +20,7 @@ namespace Cratis.Showrunner.BoxOffice.Offering.Metering;
 public class MeteringService : BackgroundService
 {
     readonly IChronicleClient _client;
-    readonly IOptions<ChronicleClientOptions> _clientOptions;
+    readonly BoxOfficeEventStore _eventStore;
     readonly IMeteringStore _store;
     readonly TenantMetering _metering;
     readonly IOptions<MeteringOptions> _options;
@@ -29,7 +29,8 @@ public class MeteringService : BackgroundService
     readonly string _holder = $"{Environment.MachineName}-{Guid.NewGuid():N}";
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MeteringService"/> class.
+    /// Initializes a new instance of the <see cref="MeteringService"/> class, resolving the event store from the Chronicle
+    /// client options only.
     /// </summary>
     /// <param name="client">The Chronicle client.</param>
     /// <param name="clientOptions">The Chronicle client options, which name the product's event store.</param>
@@ -51,7 +52,37 @@ public class MeteringService : BackgroundService
         IOptions<MeteringOptions> options,
         TimeProvider time,
         ILogger<MeteringService> logger)
+        : this(client, clientOptions, offering, meters, store, metering, options, time, logger, BoxOfficeEventStore.ForClientOptions(clientOptions))
     {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MeteringService"/> class.
+    /// </summary>
+    /// <param name="client">The Chronicle client.</param>
+    /// <param name="clientOptions">The Chronicle client options, the event store is named by <paramref name="eventStore"/>; the parameter keeps this constructor a superset of the earlier one, so dependency injection chooses it.</param>
+    /// <param name="offering">The product's offering.</param>
+    /// <param name="meters">The product's meters.</param>
+    /// <param name="store">The <see cref="IMeteringStore"/>.</param>
+    /// <param name="metering">The <see cref="TenantMetering"/>.</param>
+    /// <param name="options">The <see cref="MeteringOptions"/>.</param>
+    /// <param name="time">The time provider.</param>
+    /// <param name="logger">The logger.</param>
+    /// <param name="eventStore">The <see cref="BoxOfficeEventStore"/> naming the product's event store.</param>
+    /// <exception cref="InvalidMetering">Thrown when a meter is not declared in the offering.</exception>
+    public MeteringService(
+        IChronicleClient client,
+        IOptions<ChronicleClientOptions> clientOptions,
+        ProductOffering offering,
+        IEnumerable<IMeter> meters,
+        IMeteringStore store,
+        TenantMetering metering,
+        IOptions<MeteringOptions> options,
+        TimeProvider time,
+        ILogger<MeteringService> logger,
+        BoxOfficeEventStore eventStore)
+    {
+        _ = clientOptions;
         var problems = MeteringProblems.In(offering, meters).ToArray();
         if (problems.Length > 0)
         {
@@ -59,7 +90,7 @@ public class MeteringService : BackgroundService
         }
 
         _client = client;
-        _clientOptions = clientOptions;
+        _eventStore = eventStore;
         _store = store;
         _metering = metering;
         _options = options;
@@ -104,7 +135,7 @@ public class MeteringService : BackgroundService
             return;
         }
 
-        var name = _clientOptions.Value.EventStore;
+        var name = _eventStore.Name;
         var eventStore = await _client.GetEventStore(name, EventStoreNamespaceName.Default).WaitAsync(cancellationToken);
         foreach (var @namespace in await eventStore.GetNamespaces(cancellationToken))
         {

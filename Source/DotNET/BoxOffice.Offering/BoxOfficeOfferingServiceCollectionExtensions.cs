@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Showrunner.BoxOffice.Offering;
 using Cratis.Showrunner.BoxOffice.Offering.Declaration;
 using Cratis.Showrunner.BoxOffice.Offering.Starting;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -28,6 +29,7 @@ public static class BoxOfficeOfferingServiceCollectionExtensions
 
         services.TryAddSingleton(offering);
         services.TryAddSingleton(TimeProvider.System);
+        services.TryAddSingleton<BoxOfficeEventStore>();
         services.TryAddSingleton<OfferingReporter>();
         services.TryAddSingleton<IDefaultOffering, DefaultOffering>();
         services.AddOptions<OfferingOptions>();

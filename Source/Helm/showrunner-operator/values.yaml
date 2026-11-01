@@ -1,0 +1,77 @@
+# Default values for the Stage Manager operator chart.
+
+# The operator image. The tag defaults to the version of the chart, so the two are released together.
+image:
+  repository: cratis/showrunner-operator
+  # Overrides the tag. Leave empty to use the chart's appVersion.
+  tag: ""
+  pullPolicy: IfNotPresent
+
+# Secrets that hold registry credentials for the operator image.
+imagePullSecrets: []
+
+# Overrides the name used for the operator's resources.
+nameOverride: ""
+fullnameOverride: ""
+
+# The operator keeps one instance active at a time through a lease in its own namespace. More than one replica
+# gives a standby, not more throughput.
+replicaCount: 1
+
+serviceAccount:
+  # Creates the service account the operator runs as.
+  create: true
+  # The name of the service account. Defaults to the full name of the release.
+  name: ""
+  # Annotations of the service account.
+  annotations: {}
+
+# How the operator reaches the secrets providers of the Cratis environments it resolves. Which provider an
+# environment uses is in its environment file; these settings only give the operator the identity to use.
+environments:
+  azureKeyVault:
+    # Uses Azure workload identity (DefaultAzureCredential). Set the client id of the managed identity or app
+    # registration that may read the vault, and federate it with the service account of this release.
+    workloadIdentity:
+      enabled: false
+      clientId: ""
+      tenantId: ""
+  hashiCorpVault:
+    # The role on the Vault Kubernetes auth method that the operator logs in with (VAULT_K8S_ROLE).
+    kubernetesRole: ""
+    # The mount of the Kubernetes auth method (VAULT_AUTH_MOUNT). Empty uses "kubernetes".
+    authMount: ""
+    # The Vault namespace, for Vault Enterprise (VAULT_NAMESPACE).
+    namespace: ""
+    # A Secret holding a Vault token (key "token") for clusters without Kubernetes auth. Prefer Kubernetes auth.
+    tokenSecretName: ""
+
+# Resources of the operator pod.
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    memory: 256Mi
+
+# Extra environment variables of the operator. Never put a secret value here; use an existing Secret and valueFrom.
+extraEnv: []
+
+podAnnotations: {}
+podLabels: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
+priorityClassName: ""
+
+# The pod and container security contexts. The defaults run non-root with a read-only root file system.
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL

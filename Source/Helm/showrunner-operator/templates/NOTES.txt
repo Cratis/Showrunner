@@ -1,0 +1,8 @@
+Stage Manager is installed.
+
+Run an application with a Performance:
+
+  kubectl get performances -A
+
+The custom resources are in the showrunner.cratis.io API group. See
+https://github.com/Cratis/Showrunner/blob/main/Documentation/StageManager/index.md

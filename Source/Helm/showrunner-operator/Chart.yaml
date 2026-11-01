@@ -1,0 +1,26 @@
+apiVersion: v2
+name: showrunner-operator
+description: Stage Manager, the Showrunner operator. Owns the showrunner.cratis.io custom resources and runs applications, their AuthProxy and their Ante.
+type: application
+# The release workflow sets both to the released version when it packages the chart, so the chart and the
+# operator image are always versioned together.
+version: 0.0.0
+appVersion: 0.0.0
+kubeVersion: ">=1.27.0-0"
+home: https://github.com/Cratis/Showrunner
+sources:
+  - https://github.com/Cratis/Showrunner
+keywords:
+  - cratis
+  - showrunner
+  - operator
+# The Percona Operator for MongoDB is an optional dependency of the Production work that follows (managed
+# MongoDB). It could not be validated when this chart was written, so it is not declared yet: declaring a
+# dependency makes `helm lint` and `helm package` fetch it. When the managed MongoDB work lands, declare it here
+# with `condition: percona.enabled` and a default of false in values.yaml:
+#
+# dependencies:
+#   - name: psmdb-operator
+#     version: <pinned version>
+#     repository: https://percona.github.io/percona-helm-charts/
+#     condition: percona.enabled

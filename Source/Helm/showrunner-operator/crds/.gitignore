@@ -1,0 +1,3 @@
+# The custom resource definitions are generated from the C# types by scripts/stage-manager/generate-chart-crds.sh.
+*.yaml
+!.gitignore

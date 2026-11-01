@@ -25,7 +25,9 @@ public class when_building_a_running_application : Specification
     [Fact] void should_run_stage_in_published_mode() => Assert.Contains(_pod.Containers[0].Env, e => e.Name == "Stage__Mode" && e.Value == "Published");
     [Fact] void should_trust_the_proxy_for_authentication() => Assert.Contains(_pod.Containers[0].Env, e => e.Name == "Stage__Published__Authentication__Mode" && e.Value == "TrustedProxy");
     [Fact] void should_keep_notes_off_by_default() => Assert.Contains(_pod.Containers[0].Env, e => e.Name == "Stage__Published__Notes__Enabled" && e.Value == "false");
-    [Fact] void should_point_stage_at_the_application_database() => Assert.Contains(_pod.Containers[0].Env, e => e.Name == "Stage__Published__MongoDb__ConnectionString" && e.Value == "mongodb://orders-mongo:27017");
+    [Fact] void should_trust_principal_headers_only_from_the_proxy_in_the_pod() => Assert.Contains(_pod.Containers[0].Env, e => e.Name == "Stage__Published__TrustedProxies__0" && e.Value == "127.0.0.1");
+    [Fact] void should_only_allow_the_published_host() => Assert.Contains(_pod.Containers[0].Env, e => e.Name == "AllowedHosts" && e.Value == "orders.cratis.app");
+    [Fact] void should_point_stage_at_the_application_database() => Assert.Contains(_pod.Containers[0].Env, e => e.Name == "Stage__Published__Storage__ConnectionString" && e.Value == "mongodb://orders-mongo:27017");
     [Fact] void should_configure_the_proxy_from_its_secret() => Assert.Equal("orders-auth", _pod.Containers[1].EnvFrom.Single().SecretRef.Name);
     [Fact] void should_default_the_stage_requests() => Assert.Equal("250m", _pod.Containers[0].Resources.Requests["cpu"].ToString());
     [Fact] void should_default_the_stage_limits() => Assert.Equal("1Gi", _pod.Containers[0].Resources.Limits["memory"].ToString());

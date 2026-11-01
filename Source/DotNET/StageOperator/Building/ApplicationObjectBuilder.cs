@@ -89,7 +89,12 @@ public static class ApplicationObjectBuilder
             new() { Name = "Stage__Mode", Value = "Published" },
             new() { Name = "Stage__Published__Authentication__Mode", Value = "TrustedProxy" },
             new() { Name = "Stage__Published__Notes__Enabled", Value = (notes?.Enabled ?? false) ? "true" : "false" },
-            new() { Name = "Stage__Published__MongoDb__ConnectionString", Value = $"mongodb://{ApplicationNames.Mongo(application)}:{ApplicationNames.MongoPort}" },
+            new() { Name = "Stage__Published__Storage__ConnectionString", Value = $"mongodb://{ApplicationNames.Mongo(application)}:{ApplicationNames.MongoPort}" },
+
+            // Only the proxy in the same pod may assert who the user is; Stage strips principal headers from anyone else.
+            new() { Name = "Stage__Published__TrustedProxies__0", Value = "127.0.0.1" },
+            new() { Name = "Stage__Published__TrustedProxies__1", Value = "::1" },
+            new() { Name = "AllowedHosts", Value = host },
             new() { Name = "ASPNETCORE_URLS", Value = $"http://127.0.0.1:{ApplicationNames.StagePort}" }
         ];
 
@@ -119,9 +124,9 @@ public static class ApplicationObjectBuilder
             Ports = [new V1ContainerPort { Name = ApplicationNames.ProxyPortName, ContainerPort = authentication.Port, Protocol = "TCP" }],
             Env =
             [
-                new() { Name = "ASPNETCORE_URLS", Value = $"http://0.0.0.0:{authentication.Port}" },
-                new() { Name = "Upstream__Url", Value = $"http://127.0.0.1:{ApplicationNames.StagePort}" },
-                new() { Name = "PublicUrl", Value = $"https://{host}" }
+                // Everything else the proxy needs (providers, the upstream service, cookie domain) comes from the
+                // publisher's configuration secret, which knows the proxy it chose.
+                new() { Name = "ASPNETCORE_URLS", Value = $"http://0.0.0.0:{authentication.Port}" }
             ],
             EnvFrom = [SecretSource(authentication.ConfigSecretRef)],
             SecurityContext = SecurityContext(),

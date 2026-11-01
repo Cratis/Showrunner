@@ -14,8 +14,7 @@ Notes is a set of libraries, not a service. Each runs in the Arc and Chronicle p
 - [Collecting](./collecting.md): `Cratis.Showrunner.Notes.Collecting`, which the builder of the application hosts: it reads the application's outbox, records each note in the namespace its tenant names and answers with acknowledgements and resolutions.
 - [Transports](./transports.md): the two ways notes and answers travel between the application and the receiving side: Chronicle's own outbox and inbox in a shared kernel, or HTTP when the application runs its own kernel.
 - [Frontend proxies](./frontend-proxies.md): the generated TypeScript proxies.
-
-The React feedback button, picker and dialogs are in `@cratis/showrunner.notes.react`.
+- [React components](./react.md): `@cratis/showrunner.notes.react`, the feedback button, the dialogs, the component picker and the user's own feedback.
 
 ## How it differs from Usher
 

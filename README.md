@@ -42,6 +42,7 @@ Usher is in its earliest stage: the packages are scaffolded and published, but c
 | `@cratis/showrunner.usher` | npm | The generated TypeScript proxies for Usher's commands and queries; no UI framework dependency |
 | `@cratis/showrunner.usher.react` | npm | React components for Usher, built on `@cratis/arc.react` and `@cratis/components` |
 | `@cratis/showrunner.notes` | npm | The generated TypeScript proxies for Notes' commands and queries; no UI framework dependency |
+| `@cratis/showrunner.notes.react` | npm | React components for Notes: the feedback button with its context drop-down, the feedback dialogs, the component picker and the user's own feedback, built on `@cratis/arc.react` and `@cratis/components` |
 
 ## Building
 

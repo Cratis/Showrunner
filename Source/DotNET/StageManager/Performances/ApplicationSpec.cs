@@ -12,7 +12,7 @@ public class ApplicationSpec
     /// Gets or sets the image of the rendered application.
     /// </summary>
     [Required]
-    [Description("The image of the rendered application.")]
+    [Description("The image of the rendered application, or the Stage runtime image (cratis/stage:VERSION) when published is set.")]
     public string Image { get; set; } = string.Empty;
 
     /// <summary>
@@ -32,4 +32,10 @@ public class ApplicationSpec
     /// </summary>
     [Description("The number of replicas.")]
     public int Replicas { get; set; } = 1;
+
+    /// <summary>
+    /// Gets or sets the published Stage application settings. When set, the application runs as a published Stage application.
+    /// </summary>
+    [Description("Runs the application as a published Stage application: image is the Stage runtime image and the package comes from a ConfigMap.")]
+    public PublishedSpec? Published { get; set; }
 }

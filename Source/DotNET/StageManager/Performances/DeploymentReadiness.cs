@@ -9,10 +9,12 @@ namespace Cratis.Showrunner.StageManager.Performances;
 /// <param name="Desired">The replicas wanted.</param>
 /// <param name="Ready">The replicas that are ready.</param>
 /// <param name="Updated">The replicas running the latest pod template.</param>
-public record DeploymentReadiness(int Desired, int Ready, int Updated)
+/// <param name="Total">The replicas that exist, old and new. Zero when unknown.</param>
+/// <param name="Current">Whether the status describes the latest generation of the Deployment.</param>
+public record DeploymentReadiness(int Desired, int Ready, int Updated, int Total = 0, bool Current = true)
 {
     /// <summary>
-    /// Gets a value indicating whether every wanted replica is ready and on the latest template.
+    /// Gets a value indicating whether every wanted replica is ready and on the latest template, and no old replica is left.
     /// </summary>
-    public bool IsReady => Desired > 0 && Ready >= Desired && Updated >= Desired;
+    public bool IsReady => Current && Desired > 0 && Ready >= Desired && Updated >= Desired && Total <= Updated;
 }

@@ -18,8 +18,22 @@ public class FakeCluster : IClusterResources
 
     public Dictionary<string, string> SecretValues { get; } = new(StringComparer.Ordinal)
     {
-        ["apps/chronicle-connection/connectionString"] = PerformanceSamples.ConnectionString
+        ["apps/chronicle-connection/connectionString"] = PerformanceSamples.ConnectionString,
+        ["apps/crm-storage/connectionString"] = PerformanceSamples.StorageConnectionString,
+        ["apps/crm-notes-token/token"] = PerformanceSamples.NotesToken
     };
+
+    public Dictionary<string, PackageState> Packages { get; } = new(StringComparer.Ordinal)
+    {
+        ["apps/crm-package-1-4-0"] = new(true, true),
+        ["apps/crm-package-1-5-0"] = new(true, true)
+    };
+
+    public List<string> Deleted { get; } = [];
+
+    public Dictionary<string, int> Scaled { get; } = new(StringComparer.Ordinal);
+
+    public UsageSample? Usage { get; set; }
 
     public Dictionary<string, string> ProductionConnectionSecrets { get; } = new(StringComparer.Ordinal);
 
@@ -59,6 +73,25 @@ public class FakeCluster : IClusterResources
 
     public Task<DeploymentReadiness?> GetDeploymentReadinessAsync(string @namespace, string name, CancellationToken cancellationToken) =>
         Task.FromResult<DeploymentReadiness?>(DeploymentsReady ? new(1, 1, 1) : new(1, 0, 0));
+
+    public Task<PackageState?> GetPackageStateAsync(string @namespace, string name, string key, CancellationToken cancellationToken) =>
+        Task.FromResult(Packages.TryGetValue($"{@namespace}/{name}", out var state) ? state : null);
+
+    public Task DeleteAsync<TResource>(string @namespace, string name, CancellationToken cancellationToken)
+        where TResource : IKubernetesObject<V1ObjectMeta>
+    {
+        Deleted.Add($"{typeof(TResource).Name}/{name}");
+        return Task.CompletedTask;
+    }
+
+    public Task ScaleDeploymentAsync(string @namespace, string name, int replicas, CancellationToken cancellationToken)
+    {
+        Scaled[name] = replicas;
+        return Task.CompletedTask;
+    }
+
+    public Task<UsageSample?> GetUsageAsync(string @namespace, string performance, CancellationToken cancellationToken) =>
+        Task.FromResult(Usage);
 
     public Task UpdateStatusAsync(Performance performance, CancellationToken cancellationToken)
     {

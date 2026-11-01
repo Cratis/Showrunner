@@ -45,6 +45,11 @@ public readonly record struct PerformanceNames(string Performance)
     public string SigningKeysSecret => $"{Performance}-signing-keys";
 
     /// <summary>
+    /// Gets the name of the NetworkPolicy of a published application.
+    /// </summary>
+    public string NetworkPolicy => $"{Performance}-app";
+
+    /// <summary>
     /// Gets the name of the Ingress.
     /// </summary>
     public string Ingress => Performance;

@@ -36,13 +36,15 @@ public static partial class SpecValidator
             problems.Add("environment.configMapRef.name is required.");
         }
 
-        if (spec.ProductionRef is null && spec.Chronicle is null)
+        if (spec.ProductionRef is null && spec.Chronicle is null && spec.Application.Published is null)
         {
             problems.Add("Name the Chronicle to use with productionRef or chronicle.connectionSecretRef.");
         }
 
         ValidateProviders(spec, problems);
         ValidateOnboarding(spec, problems);
+        ValidatePublished(spec, problems);
+        ValidateLifetime(spec, problems);
 
         if (spec.Ingress.Enabled && spec.Ingress.Hosts.Count == 0)
         {
@@ -109,6 +111,112 @@ public static partial class SpecValidator
         if (identity is not null && spec.Application.EventStores.Contains(identity, StringComparer.Ordinal))
         {
             problems.Add("onboarding.eventStore must differ from the application's event stores: Ante keeps its own store.");
+        }
+    }
+
+    static void ValidateLifetime(PerformanceSpec spec, List<string> problems)
+    {
+        if (spec.Lifetime is not { } lifetime)
+        {
+            return;
+        }
+
+        if (lifetime.Permanent == lifetime.Until.HasValue)
+        {
+            problems.Add("lifetime needs exactly one of permanent: true and until.");
+        }
+
+        if (lifetime.DataRetentionDays < 0)
+        {
+            problems.Add("lifetime.dataRetentionDays cannot be negative.");
+        }
+    }
+
+    static void ValidatePublished(PerformanceSpec spec, List<string> problems)
+    {
+        if (spec.Application.Published is not { } published)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(published.Version))
+        {
+            problems.Add("application.published.version is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(published.PackageConfigMapRef.Name))
+        {
+            problems.Add("application.published.packageConfigMapRef.name is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(published.StorageConnectionSecretRef.Name))
+        {
+            problems.Add("application.published.storageConnectionSecretRef.name is required.");
+        }
+
+        if (!spec.AuthProxy.Enabled)
+        {
+            problems.Add("a published application needs authProxy.enabled: it requires a signed-in caller and trusts only AuthProxy.");
+        }
+
+        if (!spec.Ingress.Enabled || spec.Ingress.Hosts.Count == 0)
+        {
+            problems.Add("a published application needs ingress.hosts: Stage only answers the hosts it is published under.");
+        }
+
+        if (spec.Onboarding.Enabled)
+        {
+            problems.Add("onboarding is not supported for a published application.");
+        }
+
+        if (spec.Application.Replicas != 1)
+        {
+            problems.Add("a published application runs one replica: its kernel owns its storage.");
+        }
+
+        if (published.RolloutTimeoutSeconds <= 0)
+        {
+            problems.Add("application.published.rolloutTimeoutSeconds must be positive.");
+        }
+
+        if (published.TrustedProxies.Count == 0)
+        {
+            problems.Add("application.published.trustedProxies needs at least one address or network.");
+        }
+
+        foreach (var proxy in published.TrustedProxies.Where(proxy => !System.Net.IPAddress.TryParse(proxy, out _) && !System.Net.IPNetwork.TryParse(proxy, out _)))
+        {
+            problems.Add($"The trusted proxy '{proxy}' is neither an IP address nor a CIDR network.");
+        }
+
+        ValidateNotes(published.Notes, problems);
+    }
+
+    static void ValidateNotes(PublishedNotesSpec? notes, List<string> problems)
+    {
+        if (notes is not { Enabled: true })
+        {
+            return;
+        }
+
+        if (!Uri.TryCreate(notes.CollectorUrl, UriKind.Absolute, out var url) || (url.Scheme != Uri.UriSchemeHttp && url.Scheme != Uri.UriSchemeHttps))
+        {
+            problems.Add("application.published.notes.collectorUrl must be an absolute http or https URL.");
+        }
+
+        if (string.IsNullOrWhiteSpace(notes.CollectorTokenSecretRef.Name))
+        {
+            problems.Add("application.published.notes.collectorTokenSecretRef.name is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(notes.PublicationId))
+        {
+            problems.Add("application.published.notes.publicationId is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(notes.ApplicationName))
+        {
+            problems.Add("application.published.notes.applicationName is required.");
         }
     }
 }

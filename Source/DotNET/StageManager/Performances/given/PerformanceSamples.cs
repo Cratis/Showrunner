@@ -14,7 +14,35 @@ public static class PerformanceSamples
     public const string MongoServer = "mongodb://fake-user:fake-password-91c@mongo.internal:27017";
     public const string ConnectionString = "chronicle://fake-client:fake-chronicle-secret-5e2@chronicle:35000";
 
-    public static IReadOnlyList<string> SecretValues => [EntraClientSecret, GitHubClientSecret, MongoServer, ConnectionString];
+    public const string StorageConnectionString = "mongodb://fake-stage:fake-storage-password-4b8@mongo.internal:27017/crm";
+    public const string NotesToken = "fake-notes-collector-token-6c0";
+
+    public static IReadOnlyList<string> SecretValues => [EntraClientSecret, GitHubClientSecret, MongoServer, ConnectionString, StorageConnectionString, NotesToken];
+
+    public static Performance PublishedPerformance(string name = "crm", bool notes = true)
+    {
+        var performance = Performance(name, onboarding: false);
+        performance.Spec.Chronicle = null;
+        performance.Spec.Application.Image = "cratis/stage:5.3.0";
+        performance.Spec.Application.Published = new()
+        {
+            Version = "1.4.0",
+            PackageConfigMapRef = new() { Name = $"{name}-package-1-4-0" },
+            StorageConnectionSecretRef = new() { Name = $"{name}-storage" },
+            TrustedProxies = ["10.244.0.0/16"],
+            Notes = notes
+                ? new()
+                {
+                    CollectorUrl = "https://collector.example.invalid:8443",
+                    CollectorTokenSecretRef = new() { Name = $"{name}-notes-token" },
+                    PublicationId = "pub-7c1d",
+                    CollectorTenantId = "acme-corp",
+                    ApplicationName = "Crm"
+                }
+                : null
+        };
+        return performance;
+    }
 
     public static Performance Performance(string name = "crm", bool onboarding = true, bool authentication = true)
     {

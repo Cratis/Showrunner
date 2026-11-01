@@ -40,6 +40,9 @@ public static class WorkloadFactory
             Spec = new()
             {
                 Replicas = workload.Replicas,
+                Strategy = workload.KeepServingDuringRollout
+                    ? new() { Type = "RollingUpdate", RollingUpdate = new() { MaxSurge = 1, MaxUnavailable = 0 } }
+                    : null,
                 Selector = new() { MatchLabels = labels },
                 Template = new()
                 {
@@ -62,7 +65,10 @@ public static class WorkloadFactory
                                 Ports = [new() { Name = "http", ContainerPort = workload.Port }],
                                 Env = [.. workload.Environment.OrderBy(pair => pair.Key, StringComparer.Ordinal).Select(pair => new V1EnvVar { Name = pair.Key, Value = pair.Value })],
                                 VolumeMounts = mounts,
-                                ReadinessProbe = new() { TcpSocket = new() { Port = "http" }, PeriodSeconds = 5 },
+                                Resources = workload.Resources,
+                                ReadinessProbe = workload.ReadinessPath is { } path
+                                    ? new() { HttpGet = new() { Path = path, Port = "http" }, PeriodSeconds = 5 }
+                                    : new() { TcpSocket = new() { Port = "http" }, PeriodSeconds = 5 },
                                 SecurityContext = new() { AllowPrivilegeEscalation = false, Capabilities = new() { Drop = ["ALL"] } }
                             }
                         ]

@@ -27,11 +27,25 @@ public class PerformancePreparation(IClusterResources cluster, IEnvironmentResol
             return null;
         }
 
-        var connection = await ResolveConnectionAsync(performance, status, cancellationToken);
-        if (connection is null)
+        ChronicleConnectionRef? connection = null;
+        PublishedSecrets? published = null;
+        if (PublishedStageContract.IsPublished(performance.Spec))
         {
-            status.Block();
-            return null;
+            published = await ResolvePublishedAsync(performance, status, cancellationToken);
+            if (published is null)
+            {
+                status.Block();
+                return null;
+            }
+        }
+        else
+        {
+            connection = await ResolveConnectionAsync(performance, status, cancellationToken);
+            if (connection is null)
+            {
+                status.Block();
+                return null;
+            }
         }
 
         var environment = await ResolveEnvironmentAsync(performance, status, cancellationToken);
@@ -53,7 +67,7 @@ public class PerformancePreparation(IClusterResources cluster, IEnvironmentResol
             return null;
         }
 
-        return new(connection, environment);
+        return new(connection, environment, published?.Storage, published?.NotesToken);
     }
 
     async Task<ChronicleConnectionRef?> ResolveConnectionAsync(Performance performance, PerformanceStatusBuilder status, CancellationToken cancellationToken)
@@ -117,4 +131,44 @@ public class PerformancePreparation(IClusterResources cluster, IEnvironmentResol
         status.Set("EnvironmentResolved", resolution.Environment is not null, resolution.Environment is not null ? "Resolved" : "EnvironmentNotResolved", resolution.Environment is not null ? $"Resolved the environment '{spec.Name}'." : resolution.Failure);
         return resolution.Environment;
     }
+
+    async Task<PublishedSecrets?> ResolvePublishedAsync(Performance performance, PerformanceStatusBuilder status, CancellationToken cancellationToken)
+    {
+        var @namespace = performance.Metadata.NamespaceProperty;
+        var published = performance.Spec.Application.Published!;
+
+        var key = PublishedStageContract.PackageKey(published);
+        var package = await cluster.GetPackageStateAsync(@namespace, published.PackageConfigMapRef.Name, key, cancellationToken);
+        var (packageReason, packageMessage) = package switch
+        {
+            null => ("PackageNotFound", $"The package ConfigMap '{published.PackageConfigMapRef.Name}' does not exist."),
+            { HasKey: false } => ("PackageKeyNotFound", $"The package ConfigMap '{published.PackageConfigMapRef.Name}' has no key '{key}'."),
+            { Immutable: false } => ("PackageNotImmutable", $"The package ConfigMap '{published.PackageConfigMapRef.Name}' is not immutable: a version must never change in place."),
+            _ => ("PackageAvailable", $"Using the package in the ConfigMap '{published.PackageConfigMapRef.Name}'.")
+        };
+        var packageFound = packageReason == "PackageAvailable";
+        status.Set("PackageAvailable", packageFound, packageReason, packageMessage);
+
+        var storage = await ResolveSecretAsync(performance, status, "StorageConnection", published.StorageConnectionSecretRef, ChronicleConnectionRef.DefaultKey, "storage connection Secret", cancellationToken);
+
+        ResolvedSecretRef? notesToken = null;
+        var notesFound = true;
+        if (published.Notes is { Enabled: true } notes)
+        {
+            notesToken = await ResolveSecretAsync(performance, status, "NotesCollectorToken", notes.CollectorTokenSecretRef, PublishedStageContract.NotesTokenFile, "Notes collector token Secret", cancellationToken);
+            notesFound = notesToken is not null;
+        }
+
+        return packageFound && storage is not null && notesFound ? new(storage, notesToken) : null;
+    }
+
+    async Task<ResolvedSecretRef?> ResolveSecretAsync(Performance performance, PerformanceStatusBuilder status, string condition, SecretKeyReference reference, string defaultKey, string description, CancellationToken cancellationToken)
+    {
+        var key = string.IsNullOrEmpty(reference.Key) ? defaultKey : reference.Key;
+        var found = await cluster.GetSecretValueAsync(performance.Metadata.NamespaceProperty, reference.Name, key, cancellationToken) is not null;
+        status.Set(condition, found, found ? "Resolved" : "SecretNotFound", found ? $"Using the {description} '{reference.Name}'." : $"The {description} '{reference.Name}' does not exist or has no key '{key}'.");
+        return found ? new(reference.Name, key) : null;
+    }
+
+    sealed record PublishedSecrets(ResolvedSecretRef Storage, ResolvedSecretRef? NotesToken);
 }

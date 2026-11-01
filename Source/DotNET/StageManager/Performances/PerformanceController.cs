@@ -7,12 +7,14 @@ namespace Cratis.Showrunner.StageManager.Performances;
 /// Reconciles <see cref="Performance"/> resources. Everything a Performance owns carries an owner reference, so deleting it removes them.
 /// </summary>
 /// <param name="reconciler">The reconciler.</param>
+/// <param name="time">The time provider.</param>
 /// <param name="logger">The logger.</param>
-public class PerformanceController(PerformanceReconciler reconciler, ILogger<PerformanceController> logger) : IEntityController<Performance>
+public class PerformanceController(PerformanceReconciler reconciler, TimeProvider time, ILogger<PerformanceController> logger) : IEntityController<Performance>
 {
     static readonly TimeSpan _whileProgressing = TimeSpan.FromSeconds(15);
     static readonly TimeSpan _whileBlocked = TimeSpan.FromMinutes(1);
     static readonly TimeSpan _whenSettled = TimeSpan.FromMinutes(10);
+    static readonly TimeSpan _whileMeasuring = TimeSpan.FromSeconds(30);
 
     /// <inheritdoc/>
     public async Task<ReconciliationResult<Performance>> ReconcileAsync(Performance entity, CancellationToken cancellationToken)
@@ -22,10 +24,19 @@ public class PerformanceController(PerformanceReconciler reconciler, ILogger<Per
             var phase = await reconciler.ReconcileAsync(entity, cancellationToken);
             var requeue = phase switch
             {
-                PerformancePhase.Ready => _whenSettled,
+                PerformancePhase.Ready => entity.Spec.Application.Published is null ? _whenSettled : _whileMeasuring,
+                PerformancePhase.Expired => _whenSettled,
                 PerformancePhase.Blocked => _whileBlocked,
                 _ => _whileProgressing
             };
+
+            // A lifetime that ends before the next round is met on time.
+            if (phase != PerformancePhase.Expired && LifetimeClock.ExpiresAt(entity.Spec) is { } expiresAt)
+            {
+                var untilExpiry = expiresAt - time.GetUtcNow() + TimeSpan.FromSeconds(1);
+                requeue = untilExpiry < requeue ? TimeSpan.FromTicks(Math.Max(untilExpiry.Ticks, TimeSpan.FromSeconds(1).Ticks)) : requeue;
+            }
+
             return ReconciliationResult<Performance>.Success(entity, requeue);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)

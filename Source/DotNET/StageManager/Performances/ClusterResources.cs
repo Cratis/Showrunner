@@ -62,10 +62,77 @@ public class ClusterResources(IKubernetesClient client) : IClusterResources
         var deployment = await client.GetAsync<V1Deployment>(name, @namespace, cancellationToken);
         return deployment is null
             ? null
-            : new(deployment.Spec.Replicas ?? 1, deployment.Status?.ReadyReplicas ?? 0, deployment.Status?.UpdatedReplicas ?? 0);
+            : new(
+                deployment.Spec.Replicas ?? 1,
+                deployment.Status?.ReadyReplicas ?? 0,
+                deployment.Status?.UpdatedReplicas ?? 0,
+                deployment.Status?.Replicas ?? 0,
+                (deployment.Status?.ObservedGeneration ?? 0) >= (deployment.Metadata.Generation ?? 0));
     }
 
     /// <inheritdoc/>
     public async Task UpdateStatusAsync(Performance performance, CancellationToken cancellationToken) =>
         await client.UpdateStatusAsync(performance, cancellationToken);
+
+    /// <inheritdoc/>
+    public async Task<PackageState?> GetPackageStateAsync(string @namespace, string name, string key, CancellationToken cancellationToken)
+    {
+        var configMap = await client.GetAsync<V1ConfigMap>(name, @namespace, cancellationToken);
+        if (configMap is null)
+        {
+            return null;
+        }
+
+        var hasKey = (configMap.BinaryData?.ContainsKey(key) ?? false) || (configMap.Data?.ContainsKey(key) ?? false);
+        return new(hasKey, configMap.Immutable == true);
+    }
+
+    /// <inheritdoc/>
+    public async Task DeleteAsync<TResource>(string @namespace, string name, CancellationToken cancellationToken)
+        where TResource : IKubernetesObject<V1ObjectMeta>
+    {
+        var existing = await client.GetAsync<TResource>(name, @namespace, cancellationToken);
+        if (existing is not null)
+        {
+            await client.DeleteAsync(existing, cancellationToken);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task ScaleDeploymentAsync(string @namespace, string name, int replicas, CancellationToken cancellationToken)
+    {
+        var deployment = await client.GetAsync<V1Deployment>(name, @namespace, cancellationToken);
+        if (deployment is null || deployment.Spec.Replicas == replicas)
+        {
+            return;
+        }
+
+        deployment.Spec.Replicas = replicas;
+        await client.UpdateAsync(deployment, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<UsageSample?> GetUsageAsync(string @namespace, string performance, CancellationToken cancellationToken)
+    {
+        IList<PodMetrics> pods;
+        try
+        {
+            pods = await client.ListAsync<PodMetrics>(@namespace, $"{PerformanceMetadata.PerformanceLabel}={performance}", cancellationToken: cancellationToken);
+        }
+        catch (k8s.Autorest.HttpOperationException)
+        {
+            // The metrics API is an add-on; a cluster without it has no usage to report.
+            return null;
+        }
+
+        if (pods.Count == 0)
+        {
+            return null;
+        }
+
+        var containers = pods.SelectMany(pod => pod.Containers).ToList();
+        var cpu = containers.Sum(container => container.Usage.TryGetValue("cpu", out var quantity) ? (double)quantity.ToDecimal() : 0);
+        var memory = containers.Sum(container => container.Usage.TryGetValue("memory", out var quantity) ? (double)quantity.ToDecimal() : 0);
+        return new(cpu, memory);
+    }
 }

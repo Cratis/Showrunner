@@ -10,15 +10,18 @@ public class the_same_tenant_twice : a_product_with_a_default_offering
 {
     TenantStart _second;
     int _count;
+    int _entitled;
 
     async Task Because()
     {
         await StartingWith(Offering()).StartTenant(Tenant, Organization);
         _second = await StartingWith(Offering()).StartTenant(Tenant, Organization);
         _count = (await Told()).Count;
+        _entitled = (await Entitled()).Count;
     }
 
     [Fact] void should_say_it_had_started() => _second.ShouldEqual(TenantStart.AlreadyStarted);
     [Fact] void should_tell_the_operator_once() => _count.ShouldEqual(1);
+    [Fact] void should_entitle_the_tenant_once() => _entitled.ShouldEqual(1);
 }
 #endif

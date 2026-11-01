@@ -18,6 +18,7 @@ builder.AddBoxOffice(boxOffice => boxOffice.OperatorStores = ["Direct"]);
 | Option | Default | Meaning |
 | --- | --- | --- |
 | `OperatorStores` | `["Direct"]` | The event stores of the operators whose decisions the product honors. |
+| `EventStore` | the application's own event store | The event store Box Office reads and records in. In an `AddCratis` or `AddCratisChronicle` host it is the application's own, without naming it; set it only to use another one. It also sets `OfferingOptions.EventStore`, which the [offering](./offering.md), its reporting and [metering](./metering.md) use. |
 | `PollingInterval` | one minute | How often Box Office looks for tenant namespaces it does not serve yet. |
 | `EnforceModules` | `true` | Whether commands, queries and reactors of a module the tenant does not have are refused; see [Module gating](./gating.md). |
 | `MaximumWorkDuration` | 12 hours | How long admitted work holds a concurrency slot when nobody ends it; see [Compute admission](./compute-admission.md). |
@@ -33,6 +34,8 @@ The operator publishes its decisions as the public events in [Contracts](./contr
 The tenant is named by `TenantId`, and a tenant's id is the exact name of its Chronicle namespace, compared exactly: `Fjord-Logistics` is not `fjord-logistics`. Box Office never creates a namespace. A decision that names no tenant, a tenant with no namespace, or a name that two namespaces share is logged and recorded nowhere, so a decision can never land in another tenant's namespace.
 
 Every decision is recorded with the time the operator decided it, and the newest decision wins whatever order decisions arrive in: a replay that delivers a revoke before the grant it followed still ends in the revoked state. A decision that the forwarder delivers twice is recorded once, because the record is keyed on the decision itself. Two separate decisions to the same effect, made at different times, are two decisions.
+
+A product may also decide for itself. When it [starts a tenant on its default offering](./offering.md#starting-a-tenant-on-the-default-offering), it records `TenantStartedOnDefaultOffering` in the tenant's stream, and the tenant has that offer's seats and modules at once: the seats as granted seats without an end, the modules in full without an end. It is stamped with the time it happened like an operator decision, so a decision the operator makes after it wins, and one made before it does not. The catalog does not publish a trial length, so the tenant starts without a trial.
 
 The decisions about the product as a whole, `OfferPublished` and `OfferWithdrawn`, are not about a tenant. They are recorded where the operator published them, and the `OnSale` query (the `Offer` read model) returns the offers that are not withdrawn.
 

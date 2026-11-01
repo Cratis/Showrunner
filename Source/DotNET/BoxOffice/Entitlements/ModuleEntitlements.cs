@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Showrunner.BoxOffice.Offering.Starting;
 using Cratis.Showrunner.BoxOffice.Receiving;
 
 namespace Cratis.Showrunner.BoxOffice.Entitlements;
@@ -61,6 +62,19 @@ public record ModuleEntitlements(string Id, IEnumerable<ModuleEntitlement> Modul
     /// <returns>The next state.</returns>
     public static ModuleEntitlements Reduce(OperatorRevokedModule @event, ModuleEntitlements? current, EventContext context) =>
         Decide(current, context, new(@event.Module, ModuleAccess.None, EntitlementEnd.Never, context.Occurred));
+
+    /// <summary>
+    /// Folds <see cref="TenantStartedOnDefaultOffering"/> into the state: every module of the offer in full, without an end,
+    /// until a decision of the operator made later says otherwise.
+    /// </summary>
+    /// <param name="event">The event.</param>
+    /// <param name="current">The current state.</param>
+    /// <param name="context">The context of the event.</param>
+    /// <returns>The next state.</returns>
+    public static ModuleEntitlements Reduce(TenantStartedOnDefaultOffering @event, ModuleEntitlements? current, EventContext context) =>
+        @event.Modules.Aggregate(
+            current ?? new(context.EventSourceId.Value, []),
+            (state, module) => Decide(state, context, new(module, ModuleAccess.Full, EntitlementEnd.Never, context.Occurred)));
 
     static ModuleEntitlements Decide(ModuleEntitlements? current, EventContext context, ModuleEntitlement decision)
     {

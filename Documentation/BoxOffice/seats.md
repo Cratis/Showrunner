@@ -33,6 +33,8 @@ A command with the marker from a user who holds no seat the tenant's seats cover
 
 ## When the pool shrinks
 
+A tenant that a product [starts on its default offering](./offering.md#starting-a-tenant-on-the-default-offering) has the offer's included seats as its capacity at once, with no end, until the operator sets another capacity; the operator's `SeatCapacitySet` replaces it like it replaces any capacity.
+
 When the operator lowers the capacity below the seats held, the seats are not released. The holders who were assigned first stay licensed up to the capacity, oldest first, and the rest keep their seat but are not licensed: `RequiresSeat` refuses them. The `Mine` query returns a `SeatStanding` that tells each user where they stand so the frontend can tell them why:
 
 | Status | Meaning |

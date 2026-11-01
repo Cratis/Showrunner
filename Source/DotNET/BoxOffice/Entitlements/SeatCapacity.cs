@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Showrunner.BoxOffice.Offering.Starting;
 using Cratis.Showrunner.BoxOffice.Receiving;
 
 namespace Cratis.Showrunner.BoxOffice.Entitlements;
@@ -101,6 +102,25 @@ public record SeatCapacity(
             Capacity = standing.Capacity.Decide(@event.Capacity, context.Occurred),
             Until = standing.Until.Decide(@event.Until, context.Occurred),
             Origin = standing.Origin.Decide(origin, context.Occurred)
+        };
+    }
+
+    /// <summary>
+    /// Folds <see cref="TenantStartedOnDefaultOffering"/> into the state: the offer's seats, without an end, until a
+    /// decision of the operator made later replaces them.
+    /// </summary>
+    /// <param name="event">The event.</param>
+    /// <param name="current">The current state.</param>
+    /// <param name="context">The context of the event.</param>
+    /// <returns>The next state.</returns>
+    public static SeatCapacity Reduce(TenantStartedOnDefaultOffering @event, SeatCapacity? current, EventContext context)
+    {
+        var standing = Of(current, context);
+        return standing with
+        {
+            Capacity = standing.Capacity.Decide(@event.Seats, context.Occurred),
+            Until = standing.Until.Decide(EntitlementEnd.Never, context.Occurred),
+            Origin = standing.Origin.Decide(SeatCapacityOrigin.Grant, context.Occurred)
         };
     }
 

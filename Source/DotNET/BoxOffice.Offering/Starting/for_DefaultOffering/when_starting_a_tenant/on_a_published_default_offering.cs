@@ -13,6 +13,8 @@ public class on_a_published_default_offering : a_product_with_a_default_offering
     TenantStartedOnOffer _told;
     int _count;
     string _source;
+    TenantStartedOnDefaultOffering _entitled;
+    int _entitledCount;
 
     async Task Because()
     {
@@ -21,6 +23,9 @@ public class on_a_published_default_offering : a_product_with_a_default_offering
         _count = told.Count;
         _told = (TenantStartedOnOffer)told[0].Content;
         _source = told[0].Context.EventSourceId.Value;
+        var entitled = await Entitled();
+        _entitledCount = entitled.Count;
+        _entitled = (TenantStartedOnDefaultOffering)entitled[0].Content;
     }
 
     [Fact] void should_start_the_tenant() => _result.ShouldEqual(TenantStart.Started);
@@ -30,5 +35,8 @@ public class on_a_published_default_offering : a_product_with_a_default_offering
     [Fact] void should_name_the_offer() => _told.Offer.Value.ShouldEqual("Starter");
     [Fact] void should_give_the_seats_of_the_offer() => _told.Seats.Value.ShouldEqual(3);
     [Fact] void should_give_the_modules_of_the_offer() => _told.Modules.Select(_ => _.Value).ShouldContainOnly("core");
+    [Fact] void should_entitle_the_tenant_once() => _entitledCount.ShouldEqual(1);
+    [Fact] void should_entitle_it_with_the_seats_of_the_offer() => _entitled.Seats.Value.ShouldEqual(3);
+    [Fact] void should_entitle_it_with_the_modules_of_the_offer() => _entitled.Modules.Select(_ => _.Value).ShouldContainOnly("core");
 }
 #endif

@@ -57,8 +57,18 @@ public class Signups(IDefaultOffering defaultOffering)
 }
 ```
 
-`AddBoxOfficeOffering` registers `IDefaultOffering`. It finds the offer named in `DefaultOffering(...)` among the offers the operator published (`AddBoxOffice` supplies them) and tells the operator `TenantStartedOnOffer`, with the offer's name, its included seats and its modules. The fact goes to the outbox of the tenant's namespace, under the organization, like every other [tenant fact the product publishes](./contracts.md#product-to-operator).
+`AddBoxOfficeOffering` registers `IDefaultOffering`. It finds the offer named in `DefaultOffering(...)` among the offers the operator published (`AddBoxOffice` supplies them) and does two things:
+
+- It records `TenantStartedOnDefaultOffering` in the tenant's own stream. The tenant has the offer's included seats and modules at once, so [gating](./gating.md) admits the modules and [seats](./seats.md) can be assigned without waiting for the operator. See [Entitlements](./entitlements.md#how-a-decision-reaches-the-tenant). The catalog publishes no trial length, so the tenant starts without a trial.
+- It tells the operator `TenantStartedOnOffer`, with the offer's name, its included seats and its modules. The fact goes to the outbox of the tenant's namespace, under the organization, like every other [tenant fact the product publishes](./contracts.md#product-to-operator).
+
+A later decision of the operator, such as `SeatCapacitySet` or `ModuleRevoked`, replaces what the tenant started with, because the newest decision wins.
 
 - **An unknown name fails where it is used.** The catalog arrives from the operator after the product starts, so a name is checked when a tenant starts, not at startup. `StartTenant` throws `DefaultOfferingNotPublished` when the operator has not published an offer with that name or has withdrawn it, and `DefaultOfferingNotDeclared` when the product declared no default offering. Nothing is published then. The name is compared without regard to case.
 - **Starting a tenant twice tells the operator once.** Delivery is at least once, so calling `StartTenant` again for the same tenant, also from another instance, returns `TenantStart.AlreadyStarted` and publishes nothing.
+- **Both facts are recorded once.** If the product stops between the two, starting the tenant again completes what is missing.
 - **A different default later does not restart a tenant.** A tenant that started on one offer stays started; the operator changes what it has with its own decisions.
+
+## The product's event store
+
+Box Office records in the product's own event store. In a host set up with `AddCratis` or `AddCratisChronicle`, that is the application's event store, and nothing needs naming. Set `OfferingOptions.EventStore`, or `BoxOfficeOptions.EventStore` when Box Office is added, only to use another store. The same store is used for reporting the offering, [metering](./metering.md), starting tenants on the default offering and for everything `AddBoxOffice` reads and records. A host that registers only the Chronicle client, without an application event store, uses the name in `ChronicleClientOptions.EventStore`, as before.

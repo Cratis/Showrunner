@@ -37,11 +37,14 @@ public class a_product_with_a_default_offering : Specification
     {
         var offers = Substitute.For<IPublishedOffers>();
         offers.All(Arg.Any<CancellationToken>()).Returns(_ => Task.FromResult<IEnumerable<PublishedOffer>>(_catalog));
-        return new(offering, offers, _client, Options.Create(new ChronicleClientOptions()), Microsoft.Extensions.Logging.Abstractions.NullLogger<DefaultOffering>.Instance);
+        return new(offering, offers, _client, BoxOfficeEventStore.ForClientOptions(Options.Create(new ChronicleClientOptions())), Microsoft.Extensions.Logging.Abstractions.NullLogger<DefaultOffering>.Instance);
     }
 
     protected async Task<IImmutableList<AppendedEvent>> Told() =>
         await _eventStore.GetEventSequence(EventSequenceId.Outbox).GetFromSequenceNumber(EventSequenceNumber.First);
+
+    protected async Task<IImmutableList<AppendedEvent>> Entitled() =>
+        await _eventStore.EventLog.GetFromSequenceNumber(EventSequenceNumber.First, TenantStreamId.Value);
 
     void Establish()
     {

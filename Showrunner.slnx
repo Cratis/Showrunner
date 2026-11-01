@@ -15,6 +15,7 @@
   </Folder>
   <Folder Name="/Integration/">
     <Project Path="Integration.BoxOffice/BoxOffice.Integration.Specs.csproj" />
+    <Project Path="Integration.Notes/Notes.Integration.Specs.csproj" />
     <Project Path="Integration/Usher.Integration.Specs.csproj" />
   </Folder>
 </Solution>

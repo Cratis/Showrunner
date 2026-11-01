@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <!--
+        End-to-end specifications for Notes against a real Chronicle kernel in a container (Testcontainers): an
+        application store running Notes in a generic host, and a collecting store running Notes.Collecting in another,
+        exchanging the contract events through their outboxes and inboxes. Needs Docker. Run with:
+
+            dotnet test Integration.Notes/Notes.Integration.Specs.csproj
+
+        The kernel container comes from the Usher integration specifications, which this project shares it with: set
+        USHER_CHRONICLE_IMAGE to run against another kernel image, and USHER_INTEGRATION_LOG to a file path to keep the
+        logs of both hosts.
+    -->
+    <PropertyGroup>
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <OutputType>Exe</OutputType>
+        <AssemblyName>Cratis.Showrunner.Notes.Integration.Specs</AssemblyName>
+        <RootNamespace>Cratis.Showrunner.Notes.Integration</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <!-- One Establish/Because per spec class, as in the inline specs. -->
+        <Compile Include="../Source/DotNET/SharedSpecificationInstance.cs" Link="SharedSpecificationInstance.cs" />
+
+        <!-- The kernel container and the polling helper are the Usher integration specifications' own; one copy of each. -->
+        <Compile Include="../Integration/given/ChronicleInfrastructure.cs" Link="given/ChronicleInfrastructure.cs" />
+        <Compile Include="../Integration/given/ChronicleCollection.cs" Link="given/ChronicleCollection.cs" />
+        <Compile Include="../Integration/given/Eventually.cs" Link="given/Eventually.cs" />
+        <Compile Include="../Integration/given/FileLoggerProvider.cs" Link="given/FileLoggerProvider.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../Source/DotNET/Notes/Notes.csproj" />
+        <ProjectReference Include="../Source/DotNET/Notes.Collecting/Notes.Collecting.csproj" />
+        <ProjectReference Include="../Source/DotNET/Notes.Contracts/Notes.Contracts.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Cratis.Fundamentals" />
+        <PackageReference Include="xunit" />
+        <PackageReference Include="xunit.runner.visualstudio">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" />
+        <PackageReference Include="Cratis.Specifications.XUnit" />
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+        <PackageReference Include="Testcontainers" />
+        <PackageReference Include="SSH.NET" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Update="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+</Project>

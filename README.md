@@ -63,7 +63,7 @@ yarn build
 
 Specifications live beside the code they specify — `for_*/when_*/` folders compiled into Debug builds only for .NET, and Vitest specs in the same layout for TypeScript.
 
-The end-to-end specifications in [`Integration`](./Integration) run Usher and a desk against a real Chronicle kernel in a container, so `dotnet test Showrunner.slnx` needs Docker. Set `USHER_CHRONICLE_IMAGE` to run them against another kernel image, and `USHER_INTEGRATION_LOG` to a file path to keep the application's log.
+The end-to-end specifications in [`Integration`](./Integration) run Usher and a desk against a real Chronicle kernel in a container, so `dotnet test Showrunner.slnx` needs Docker. The end-to-end specifications for Notes in [`Integration.Notes`](./Integration.Notes) run an application and a collecting host the same way, sharing Usher's kernel container. Set `USHER_CHRONICLE_IMAGE` to run them against another kernel image, and `USHER_INTEGRATION_LOG` to a file path to keep the application's log.
 
 ## Releasing
 

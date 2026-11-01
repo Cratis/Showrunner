@@ -42,7 +42,10 @@ namespace Cratis.Showrunner.Notes.Receiving;
 /// <param name="logger">The logger.</param>
 public class ReceiverEventTranslator(IChronicleClient client, ILogger<ReceiverEventTranslator> logger)
 {
-    static readonly Type[] _noteOpeners =
+    /// <summary>
+    /// Gets the private facts that open a note.
+    /// </summary>
+    public static IReadOnlyList<Type> NoteOpeners { get; } =
     [
         typeof(GiverGaveNoteOnContext),
         typeof(GiverGaveNoteOnSlices),
@@ -113,7 +116,7 @@ public class ReceiverEventTranslator(IChronicleClient client, ILogger<ReceiverEv
         }
 
         var tenant = await client.GetEventStore(context.EventStore, @namespace);
-        var openers = _noteOpeners.Select(tenant.EventTypes.GetEventTypeFor).ToArray();
+        var openers = NoteOpeners.Select(tenant.EventTypes.GetEventTypeFor).ToArray();
         var opened = await tenant.EventLog.GetForEventSourceIdAndEventTypes(context.EventSourceId, openers);
         if (opened.Count == 0)
         {

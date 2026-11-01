@@ -33,6 +33,12 @@ public class an_outbox_publisher : Specification
     protected RecordingLogger<OutboxPublisher> _logger;
     protected OutboxPublisher _publisher;
     protected NoteId _noteId;
+
+    /// <summary>
+    /// Gets the options the publisher runs with.
+    /// </summary>
+    protected virtual NotesOptions Options => new();
+
     protected Cratis.Execution.CorrelationId _correlationId;
     protected IImmutableList<AppendedEvent> _outbox;
 
@@ -42,7 +48,7 @@ public class an_outbox_publisher : Specification
         _client = Substitute.For<IChronicleClient>();
         _client.GetEventStore(Arg.Any<EventStoreName>(), Arg.Any<EventStoreNamespaceName?>()).Returns(_eventStore);
         _logger = new();
-        _publisher = new(_client, _logger);
+        _publisher = new(_client, _logger, Microsoft.Extensions.Options.Options.Create(Options));
         _noteId = NoteId.New();
         _correlationId = Cratis.Execution.CorrelationId.New();
     }

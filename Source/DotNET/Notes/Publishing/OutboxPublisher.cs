@@ -11,6 +11,7 @@ using Cratis.Showrunner.Notes.Giving.GiveNoteOnSlices;
 using Cratis.Showrunner.Notes.Giving.SuggestComponentPropertyChange;
 using Cratis.Showrunner.Notes.Withdrawing.WithdrawNote;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Cratis.Showrunner.Notes.Publishing;
 
@@ -33,9 +34,10 @@ namespace Cratis.Showrunner.Notes.Publishing;
 /// </remarks>
 /// <param name="client">The Chronicle client, to reach the outbox of the namespace the fact was recorded in.</param>
 /// <param name="logger">The logger.</param>
+/// <param name="options">Notes' options; with the HTTP transport <see cref="NotesOptions.CollectorTenantId"/> names the tenant.</param>
 [Reactor(Id)]
 [OnceOnly]
-public class OutboxPublisher(IChronicleClient client, ILogger<OutboxPublisher> logger) : IReactor
+public class OutboxPublisher(IChronicleClient client, ILogger<OutboxPublisher> logger, IOptions<NotesOptions> options) : IReactor
 {
     /// <summary>
     /// The stable identity of the reactor; its position in the event log and its idempotency keys hang on it.
@@ -102,7 +104,8 @@ public class OutboxPublisher(IChronicleClient client, ILogger<OutboxPublisher> l
     public Task WithdrewNote(GiverWithdrewNote @event, EventContext context, ReactorDelivery delivery) =>
         Publish(PublicEvents.For(@event, TenantOf(context)), context, delivery);
 
-    static TenantId TenantOf(EventContext context) => new(context.Namespace.Value);
+    TenantId TenantOf(EventContext context) =>
+        options.Value is { Transport: NotesTransport.Http, CollectorTenantId.Value.Length: > 0 } http ? http.CollectorTenantId : new(context.Namespace.Value);
 
     async Task Publish(object publicEvent, EventContext context, ReactorDelivery delivery)
     {

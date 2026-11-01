@@ -11,7 +11,7 @@ namespace Cratis.Showrunner.Notes.Tenancy;
 /// <summary>
 /// Notes' background work, every <see cref="NotesOptions.PollingInterval"/> from the start of the host: opens every
 /// tenant namespace, observes the inbox of each collecting store in each namespace and subscribes the application to
-/// the collecting stores.
+/// the collecting stores. With the HTTP transport it only opens the namespaces.
 /// </summary>
 /// <remarks>
 /// Everything it acts on is durable - the namespaces, the subscriptions and the inbox positions live in Chronicle - so a
@@ -37,6 +37,13 @@ public class NotesWorker(
     public async Task RunOnce(CancellationToken cancellationToken = default)
     {
         var stores = await tenants.All(cancellationToken);
+        if (options.Value.Transport == NotesTransport.Http)
+        {
+            // The collector is not in this kernel: there is no inbox to observe and no outbox to subscribe. The relay
+            // takes the notes over HTTP, but the namespaces still have to be open for Notes' reactors to run in them.
+            return;
+        }
+
         foreach (var store in stores)
         {
             cancellationToken.ThrowIfCancellationRequested();

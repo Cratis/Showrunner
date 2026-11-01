@@ -5,7 +5,9 @@ using Cratis.Showrunner.Notes;
 using Cratis.Showrunner.Notes.Identity;
 using Cratis.Showrunner.Notes.Receiving;
 using Cratis.Showrunner.Notes.Tenancy;
+using Cratis.Showrunner.Notes.Transport;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -27,8 +29,9 @@ public static class NotesServiceCollectionExtensions
             .Configure(configure)
             .Validate(options => !options.Enabled || options.ApplicationName != ApplicationName.NotSet, "Notes needs an application name: set NotesOptions.ApplicationName in AddNotes.")
             .Validate(options => !options.Enabled || options.PublicationId != PublicationId.NotSet, "Notes needs the publication the application runs as: set NotesOptions.PublicationId in AddNotes.")
-            .Validate(options => !options.Enabled || options.CollectingStores.Any(), "Notes needs at least one collecting store: set NotesOptions.CollectingStores in AddNotes.")
+            .Validate(options => !options.Enabled || options.Transport != NotesTransport.SameKernel || options.CollectingStores.Any(), "Notes needs at least one collecting store: set NotesOptions.CollectingStores in AddNotes.")
             .Validate(options => options.PollingInterval > TimeSpan.Zero, "Notes polls at an interval: set NotesOptions.PollingInterval to more than zero.")
+            .Validate(options => !NotesOptionsValidation.HttpProblems(options).Any(), "Notes' HTTP transport is not configured: check NotesOptions.CollectorUrl, CollectorToken or CollectorTokenFile, RelayInterval and RelayBatchSize.")
             .ValidateOnStart();
 
         services.TryAddSingleton(TimeProvider.System);
@@ -37,6 +40,15 @@ public static class NotesServiceCollectionExtensions
         services.TryAddSingleton<ReceiverEventTranslator>();
         services.TryAddSingleton<ReceiverSubscriptions>();
         services.AddHostedService<NotesWorker>();
+
+        services.TryAddSingleton<CollectorToken>();
+        services.TryAddSingleton<ICollectorClient>(provider => new HttpCollectorClient(
+            new HttpClient(),
+            provider.GetRequiredService<CollectorToken>(),
+            provider.GetRequiredService<IOptions<NotesOptions>>()));
+        services.TryAddSingleton<OutboxRelay>();
+        services.TryAddSingleton<ResponseApplier>();
+        services.AddHostedService<CollectorRelayWorker>();
         return services;
     }
 }

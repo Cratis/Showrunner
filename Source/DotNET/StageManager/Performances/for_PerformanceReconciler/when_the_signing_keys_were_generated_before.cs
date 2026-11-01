@@ -17,6 +17,8 @@ public class when_the_signing_keys_were_generated_before : a_reconciliation
         _cluster.Applied.Add(secret);
     }
 
+    Task Because() => Reconcile();
+
     [Fact] void should_keep_the_invitation_key() => _performance.Status.SigningKeys.InvitationKeyId.ShouldEqual(_stored.Invitation.Current.KeyId);
     [Fact] void should_keep_the_attestation_key() => _performance.Status.SigningKeys.AttestationKeyId.ShouldEqual(_stored.Attestation.Current.KeyId);
 }

@@ -10,6 +10,8 @@ public class when_the_deployments_are_ready : a_reconciliation
 {
     void Establish() => _cluster.DeploymentsReady = true;
 
+    Task Because() => Reconcile();
+
     [Fact] void should_be_ready() => _phase.ShouldEqual(PerformancePhase.Ready);
 }
 #endif

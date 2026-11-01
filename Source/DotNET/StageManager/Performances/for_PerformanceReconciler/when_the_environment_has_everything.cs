@@ -10,6 +10,8 @@ public class when_the_environment_has_everything : a_reconciliation
 {
     string[] ConditionTypes => [.. _performance.Status.Conditions.Select(condition => condition.Type)];
 
+    Task Because() => Reconcile();
+
     [Fact] void should_be_progressing_until_the_deployments_are_ready() => _phase.ShouldEqual(PerformancePhase.Progressing);
     [Fact] void should_apply_the_application_authproxy_and_ante() => string.Join(',', _cluster.AppliedOf<V1Deployment>().Select(deployment => deployment.Metadata.Name).Order(StringComparer.Ordinal)).ShouldEqual("crm-ante,crm-app,crm-authproxy");
     [Fact] void should_apply_one_ingress() => _cluster.AppliedOf<V1Ingress>().Count().ShouldEqual(1);

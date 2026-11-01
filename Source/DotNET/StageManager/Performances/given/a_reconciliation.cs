@@ -27,7 +27,11 @@ public abstract class a_reconciliation : Specification
         _cluster = new FakeCluster();
     }
 
-    async Task Because()
+    /// <summary>
+    /// Reconciles the Performance. Each specification calls it from its own Because().
+    /// </summary>
+    /// <returns>A task that completes when the Performance is reconciled.</returns>
+    protected async Task Reconcile()
     {
         var resolver = new FakeEnvironmentResolver(EnvironmentResolution.Resolved(_environment));
         var reconciler = new PerformanceReconciler(

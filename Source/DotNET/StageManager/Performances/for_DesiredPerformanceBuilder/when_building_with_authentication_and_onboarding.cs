@@ -38,7 +38,7 @@ public class when_building_with_authentication_and_onboarding : Specification
     [Fact] void should_not_run_privileged() => Containers.All(container => container.SecurityContext.AllowPrivilegeEscalation == false).ShouldBeTrue();
     [Fact] void should_mount_the_connection_secret_as_a_file_without_copying_it() => _desired.Deployments.Single(deployment => deployment.Metadata.Name == "crm-ante").Spec.Template.Spec.Volumes
         .Where(volume => volume.Projected is not null).SelectMany(volume => volume.Projected.Sources).Single(source => source.Secret.Name == "chronicle-connection").Secret.Items.Single().Path.ShouldEqual("Cratis__Chronicle__ConnectionString");
-    [Fact] void should_hand_the_application_only_its_own_values() => _desired.Secrets.Single(secret => secret.Metadata.Name == "crm-app-environment").Data.Keys.Contains("authentication.providers.EntraId.clientSecret").ShouldBeFalse();
+    [Fact] void should_hand_the_application_only_its_own_values() => _desired.Secrets.Single(secret => secret.Metadata.Name == "crm-app-environment").Data.ContainsKey("authentication.providers.EntraId.clientSecret").ShouldBeFalse();
     [Fact] void should_own_everything_it_creates() => _desired.Deployments.All(deployment => deployment.Metadata.OwnerReferences.Single().Name == "crm").ShouldBeTrue();
     [Fact] void should_roll_the_pods_when_content_changes() => _desired.Deployments.All(deployment => deployment.Spec.Template.Metadata.Annotations.ContainsKey(PerformanceMetadata.ConfigRevisionAnnotation)).ShouldBeTrue();
 }

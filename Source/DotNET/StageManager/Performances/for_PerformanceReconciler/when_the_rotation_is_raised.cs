@@ -24,8 +24,9 @@ public class when_the_rotation_is_raised : a_reconciliation
         _cluster.Applied.Add(SecretFactory.Create(PerformanceSamples.Performance(), "crm-signing-keys", "signing-keys", new Dictionary<string, string> { [SigningKeyState.SecretKey] = _stored.Serialize() }));
     }
 
-    void Because()
+    async Task Because()
     {
+        await Reconcile();
         var ante = _cluster.AppliedOf<V1Secret>().Single(secret => secret.Metadata.Name == "crm-ante-secrets");
         _ante = new(ante.Data.Keys.ToList());
     }

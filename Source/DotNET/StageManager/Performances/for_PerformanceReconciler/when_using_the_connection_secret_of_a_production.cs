@@ -22,6 +22,8 @@ public class when_using_the_connection_secret_of_a_production : a_reconciliation
         _cluster.SecretValues["apps/ledger-connection/connectionString"] = PerformanceSamples.ConnectionString;
     }
 
+    Task Because() => Reconcile();
+
     [Fact] void should_not_be_blocked() => _phase.ShouldEqual(PerformancePhase.Progressing);
 
     [Fact] void should_mount_the_secret_of_the_production() =>

@@ -18,7 +18,7 @@ public static class PerformanceSamples
 
     public static Performance Performance(string name = "crm", bool onboarding = true, bool authentication = true)
     {
-        var performance = new Performance
+        return new Performance
         {
             Metadata = new()
             {
@@ -62,7 +62,6 @@ public static class PerformanceSamples
                 }
             }
         };
-        return performance;
     }
 
     public static ResolvedEnvironment Environment() => new("production", new Dictionary<string, string>(StringComparer.Ordinal)

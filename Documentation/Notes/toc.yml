@@ -6,5 +6,7 @@
   href: contracts.md
 - name: Collecting
   href: collecting.md
+- name: Transports
+  href: transports.md
 - name: Frontend proxies
   href: frontend-proxies.md

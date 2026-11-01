@@ -12,6 +12,7 @@ Notes is a set of libraries, not a service. Each runs in the Arc and Chronicle p
 - [Contracts](./contracts.md): the public events the application and the receiving side exchange, and their value types.
 - [Backend](./backend.md): `Cratis.Showrunner.Notes`, which the application hosts: the commands to give, suggest and withdraw a note, the live list of a user's notes with their status, the switch that turns Notes off and the outbox that publishes the notes.
 - [Collecting](./collecting.md): `Cratis.Showrunner.Notes.Collecting`, which the builder of the application hosts: it reads the application's outbox, records each note in the namespace its tenant names and answers with acknowledgements and resolutions.
+- [Transports](./transports.md): the two ways notes and answers travel between the application and the receiving side: Chronicle's own outbox and inbox in a shared kernel, or HTTP when the application runs its own kernel.
 - [Frontend proxies](./frontend-proxies.md): the generated TypeScript proxies.
 
 The React feedback button, picker and dialogs are in `@cratis/showrunner.notes.react`.
@@ -21,6 +22,8 @@ The React feedback button, picker and dialogs are in `@cratis/showrunner.notes.r
 Usher's issues and errors also carry a place in the application, and Notes reuses Usher's `SliceLocation`. But [Usher](../Usher/index.md) is a support conversation with a desk of people: an issue gets work items, a lifecycle and replies. Notes is structured feedback about the model and its surface, and its consumer is the model. Keeping them separate keeps both contracts honest; the two parts are independent and can be used together or alone.
 
 ## How it works
+
+The diagram shows the same-kernel transport. An application that runs its own Chronicle kernel uses the [HTTP transport](./transports.md#the-http-transport) instead; everything else is the same.
 
 ```mermaid
 flowchart LR

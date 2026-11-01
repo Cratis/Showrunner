@@ -29,11 +29,40 @@ A builder that publishes applications while it runs registers its own `IAppStore
 
 ## What the receiving system has to configure
 
-1. **The application's event store must be reachable as an event store of the same Chronicle kernel the collecting host connects to.** Chronicle forwards events between event stores through a subscription: the collecting store subscribes to the application's store by name, and Chronicle forwards the listed event types from that store's outbox into `inbox-{application store}` on the collecting store. A subscription is between two event stores of one Chronicle server. A published application that talks to its own, separate Chronicle server can not be subscribed to from another server, so the application's event store has to be on the kernel the collecting host uses, or the events have to be brought across by something else.
+1. **For the same-kernel transport, the application's event store must be reachable as an event store of the same Chronicle kernel the collecting host connects to.** Chronicle forwards events between event stores through a subscription: the collecting store subscribes to the application's store by name, and Chronicle forwards the listed event types from that store's outbox into `inbox-{application store}` on the collecting store. A subscription is between two event stores of one Chronicle server. A published application that talks to its own, separate Chronicle server can not be subscribed to from another server, so the application's event store has to be on the kernel the collecting host uses, so an application with its own kernel uses the [HTTP transport](./transports.md#the-http-transport) and the endpoints below.
 2. **The name of the application's event store**, as the application names it in its Chronicle connection (`ChronicleClientOptions.EventStore`), in `AppStores` or in the `IAppStores` the host supplies.
 3. **A namespace in the collecting store named exactly as each tenant.** The application names its tenant in `TenantId`, which is the name of the tenant's namespace in the application. Chronicle forwards an event only into the namespaces the subscribing store has, and the translator records the note in the namespace `TenantId` names, matched exactly, case included. The collecting host opens every namespace its store has, so creating the namespace for an organization is enough. A tenant without a namespace gets no notes: Chronicle does not forward into it, and a note that arrives in another namespace but names a tenant the store does not have is logged and skipped.
 4. **The application has to know the collecting store's name** in `NotesOptions.CollectingStores` (default `Studio`) and be subscribed to its outbox. That subscription is the application's own, made by `AddNotes`; the collecting store has to be in the same Chronicle kernel for it too.
 5. **Who may answer.** The commands require a signed-in person. Add the roles or policies the builder needs through Arc authorization for the host.
+
+## Collecting over HTTP
+
+An application that runs its own Chronicle kernel relays its notes to the host over HTTP. The host maps the endpoints and says how a publication is authenticated.
+
+```csharp
+builder.Services.AddNoteCollecting(collecting => { });
+builder.Services.AddSingleton<IResolveNotesPublications, MyPublications>();
+
+var app = builder.Build();
+app.MapNoteCollecting();
+```
+
+`IResolveNotesPublications` is the host's authentication:
+
+```csharp
+public interface IResolveNotesPublications
+{
+    Task<NotesPublication?> Resolve(PublicationId publicationId, string bearerToken);
+}
+
+public record NotesPublication(TenantId TenantId, AppStoreName AppStore);
+```
+
+- `TenantId` is the name of the namespace in the collecting store the publication's notes are recorded in.
+- `AppStore` is recorded as `AppStore` on every received fact. It does not have to be an event store of this kernel.
+- Return `null` for an unknown publication and for a wrong secret alike. Store a hash of each secret and compare in constant time, for example with `CryptographicOperations.FixedTimeEquals` over the hashes of the stored and the presented secret.
+
+`MapNoteCollecting` throws when the host did not register an `IResolveNotesPublications`. See [Transports](./transports.md#the-collector-endpoints) for the endpoints, their payloads, their status codes and the security model. The endpoints do not use the host's user authentication: map them only on an internal address.
 
 ## Background work
 

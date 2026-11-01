@@ -30,8 +30,15 @@ The same is available on the service collection as `services.AddNotes(...)`.
 | `ApplicationVersion` | the entry assembly's informational version, without build metadata | The version published with every note. |
 | `CollectingStores` | `["Studio"]` | The event stores of the receiving sides the application publishes to and receives answers from. |
 | `PollingInterval` | one minute | How often Notes opens tenant namespaces it does not serve yet and makes sure the application is subscribed to the collecting stores. |
+| `Transport` | `SameKernel` | How notes reach the receiving side: `SameKernel` (Chronicle's outbox, subscription and inbox) or `Http`. See [Transports](./transports.md). |
+| `CollectorUrl` | none | `Http` only. The absolute `http(s)` URL of the collector. |
+| `CollectorToken` | none | `Http` only. The bearer secret of the publication. Prefer `CollectorTokenFile`. |
+| `CollectorTokenFile` | none | `Http` only. The path of a file, typically a mounted secret, that holds the bearer secret. Read again on every use; wins over `CollectorToken`. |
+| `CollectorTenantId` | none | `Http` only. The tenant the collector knows the publication's notes by; every published note names it instead of its namespace. |
+| `RelayInterval` | five seconds | `Http` only. How often the relay looks for notes to send and answers to apply. |
+| `RelayBatchSize` | 100 | `Http` only. The most notes sent in one request. |
 
-The host fails to start when `ApplicationName`, `PublicationId` or `CollectingStores` is not set, unless `Enabled` is `false`. Arc discovers Notes' commands and queries, and Chronicle its events, read models and reactors, from the referenced assembly; there is nothing else to register. `AddNotes` also adds a hosted service that opens every tenant namespace, observes the inbox of each collecting store and subscribes the application to it; see [Collecting](./collecting.md#what-the-application-needs).
+The host fails to start when `ApplicationName` or `PublicationId` is not set, when `CollectingStores` is empty on the `SameKernel` transport, or when the `Http` transport has no valid `CollectorUrl` or no secret, unless `Enabled` is `false`. Arc discovers Notes' commands and queries, and Chronicle its events, read models and reactors, from the referenced assembly; there is nothing else to register. `AddNotes` also adds a hosted service that opens every tenant namespace, observes the inbox of each collecting store and subscribes the application to it; see [Collecting](./collecting.md#what-the-application-needs).
 
 Every command and query requires a signed-in user. Notes takes who the giver is from the signed-in identity, never from the request: the `sub` claim (or the name identifier) is the user's id and the `name` claim their display name. There is no giver field on any command, and a call that is not signed in is refused.
 
@@ -84,6 +91,25 @@ The `Publishing/OutboxPublisher` reactor appends each public event to the outbox
 
 Chronicle delivers an event to a reactor at least once. Each publication is appended with an idempotency key derived from the delivery, so a repeated delivery finds its publication already in the outbox and appends nothing. The reactor is excluded from replay, so replaying it does not try to publish history again. A newly deployed publisher does catch up: it publishes everything the namespace recorded before it ran.
 
+### Configuring Notes from the environment
+
+`AddNotes` takes a delegate, so the host decides where the values come from. Binding a configuration section gives the usual environment variable forms; the section name is the host's choice, and the documentation and Studio use `Notes`:
+
+```csharp
+builder.AddNotes(notes => builder.Configuration.GetSection("Notes").Bind(notes));
+```
+
+```text
+Notes__ApplicationName=Ledger
+Notes__PublicationId=pub-7f3a
+Notes__Transport=Http
+Notes__CollectorUrl=https://studio.internal:8443
+Notes__CollectorTokenFile=/var/run/secrets/notes/token
+Notes__CollectorTenantId=acme-corp
+```
+
 ## Receiving the answers
 
 The `Receiving/ReceiverEventTranslator` observes `inbox-{collecting store}` in every tenant namespace and records each answer as its private fact in the namespace its `TenantId` names. A tenant that does not exist or is ambiguous, an event that names no tenant and a note that was never given in the tenant are logged and skipped; they change nothing, and failing on them would hold up later events. The tenant is matched to a namespace exactly, case included. Every copy of the same answer yields one fact, because the private fact is appended with an idempotency key derived from the answer itself.
+
+With the `Http` transport the answers arrive through the collector instead of an inbox; see [Transports](./transports.md#the-http-transport).

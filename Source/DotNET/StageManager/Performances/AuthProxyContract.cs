@@ -14,6 +14,7 @@ public static class AuthProxyContract
     public const string SecretsDirectory = "/run/secrets/cratis";
 
     const string Prefix = "Cratis__AuthProxy__Application__";
+    const string ServicesPrefix = "Cratis__AuthProxy__Services__application__";
 
     /// <summary>
     /// Gets the environment variables, which hold structure only and never a value from the Cratis environment.
@@ -40,6 +41,7 @@ public static class AuthProxyContract
             variables[$"{Prefix}Providers__{index}__Identity"] = provider.Identity;
         }
 
+        AddApplicationService(variables, performance);
         return variables;
     }
 
@@ -76,5 +78,18 @@ public static class AuthProxyContract
         files["onboarding.attestation.keyId"] = keys.Attestation.Current.KeyId;
         files["onboarding.attestation.privateKeyPem"] = keys.Attestation.Current.PrivateKeyPem;
         return files;
+    }
+
+    /// <summary>
+    /// Points AuthProxy at the application: it forwards only to the services it is told about, and the application is the one service, backend and frontend alike, reached on its in-cluster Service.
+    /// </summary>
+    /// <param name="variables">The variables to add to.</param>
+    /// <param name="performance">The Performance.</param>
+    static void AddApplicationService(Dictionary<string, string> variables, Performance performance)
+    {
+        var port = PublishedStageContract.IsPublished(performance.Spec) ? PublishedStageContract.Port : performance.Spec.Application.Port;
+        var address = $"http://{PerformanceNames.For(performance).Application}:{port}/";
+        variables[$"{ServicesPrefix}Backend__BaseUrl"] = address;
+        variables[$"{ServicesPrefix}Frontend__BaseUrl"] = address;
     }
 }

@@ -66,7 +66,7 @@ AuthProxy runs as its own Deployment, so Stage sees the address of an AuthProxy 
 
 The Ingress routes every host to AuthProxy and nothing else, so `/scalar`, `/openapi`, `/workbench`, `/read-models`, `/stage/load` and `/stage/semantic` are not reachable from outside, and published mode does not map them in the first place.
 
-The application's Service is `<name>-app` on port 9090. Stage Manager does not configure AuthProxy's backend address for any application; point AuthProxy at that Service.
+The application's Service is `<name>-app` on port 9090. Stage Manager points AuthProxy at it with `Cratis__AuthProxy__Services__application__Backend__BaseUrl` and `…Frontend__BaseUrl`, both `http://<name>-app:9090/`.
 
 ## Notes
 

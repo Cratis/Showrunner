@@ -104,4 +104,6 @@ The operator generates the key Ante signs invitations with and the key AuthProxy
 
 The Performance spec carries the providers and the onboarding behavior; the values come from the environment. The operator derives the rest of both contracts so nobody writes them twice: the invitation issuer and audience (`urn:cratis:ante:<store>:<namespace>`), the AuthProxy attestation issuer and audience, the public URLs and the generated keys. With `onboarding.attestedProviders` set, Ante runs attested invitation exchange against AuthProxy's attestations; without it, Ante keeps the legacy exchange.
 
+AuthProxy forwards every request it lets through to the application's Service, `<name>-app`: the operator sets `Cratis__AuthProxy__Services__application__Backend__BaseUrl` and `…Frontend__BaseUrl` to it, on `application.port` (9090 for a published application).
+
 AuthProxy's onboarding URLs are on the public host, as its contract requires HTTPS outside development. Routing the `/_invite` and `/.well-known/ante` paths from AuthProxy to Ante is configured on AuthProxy's side; set `onboarding.lobbyBackendBaseUrl` in the environment when your AuthProxy needs it.

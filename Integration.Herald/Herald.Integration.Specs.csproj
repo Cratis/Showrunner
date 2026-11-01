@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <!--
+        End-to-end specifications for Herald against a real Chronicle kernel in a container (Testcontainers) and a
+        mail server running inside the test process: an application sends a templated email with an image over SMTP,
+        and a server that is down makes the email wait and be retried. Needs Docker. Run with:
+
+            dotnet test Integration.Herald/Herald.Integration.Specs.csproj
+
+        Set HERALD_CHRONICLE_IMAGE to run against another kernel image.
+    -->
+    <PropertyGroup>
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <OutputType>Exe</OutputType>
+        <AssemblyName>Cratis.Showrunner.Herald.Integration.Specs</AssemblyName>
+        <RootNamespace>Cratis.Showrunner.Herald.Integration</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <!-- One Establish/Because per spec class, as in the inline specs. -->
+        <Compile Include="../Source/DotNET/SharedSpecificationInstance.cs" Link="SharedSpecificationInstance.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../Source/DotNET/Herald/Herald.csproj" />
+        <ProjectReference Include="../Source/DotNET/Herald.Contracts/Herald.Contracts.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Cratis.Fundamentals" />
+        <PackageReference Include="SmtpServer" />
+        <PackageReference Include="xunit" />
+        <PackageReference Include="xunit.runner.visualstudio">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" />
+        <PackageReference Include="Cratis.Specifications.XUnit" />
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+        <PackageReference Include="Testcontainers" />
+        <PackageReference Include="SSH.NET" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Update="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+</Project>

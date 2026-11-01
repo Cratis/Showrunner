@@ -17,6 +17,8 @@ Usher is in its earliest stage: the packages are scaffolded and published, but c
 
 **Marquee** is the announcements part: the people running a product write an announcement with an audience, a display and an exact window, and the product shows it to the people it reaches, as a banner or a dialog. Drop `<Marquee />` into the application shell and it brings its own queries and commands; see [Documentation](./Documentation/Marquee/index.md).
 
+**Herald** is the email part: an application asks it to send an email of a kind, such as an invitation, and it fills the template for that kind and language, makes the HTML safe for email clients, embeds the images, sends it over SMTP and records the outcome. Failed sends are queued and retried; see [Documentation](./Documentation/Herald/index.md).
+
 ## Packages
 
 | Package | Registry | What it is |
@@ -24,6 +26,8 @@ Usher is in its earliest stage: the packages are scaffolded and published, but c
 | `Cratis.Showrunner.BoxOffice.Catalog` | NuGet | Box Office's catalog — offers (seat plans, modules, compute packs), prices and the pricing arithmetic, published to products |
 | `Cratis.Showrunner.BoxOffice.Offering` | NuGet | Box Office for a product — declares what the product sells (modules, meters, seat licensing) and measures its compute per tenant and day |
 | `Cratis.Showrunner.BoxOffice.Contracts` | NuGet | Box Office's event contracts: what an operator decides about a tenant and what a product reports back |
+| `Cratis.Showrunner.Herald.Contracts` | NuGet | Herald's event contracts: the facts recorded when an email was sent, failed or bounced |
+| `Cratis.Showrunner.Herald` | NuGet | Herald's backend — templates, strict rendering, images, SMTP and folder transports, queued delivery with retries, recorded in the application's Chronicle event store |
 | `Cratis.Showrunner.Usher.Contracts` | NuGet | Usher's event contracts, for hosts that react to what Usher records |
 | `Cratis.Showrunner.Marquee.Contracts` | NuGet | Marquee's event contracts: the public events a product receives announcements through |
 | `Cratis.Showrunner.Marquee.Authoring` | NuGet | Marquee's authoring backend — commands, query and outbox for writing announcements, built on Arc and Chronicle |

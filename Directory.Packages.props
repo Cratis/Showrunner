@@ -1,7 +1,7 @@
 <Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <CratisEnvironmentsVersion>0.0.0-local</CratisEnvironmentsVersion>
+    <CratisEnvironmentsVersion>3.114.0</CratisEnvironmentsVersion>
   </PropertyGroup>
   <ItemGroup>
     <!-- Cratis — keep the public Cratis / Arc family aligned so generated proxies and runtime

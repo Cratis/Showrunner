@@ -17,9 +17,11 @@ Usher is in its earliest stage: the packages are scaffolded and published, but c
 
 **Marquee** is the announcements part: the people running a product write an announcement with an audience, a display and an exact window, and the product shows it to the people it reaches, as a banner or a dialog. Drop `<Marquee />` into the application shell and it brings its own queries and commands; see [Documentation](./Documentation/Marquee/index.md).
 
+**Notes** is the product feedback part: the users of an application give a note about what they are looking at — the slice, the screen or a single component — and the people building the application receive it as events and answer it. The application hosts `Cratis.Showrunner.Notes`, the builder hosts `Cratis.Showrunner.Notes.Collecting`; see [Documentation](./Documentation/Notes/index.md).
+
 **Herald** is the email part: an application asks it to send an email of a kind, such as an invitation, and it fills the template for that kind and language, makes the HTML safe for email clients, embeds the images, sends it over SMTP and records the outcome. Failed sends are queued and retried; see [Documentation](./Documentation/Herald/index.md).
 
-**Stage Manager** is the Kubernetes operator. Unlike the other parts it is a service you install with the `cratis/showrunner-operator` Helm chart: a `Performance` runs an application with its AuthProxy and its own Ante from a Cratis environment, reachable only through AuthProxy; see [Documentation](./Documentation/StageManager/index.md).
+**Stage Manager** is the Kubernetes operator. Unlike the other parts it is a service you install with the `cratis/showrunner-operator` Helm chart: a `Performance` runs an application, or a published Stage application, with its AuthProxy and its own Ante from a Cratis environment, reachable only through AuthProxy; see [Documentation](./Documentation/StageManager/index.md).
 
 ## Packages
 
@@ -36,11 +38,16 @@ Usher is in its earliest stage: the packages are scaffolded and published, but c
 | `Cratis.Showrunner.Marquee.Authoring` | NuGet | Marquee's authoring backend — commands, query and outbox for writing announcements, built on Arc and Chronicle |
 | `Cratis.Showrunner.Marquee` | NuGet | Marquee's backend for products — receives announcements once, shows each tenant what its audience matches and records acknowledgements |
 | `Cratis.Showrunner.Usher` | NuGet | Usher's backend — Arc commands and queries over Chronicle |
+| `Cratis.Showrunner.Notes.Contracts` | NuGet | Notes' event contracts: the public events an application and the people building it exchange about product feedback |
+| `Cratis.Showrunner.Notes` | NuGet | Notes' backend for applications — commands to give, suggest and withdraw notes, the live list of a user's notes with their status, and the outbox that publishes them |
+| `Cratis.Showrunner.Notes.Collecting` | NuGet | Notes' receiving side for the builder of an application — reads the applications' notes into the tenant's namespace and answers them |
 | `@cratis/showrunner.marquee` | npm | The generated TypeScript proxies for Marquee's receiving commands and queries; no UI framework dependency |
 | `@cratis/showrunner.marquee.authoring` | npm | The generated TypeScript proxies for Marquee's authoring commands and query; no UI framework dependency |
 | `@cratis/showrunner.marquee.react` | npm | The Marquee drop-in React component: banners and dialogs for a product's announcements, built on `@cratis/arc.react` and `@cratis/components` |
 | `@cratis/showrunner.usher` | npm | The generated TypeScript proxies for Usher's commands and queries; no UI framework dependency |
 | `@cratis/showrunner.usher.react` | npm | React components for Usher, built on `@cratis/arc.react` and `@cratis/components` |
+| `@cratis/showrunner.notes` | npm | The generated TypeScript proxies for Notes' commands and queries; no UI framework dependency |
+| `@cratis/showrunner.notes.react` | npm | React components for Notes: the feedback button with its context drop-down, the feedback dialogs, the component picker and the user's own feedback, built on `@cratis/arc.react` and `@cratis/components` |
 
 ## Building
 
@@ -64,7 +71,7 @@ yarn build
 
 Specifications live beside the code they specify — `for_*/when_*/` folders compiled into Debug builds only for .NET, and Vitest specs in the same layout for TypeScript.
 
-The end-to-end specifications in [`Integration`](./Integration) run Usher and a desk against a real Chronicle kernel in a container, so `dotnet test Showrunner.slnx` needs Docker. Set `USHER_CHRONICLE_IMAGE` to run them against another kernel image, and `USHER_INTEGRATION_LOG` to a file path to keep the application's log.
+The end-to-end specifications in [`Integration`](./Integration) run Usher and a desk against a real Chronicle kernel in a container, so `dotnet test Showrunner.slnx` needs Docker. The end-to-end specifications for Notes in [`Integration.Notes`](./Integration.Notes) run an application and a collecting host the same way, sharing Usher's kernel container. Set `USHER_CHRONICLE_IMAGE` to run them against another kernel image, and `USHER_INTEGRATION_LOG` to a file path to keep the application's log.
 
 ## Releasing
 

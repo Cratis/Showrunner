@@ -14,6 +14,11 @@ public static class PerformanceMetadata
     public const string ConfigRevisionAnnotation = "showrunner.cratis.io/config-revision";
 
     /// <summary>
+    /// The label that ties everything to the Performance that owns it.
+    /// </summary>
+    public const string PerformanceLabel = "showrunner.cratis.io/performance";
+
+    /// <summary>
     /// Gets the labels of a component of a Performance.
     /// </summary>
     /// <param name="performance">The Performance.</param>
@@ -25,7 +30,7 @@ public static class PerformanceMetadata
         ["app.kubernetes.io/instance"] = performance.Metadata.Name,
         ["app.kubernetes.io/part-of"] = "showrunner",
         ["app.kubernetes.io/managed-by"] = "stage-manager",
-        ["showrunner.cratis.io/performance"] = performance.Metadata.Name
+        [PerformanceLabel] = performance.Metadata.Name
     };
 
     /// <summary>

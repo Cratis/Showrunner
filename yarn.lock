@@ -252,26 +252,26 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@cratis/arc.react@npm:22.146.0":
-  version: 22.146.0
-  resolution: "@cratis/arc.react@npm:22.146.0"
+"@cratis/arc.react@npm:22.155.0":
+  version: 22.155.0
+  resolution: "@cratis/arc.react@npm:22.155.0"
   dependencies:
-    "@cratis/arc": "npm:22.146.0"
+    "@cratis/arc": "npm:22.155.0"
     "@cratis/fundamentals": "npm:^7.27.0"
     tsyringe: "npm:^4.10.0"
   peerDependencies:
     react: ^18.0.0 || ^19.0.0
-  checksum: 10/deb6a610aeabdcda86faf52c1bd4313fa5dea280b59c37d39fbfe174a0b63a0922acfa61a32eeb7761c446c143493d1bbded136ffe9628bee290e3092b78561c
+  checksum: 10/877ded1b86c86bcc59fc77bed56e09b6963869eeba3a76ae24f0ebc439a9e7bcdbd5066355c0d092f80187e2dc71acc51d5ad12c2bc63f38c2c40b46b6bbe316
   languageName: node
   linkType: hard
 
-"@cratis/arc@npm:22.146.0":
-  version: 22.146.0
-  resolution: "@cratis/arc@npm:22.146.0"
+"@cratis/arc@npm:22.155.0":
+  version: 22.155.0
+  resolution: "@cratis/arc@npm:22.155.0"
   dependencies:
     "@cratis/fundamentals": "npm:^7.27.0"
     rxjs: "npm:^7.8.2"
-  checksum: 10/2aab1fa6984c1c5ab42c5ada5e53dd8b84b99ab37432d9c38c9fbc31bb32f782dd490fd931f0041552bd5585130e0c029d914baf81c0d70aa4a00d339e45e8b7
+  checksum: 10/87e2df335b1df0b99b0fda0d2661fafbd5d21b2a59414be58fbb6e4c82ffa1c8bc0423ae55561b888bb89ce9da59de8aff199781aefb01752e7f9c05174efbb9
   languageName: node
   linkType: hard
 
@@ -304,6 +304,35 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@cratis/components@npm:^4.39.0":
+  version: 4.39.0
+  resolution: "@cratis/components@npm:4.39.0"
+  dependencies:
+    "@internationalized/date": "npm:3.12.4"
+    allotment: "npm:1.20.5"
+    framer-motion: "npm:13.5.0"
+    react-aria: "npm:3.52.1"
+    react-aria-components: "npm:1.21.1"
+    react-icons: "npm:5.7.0"
+    ts-deepmerge: "npm:8.0.0"
+  peerDependencies:
+    "@cratis/arc": ">=20.3.1 <23"
+    "@cratis/arc.react": ">=20.3.1 <23"
+    "@cratis/fundamentals": ^7.10.3
+    pixi.js: ^8.20.0
+    react: ^19.0.0
+    react-dom: ^19.0.0
+    reflect-metadata: 0.2.2
+    tsyringe: 4.10.0
+  peerDependenciesMeta:
+    pixi.js:
+      optional: true
+    tsyringe:
+      optional: true
+  checksum: 10/20106280885eaf1c2d95b32b37072fc5f534057fc18947190360cb6d13162a3a0ae2930fb468f323adc84c3c55105efb2c1f9a89678eca48ac09cf63af0442cf
+  languageName: node
+  linkType: hard
+
 "@cratis/fundamentals@npm:7.27.0, @cratis/fundamentals@npm:^7.27.0":
   version: 7.27.0
   resolution: "@cratis/fundamentals@npm:7.27.0"
@@ -315,8 +344,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@cratis/showrunner.boxoffice.react@workspace:Source/JavaScript/BoxOffice.React"
   dependencies:
-    "@cratis/arc": "npm:22.146.0"
-    "@cratis/arc.react": "npm:22.146.0"
+    "@cratis/arc": "npm:22.155.0"
+    "@cratis/arc.react": "npm:22.155.0"
     "@cratis/components": "npm:4.38.0"
     "@cratis/fundamentals": "npm:7.27.0"
     "@cratis/showrunner.boxoffice": "npm:1.0.0"
@@ -324,8 +353,8 @@ __metadata:
     react-dom: "npm:^19.3.1"
     reflect-metadata: "npm:0.2.2"
   peerDependencies:
-    "@cratis/arc": ^22.146.0
-    "@cratis/arc.react": ^22.146.0
+    "@cratis/arc": ^22.155.0
+    "@cratis/arc.react": ^22.155.0
     "@cratis/components": ^4.38.0
     "@cratis/fundamentals": ^7.27.0
     react: ^19.0.0
@@ -336,12 +365,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@cratis/showrunner.boxoffice@workspace:Source/JavaScript/BoxOffice"
   dependencies:
-    "@cratis/arc": "npm:22.146.0"
-    "@cratis/arc.react": "npm:22.146.0"
+    "@cratis/arc": "npm:22.155.0"
+    "@cratis/arc.react": "npm:22.155.0"
     "@cratis/fundamentals": "npm:7.27.0"
   peerDependencies:
-    "@cratis/arc": ^22.146.0
-    "@cratis/arc.react": ^22.146.0
+    "@cratis/arc": ^22.155.0
+    "@cratis/arc.react": ^22.155.0
     "@cratis/fundamentals": ^7.27.0
   languageName: unknown
   linkType: soft
@@ -350,12 +379,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@cratis/showrunner.marquee.authoring@workspace:Source/JavaScript/Marquee.Authoring"
   dependencies:
-    "@cratis/arc": "npm:22.146.0"
-    "@cratis/arc.react": "npm:22.146.0"
+    "@cratis/arc": "npm:22.155.0"
+    "@cratis/arc.react": "npm:22.155.0"
     "@cratis/fundamentals": "npm:7.27.0"
   peerDependencies:
-    "@cratis/arc": ^22.146.0
-    "@cratis/arc.react": ^22.146.0
+    "@cratis/arc": ^22.155.0
+    "@cratis/arc.react": ^22.155.0
     "@cratis/fundamentals": ^7.27.0
   languageName: unknown
   linkType: soft
@@ -364,8 +393,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@cratis/showrunner.marquee.react@workspace:Source/JavaScript/Marquee.React"
   dependencies:
-    "@cratis/arc": "npm:22.146.0"
-    "@cratis/arc.react": "npm:22.146.0"
+    "@cratis/arc": "npm:22.155.0"
+    "@cratis/arc.react": "npm:22.155.0"
     "@cratis/components": "npm:4.38.0"
     "@cratis/fundamentals": "npm:7.27.0"
     "@cratis/showrunner.marquee": "npm:1.0.0"
@@ -376,8 +405,8 @@ __metadata:
     reflect-metadata: "npm:0.2.2"
     storybook: "npm:^10.5.10"
   peerDependencies:
-    "@cratis/arc": ^22.146.0
-    "@cratis/arc.react": ^22.146.0
+    "@cratis/arc": ^22.155.0
+    "@cratis/arc.react": ^22.155.0
     "@cratis/components": ^4.38.0
     "@cratis/fundamentals": ^7.27.0
     react: ^19.0.0
@@ -388,12 +417,47 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@cratis/showrunner.marquee@workspace:Source/JavaScript/Marquee"
   dependencies:
-    "@cratis/arc": "npm:22.146.0"
-    "@cratis/arc.react": "npm:22.146.0"
+    "@cratis/arc": "npm:22.155.0"
+    "@cratis/arc.react": "npm:22.155.0"
     "@cratis/fundamentals": "npm:7.27.0"
   peerDependencies:
-    "@cratis/arc": ^22.146.0
-    "@cratis/arc.react": ^22.146.0
+    "@cratis/arc": ^22.155.0
+    "@cratis/arc.react": ^22.155.0
+    "@cratis/fundamentals": ^7.27.0
+  languageName: unknown
+  linkType: soft
+
+"@cratis/showrunner.notes.react@workspace:Source/JavaScript/Notes.React":
+  version: 0.0.0-use.local
+  resolution: "@cratis/showrunner.notes.react@workspace:Source/JavaScript/Notes.React"
+  dependencies:
+    "@cratis/arc": "npm:22.155.0"
+    "@cratis/arc.react": "npm:22.155.0"
+    "@cratis/components": "npm:^4.39.0"
+    "@cratis/fundamentals": "npm:7.27.0"
+    "@cratis/showrunner.notes": "npm:1.0.0"
+    react: "npm:^19.3.1"
+    react-dom: "npm:^19.3.1"
+    reflect-metadata: "npm:0.2.2"
+  peerDependencies:
+    "@cratis/arc": ^22.155.0
+    "@cratis/arc.react": ^22.155.0
+    "@cratis/components": ^4.39.0
+    "@cratis/fundamentals": ^7.27.0
+    react: ^19.0.0
+  languageName: unknown
+  linkType: soft
+
+"@cratis/showrunner.notes@npm:1.0.0, @cratis/showrunner.notes@workspace:Source/JavaScript/Notes":
+  version: 0.0.0-use.local
+  resolution: "@cratis/showrunner.notes@workspace:Source/JavaScript/Notes"
+  dependencies:
+    "@cratis/arc": "npm:22.155.0"
+    "@cratis/arc.react": "npm:22.155.0"
+    "@cratis/fundamentals": "npm:7.27.0"
+  peerDependencies:
+    "@cratis/arc": ^22.155.0
+    "@cratis/arc.react": ^22.155.0
     "@cratis/fundamentals": ^7.27.0
   languageName: unknown
   linkType: soft
@@ -402,8 +466,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@cratis/showrunner.usher.react@workspace:Source/JavaScript/Usher.React"
   dependencies:
-    "@cratis/arc": "npm:22.146.0"
-    "@cratis/arc.react": "npm:22.146.0"
+    "@cratis/arc": "npm:22.155.0"
+    "@cratis/arc.react": "npm:22.155.0"
     "@cratis/components": "npm:4.38.0"
     "@cratis/fundamentals": "npm:7.27.0"
     "@cratis/showrunner.usher": "npm:1.0.0"
@@ -411,8 +475,8 @@ __metadata:
     react-dom: "npm:^19.3.1"
     reflect-metadata: "npm:0.2.2"
   peerDependencies:
-    "@cratis/arc": ^22.146.0
-    "@cratis/arc.react": ^22.146.0
+    "@cratis/arc": ^22.155.0
+    "@cratis/arc.react": ^22.155.0
     "@cratis/components": ^4.38.0
     "@cratis/fundamentals": ^7.27.0
     react: ^19.0.0
@@ -423,12 +487,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@cratis/showrunner.usher@workspace:Source/JavaScript/Usher"
   dependencies:
-    "@cratis/arc": "npm:22.146.0"
-    "@cratis/arc.react": "npm:22.146.0"
+    "@cratis/arc": "npm:22.155.0"
+    "@cratis/arc.react": "npm:22.155.0"
     "@cratis/fundamentals": "npm:7.27.0"
   peerDependencies:
-    "@cratis/arc": ^22.146.0
-    "@cratis/arc.react": ^22.146.0
+    "@cratis/arc": ^22.155.0
+    "@cratis/arc.react": ^22.155.0
     "@cratis/fundamentals": ^7.27.0
   languageName: unknown
   linkType: soft

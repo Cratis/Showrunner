@@ -1,0 +1,1215 @@
+{
+  "ComponentPropertyChangeSuggested:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "application": {
+        "type": "object",
+        "properties": {
+          "applicationName": {
+            "type": "string"
+          },
+          "applicationVersion": {
+            "type": "string"
+          },
+          "publicationId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "applicationName",
+          "applicationVersion",
+          "publicationId"
+        ],
+        "title": "PublishedApplication"
+      },
+      "giver": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "compliance": [
+              {
+                "metadataType": "PII",
+                "details": "A pseudonymous identifier of the user who gave a note at their identity provider; the application lists a user\u0027s notes by it and the receiving side learns it with the note."
+              }
+            ]
+          },
+          "displayName": {
+            "type": "string",
+            "compliance": [
+              {
+                "metadataType": "PII",
+                "details": "The display name of the user who gave a note, shown to the people reading the note so they can follow up with the giver."
+              }
+            ]
+          }
+        },
+        "required": [
+          "userId",
+          "displayName"
+        ],
+        "title": "NoteGiver"
+      },
+      "context": {
+        "type": "object",
+        "properties": {
+          "location": {
+            "type": "object",
+            "properties": {
+              "module": {
+                "type": "string"
+              },
+              "feature": {
+                "type": "string"
+              },
+              "slice": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "module",
+              "feature",
+              "slice"
+            ],
+            "title": "SliceLocation"
+          },
+          "activeSlices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "module": {
+                  "type": "string"
+                },
+                "feature": {
+                  "type": "string"
+                },
+                "slice": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "module",
+                "feature",
+                "slice"
+              ],
+              "title": "SliceLocation"
+            }
+          },
+          "screen": {
+            "type": "object",
+            "properties": {
+              "screenId": {
+                "type": "string"
+              },
+              "screenName": {
+                "type": "string"
+              },
+              "screenPath": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "screenId",
+              "screenName",
+              "screenPath"
+            ],
+            "title": "NoteScreen"
+          },
+          "route": {
+            "type": "string"
+          },
+          "dialog": {
+            "type": "object",
+            "properties": {
+              "dialogTitle": {
+                "type": "string"
+              },
+              "location": {
+                "type": "object",
+                "properties": {
+                  "module": {
+                    "type": "string"
+                  },
+                  "feature": {
+                    "type": "string"
+                  },
+                  "slice": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "module",
+                  "feature",
+                  "slice"
+                ],
+                "title": "SliceLocation"
+              }
+            },
+            "required": [
+              "dialogTitle",
+              "location"
+            ],
+            "title": "NoteDialog"
+          },
+          "modelReferences": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "correlationId": {
+            "type": "string",
+            "format": "guid"
+          }
+        },
+        "required": [
+          "location",
+          "activeSlices",
+          "screen",
+          "route",
+          "dialog",
+          "modelReferences",
+          "correlationId"
+        ],
+        "title": "NoteContext"
+      },
+      "component": {
+        "type": "object",
+        "properties": {
+          "componentName": {
+            "type": "string"
+          },
+          "componentId": {
+            "type": "string"
+          },
+          "part": {
+            "type": "string"
+          },
+          "ancestors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "location": {
+            "type": "object",
+            "properties": {
+              "module": {
+                "type": "string"
+              },
+              "feature": {
+                "type": "string"
+              },
+              "slice": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "module",
+              "feature",
+              "slice"
+            ],
+            "title": "SliceLocation"
+          }
+        },
+        "required": [
+          "componentName",
+          "componentId",
+          "part",
+          "ancestors",
+          "location"
+        ],
+        "title": "PickedComponent"
+      },
+      "property": {
+        "type": "string"
+      },
+      "currentValue": {
+        "type": "string"
+      },
+      "suggestedValue": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "tenantId",
+      "application",
+      "giver",
+      "context",
+      "component",
+      "property",
+      "currentValue",
+      "suggestedValue"
+    ],
+    "title": "ComponentPropertyChangeSuggested"
+  },
+  "NoteOnComponentGiven:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "application": {
+        "type": "object",
+        "properties": {
+          "applicationName": {
+            "type": "string"
+          },
+          "applicationVersion": {
+            "type": "string"
+          },
+          "publicationId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "applicationName",
+          "applicationVersion",
+          "publicationId"
+        ],
+        "title": "PublishedApplication"
+      },
+      "giver": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "compliance": [
+              {
+                "metadataType": "PII",
+                "details": "A pseudonymous identifier of the user who gave a note at their identity provider; the application lists a user\u0027s notes by it and the receiving side learns it with the note."
+              }
+            ]
+          },
+          "displayName": {
+            "type": "string",
+            "compliance": [
+              {
+                "metadataType": "PII",
+                "details": "The display name of the user who gave a note, shown to the people reading the note so they can follow up with the giver."
+              }
+            ]
+          }
+        },
+        "required": [
+          "userId",
+          "displayName"
+        ],
+        "title": "NoteGiver"
+      },
+      "context": {
+        "type": "object",
+        "properties": {
+          "location": {
+            "type": "object",
+            "properties": {
+              "module": {
+                "type": "string"
+              },
+              "feature": {
+                "type": "string"
+              },
+              "slice": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "module",
+              "feature",
+              "slice"
+            ],
+            "title": "SliceLocation"
+          },
+          "activeSlices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "module": {
+                  "type": "string"
+                },
+                "feature": {
+                  "type": "string"
+                },
+                "slice": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "module",
+                "feature",
+                "slice"
+              ],
+              "title": "SliceLocation"
+            }
+          },
+          "screen": {
+            "type": "object",
+            "properties": {
+              "screenId": {
+                "type": "string"
+              },
+              "screenName": {
+                "type": "string"
+              },
+              "screenPath": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "screenId",
+              "screenName",
+              "screenPath"
+            ],
+            "title": "NoteScreen"
+          },
+          "route": {
+            "type": "string"
+          },
+          "dialog": {
+            "type": "object",
+            "properties": {
+              "dialogTitle": {
+                "type": "string"
+              },
+              "location": {
+                "type": "object",
+                "properties": {
+                  "module": {
+                    "type": "string"
+                  },
+                  "feature": {
+                    "type": "string"
+                  },
+                  "slice": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "module",
+                  "feature",
+                  "slice"
+                ],
+                "title": "SliceLocation"
+              }
+            },
+            "required": [
+              "dialogTitle",
+              "location"
+            ],
+            "title": "NoteDialog"
+          },
+          "modelReferences": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "correlationId": {
+            "type": "string",
+            "format": "guid"
+          }
+        },
+        "required": [
+          "location",
+          "activeSlices",
+          "screen",
+          "route",
+          "dialog",
+          "modelReferences",
+          "correlationId"
+        ],
+        "title": "NoteContext"
+      },
+      "component": {
+        "type": "object",
+        "properties": {
+          "componentName": {
+            "type": "string"
+          },
+          "componentId": {
+            "type": "string"
+          },
+          "part": {
+            "type": "string"
+          },
+          "ancestors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "location": {
+            "type": "object",
+            "properties": {
+              "module": {
+                "type": "string"
+              },
+              "feature": {
+                "type": "string"
+              },
+              "slice": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "module",
+              "feature",
+              "slice"
+            ],
+            "title": "SliceLocation"
+          }
+        },
+        "required": [
+          "componentName",
+          "componentId",
+          "part",
+          "ancestors",
+          "location"
+        ],
+        "title": "PickedComponent"
+      },
+      "kind": {
+        "type": "integer",
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "x-enumNames": [
+          "Problem",
+          "Suggestion",
+          "Question",
+          "Praise"
+        ]
+      },
+      "text": {
+        "type": "string",
+        "compliance": [
+          {
+            "metadataType": "PII",
+            "details": "Free text the user writes to give feedback; it can name or identify them and is read by the people building the application."
+          }
+        ]
+      }
+    },
+    "required": [
+      "tenantId",
+      "application",
+      "giver",
+      "context",
+      "component",
+      "kind",
+      "text"
+    ],
+    "title": "NoteOnComponentGiven"
+  },
+  "NoteOnContextGiven:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "application": {
+        "type": "object",
+        "properties": {
+          "applicationName": {
+            "type": "string"
+          },
+          "applicationVersion": {
+            "type": "string"
+          },
+          "publicationId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "applicationName",
+          "applicationVersion",
+          "publicationId"
+        ],
+        "title": "PublishedApplication"
+      },
+      "giver": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "compliance": [
+              {
+                "metadataType": "PII",
+                "details": "A pseudonymous identifier of the user who gave a note at their identity provider; the application lists a user\u0027s notes by it and the receiving side learns it with the note."
+              }
+            ]
+          },
+          "displayName": {
+            "type": "string",
+            "compliance": [
+              {
+                "metadataType": "PII",
+                "details": "The display name of the user who gave a note, shown to the people reading the note so they can follow up with the giver."
+              }
+            ]
+          }
+        },
+        "required": [
+          "userId",
+          "displayName"
+        ],
+        "title": "NoteGiver"
+      },
+      "context": {
+        "type": "object",
+        "properties": {
+          "location": {
+            "type": "object",
+            "properties": {
+              "module": {
+                "type": "string"
+              },
+              "feature": {
+                "type": "string"
+              },
+              "slice": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "module",
+              "feature",
+              "slice"
+            ],
+            "title": "SliceLocation"
+          },
+          "activeSlices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "module": {
+                  "type": "string"
+                },
+                "feature": {
+                  "type": "string"
+                },
+                "slice": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "module",
+                "feature",
+                "slice"
+              ],
+              "title": "SliceLocation"
+            }
+          },
+          "screen": {
+            "type": "object",
+            "properties": {
+              "screenId": {
+                "type": "string"
+              },
+              "screenName": {
+                "type": "string"
+              },
+              "screenPath": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "screenId",
+              "screenName",
+              "screenPath"
+            ],
+            "title": "NoteScreen"
+          },
+          "route": {
+            "type": "string"
+          },
+          "dialog": {
+            "type": "object",
+            "properties": {
+              "dialogTitle": {
+                "type": "string"
+              },
+              "location": {
+                "type": "object",
+                "properties": {
+                  "module": {
+                    "type": "string"
+                  },
+                  "feature": {
+                    "type": "string"
+                  },
+                  "slice": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "module",
+                  "feature",
+                  "slice"
+                ],
+                "title": "SliceLocation"
+              }
+            },
+            "required": [
+              "dialogTitle",
+              "location"
+            ],
+            "title": "NoteDialog"
+          },
+          "modelReferences": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "correlationId": {
+            "type": "string",
+            "format": "guid"
+          }
+        },
+        "required": [
+          "location",
+          "activeSlices",
+          "screen",
+          "route",
+          "dialog",
+          "modelReferences",
+          "correlationId"
+        ],
+        "title": "NoteContext"
+      },
+      "kind": {
+        "type": "integer",
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "x-enumNames": [
+          "Problem",
+          "Suggestion",
+          "Question",
+          "Praise"
+        ]
+      },
+      "text": {
+        "type": "string",
+        "compliance": [
+          {
+            "metadataType": "PII",
+            "details": "Free text the user writes to give feedback; it can name or identify them and is read by the people building the application."
+          }
+        ]
+      }
+    },
+    "required": [
+      "tenantId",
+      "application",
+      "giver",
+      "context",
+      "kind",
+      "text"
+    ],
+    "title": "NoteOnContextGiven"
+  },
+  "NoteOnScreenGiven:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "application": {
+        "type": "object",
+        "properties": {
+          "applicationName": {
+            "type": "string"
+          },
+          "applicationVersion": {
+            "type": "string"
+          },
+          "publicationId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "applicationName",
+          "applicationVersion",
+          "publicationId"
+        ],
+        "title": "PublishedApplication"
+      },
+      "giver": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "compliance": [
+              {
+                "metadataType": "PII",
+                "details": "A pseudonymous identifier of the user who gave a note at their identity provider; the application lists a user\u0027s notes by it and the receiving side learns it with the note."
+              }
+            ]
+          },
+          "displayName": {
+            "type": "string",
+            "compliance": [
+              {
+                "metadataType": "PII",
+                "details": "The display name of the user who gave a note, shown to the people reading the note so they can follow up with the giver."
+              }
+            ]
+          }
+        },
+        "required": [
+          "userId",
+          "displayName"
+        ],
+        "title": "NoteGiver"
+      },
+      "context": {
+        "type": "object",
+        "properties": {
+          "location": {
+            "type": "object",
+            "properties": {
+              "module": {
+                "type": "string"
+              },
+              "feature": {
+                "type": "string"
+              },
+              "slice": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "module",
+              "feature",
+              "slice"
+            ],
+            "title": "SliceLocation"
+          },
+          "activeSlices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "module": {
+                  "type": "string"
+                },
+                "feature": {
+                  "type": "string"
+                },
+                "slice": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "module",
+                "feature",
+                "slice"
+              ],
+              "title": "SliceLocation"
+            }
+          },
+          "screen": {
+            "type": "object",
+            "properties": {
+              "screenId": {
+                "type": "string"
+              },
+              "screenName": {
+                "type": "string"
+              },
+              "screenPath": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "screenId",
+              "screenName",
+              "screenPath"
+            ],
+            "title": "NoteScreen"
+          },
+          "route": {
+            "type": "string"
+          },
+          "dialog": {
+            "type": "object",
+            "properties": {
+              "dialogTitle": {
+                "type": "string"
+              },
+              "location": {
+                "type": "object",
+                "properties": {
+                  "module": {
+                    "type": "string"
+                  },
+                  "feature": {
+                    "type": "string"
+                  },
+                  "slice": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "module",
+                  "feature",
+                  "slice"
+                ],
+                "title": "SliceLocation"
+              }
+            },
+            "required": [
+              "dialogTitle",
+              "location"
+            ],
+            "title": "NoteDialog"
+          },
+          "modelReferences": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "correlationId": {
+            "type": "string",
+            "format": "guid"
+          }
+        },
+        "required": [
+          "location",
+          "activeSlices",
+          "screen",
+          "route",
+          "dialog",
+          "modelReferences",
+          "correlationId"
+        ],
+        "title": "NoteContext"
+      },
+      "kind": {
+        "type": "integer",
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "x-enumNames": [
+          "Problem",
+          "Suggestion",
+          "Question",
+          "Praise"
+        ]
+      },
+      "text": {
+        "type": "string",
+        "compliance": [
+          {
+            "metadataType": "PII",
+            "details": "Free text the user writes to give feedback; it can name or identify them and is read by the people building the application."
+          }
+        ]
+      }
+    },
+    "required": [
+      "tenantId",
+      "application",
+      "giver",
+      "context",
+      "kind",
+      "text"
+    ],
+    "title": "NoteOnScreenGiven"
+  },
+  "NoteOnSlicesGiven:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "application": {
+        "type": "object",
+        "properties": {
+          "applicationName": {
+            "type": "string"
+          },
+          "applicationVersion": {
+            "type": "string"
+          },
+          "publicationId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "applicationName",
+          "applicationVersion",
+          "publicationId"
+        ],
+        "title": "PublishedApplication"
+      },
+      "giver": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "compliance": [
+              {
+                "metadataType": "PII",
+                "details": "A pseudonymous identifier of the user who gave a note at their identity provider; the application lists a user\u0027s notes by it and the receiving side learns it with the note."
+              }
+            ]
+          },
+          "displayName": {
+            "type": "string",
+            "compliance": [
+              {
+                "metadataType": "PII",
+                "details": "The display name of the user who gave a note, shown to the people reading the note so they can follow up with the giver."
+              }
+            ]
+          }
+        },
+        "required": [
+          "userId",
+          "displayName"
+        ],
+        "title": "NoteGiver"
+      },
+      "context": {
+        "type": "object",
+        "properties": {
+          "location": {
+            "type": "object",
+            "properties": {
+              "module": {
+                "type": "string"
+              },
+              "feature": {
+                "type": "string"
+              },
+              "slice": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "module",
+              "feature",
+              "slice"
+            ],
+            "title": "SliceLocation"
+          },
+          "activeSlices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "module": {
+                  "type": "string"
+                },
+                "feature": {
+                  "type": "string"
+                },
+                "slice": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "module",
+                "feature",
+                "slice"
+              ],
+              "title": "SliceLocation"
+            }
+          },
+          "screen": {
+            "type": "object",
+            "properties": {
+              "screenId": {
+                "type": "string"
+              },
+              "screenName": {
+                "type": "string"
+              },
+              "screenPath": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "screenId",
+              "screenName",
+              "screenPath"
+            ],
+            "title": "NoteScreen"
+          },
+          "route": {
+            "type": "string"
+          },
+          "dialog": {
+            "type": "object",
+            "properties": {
+              "dialogTitle": {
+                "type": "string"
+              },
+              "location": {
+                "type": "object",
+                "properties": {
+                  "module": {
+                    "type": "string"
+                  },
+                  "feature": {
+                    "type": "string"
+                  },
+                  "slice": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "module",
+                  "feature",
+                  "slice"
+                ],
+                "title": "SliceLocation"
+              }
+            },
+            "required": [
+              "dialogTitle",
+              "location"
+            ],
+            "title": "NoteDialog"
+          },
+          "modelReferences": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "correlationId": {
+            "type": "string",
+            "format": "guid"
+          }
+        },
+        "required": [
+          "location",
+          "activeSlices",
+          "screen",
+          "route",
+          "dialog",
+          "modelReferences",
+          "correlationId"
+        ],
+        "title": "NoteContext"
+      },
+      "slices": {
+        "type": "array",
+        "items": {
+          "$ref": "#/properties/context/properties/activeSlices/items",
+          "title": "SliceLocation"
+        }
+      },
+      "kind": {
+        "type": "integer",
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "x-enumNames": [
+          "Problem",
+          "Suggestion",
+          "Question",
+          "Praise"
+        ]
+      },
+      "text": {
+        "type": "string",
+        "compliance": [
+          {
+            "metadataType": "PII",
+            "details": "Free text the user writes to give feedback; it can name or identify them and is read by the people building the application."
+          }
+        ]
+      }
+    },
+    "required": [
+      "tenantId",
+      "application",
+      "giver",
+      "context",
+      "slices",
+      "kind",
+      "text"
+    ],
+    "title": "NoteOnSlicesGiven"
+  },
+  "NoteWithdrawn:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "tenantId"
+    ],
+    "title": "NoteWithdrawn"
+  },
+  "NoteAcknowledged:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "tenantId"
+    ],
+    "title": "NoteAcknowledged"
+  },
+  "NoteAddressed:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "addressedInVersion": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "tenantId",
+      "addressedInVersion"
+    ],
+    "title": "NoteAddressed"
+  },
+  "NoteDeclined:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "reason": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "tenantId",
+      "reason"
+    ],
+    "title": "NoteDeclined"
+  }
+}

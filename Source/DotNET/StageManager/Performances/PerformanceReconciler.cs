@@ -22,10 +22,20 @@ public class PerformanceReconciler(IClusterResources cluster, PerformancePrepara
     {
         performance.Status ??= new();
         var status = new PerformanceStatusBuilder(performance, time);
-        var prepared = await preparation.PrepareAsync(performance, status, cancellationToken);
-        if (prepared is not null)
+        var now = time.GetUtcNow();
+        if (LifetimeClock.IsExpired(performance.Spec, now))
         {
-            await RollOutAsync(performance, prepared, status, cancellationToken);
+            await ExpireAsync(performance, status, cancellationToken);
+        }
+        else
+        {
+            var prepared = await preparation.PrepareAsync(performance, status, cancellationToken);
+            if (prepared is not null)
+            {
+                await RollOutAsync(performance, prepared, status, cancellationToken);
+            }
+
+            UsageAccumulator.Add(performance.Status, await cluster.GetUsageAsync(performance.Metadata.NamespaceProperty, performance.Metadata.Name, cancellationToken), now);
         }
 
         status.Write();
@@ -63,10 +73,23 @@ public class PerformanceReconciler(IClusterResources cluster, PerformancePrepara
             PinnedPreviousKeys = keys.Invitation.Previous.Count + keys.Attestation.Previous.Count
         };
 
-        var desired = DesiredPerformanceBuilder.Build(performance, prepared.Connection, prepared.Environment, keys);
+        PublishedRelease? target = null;
+        PublishedInputs? published = null;
+        if (prepared.Storage is not null)
+        {
+            target = PublishedRelease.Of(spec);
+            published = new(prepared.Storage, prepared.NotesToken, RolloutTracker.ToDeploy(performance.Status, target));
+        }
+
+        var desired = DesiredPerformanceBuilder.Build(performance, prepared.Connection, prepared.Environment, keys, published);
         foreach (var secret in desired.Secrets)
         {
             await cluster.ApplyAsync(secret, cancellationToken);
+        }
+
+        if (desired.NetworkPolicy is not null)
+        {
+            await cluster.ApplyAsync(desired.NetworkPolicy, cancellationToken);
         }
 
         foreach (var service in desired.Services)
@@ -85,15 +108,56 @@ public class PerformanceReconciler(IClusterResources cluster, PerformancePrepara
         }
 
         var allReady = true;
+        var applicationReady = false;
         foreach (var deployment in desired.Deployments)
         {
             var readiness = await cluster.GetDeploymentReadinessAsync(@namespace, deployment.Metadata.Name, cancellationToken);
             var ready = readiness?.IsReady ?? false;
             allReady &= ready;
+            applicationReady |= ready && deployment.Metadata.Name == names.Application;
             var component = deployment.Metadata.Labels["app.kubernetes.io/name"];
             status.Set(ComponentConditionType(component), ready, ready ? "Ready" : "NotReady", ready ? $"{deployment.Metadata.Name} is ready." : $"{deployment.Metadata.Name} has {readiness?.Ready ?? 0} of {readiness?.Desired ?? 0} replicas ready.");
         }
 
+        if (published is not null && target is not null)
+        {
+            RolloutTracker.Observe(performance.Status, published.Release, target, applicationReady, time.GetUtcNow(), TimeSpan.FromSeconds(spec.Application.Published!.RolloutTimeoutSeconds));
+            var held = published.Release != target;
+            status.Set(
+                "RolloutSucceeded",
+                !held,
+                held ? "RolledBack" : "RolledOut",
+                held ? $"Version {target.Version} failed and version {published.Release.Version} keeps running." : $"Version {target.Version} is the version asked for.");
+        }
+
         status.Applied(allReady);
+    }
+
+    async Task ExpireAsync(Performance performance, PerformanceStatusBuilder status, CancellationToken cancellationToken)
+    {
+        var names = PerformanceNames.For(performance);
+        var @namespace = performance.Metadata.NamespaceProperty;
+        var spec = performance.Spec;
+
+        // The route goes first, so nothing reaches the workloads while they stop.
+        if (spec.Ingress.Enabled)
+        {
+            await cluster.DeleteAsync<V1Ingress>(@namespace, names.Ingress, cancellationToken);
+        }
+
+        await cluster.ScaleDeploymentAsync(@namespace, names.Application, 0, cancellationToken);
+        if (spec.AuthProxy.Enabled)
+        {
+            await cluster.ScaleDeploymentAsync(@namespace, names.AuthProxy, 0, cancellationToken);
+        }
+
+        if (spec.Onboarding.Enabled)
+        {
+            await cluster.ScaleDeploymentAsync(@namespace, names.Ante, 0, cancellationToken);
+        }
+
+        performance.Status.RunningVersion = string.Empty;
+        performance.Status.Rollout = null;
+        status.Expire();
     }
 }

@@ -63,4 +63,44 @@ public interface IClusterResources
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A task that completes when the status is written.</returns>
     Task UpdateStatusAsync(Performance performance, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Reads whether a ConfigMap holds a package.
+    /// </summary>
+    /// <param name="namespace">The namespace.</param>
+    /// <param name="name">The name of the ConfigMap.</param>
+    /// <param name="key">The key of the package, in data or in binary data.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>What is known, or null when the ConfigMap does not exist.</returns>
+    Task<PackageState?> GetPackageStateAsync(string @namespace, string name, string key, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Deletes a resource. Deleting one that does not exist is not an error.
+    /// </summary>
+    /// <typeparam name="TResource">The type of resource.</typeparam>
+    /// <param name="namespace">The namespace.</param>
+    /// <param name="name">The name of the resource.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task that completes when the resource is gone.</returns>
+    Task DeleteAsync<TResource>(string @namespace, string name, CancellationToken cancellationToken)
+        where TResource : IKubernetesObject<V1ObjectMeta>;
+
+    /// <summary>
+    /// Sets the number of replicas of a Deployment. A Deployment that does not exist is left alone.
+    /// </summary>
+    /// <param name="namespace">The namespace.</param>
+    /// <param name="name">The name of the Deployment.</param>
+    /// <param name="replicas">The number of replicas.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task that completes when the Deployment is scaled.</returns>
+    Task ScaleDeploymentAsync(string @namespace, string name, int replicas, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Reads what the pods of a Performance use right now, from the metrics API.
+    /// </summary>
+    /// <param name="namespace">The namespace.</param>
+    /// <param name="performance">The name of the Performance.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The usage, or null when the metrics API is not available or has no pod of the Performance yet.</returns>
+    Task<UsageSample?> GetUsageAsync(string @namespace, string performance, CancellationToken cancellationToken);
 }

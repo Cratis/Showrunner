@@ -10,12 +10,16 @@
     <Project Path="Source/DotNET/Marquee.Authoring/Marquee.Authoring.csproj" />
     <Project Path="Source/DotNET/Marquee.Contracts/Marquee.Contracts.csproj" />
     <Project Path="Source/DotNET/Marquee/Marquee.csproj" />
+    <Project Path="Source/DotNET/Notes.Collecting/Notes.Collecting.csproj" />
+    <Project Path="Source/DotNET/Notes.Contracts/Notes.Contracts.csproj" />
+    <Project Path="Source/DotNET/Notes/Notes.csproj" />
     <Project Path="Source/DotNET/Usher.Contracts/Usher.Contracts.csproj" />
     <Project Path="Source/DotNET/Usher/Usher.csproj" />
   </Folder>
   <Folder Name="/Integration/">
     <Project Path="Integration.Herald/Herald.Integration.Specs.csproj" />
     <Project Path="Integration.BoxOffice/BoxOffice.Integration.Specs.csproj" />
+    <Project Path="Integration.Notes/Notes.Integration.Specs.csproj" />
     <Project Path="Integration/Usher.Integration.Specs.csproj" />
   </Folder>
 </Solution>

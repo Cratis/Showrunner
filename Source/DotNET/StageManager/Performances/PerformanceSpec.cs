@@ -57,4 +57,10 @@ public class PerformanceSpec
     /// </summary>
     [Description("How the generated signing keys are rotated.")]
     public SigningKeysSpec SigningKeys { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets how long the Performance runs. Omit to run permanently.
+    /// </summary>
+    [Description("How long the Performance runs: permanently, or until a given time. Omit to run permanently.")]
+    public LifetimeSpec? Lifetime { get; set; }
 }

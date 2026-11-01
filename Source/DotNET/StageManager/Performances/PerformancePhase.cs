@@ -27,5 +27,10 @@ public enum PerformancePhase
     /// <summary>
     /// Every enabled component is ready.
     /// </summary>
-    Ready = 3
+    Ready = 3,
+
+    /// <summary>
+    /// The lifetime ended: the workloads are stopped and the public route is removed.
+    /// </summary>
+    Expired = 4
 }

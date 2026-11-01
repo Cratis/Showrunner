@@ -17,8 +17,9 @@ public static class DesiredPerformanceBuilder
     /// <param name="connection">The Chronicle connection Secret to mount.</param>
     /// <param name="environment">The resolved Cratis environment.</param>
     /// <param name="keys">The generated signing keys.</param>
+    /// <param name="published">What a published Stage application needs, null for any other application.</param>
     /// <returns>The desired state.</returns>
-    public static DesiredPerformance Build(Performance performance, ChronicleConnectionRef connection, ResolvedEnvironment environment, SigningKeyState keys)
+    public static DesiredPerformance Build(Performance performance, ChronicleConnectionRef? connection, ResolvedEnvironment environment, SigningKeyState keys, PublishedInputs? published = null)
     {
         var spec = performance.Spec;
         var names = PerformanceNames.For(performance);
@@ -30,7 +31,9 @@ public static class DesiredPerformanceBuilder
             .Where(pair => EnvironmentKeys.IsForApplication(pair.Key))
             .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
         secrets.Add(SecretFactory.Create(performance, names.ApplicationSecret, "application", applicationFiles));
-        workloads.Add(Application(performance, names, connection, applicationFiles, revisionKey));
+        workloads.Add(published is null
+            ? Application(performance, names, connection!, applicationFiles, revisionKey)
+            : PublishedApplication(performance, names, published, applicationFiles, revisionKey));
 
         if (spec.AuthProxy.Enabled)
         {
@@ -43,14 +46,15 @@ public static class DesiredPerformanceBuilder
         {
             var files = AnteContract.SecretFiles(performance, environment, keys);
             secrets.Add(SecretFactory.Create(performance, names.AnteSecret, "ante", files));
-            workloads.Add(Ante(performance, names, connection, files, revisionKey));
+            workloads.Add(Ante(performance, names, connection!, files, revisionKey));
         }
 
         return new(
             secrets,
             [.. workloads.Select(workload => WorkloadFactory.Deployment(performance, workload))],
             [.. workloads.Select(workload => WorkloadFactory.Service(performance, workload))],
-            spec.Ingress.Enabled ? IngressFactory.Create(performance) : null);
+            spec.Ingress.Enabled ? IngressFactory.Create(performance) : null,
+            published is null ? null : PublishedNetworkPolicy.Create(performance));
     }
 
     static SecretSource ConnectionSource(ChronicleConnectionRef connection) =>
@@ -76,6 +80,37 @@ public static class DesiredPerformanceBuilder
             [new("environment", ApplicationSecretsDirectory, [new(names.ApplicationSecret), ConnectionSource(connection)])],
             [],
             ConfigRevision.Of(revisionKey, files));
+    }
+
+    static WorkloadDefinition PublishedApplication(Performance performance, PerformanceNames names, PublishedInputs published, IReadOnlyDictionary<string, string> files, string revisionKey)
+    {
+        var spec = performance.Spec;
+        var settings = spec.Application.Published!;
+        List<SecretMount> secretMounts =
+        [
+            new("environment", ApplicationSecretsDirectory, [new(names.ApplicationSecret), new(published.Storage.SecretName, new Dictionary<string, string> { [published.Storage.Key] = PublishedStageContract.StorageFile })])
+        ];
+        if (published.NotesToken is { } token)
+        {
+            secretMounts.Add(new("notes", PublishedStageContract.NotesDirectory, [new(token.SecretName, new Dictionary<string, string> { [token.Key] = PublishedStageContract.NotesTokenFile })]));
+        }
+
+        return new(
+            names.Application,
+            "application",
+            published.Release.Image,
+            PublishedStageContract.Port,
+            1,
+            PublishedStageContract.EnvironmentVariables(performance, ApplicationSecretsDirectory),
+            secretMounts,
+            [new("package", PublishedStageContract.PackageDirectory, published.Release.PackageConfigMap)],
+            ConfigRevision.Of(revisionKey, files),
+            PublishedStageContract.Resources(settings),
+            PublishedStageContract.ReadinessPath,
+
+            // Stage runs its Chronicle kernel in-process against the application's database: two pods during a
+            // rollout would be two kernels writing the same event store, so the old one stops first.
+            StopBeforeRollout: true);
     }
 
     static WorkloadDefinition AuthProxy(Performance performance, PerformanceNames names, IReadOnlyDictionary<string, string> files, string revisionKey)

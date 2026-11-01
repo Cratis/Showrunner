@@ -1,13 +1,13 @@
 ---
 title: Stage Manager
-description: Stage Manager is Showrunner's Kubernetes operator. A Performance runs an application with its AuthProxy and its own Ante from a Cratis environment.
+description: Stage Manager is Showrunner's Kubernetes operator. A Performance runs an application, or a published Stage application, with its AuthProxy and its own Ante from a Cratis environment.
 ---
 
 Stage Manager is the Kubernetes operator of Showrunner. Unlike the other parts it is not a library an application hosts: it is a service you install in a cluster, and it owns the custom resources of the `showrunner.cratis.io` API group, version `v1alpha1`.
 
 | Resource | What it is | State |
 | --- | --- | --- |
-| `Performance` | One application running in one Cratis environment, with its AuthProxy and, when it has onboarding, its own Ante | Reconciled |
+| `Performance` | One application running in one Cratis environment, with its AuthProxy and, when it has onboarding, its own Ante. The application can be a published Stage application, and can have a lifetime | Reconciled |
 | `Production` | Chronicle, with an optional MongoDB and Vault, for one or more applications | Schema only |
 | `Understudy` | How a Production is backed up | Schema only |
 | `Restore` | Brings a backup back | Schema only |
@@ -19,4 +19,5 @@ The custom resource definitions are generated from the C# types in `Source/DotNE
 
 - [Install the operator](./install.md): the Helm chart, its values and the permissions it asks for.
 - [Run an application with a Performance](./performance.md): the spec, what is created, the status and how Ante and AuthProxy are configured.
+- [Run a published Stage application](./published-stage-applications.md): the Stage runtime in published mode with a package, storage, Notes, rollouts, lifetime and usage.
 - [Environments and secrets](./environments-and-secrets.md): how the Cratis environment is resolved and how values reach containers.

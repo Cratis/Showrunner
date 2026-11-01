@@ -282,6 +282,155 @@ jobs:
       - name: Publish npm packages
         run: node scripts/publish-tarballs.cjs "$NPM_OUTPUT"
 
+  # The Stage Manager operator is released as a container image and a Helm chart carrying the same version, so
+  # a chart always installs the operator it was packaged with. Publishing and packaging run the build, so this
+  # job holds no publishing rights; publish-operator below pushes what it produced.
+  pack-operator:
+    name: Pack the operator image and chart
+    if: needs.release.outputs.publish == 'true'
+    needs: [release]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Validate the version
+        env:
+          VERSION: ${{ needs.release.outputs.version }}
+        run: |
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::'$VERSION' is not a semantic version"
+            exit 1
+          fi
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          global-json-file: global.json
+
+      - name: Publish the operator
+        env:
+          VERSION: ${{ needs.release.outputs.version }}
+        run: >
+          dotnet publish Source/DotNET/StageManager/StageManager.csproj
+          --configuration Release
+          -p:CratisProxiesOutputPath=
+          "-p:Version=$VERSION"
+          -o Source/DotNET/StageManager/out
+
+      # The custom resource definitions are generated from the C# types into the chart; they are not committed.
+      - name: Generate the custom resource definitions
+        run: ./scripts/stage-manager-crds.sh
+
+      - name: Package the chart
+        env:
+          VERSION: ${{ needs.release.outputs.version }}
+        run: helm package Source/Helm/showrunner-operator --version "$VERSION" --app-version "$VERSION" --destination ./Artifacts/Helm
+
+      - name: Upload the operator output
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: operator-out
+          path: Source/DotNET/StageManager/out
+          if-no-files-found: error
+          retention-days: 1
+          include-hidden-files: true
+
+      - name: Upload the chart
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: operator-chart
+          path: ./Artifacts/Helm/*.tgz
+          if-no-files-found: error
+          retention-days: 7
+
+  # cratis/showrunner-operator on Docker Hub (as cratis/authproxy is) and the chart as an OCI artifact in the same
+  # Docker Hub organization, so `helm install oci://registry-1.docker.io/cratis/showrunner-operator` installs the
+  # operator it was packaged with. It checks out and builds nothing but the image from the packed output.
+  publish-operator:
+    name: Push the operator image and chart
+    needs: [release, pack-operator]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout the Dockerfile
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          sparse-checkout: Docker/StageManager
+          sparse-checkout-cone-mode: true
+
+      - name: Download the operator output
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: operator-out
+          path: Source/DotNET/StageManager/out
+
+      - name: Download the chart
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: operator-chart
+          path: ./Artifacts/Helm
+
+      # The docker actions are referenced by tag, as the other Cratis repositories do; pin them to a commit when
+      # the repository's actions policy asks for it.
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Prepare Docker tags
+        id: docker-tags
+        env:
+          VERSION: ${{ needs.release.outputs.version }}
+          PRERELEASE: ${{ needs.release.outputs.prerelease }}
+        run: |
+          {
+            echo "tags<<EOF"
+            echo "cratis/showrunner-operator:$VERSION"
+            if [ "$PRERELEASE" != "true" ]; then
+              echo "cratis/showrunner-operator:latest"
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Build and push the image
+        uses: docker/build-push-action@v6
+        with:
+          builder: ${{ steps.buildx.outputs.name }}
+          context: .
+          file: Docker/StageManager/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.docker-tags.outputs.tags }}
+          build-args: |
+            VERSION=${{ needs.release.outputs.version }}
+
+      - name: Push the chart
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        run: |
+          echo "$DOCKER_PASSWORD" | helm registry login registry-1.docker.io --username "$DOCKER_USERNAME" --password-stdin
+          helm push ./Artifacts/Helm/showrunner-operator-*.tgz oci://registry-1.docker.io/cratis
+
   # A merged pull request that publishes nothing is the failure mode that silently costs a release:
   # the release job succeeds, every publish job is skipped for want of should-publish, and the
   # whole run reports green. Fail instead, so a release that did not happen cannot be mistaken for

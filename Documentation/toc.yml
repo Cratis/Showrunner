@@ -8,3 +8,5 @@
   href: Marquee/toc.yml
 - name: Herald
   href: Herald/toc.yml
+- name: Stage Manager
+  href: StageManager/toc.yml

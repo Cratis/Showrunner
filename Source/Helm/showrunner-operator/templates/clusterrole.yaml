@@ -1,0 +1,43 @@
+# What the operator may do, and nothing more. It never lists or watches Secrets, never deletes anything
+# directly (owner references remove what a Performance created) and never touches namespaces or nodes.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "showrunner-operator.fullname" . }}
+  labels:
+    {{- include "showrunner-operator.labels" . | nindent 4 }}
+rules:
+  # The resources it owns.
+  - apiGroups: ["showrunner.cratis.io"]
+    resources: ["performances"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups: ["showrunner.cratis.io"]
+    resources: ["performances/status"]
+    verbs: ["get", "update", "patch"]
+  - apiGroups: ["showrunner.cratis.io"]
+    resources: ["performances/finalizers"]
+    verbs: ["update"]
+  # A Performance reads the connection Secret name a Production reports.
+  - apiGroups: ["showrunner.cratis.io"]
+    resources: ["productions"]
+    verbs: ["get"]
+  # The environment files and legal terms a Performance names.
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get"]
+  # The Secrets it reads (passphrase, Chronicle connection) and writes (resolved environment, signing keys).
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "create", "update"]
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get", "create", "update"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "create", "update"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get", "create", "update"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]

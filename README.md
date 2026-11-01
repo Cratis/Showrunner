@@ -19,6 +19,8 @@ Usher is in its earliest stage: the packages are scaffolded and published, but c
 
 **Herald** is the email part: an application asks it to send an email of a kind, such as an invitation, and it fills the template for that kind and language, makes the HTML safe for email clients, embeds the images, sends it over SMTP and records the outcome. Failed sends are queued and retried; see [Documentation](./Documentation/Herald/index.md).
 
+**Stage Manager** is the Kubernetes operator. Unlike the other parts it is a service you install with the `cratis/showrunner-operator` Helm chart: a `Performance` runs an application with its AuthProxy and its own Ante from a Cratis environment, reachable only through AuthProxy; see [Documentation](./Documentation/StageManager/index.md).
+
 ## Packages
 
 | Package | Registry | What it is |
@@ -28,6 +30,7 @@ Usher is in its earliest stage: the packages are scaffolded and published, but c
 | `Cratis.Showrunner.BoxOffice.Contracts` | NuGet | Box Office's event contracts: what an operator decides about a tenant and what a product reports back |
 | `Cratis.Showrunner.Herald.Contracts` | NuGet | Herald's event contracts: the facts recorded when an email was sent, failed or bounced |
 | `Cratis.Showrunner.Herald` | NuGet | Herald's backend — templates, strict rendering, images, SMTP and folder transports, queued delivery with retries, recorded in the application's Chronicle event store |
+| `cratis/showrunner-operator` | Docker Hub, Helm (OCI) | Stage Manager, the Kubernetes operator, as a container image and a Helm chart released with the same version |
 | `Cratis.Showrunner.Usher.Contracts` | NuGet | Usher's event contracts, for hosts that react to what Usher records |
 | `Cratis.Showrunner.Marquee.Contracts` | NuGet | Marquee's event contracts: the public events a product receives announcements through |
 | `Cratis.Showrunner.Marquee.Authoring` | NuGet | Marquee's authoring backend — commands, query and outbox for writing announcements, built on Arc and Chronicle |

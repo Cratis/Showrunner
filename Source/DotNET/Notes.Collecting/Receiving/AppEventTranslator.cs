@@ -102,33 +102,79 @@ public class AppEventTranslator(IChronicleClient client, ILogger<AppEventTransla
         }
 
         var tenant = await client.GetEventStore(context.EventStore, @namespace);
-        if (privateEvent is NoteWithdrawalReceived && !await HasReceivedNote(tenant, context))
+        await Record(
+            tenant,
+            @namespace,
+            tenantId,
+            privateEvent,
+            context.EventSourceId,
+            KeyFor(applicationEvent, context, appStore),
+            context.CorrelationId,
+            context.Occurred,
+            context.Subject,
+            appStore,
+            eventType);
+    }
+
+    /// <summary>
+    /// Appends the private fact of an event from an application to the event log of the tenant, once: the idempotency key
+    /// decides what a repeat is. A withdrawal of a note that was never received in the tenant is logged and skipped.
+    /// Every path an application's events take - the inbox of the same kernel and the collector's HTTP endpoint - records
+    /// through it, so they record the same facts.
+    /// </summary>
+    /// <param name="tenant">The collecting store in the tenant's namespace.</param>
+    /// <param name="namespace">The tenant's namespace.</param>
+    /// <param name="tenantId">The tenant, as the event names it.</param>
+    /// <param name="privateEvent">The private fact, from <see cref="PrivateEvents.For"/>.</param>
+    /// <param name="noteId">The note.</param>
+    /// <param name="key">What makes every copy of the event the same.</param>
+    /// <param name="correlationId">The correlation the application recorded the event under.</param>
+    /// <param name="occurred">When the application recorded the event.</param>
+    /// <param name="subject">The compliance subject of the giver.</param>
+    /// <param name="appStore">The application store the event came from.</param>
+    /// <param name="eventType">The name of the public event, for the log.</param>
+    /// <returns>An awaitable task.</returns>
+    /// <exception cref="NoteFactNotRecorded">The event log refused the private fact.</exception>
+    public async Task Record(
+        IEventStore tenant,
+        EventStoreNamespaceName @namespace,
+        TenantId tenantId,
+        object privateEvent,
+        EventSourceId noteId,
+        IdempotencyKey key,
+        Cratis.Execution.CorrelationId correlationId,
+        DateTimeOffset occurred,
+        Subject subject,
+        EventStoreName appStore,
+        string eventType)
+    {
+        if (privateEvent is NoteWithdrawalReceived && !await HasReceivedNote(tenant, noteId))
         {
-            logger.UnknownNote(eventType, context.EventSourceId, tenantId, appStore);
+            logger.UnknownNote(eventType, noteId, tenantId, appStore);
             return;
         }
 
         var result = await tenant.EventLog.AppendOnce(
-            context.EventSourceId,
+            noteId,
             privateEvent,
-            KeyFor(applicationEvent, context, appStore),
-            correlationId: context.CorrelationId,
-            occurred: context.Occurred,
-            subject: context.Subject);
+            key,
+            correlationId: correlationId,
+            occurred: occurred,
+            subject: subject);
 
         if (result.WasAlreadyAppended)
         {
-            logger.AlreadyRecorded(eventType, context.EventSourceId, tenantId, appStore);
+            logger.AlreadyRecorded(eventType, noteId, tenantId, appStore);
             return;
         }
 
         if (!result.IsSuccess)
         {
-            throw new NoteFactNotRecorded(privateEvent.GetType(), context.EventSourceId, @namespace, result);
+            throw new NoteFactNotRecorded(privateEvent.GetType(), noteId, @namespace, result);
         }
     }
 
-    static async Task<bool> HasReceivedNote(IEventStore tenant, EventContext context)
+    static async Task<bool> HasReceivedNote(IEventStore tenant, EventSourceId noteId)
     {
         Type[] received =
         [
@@ -139,7 +185,7 @@ public class AppEventTranslator(IChronicleClient client, ILogger<AppEventTransla
             typeof(ComponentPropertyChangeReceived)
         ];
         var openers = received.Select(tenant.EventTypes.GetEventTypeFor).ToArray();
-        var opened = await tenant.EventLog.GetForEventSourceIdAndEventTypes(context.EventSourceId, openers);
+        var opened = await tenant.EventLog.GetForEventSourceIdAndEventTypes(noteId, openers);
         return opened.Count > 0;
     }
 }

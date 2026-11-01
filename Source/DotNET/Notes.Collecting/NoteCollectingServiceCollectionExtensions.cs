@@ -4,6 +4,7 @@
 using Cratis.Showrunner.Notes.Collecting;
 using Cratis.Showrunner.Notes.Collecting.Receiving;
 using Cratis.Showrunner.Notes.Collecting.Tenancy;
+using Cratis.Showrunner.Notes.Collecting.Transport;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -33,6 +34,8 @@ public static class NoteCollectingServiceCollectionExtensions
         services.TryAddSingleton<AppEventTranslator>();
         services.TryAddSingleton<AppSubscriptions>();
         services.AddHostedService<CollectingWorker>();
+        services.TryAddSingleton<NoteCollector>();
+        services.TryAddSingleton<NoteCollectingCalls>();
         return services;
     }
 }

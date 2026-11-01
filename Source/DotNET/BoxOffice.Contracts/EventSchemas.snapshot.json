@@ -264,6 +264,18 @@
     ],
     "title": "ModuleTrialGranted"
   },
+  "DefaultOfferingDeclared:1": {
+    "type": "object",
+    "properties": {
+      "offer": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "offer"
+    ],
+    "title": "DefaultOfferingDeclared"
+  },
   "OfferingDeclared:1": {
     "type": "object",
     "properties": {
@@ -577,6 +589,34 @@
       "tenantId"
     ],
     "title": "TenantReinstated"
+  },
+  "TenantStartedOnOffer:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "offer": {
+        "type": "string"
+      },
+      "seats": {
+        "type": "integer",
+        "format": "int32"
+      },
+      "modules": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": [
+      "tenantId",
+      "offer",
+      "seats",
+      "modules"
+    ],
+    "title": "TenantStartedOnOffer"
   },
   "TenantSuspended:1": {
     "type": "object",

@@ -13,3 +13,4 @@ Showrunner is a set of ready-made product parts for applications built on [Crati
 | [Box Office](./BoxOffice/index.md) | Licensing: trials, seats, modules, compute allowances and suspension of a managed product's tenants |
 | [Marquee](./Marquee/index.md) | Announcements: what the people running a product tell the people using it, with an audience, a display and an exact active window |
 | [Notes](./Notes/index.md) | Feedback: product feedback from an application's users, tied to the slice, screen or component they were looking at, delivered as events to the people building the application |
+| [Stage operator](./StageOperator/index.md) | Hosting: a Kubernetes operator that runs published Stage applications permanently or for a period, with storage, sign-in and a hardened edge |

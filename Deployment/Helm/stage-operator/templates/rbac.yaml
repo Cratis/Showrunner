@@ -1,0 +1,56 @@
+{{- if .Values.rbac.create }}
+{{- if empty .Values.operator.watchNamespaces }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "stage-operator.fullname" . }}
+  labels:
+    {{- include "stage-operator.labels" . | nindent 4 }}
+rules:
+  {{- include "stage-operator.rules" . | nindent 2 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "stage-operator.fullname" . }}
+  labels:
+    {{- include "stage-operator.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "stage-operator.fullname" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "stage-operator.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+{{- else }}
+{{- range .Values.operator.watchNamespaces }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "stage-operator.fullname" $ }}
+  namespace: {{ . }}
+  labels:
+    {{- include "stage-operator.labels" $ | nindent 4 }}
+rules:
+  {{- include "stage-operator.rules" $ | nindent 2 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "stage-operator.fullname" $ }}
+  namespace: {{ . }}
+  labels:
+    {{- include "stage-operator.labels" $ | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "stage-operator.fullname" $ }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "stage-operator.serviceAccountName" $ }}
+    namespace: {{ $.Release.Namespace }}
+---
+{{- end }}
+{{- end }}
+{{- end }}

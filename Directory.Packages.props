@@ -11,6 +11,9 @@
     <PackageVersion Include="Cratis.Arc.ProxyGenerator.Build" Version="22.146.0" />
     <PackageVersion Include="Cratis.Arc.Chronicle.Testing" Version="22.146.0" />
     <PackageVersion Include="Cratis.Fundamentals" Version="7.27.0" />
+    <!-- The Stage operator talks to the Kubernetes API with the official client. -->
+    <PackageVersion Include="KubernetesClient" Version="21.0.8" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.14" />
     <!-- Keep Chronicle clients and testing support on the same release. -->
     <PackageVersion Include="Cratis.Metrics.Roslyn" Version="7.27.0" />
     <PackageVersion Include="MongoDB.Driver" Version="3.13.0" />

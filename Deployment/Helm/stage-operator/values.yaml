@@ -1,0 +1,67 @@
+# The operator image. An empty tag uses the chart's appVersion.
+image:
+  repository: ghcr.io/cratis/showrunner-stage-operator
+  tag: ""
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+# The operator keeps state only in the cluster, but two copies would reconcile the same resources against each other.
+# It always runs as a single replica.
+replicaCount: 1
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+# Creates the RBAC the operator needs. Set to false to bring your own.
+rbac:
+  create: true
+
+# Configuration of the operator. Each key maps to StageOperator:<Key> in appsettings (StageOperator__<Key> in the environment).
+operator:
+  # The domain applications are published under: <publishedName>.<baseDomain>.
+  baseDomain: cratis.app
+  # The ingress class applications use. Empty leaves the cluster default.
+  ingressClassName: ""
+  # The cert-manager cluster issuer asked for a certificate per application host.
+  tlsIssuerAnnotation: ""
+  # A wildcard TLS secret (it must exist in each application namespace). When set it is used instead of a certificate per host.
+  tlsSecretName: ""
+  # How long the data of an expired or deleted application is kept.
+  expiredDataRetention: 7.00:00:00
+  # Namespaces to watch. Empty watches every namespace and installs a ClusterRole; listed namespaces get a Role each.
+  watchNamespaces: []
+  # How long a new image gets to become ready before the rollout is rolled back.
+  rolloutTimeout: 00:05:00
+  # How often pod metrics are sampled into status.resourceUsage.
+  metricsSampleInterval: 00:00:30
+  # How often every resource is reconciled even when nothing changed.
+  resyncInterval: 00:01:00
+  mongoImage: mongo:8
+  # Empty uses the cluster default storage class.
+  storageClassName: ""
+  defaultStorageSize: 5Gi
+  # The port of the Notes collector allowed into application pods when Notes is enabled. 0 allows none.
+  notesCollectorPort: 0
+  # Also add an ingress-nginx server-snippet that answers the denied paths. Needs snippet annotations enabled in the controller.
+  denyPathsWithSnippet: false
+
+# A ClusterRole for the publisher (for example Studio's Core): create, update, delete and read StageApplication resources, and
+# manage the secrets they reference. Bind it with a RoleBinding in each namespace the publisher publishes to.
+publisher:
+  createRole: true
+  roleName: stage-application-publisher
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    memory: 256Mi
+
+podAnnotations: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

@@ -34,6 +34,8 @@ Usher is in its earliest stage: the packages are scaffolded and published, but c
 | `Cratis.Showrunner.Notes.Contracts` | NuGet | Notes' event contracts: the public events an application and the people building it exchange about product feedback |
 | `Cratis.Showrunner.Notes` | NuGet | Notes' backend for applications — commands to give, suggest and withdraw notes, the live list of a user's notes with their status, and the outbox that publishes them |
 | `Cratis.Showrunner.Notes.Collecting` | NuGet | Notes' receiving side for the builder of an application — reads the applications' notes into the tenant's namespace and answers them |
+| `ghcr.io/cratis/showrunner-stage-operator` | Container image | The Stage operator: a Kubernetes operator that runs published Stage applications permanently or for a period; see [Documentation](./Documentation/StageOperator/index.md) |
+| `stage-operator` | Helm chart (OCI, `ghcr.io/cratis/charts`) | Installs the Stage operator with the `StageApplication` custom resource definition |
 | `@cratis/showrunner.marquee` | npm | The generated TypeScript proxies for Marquee's receiving commands and queries; no UI framework dependency |
 | `@cratis/showrunner.marquee.authoring` | npm | The generated TypeScript proxies for Marquee's authoring commands and query; no UI framework dependency |
 | `@cratis/showrunner.marquee.react` | npm | The Marquee drop-in React component: banners and dialogs for a product's announcements, built on `@cratis/arc.react` and `@cratis/components` |

@@ -8,3 +8,5 @@
   href: Marquee/toc.yml
 - name: Notes
   href: Notes/toc.yml
+- name: Stage operator
+  href: StageOperator/toc.yml

@@ -137,3 +137,26 @@ jobs:
 
       - name: Build
         run: yarn build
+
+  # The operator ships as a container image and a Helm chart rather than as a package, so building and packing
+  # the solution does not prove it. Build the image without pushing it and render the chart, so a pull request
+  # that breaks either fails here instead of at release.
+  stage-operator:
+    name: Stage operator image and chart
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Build the operator image
+        run: docker build --file Source/DotNET/StageOperator/Dockerfile --tag showrunner-stage-operator:ci .
+
+      - name: Lint the chart
+        run: helm lint Deployment/Helm/stage-operator
+
+      # Render the cluster-wide mode and the namespaced mode: they generate different RBAC.
+      - name: Render the chart
+        run: |
+          helm template stage-operator Deployment/Helm/stage-operator --namespace stage-operator > /dev/null
+          helm template stage-operator Deployment/Helm/stage-operator --namespace stage-operator --set 'operator.watchNamespaces={published,staging}' > /dev/null

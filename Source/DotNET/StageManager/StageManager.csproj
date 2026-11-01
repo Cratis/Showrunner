@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <AssemblyName>Cratis.Showrunner.StageManager</AssemblyName>
+        <RootNamespace>Cratis.Showrunner.StageManager</RootNamespace>
+        <Description>Stage Manager — the Showrunner Kubernetes operator that owns the showrunner.cratis.io custom resources.</Description>
+
+        <!-- The operator ships as a container image and a Helm chart, not as a NuGet package. -->
+        <IsPackable>false</IsPackable>
+
+        <!-- The custom resource definitions are generated from the C# types by scripts/stage-manager/generate-chart-crds.sh
+             into the Helm chart, not as a side effect of every build. -->
+        <GenerateOperatorResources>false</GenerateOperatorResources>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="KubeOps.Operator" />
+        <PackageReference Include="KubeOps.Generator" PrivateAssets="all" />
+        <PackageReference Include="Cratis.Environments" />
+    </ItemGroup>
+</Project>

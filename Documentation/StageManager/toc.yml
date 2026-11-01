@@ -1,0 +1,8 @@
+- name: Overview
+  href: index.md
+- name: Install the operator
+  href: install.md
+- name: Run an application with a Performance
+  href: performance.md
+- name: Environments and secrets
+  href: environments-and-secrets.md

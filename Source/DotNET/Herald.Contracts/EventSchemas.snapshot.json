@@ -1,0 +1,79 @@
+{
+  "EmailBounced:1": {
+    "type": "object",
+    "properties": {
+      "emailId": {
+        "type": "string",
+        "format": "guid"
+      },
+      "kind": {
+        "type": "string"
+      },
+      "reason": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "emailId",
+      "kind",
+      "reason"
+    ],
+    "title": "EmailBounced"
+  },
+  "EmailFailed:1": {
+    "type": "object",
+    "properties": {
+      "emailId": {
+        "type": "string",
+        "format": "guid"
+      },
+      "kind": {
+        "type": "string"
+      },
+      "language": {
+        "type": "string"
+      },
+      "reason": {
+        "type": "string"
+      },
+      "attempts": {
+        "type": "integer",
+        "format": "int32"
+      }
+    },
+    "required": [
+      "emailId",
+      "kind",
+      "language",
+      "reason",
+      "attempts"
+    ],
+    "title": "EmailFailed"
+  },
+  "EmailSent:1": {
+    "type": "object",
+    "properties": {
+      "emailId": {
+        "type": "string",
+        "format": "guid"
+      },
+      "kind": {
+        "type": "string"
+      },
+      "language": {
+        "type": "string"
+      },
+      "attempts": {
+        "type": "integer",
+        "format": "int32"
+      }
+    },
+    "required": [
+      "emailId",
+      "kind",
+      "language",
+      "attempts"
+    ],
+    "title": "EmailSent"
+  }
+}

@@ -1,6 +1,7 @@
 <Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CratisEnvironmentsVersion>3.114.0</CratisEnvironmentsVersion>
   </PropertyGroup>
   <ItemGroup>
     <!-- Cratis — keep the public Cratis / Arc family aligned so generated proxies and runtime
@@ -11,9 +12,6 @@
     <PackageVersion Include="Cratis.Arc.ProxyGenerator.Build" Version="22.146.0" />
     <PackageVersion Include="Cratis.Arc.Chronicle.Testing" Version="22.146.0" />
     <PackageVersion Include="Cratis.Fundamentals" Version="7.27.0" />
-    <!-- The Stage operator talks to the Kubernetes API with the official client. -->
-    <PackageVersion Include="KubernetesClient" Version="21.0.8" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.14" />
     <!-- Keep Chronicle clients and testing support on the same release. -->
     <PackageVersion Include="Cratis.Metrics.Roslyn" Version="7.27.0" />
     <PackageVersion Include="MongoDB.Driver" Version="3.13.0" />
@@ -32,6 +30,23 @@
          bin/Debug, which throws FileNotFoundException the moment a CommandScenario spec runs. -->
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.9.0" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.401" />
+    <!-- Herald (email). MailKit sends over SMTP and writes the .eml files of the development transport; it is the
+         maintained SMTP client for .NET (System.Net.Mail's SmtpClient is documented as not recommended). Handlebars.Net
+         renders the templates in strict mode. PreMailer.Net moves the template's <style> rules into style attributes,
+         which email clients need; it is MIT licensed and actively released. -->
+    <PackageVersion Include="MailKit" Version="4.18.2" />
+    <PackageVersion Include="Handlebars.Net" Version="2.4.3" />
+    <PackageVersion Include="PreMailer.Net" Version="2.7.4" />
+    <!-- Integration specifications only: an SMTP server running inside the test process. -->
+    <PackageVersion Include="SmtpServer" Version="11.1.0" />
+    <!-- Stage Manager (Kubernetes operator). KubeOps generates the custom resource definitions, and the RBAC the
+         chart installs, from the C# types at build time. -->
+    <PackageVersion Include="KubeOps.Operator" Version="13.3.5" />
+    <PackageVersion Include="KubeOps.Generator" Version="13.3.5" />
+    <!-- Cratis.Environments is not on NuGet yet. CratisEnvironmentsVersion is the one place to set the version;
+         0.0.0-local is a build packed from Cratis/cli (branch env-onboarding/environments-secrets) into a local
+         feed. Set it to the released version before this merges. -->
+    <PackageVersion Include="Cratis.Environments" Version="$(CratisEnvironmentsVersion)" />
     <!-- Analysis -->
     <PackageVersion Include="StyleCop.Analyzers" Version="1.2.0-beta.556" NoWarn="NU5104" />
     <PackageVersion Include="Roslynator.Analyzers" Version="5.0.0" />

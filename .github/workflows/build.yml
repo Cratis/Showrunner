@@ -68,7 +68,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      # The Debug backend build regenerates the TypeScript proxies into Source/JavaScript/Usher, BoxOffice, Marquee, Marquee.Authoring and Notes; the
+      # The Debug backend build regenerates the TypeScript proxies into Source/JavaScript/Usher, BoxOffice, Marquee and Marquee.Authoring; the
       # frontend gate needs them present on disk (they are committed, but a PR that changes backend
       # contracts without rebuilding would otherwise pass a stale proxy through lint/tsc).
       - name: Setup .NET
@@ -94,7 +94,7 @@ jobs:
           # Each backend project generates into its own npm package. The generator writes its state file when
           # it runs; without it a clean tree would prove nothing.
           failed=0
-          for pair in Usher:Usher BoxOffice:BoxOffice Marquee:Marquee Marquee.Authoring:Marquee.Authoring Notes:Notes; do
+          for pair in Usher:Usher BoxOffice:BoxOffice Marquee:Marquee Marquee.Authoring:Marquee.Authoring; do
             project="${pair%%:*}"
             package="${pair##*:}"
             if [ ! -f "Source/DotNET/$project/obj/Debug/net10.0/cratis-proxies.state.json" ]; then
@@ -138,25 +138,60 @@ jobs:
       - name: Build
         run: yarn build
 
-  # The operator ships as a container image and a Helm chart rather than as a package, so building and packing
-  # the solution does not prove it. Build the image without pushing it and render the chart, so a pull request
-  # that breaks either fails here instead of at release.
-  stage-operator:
-    name: Stage operator image and chart
+  # Stage Manager, the operator: the chart's custom resource definitions are generated from the C# types, so a
+  # chart that lints and templates here carries exactly what the operator reconciles; the image builds from the
+  # same checkout.
+  stage-manager:
+    name: Stage Manager chart and image
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - name: Checkout code
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - name: Build the operator image
-        run: docker build --file Source/DotNET/StageOperator/Dockerfile --tag showrunner-stage-operator:ci .
+      - name: Setup .NET
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          global-json-file: global.json
+
+      - name: Generate the custom resource definitions
+        run: ./scripts/stage-manager-crds.sh
 
       - name: Lint the chart
-        run: helm lint Deployment/Helm/stage-operator
+        run: helm lint Source/Helm/showrunner-operator --strict
 
-      # Render the cluster-wide mode and the namespaced mode: they generate different RBAC.
-      - name: Render the chart
-        run: |
-          helm template stage-operator Deployment/Helm/stage-operator --namespace stage-operator > /dev/null
-          helm template stage-operator Deployment/Helm/stage-operator --namespace stage-operator --set 'operator.watchNamespaces={published,staging}' > /dev/null
+      - name: Template the chart
+        run: helm template stage-manager Source/Helm/showrunner-operator --namespace stage-manager > /dev/null
+
+      - name: Publish the operator
+        run: dotnet publish Source/DotNET/StageManager/StageManager.csproj -c Release -p:CratisProxiesOutputPath= -o Source/DotNET/StageManager/out
+
+      - name: Build the operator image
+        run: docker build -f Docker/StageManager/Dockerfile -t cratis/showrunner-operator:ci .
+
+  # Installs the chart on a kind cluster and applies a Performance: a missing environment key blocks the rollout,
+  # a complete environment rolls it out, only AuthProxy is public and no secret value reaches a Deployment, the
+  # status or the log.
+  stage-manager-kind:
+    name: Stage Manager on kind
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          global-json-file: global.json
+
+      # kind, kubectl and helm are part of the runner image.
+      - name: Create the cluster
+        run: kind create cluster --name stage-manager --wait 120s
+
+      - name: Run the end-to-end checks
+        run: ./scripts/stage-manager-e2e.sh
+
+      - name: Show the operator log on failure
+        if: failure()
+        run: kubectl -n stage-manager logs deployment/stage-manager-showrunner-operator --tail=200 || true

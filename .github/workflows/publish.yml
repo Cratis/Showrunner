@@ -15,7 +15,6 @@ env:
   NPM_VERSION: "11.6.2"
   NUGET_OUTPUT: ./Artifacts/NuGet
   NPM_OUTPUT: ./Artifacts/npm
-  IMAGE_OUTPUT: ./Artifacts/image
 
 on:
   workflow_dispatch:
@@ -112,7 +111,7 @@ jobs:
       # CratisProxiesOutputPath is cleared so the proxy generator's MSBuild target no-ops for this Release
       # build instead of rewriting the committed proxies (they were verified fresh by build.yml before
       # this merged). Packing the solution packs every project under the same version, so Usher's
-      # dependency on Usher.Contracts carries the released version.
+      # dependency on Usher.Contracts (and Herald's on Herald.Contracts) carries the released version.
       - name: Pack NuGet packages
         env:
           VERSION: ${{ needs.release.outputs.version }}
@@ -131,7 +130,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  # Every Cratis.Showrunner.* package (Usher, Marquee, Box Office, Notes and their contracts) via NuGet.org trusted publishing
+  # Every Cratis.Showrunner.* package (Usher, Marquee, Box Office, Herald, Notes and their contracts) via NuGet.org trusted publishing
   # (OIDC) - no long-lived API key secret to hold or rotate. The trusted-publishing policy on
   # nuget.org is bound to this workflow file (publish.yml) by name, so the job must live here rather
   # than in a separately named workflow. It checks out and builds nothing: it pushes what pack-nuget
@@ -233,7 +232,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  # Every @cratis/showrunner.* package (usher, usher.react, marquee, marquee.authoring, marquee.react, boxoffice, boxoffice.react, notes, notes.react) via npm trusted publishing (OIDC) with
+  # Every @cratis/showrunner.* package (usher, usher.react, marquee, marquee.authoring, marquee.react, boxoffice, boxoffice.react) via npm trusted publishing (OIDC) with
   # provenance - no long-lived npm token. It installs and builds nothing: publish-tarballs.cjs
   # publishes the tarballs pack-npm packed, in dependency order, with lifecycle scripts disabled.
   publish-npm:
@@ -283,14 +282,15 @@ jobs:
       - name: Publish npm packages
         run: node scripts/publish-tarballs.cjs "$NPM_OUTPUT"
 
-  # The Stage operator image. Building runs the .NET build, so the job that builds holds no publishing rights; the
-  # image goes to the next job as a one-day artifact.
-  build-operator-image:
-    name: Build the Stage operator image
+  # The Stage Manager operator is released as a container image and a Helm chart carrying the same version, so
+  # a chart always installs the operator it was packaged with. Publishing and packaging run the build, so this
+  # job holds no publishing rights; publish-operator below pushes what it produced.
+  pack-operator:
+    name: Pack the operator image and chart
     if: needs.release.outputs.publish == 'true'
     needs: [release]
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     permissions:
       contents: read
 
@@ -309,87 +309,127 @@ jobs:
             exit 1
           fi
 
-      - name: Build the image
+      - name: Setup .NET
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          global-json-file: global.json
+
+      - name: Publish the operator
         env:
           VERSION: ${{ needs.release.outputs.version }}
-        run: |
-          docker build \
-            --file Source/DotNET/StageOperator/Dockerfile \
-            --build-arg "VERSION=$VERSION" \
-            --tag "showrunner-stage-operator:$VERSION" .
-          mkdir -p "$IMAGE_OUTPUT"
-          docker save "showrunner-stage-operator:$VERSION" --output "$IMAGE_OUTPUT/stage-operator.tar"
+        run: >
+          dotnet publish Source/DotNET/StageManager/StageManager.csproj
+          --configuration Release
+          -p:CratisProxiesOutputPath=
+          "-p:Version=$VERSION"
+          -o Source/DotNET/StageManager/out
 
-      - name: Upload the image
+      # The custom resource definitions are generated from the C# types into the chart; they are not committed.
+      - name: Generate the custom resource definitions
+        run: ./scripts/stage-manager-crds.sh
+
+      - name: Package the chart
+        env:
+          VERSION: ${{ needs.release.outputs.version }}
+        run: helm package Source/Helm/showrunner-operator --version "$VERSION" --app-version "$VERSION" --destination ./Artifacts/Helm
+
+      - name: Upload the operator output
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: stage-operator-image
-          path: ${{ env.IMAGE_OUTPUT }}/stage-operator.tar
+          name: operator-out
+          path: Source/DotNET/StageManager/out
           if-no-files-found: error
           retention-days: 1
+          include-hidden-files: true
 
-  # Pushes the image to ghcr.io/cratis/showrunner-stage-operator. It builds nothing: it pushes what the job above built.
-  publish-operator-image:
-    name: Push the Stage operator image
-    needs: [release, build-operator-image]
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - name: Download the image
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+      - name: Upload the chart
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: stage-operator-image
-          path: ${{ env.IMAGE_OUTPUT }}
+          name: operator-chart
+          path: ./Artifacts/Helm/*.tgz
+          if-no-files-found: error
+          retention-days: 7
 
-      - name: Push the image
-        env:
-          VERSION: ${{ needs.release.outputs.version }}
-          PRERELEASE: ${{ needs.release.outputs.prerelease }}
-          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REGISTRY_USER: ${{ github.actor }}
-        run: |
-          docker load --input "$IMAGE_OUTPUT/stage-operator.tar"
-          echo "$REGISTRY_TOKEN" | docker login ghcr.io --username "$REGISTRY_USER" --password-stdin
-          image="ghcr.io/cratis/showrunner-stage-operator"
-          docker tag "showrunner-stage-operator:$VERSION" "$image:$VERSION"
-          docker push "$image:$VERSION"
-          if [ "$PRERELEASE" != "true" ]; then
-            docker tag "showrunner-stage-operator:$VERSION" "$image:latest"
-            docker push "$image:latest"
-          fi
-
-  # The Helm chart, pushed as an OCI artifact to ghcr.io/cratis/charts/stage-operator at the released version. The chart
-  # defaults to the image of the same version, so it is pushed after the image.
-  publish-helm-chart:
-    name: Push the Stage operator Helm chart
-    needs: [release, publish-operator-image]
+  # cratis/showrunner-operator on Docker Hub (as cratis/authproxy is) and the chart as an OCI artifact in the same
+  # Docker Hub organization, so `helm install oci://registry-1.docker.io/cratis/showrunner-operator` installs the
+  # operator it was packaged with. It checks out and builds nothing but the image from the packed output.
+  publish-operator:
+    name: Push the operator image and chart
+    needs: [release, pack-operator]
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     permissions:
       contents: read
-      packages: write
 
     steps:
-      - name: Checkout the chart
+      - name: Checkout the Dockerfile
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-          sparse-checkout: Deployment/Helm
+          sparse-checkout: Docker/StageManager
           sparse-checkout-cone-mode: true
 
-      - name: Package and push the chart
+      - name: Download the operator output
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: operator-out
+          path: Source/DotNET/StageManager/out
+
+      - name: Download the chart
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: operator-chart
+          path: ./Artifacts/Helm
+
+      # The docker actions are referenced by tag, as the other Cratis repositories do; pin them to a commit when
+      # the repository's actions policy asks for it.
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Prepare Docker tags
+        id: docker-tags
         env:
           VERSION: ${{ needs.release.outputs.version }}
-          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REGISTRY_USER: ${{ github.actor }}
+          PRERELEASE: ${{ needs.release.outputs.prerelease }}
         run: |
-          echo "$REGISTRY_TOKEN" | helm registry login ghcr.io --username "$REGISTRY_USER" --password-stdin
-          helm package Deployment/Helm/stage-operator --version "$VERSION" --app-version "$VERSION" --destination ./Artifacts/Helm
-          helm push "./Artifacts/Helm/stage-operator-$VERSION.tgz" oci://ghcr.io/cratis/charts
+          {
+            echo "tags<<EOF"
+            echo "cratis/showrunner-operator:$VERSION"
+            if [ "$PRERELEASE" != "true" ]; then
+              echo "cratis/showrunner-operator:latest"
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Build and push the image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          builder: ${{ steps.buildx.outputs.name }}
+          context: .
+          file: Docker/StageManager/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.docker-tags.outputs.tags }}
+          build-args: |
+            VERSION=${{ needs.release.outputs.version }}
+
+      - name: Push the chart
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        run: |
+          echo "$DOCKER_PASSWORD" | helm registry login registry-1.docker.io --username "$DOCKER_USERNAME" --password-stdin
+          helm push ./Artifacts/Helm/showrunner-operator-*.tgz oci://registry-1.docker.io/cratis
 
   # A merged pull request that publishes nothing is the failure mode that silently costs a release:
   # the release job succeeds, every publish job is skipped for want of should-publish, and the

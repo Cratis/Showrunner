@@ -19,6 +19,10 @@ Usher is in its earliest stage: the packages are scaffolded and published, but c
 
 **Notes** is the product feedback part: the users of an application give a note about what they are looking at — the slice, the screen or a single component — and the people building the application receive it as events and answer it. The application hosts `Cratis.Showrunner.Notes`, the builder hosts `Cratis.Showrunner.Notes.Collecting`; see [Documentation](./Documentation/Notes/index.md).
 
+**Herald** is the email part: an application asks it to send an email of a kind, such as an invitation, and it fills the template for that kind and language, makes the HTML safe for email clients, embeds the images, sends it over SMTP and records the outcome. Failed sends are queued and retried; see [Documentation](./Documentation/Herald/index.md).
+
+**Stage Manager** is the Kubernetes operator. Unlike the other parts it is a service you install with the `cratis/showrunner-operator` Helm chart: a `Performance` runs an application with its AuthProxy and its own Ante from a Cratis environment, reachable only through AuthProxy; see [Documentation](./Documentation/StageManager/index.md).
+
 ## Packages
 
 | Package | Registry | What it is |
@@ -26,6 +30,9 @@ Usher is in its earliest stage: the packages are scaffolded and published, but c
 | `Cratis.Showrunner.BoxOffice.Catalog` | NuGet | Box Office's catalog — offers (seat plans, modules, compute packs), prices and the pricing arithmetic, published to products |
 | `Cratis.Showrunner.BoxOffice.Offering` | NuGet | Box Office for a product — declares what the product sells (modules, meters, seat licensing) and measures its compute per tenant and day |
 | `Cratis.Showrunner.BoxOffice.Contracts` | NuGet | Box Office's event contracts: what an operator decides about a tenant and what a product reports back |
+| `Cratis.Showrunner.Herald.Contracts` | NuGet | Herald's event contracts: the facts recorded when an email was sent, failed or bounced |
+| `Cratis.Showrunner.Herald` | NuGet | Herald's backend — templates, strict rendering, images, SMTP and folder transports, queued delivery with retries, recorded in the application's Chronicle event store |
+| `cratis/showrunner-operator` | Docker Hub, Helm (OCI) | Stage Manager, the Kubernetes operator, as a container image and a Helm chart released with the same version |
 | `Cratis.Showrunner.Usher.Contracts` | NuGet | Usher's event contracts, for hosts that react to what Usher records |
 | `Cratis.Showrunner.Marquee.Contracts` | NuGet | Marquee's event contracts: the public events a product receives announcements through |
 | `Cratis.Showrunner.Marquee.Authoring` | NuGet | Marquee's authoring backend — commands, query and outbox for writing announcements, built on Arc and Chronicle |
@@ -34,8 +41,6 @@ Usher is in its earliest stage: the packages are scaffolded and published, but c
 | `Cratis.Showrunner.Notes.Contracts` | NuGet | Notes' event contracts: the public events an application and the people building it exchange about product feedback |
 | `Cratis.Showrunner.Notes` | NuGet | Notes' backend for applications — commands to give, suggest and withdraw notes, the live list of a user's notes with their status, and the outbox that publishes them |
 | `Cratis.Showrunner.Notes.Collecting` | NuGet | Notes' receiving side for the builder of an application — reads the applications' notes into the tenant's namespace and answers them |
-| `ghcr.io/cratis/showrunner-stage-operator` | Container image | The Stage operator: a Kubernetes operator that runs published Stage applications permanently or for a period; see [Documentation](./Documentation/StageOperator/index.md) |
-| `stage-operator` | Helm chart (OCI, `ghcr.io/cratis/charts`) | Installs the Stage operator with the `StageApplication` custom resource definition |
 | `@cratis/showrunner.marquee` | npm | The generated TypeScript proxies for Marquee's receiving commands and queries; no UI framework dependency |
 | `@cratis/showrunner.marquee.authoring` | npm | The generated TypeScript proxies for Marquee's authoring commands and query; no UI framework dependency |
 | `@cratis/showrunner.marquee.react` | npm | The Marquee drop-in React component: banners and dialogs for a product's announcements, built on `@cratis/arc.react` and `@cratis/components` |

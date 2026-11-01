@@ -63,6 +63,7 @@ For a Performance named `crm`:
 | Deployment and Service | `crm-app` | The application. ClusterIP |
 | Deployment and Service | `crm-authproxy` | When `authProxy.enabled`. ClusterIP |
 | Deployment and Service | `crm-ante` | When `onboarding.enabled`. One replica, ClusterIP |
+| NetworkPolicy | `crm-app` | For a published Stage application: only AuthProxy of the Performance may connect to the application |
 | Ingress | `crm` | When `ingress.enabled`. Every host routes to AuthProxy and nothing else, with a certificate from cert-manager |
 | Secrets | `crm-app-environment`, `crm-authproxy-environment`, `crm-ante-secrets`, `crm-signing-keys` | What is mounted into each workload, and the generated keys |
 
@@ -80,13 +81,20 @@ The keys needed per provider kind are the ones AuthProxy's application contract 
 
 | Field | Meaning |
 | --- | --- |
-| `phase` | `Pending`, `Blocked`, `Progressing` or `Ready` |
+| `phase` | `Pending`, `Blocked`, `Progressing`, `Ready` or `Expired` |
 | `publicUrl` | `https://` and the first ingress host |
 | `missingEnvironmentKeys` | The keys the environment lacks, while the phase is `Blocked` |
 | `conditions` | `SpecValid`, `ChronicleConnection`, `EnvironmentResolved`, `EnvironmentComplete`, and `ApplicationReady`, `AuthProxyReady`, `AnteReady` per component |
 | `signingKeys` | The key ids in use, the rotation counter applied and how many previous public keys are pinned |
+| `runningVersion`, `versions`, `rollout` | The version of a [published Stage application](./published-stage-applications.md) that runs, its history and the rollout under way |
+| `expiresAt`, `dataRetainedUntil` | When a [lifetime](./published-stage-applications.md#lifetime) ends, and until when the publisher should keep the data |
+| `resourceUsage`, `currentPeriodUsage`, `lastPeriodUsage` | CPU and memory of the pods, accumulated from `metrics.k8s.io` |
 
 Conditions and the status never contain a secret value.
+
+## Application, lifetime and usage
+
+`application.published` runs the application as a published Stage application instead of an image you built; see [Run a published Stage application](./published-stage-applications.md). `lifetime` (`permanent: true`, or `until`) applies to every Performance: at `until` the workloads are scaled to zero, the Ingress is removed and the phase is `Expired`. Usage is sampled from the metrics API on every reconciliation, which is every 30 seconds for a published application.
 
 ## Signing keys
 

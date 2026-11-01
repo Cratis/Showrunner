@@ -32,10 +32,12 @@ The chart's ClusterRole is the whole list, and it is short:
 - Productions: get, to read the connection Secret a Production reports.
 - ConfigMaps: get.
 - Secrets: get, create and update. It never lists or watches Secrets.
-- Services, Deployments and Ingresses: get, create and update.
+- Services and Deployments: get, create and update. Ingresses: also delete, only for a Performance whose lifetime ended.
+- NetworkPolicies: get, create and update, for published Stage applications.
+- Pod metrics (`metrics.k8s.io`): list, to report CPU and memory usage. Without metrics-server the usage is reported as not measured.
 - Events: create and patch.
 
-The operator never deletes anything directly. Everything a Performance creates carries an owner reference to it, so deleting the Performance removes it all.
+The operator deletes nothing but the Ingress of an expired Performance. Everything a Performance creates carries an owner reference to it, so deleting the Performance removes it all.
 
 ## Managed MongoDB
 

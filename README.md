@@ -21,7 +21,7 @@ Usher is in its earliest stage: the packages are scaffolded and published, but c
 
 **Herald** is the email part: an application asks it to send an email of a kind, such as an invitation, and it fills the template for that kind and language, makes the HTML safe for email clients, embeds the images, sends it over SMTP and records the outcome. Failed sends are queued and retried; see [Documentation](./Documentation/Herald/index.md).
 
-**Stage Manager** is the Kubernetes operator. Unlike the other parts it is a service you install with the `cratis/showrunner-operator` Helm chart: a `Performance` runs an application with its AuthProxy and its own Ante from a Cratis environment, reachable only through AuthProxy; see [Documentation](./Documentation/StageManager/index.md).
+**Stage Manager** is the Kubernetes operator. Unlike the other parts it is a service you install with the `cratis/showrunner-operator` Helm chart: a `Performance` runs an application, or a published Stage application, with its AuthProxy and its own Ante from a Cratis environment, reachable only through AuthProxy; see [Documentation](./Documentation/StageManager/index.md).
 
 ## Packages
 

@@ -40,9 +40,7 @@ public static class WorkloadFactory
             Spec = new()
             {
                 Replicas = workload.Replicas,
-                Strategy = workload.KeepServingDuringRollout
-                    ? new() { Type = "RollingUpdate", RollingUpdate = new() { MaxSurge = 1, MaxUnavailable = 0 } }
-                    : null,
+                Strategy = Strategy(workload),
                 Selector = new() { MatchLabels = labels },
                 Template = new()
                 {
@@ -104,5 +102,12 @@ public static class WorkloadFactory
             Name = source.SecretName,
             Items = source.Items?.Select(item => new V1KeyToPath { Key = item.Key, Path = item.Value }).ToList()
         }
+    };
+
+    static V1DeploymentStrategy? Strategy(WorkloadDefinition workload) => workload switch
+    {
+        { StopBeforeRollout: true } => new() { Type = "Recreate" },
+        { KeepServingDuringRollout: true } => new() { Type = "RollingUpdate", RollingUpdate = new() { MaxSurge = 1, MaxUnavailable = 0 } },
+        _ => null
     };
 }

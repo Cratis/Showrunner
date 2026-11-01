@@ -74,7 +74,7 @@ With `notes` set, the application hosts the Notes backend and sends notes over H
 
 ## Rollouts
 
-A release is the application `version`, the runtime `image` and the package ConfigMap. Changing any of them rolls out. The application Deployment keeps the old pod serving until the new one is ready (`maxUnavailable: 0`, readiness on `/stage/status`).
+A release is the application `version`, the runtime `image` and the package ConfigMap. Changing any of them rolls out. The application Deployment stops the old pod before it starts the new one (`strategy: Recreate`), and readiness is checked on `/stage/status`.
 
 - When the new release is ready, `status.versions` gets an entry with outcome `RolledOut` and `status.runningVersion` is the new version.
 - When it is not ready within `rolloutTimeoutSeconds` (300), `status.versions` gets an entry for it with outcome `Failed` and a `reason`, another for the previous release with outcome `RolledBack`, and the previous image and package are deployed again. The condition `RolloutSucceeded` is `False`, `runningVersion` is the old version and the phase can be `Ready`.
@@ -83,7 +83,7 @@ A release is the application `version`, the runtime `image` and the package Conf
 
 `status.versions` keeps the last twenty entries, the newest last. Stage's own data stays in the storage the Secret names.
 
-Two Stage pods briefly run against one database during a rollout, because the old pod serves until the new one is ready.
+Stage runs its Chronicle kernel in-process against the application's database, so two pods must never run at once: a rollout stops the application briefly, until the new pod is ready. A rollback is a rollout too.
 
 ## Lifetime
 

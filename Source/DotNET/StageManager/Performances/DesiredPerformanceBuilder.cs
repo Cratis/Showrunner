@@ -107,7 +107,10 @@ public static class DesiredPerformanceBuilder
             ConfigRevision.Of(revisionKey, files),
             PublishedStageContract.Resources(settings),
             PublishedStageContract.ReadinessPath,
-            true);
+
+            // Stage runs its Chronicle kernel in-process against the application's database: two pods during a
+            // rollout would be two kernels writing the same event store, so the old one stops first.
+            StopBeforeRollout: true);
     }
 
     static WorkloadDefinition AuthProxy(Performance performance, PerformanceNames names, IReadOnlyDictionary<string, string> files, string revisionKey)

@@ -18,6 +18,7 @@ namespace Cratis.Showrunner.StageManager.Performances;
 /// <param name="Resources">The resource requests and limits, or null for none.</param>
 /// <param name="ReadinessPath">An HTTP path that answers when the container is ready, or null to check the port.</param>
 /// <param name="KeepServingDuringRollout">Whether the old pod keeps serving until the new one is ready.</param>
+/// <param name="StopBeforeRollout">Whether the old pod is stopped before the new one starts, so two never share state.</param>
 public record WorkloadDefinition(
     string Name,
     string Component,
@@ -30,4 +31,5 @@ public record WorkloadDefinition(
     string ConfigRevision,
     V1ResourceRequirements? Resources = null,
     string? ReadinessPath = null,
-    bool KeepServingDuringRollout = false);
+    bool KeepServingDuringRollout = false,
+    bool StopBeforeRollout = false);

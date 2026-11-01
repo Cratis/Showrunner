@@ -37,8 +37,7 @@ public class when_building_a_published_application : Specification
     [Fact] void should_project_the_notes_token_as_a_file() => Volume("notes").Projected.Sources.Single().Secret.Items.Single().Path.ShouldEqual("token");
     [Fact] void should_not_put_a_secret_value_in_the_deployment() => PerformanceSamples.SecretValues.Any(value => JsonSerializer.Serialize(_desired.Deployments).Contains(value)).ShouldBeFalse();
     [Fact] void should_run_one_replica() => _application.Spec.Replicas.ShouldEqual(1);
-    [Fact] void should_keep_serving_during_a_rollout() => _application.Spec.Strategy.RollingUpdate.MaxUnavailable.Value.ShouldEqual("0");
-    [Fact] void should_surge_by_one() => _application.Spec.Strategy.RollingUpdate.MaxSurge.Value.ShouldEqual("1");
+    [Fact] void should_stop_the_running_kernel_before_starting_the_next() => _application.Spec.Strategy.Type.ShouldEqual("Recreate");
     [Fact] void should_be_ready_when_stage_says_so() => _container.ReadinessProbe.HttpGet.Path.ShouldEqual("/stage/status");
     [Fact] void should_request_the_default_cpu() => _container.Resources.Requests["cpu"].ToString().ShouldEqual("250m");
     [Fact] void should_limit_the_default_memory() => _container.Resources.Limits["memory"].ToString().ShouldEqual("1Gi");

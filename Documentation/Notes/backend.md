@@ -96,7 +96,7 @@ Chronicle delivers an event to a reactor at least once. Each publication is appe
 `AddNotes` takes a delegate, so the host decides where the values come from. Binding a configuration section gives the usual environment variable forms; the section name is the host's choice, and the documentation and Studio use `Notes`:
 
 ```csharp
-builder.AddNotes(notes => builder.Configuration.GetSection("Notes").Bind(notes));
+builder.AddNotes(notes => notes.BindFrom(builder.Configuration.GetSection("Notes")));
 ```
 
 ```text

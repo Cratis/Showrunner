@@ -24,4 +24,10 @@ public class NoteCollectingOptions
     /// next one. Defaults to one minute.
     /// </summary>
     public TimeSpan PollingInterval { get; set; } = TimeSpan.FromMinutes(1);
+
+    /// <summary>
+    /// Gets or sets the event store the collecting side reads and records in. Defaults to <see cref="EventStoreName.NotSet"/>,
+    /// which means the host's own event store: the one its Cratis or Chronicle setup registers. Set it only to use another one.
+    /// </summary>
+    public EventStoreName EventStore { get; set; } = EventStoreName.NotSet;
 }

@@ -23,6 +23,7 @@ The same is available on the service collection as `services.AddNoteCollecting(.
 | Option | Default | Meaning |
 | --- | --- | --- |
 | `AppStores` | none | The names of the event stores of the applications whose notes are collected. |
+| `EventStore` | the host's own event store | The event store collecting reads and records in. Collecting uses the event store of the host's `AddCratis` or `AddCratisChronicle` setup; set it only to use another one. |
 | `PollingInterval` | one minute | How often collecting opens the namespaces it does not serve yet and makes sure it is subscribed to the application stores. |
 
 A builder that publishes applications while it runs registers its own `IAppStores`, which returns the names of the stores of the applications published so far. It is asked again every round, so a new application is subscribed to within one `PollingInterval`. Without one, `AppStores` names them.

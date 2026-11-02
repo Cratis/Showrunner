@@ -93,4 +93,11 @@ public class NotesOptions
     /// Gets or sets the most notes sent in one request. Defaults to 100. Used when <see cref="Transport"/> is <see cref="NotesTransport.Http"/>.
     /// </summary>
     public int RelayBatchSize { get; set; } = 100;
+
+    /// <summary>
+    /// Gets or sets the event store Notes records the application's facts in. Defaults to <see cref="EventStoreName.NotSet"/>,
+    /// which means the application's own event store: the one its Cratis or Chronicle setup registers. Set it only to use
+    /// another one.
+    /// </summary>
+    public EventStoreName EventStore { get; set; } = EventStoreName.NotSet;
 }

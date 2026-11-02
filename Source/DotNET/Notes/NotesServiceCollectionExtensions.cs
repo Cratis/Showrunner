@@ -36,6 +36,7 @@ public static class NotesServiceCollectionExtensions
 
         services.TryAddSingleton(TimeProvider.System);
         services.TryAddTransient<ISignedInGiver, SignedInGiver>();
+        services.TryAddSingleton<NotesEventStore>();
         services.TryAddSingleton<TenantEventStores>();
         services.TryAddSingleton<ReceiverEventTranslator>();
         services.TryAddSingleton<ReceiverSubscriptions>();

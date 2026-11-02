@@ -30,6 +30,7 @@ public static class NoteCollectingServiceCollectionExtensions
 
         services.TryAddSingleton(TimeProvider.System);
         services.TryAddSingleton<IAppStores, ConfiguredAppStores>();
+        services.TryAddSingleton<NotesEventStore>();
         services.TryAddSingleton<TenantEventStores>();
         services.TryAddSingleton<AppEventTranslator>();
         services.TryAddSingleton<AppSubscriptions>();

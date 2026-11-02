@@ -34,7 +34,7 @@ namespace Cratis.Showrunner.Notes.Collecting.Transport;
 /// </para>
 /// </remarks>
 /// <param name="client">The Chronicle client, to reach the namespace of the tenant.</param>
-/// <param name="options">The Chronicle client options, which name the collecting event store.</param>
+/// <param name="options">The Chronicle client options, which name the collecting event store when nothing else does.</param>
 /// <param name="translator">Records a fact of an application.</param>
 /// <param name="logger">The logger.</param>
 public class NoteCollector(IChronicleClient client, IOptions<ChronicleClientOptions> options, AppEventTranslator translator, ILogger<NoteCollector> logger)
@@ -48,6 +48,24 @@ public class NoteCollector(IChronicleClient client, IOptions<ChronicleClientOpti
         .ToDictionary(type => type.GetEventType().Id.Value);
 
     static readonly Type[] _operatorFacts = [typeof(OperatorAcknowledgedNote), typeof(OperatorAddressedNote), typeof(OperatorDeclinedNote)];
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="NoteCollector"/> class.
+    /// </summary>
+    /// <param name="client">The Chronicle client, to reach the namespace of the tenant.</param>
+    /// <param name="options">The Chronicle client options.</param>
+    /// <param name="translator">Records a fact of an application.</param>
+    /// <param name="logger">The logger.</param>
+    /// <param name="eventStore">The <see cref="NotesEventStore"/> naming the collecting event store.</param>
+    public NoteCollector(
+        IChronicleClient client,
+        IOptions<ChronicleClientOptions> options,
+        AppEventTranslator translator,
+        ILogger<NoteCollector> logger,
+        NotesEventStore eventStore)
+        : this(client, options, translator, logger) => EventStore = eventStore;
+
+    NotesEventStore EventStore { get => field ??= NotesEventStore.ForClientOptions(options); init; }
 
     /// <summary>
     /// Derives the idempotency key of a relayed note.
@@ -261,7 +279,7 @@ public class NoteCollector(IChronicleClient client, IOptions<ChronicleClientOpti
 
     async Task<(IEventStore Store, EventStoreNamespaceName Namespace)?> Tenant(NotesPublication publication)
     {
-        var name = options.Value.EventStore;
+        var name = EventStore.Name;
         var root = await client.GetEventStore(name, EventStoreNamespaceName.Default);
         var found = TenantNamespaces.Find(await root.GetNamespaces(), publication.TenantId);
         if (found.Namespace is not { } @namespace)

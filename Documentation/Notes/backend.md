@@ -28,6 +28,7 @@ The same is available on the service collection as `services.AddNotes(...)`.
 | `ApplicationName` | none, required | The name of the application as the receiving side sees it on every note. |
 | `PublicationId` | none, required | The publication the application runs as: how the receiving side finds the organization, application and event model. The builder of the application assigns it when it publishes the application. |
 | `ApplicationVersion` | the entry assembly's informational version, without build metadata | The version published with every note. |
+| `EventStore` | the application's own event store | The event store Notes records the application's facts in. Notes uses the event store of the application's `AddCratis` or `AddCratisChronicle` setup; set it only to record in another one. |
 | `CollectingStores` | `["Studio"]` | The event stores of the receiving sides the application publishes to and receives answers from. |
 | `PollingInterval` | one minute | How often Notes opens tenant namespaces it does not serve yet and makes sure the application is subscribed to the collecting stores. |
 | `Transport` | `SameKernel` | How notes reach the receiving side: `SameKernel` (Chronicle's outbox, subscription and inbox) or `Http`. See [Transports](./transports.md). |

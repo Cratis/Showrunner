@@ -15,10 +15,35 @@ namespace Cratis.Showrunner.Notes.Tenancy;
 /// from it is signed in: publishing what was recorded before a restart and receiving the answers. Opening a namespace
 /// registers Notes' observers in it.
 /// </remarks>
-/// <param name="client">The Chronicle client.</param>
-/// <param name="options">The Chronicle client options, which name the application's event store.</param>
-public class TenantEventStores(IChronicleClient client, IOptions<ChronicleClientOptions> options)
+public class TenantEventStores
 {
+    readonly IChronicleClient _client;
+    readonly NotesEventStore _eventStore;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TenantEventStores"/> class, naming the event store from the Chronicle
+    /// client options only.
+    /// </summary>
+    /// <param name="client">The Chronicle client.</param>
+    /// <param name="options">The Chronicle client options, which name the event store.</param>
+    public TenantEventStores(IChronicleClient client, IOptions<ChronicleClientOptions> options)
+        : this(client, options, NotesEventStore.ForClientOptions(options))
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TenantEventStores"/> class.
+    /// </summary>
+    /// <param name="client">The Chronicle client.</param>
+    /// <param name="options">The Chronicle client options. The event store is named by <paramref name="eventStore"/>; the parameter keeps this constructor a superset of the earlier one, so dependency injection chooses it.</param>
+    /// <param name="eventStore">The <see cref="NotesEventStore"/> naming the event store.</param>
+    public TenantEventStores(IChronicleClient client, IOptions<ChronicleClientOptions> options, NotesEventStore eventStore)
+    {
+        _ = options;
+        _client = client;
+        _eventStore = eventStore;
+    }
+
     /// <summary>
     /// Opens the event store in the default namespace and every other namespace it has.
     /// </summary>
@@ -26,8 +51,8 @@ public class TenantEventStores(IChronicleClient client, IOptions<ChronicleClient
     /// <returns>The event store of each namespace, the default namespace first.</returns>
     public async Task<IReadOnlyList<IEventStore>> All(CancellationToken cancellationToken = default)
     {
-        var name = options.Value.EventStore;
-        var root = await client.GetEventStore(name, EventStoreNamespaceName.Default).WaitAsync(cancellationToken);
+        var name = _eventStore.Name;
+        var root = await _client.GetEventStore(name, EventStoreNamespaceName.Default).WaitAsync(cancellationToken);
         var stores = new List<IEventStore> { root };
         foreach (var @namespace in await root.GetNamespaces(cancellationToken))
         {
@@ -36,7 +61,7 @@ public class TenantEventStores(IChronicleClient client, IOptions<ChronicleClient
                 continue;
             }
 
-            stores.Add(await client.GetEventStore(name, @namespace).WaitAsync(cancellationToken));
+            stores.Add(await _client.GetEventStore(name, @namespace).WaitAsync(cancellationToken));
         }
 
         return stores;

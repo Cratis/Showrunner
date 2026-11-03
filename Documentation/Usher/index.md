@@ -12,4 +12,4 @@ Usher is a library, not a service. The application hosts it:
 - `@cratis/showrunner.usher` is the generated TypeScript proxies for Usher's commands and queries, and helpers for reporting errors; see [Frontend proxies](./frontend-proxies.md).
 - `@cratis/showrunner.usher.react` is the React components that drive them, built on `@cratis/components`; see [React components](./react.md).
 
-Usher is in its earliest stage: the contracts, the backend with error capture and fingerprinting, its generated proxies, the exchange of events with a desk and the React components are in place; see [Exchanging events with a desk](./desk-exchange.md) and [React components](./react.md). This documentation grows with each slice that lands.
+Usher covers the whole path of an issue: reporting one, capturing and fingerprinting errors, holding the conversation, letting the reporter grant support time-limited access, and publishing the facts to the desk. The pages below follow that path; start with [Backend](./backend.md).

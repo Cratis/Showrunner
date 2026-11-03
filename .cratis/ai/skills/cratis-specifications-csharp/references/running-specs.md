@@ -4,9 +4,21 @@
 
 # Running specifications and migrating to 5.0
 
-Requires `Cratis.Specifications.XUnit.v3` 5.0 on `net10.0`. Check the
-`PackageReference` versions in the specification project; 4.x projects follow the
-checklist below before the executable loop applies.
+## Contents
+
+- Project shape
+- Local loop
+- Measure specification cost
+- Filters
+- Migrate from 4.x to 5.0
+
+The xUnit examples and migration checklist require `Cratis.Specifications.XUnit.v3`
+5.0 on `net10.0`. This is not a requirement to migrate frameworks: identify the
+project's evaluated runner first. TUnit and `Cratis.Specifications.Runner` suites
+also run their built executable, with their own help-confirmed flags, not xUnit
+`-trx`/filter flags. Only legacy VSTest projects use `dotnet test <project> --no-build`.
+Check package versions and the actual configuration/TFM; the 4.x migration checklist
+below applies only when migrating, not as a prerequisite to running an existing suite.
 
 Sources: [Running specifications fast](https://github.com/Cratis/Specifications/blob/main/Documentation/running-fast.md),
 [The native runner](https://github.com/Cratis/Specifications/blob/main/Documentation/runner.md) and
@@ -51,6 +63,28 @@ passed count.
 Where a solution mixes Microsoft.Testing.Platform and VSTest projects, run each
 project on its own; `dotnet test` on the whole solution does not work there.
 
+## Measure specification cost
+
+Apply the [scenario cost budget](../../../rules/specs.scenarios.csharp.md): plain
+decision specs should take roughly milliseconds, not seconds. Measure scenario
+facts and justify their cost by pipeline/authorization wiring, constraints,
+or declarative mapping that a plain call cannot
+prove. Prefer fewer startups, not fewer assertions or weaker production guards.
+
+Capture TRX for the affected project before and after the change. With VSTest,
+use `dotnet test <project> --no-build --configuration Release --logger "trx;LogFileName=specs.trx" --results-directory <results>`.
+For the built xUnit v3 `mtp-off` executable, use `-trx <results>/specs.trx`;
+check `<executable> -h` for other runner flavors rather than mixing switches.
+Use separate result paths for each run, under `.ai-work/` for local work.
+
+Inspect `UnitTestResult` entries: rank `duration` by `testName`, group by spec
+class, and compare pure calls, command scenarios and read-model scenarios. Shared
+setup may be charged to one fact, so also compare class totals and suite wall
+time; an individual fact's duration is not its isolated startup cost. Keep package
+versions, configuration, filters, concurrency/shards and machine fixed; preserve
+discovered/passed/failed/skipped counts and investigate any change. Do not count
+restore/build time as test execution or repeat unchanged runs merely for reassurance.
+
 ## Filters
 
 The executable accepts the filters of the xUnit v3 runner flavor the project
@@ -82,7 +116,8 @@ and record the spec count and outcomes first.
 4. Delete any `[assembly: Xunit.TestFramework(...)]` that registers Cratis
    Specifications.
 5. Fix each `CRSPEC0008` error by moving the change into `Establish` or `Because`; use
-   `[PerFactSpecificationLifecycle]` only when the fact genuinely needs a fresh instance.
+   `[PerFactSpecificationLifecycle]` only on a class whose facts genuinely mutate shared
+   state and cannot move that mutation into `Because`.
 6. Change assertion delegates typed as `Predicate<T>` to `Func<T, bool>`; for
    NUnit 4 comparisons that relied on unordered `ShouldEqual(params)`, use
    `ShouldEqualInAnyOrder`. Null actual values now fail, including nullable

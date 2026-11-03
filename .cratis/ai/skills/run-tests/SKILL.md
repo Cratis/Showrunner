@@ -1,6 +1,6 @@
 ---
 name: run-tests
-description: 'Chooses and runs the repository-compatible .NET test command: classic, VSTest, bridged MTP, or native MTP syntax for MSTest, xUnit, NUnit, and TUnit. Use before running .NET tests or answering with a test command or flags: run the tests, one test, class, category, trait or target framework, combined filters, --filter-query, --no-build, --diag, TRX, coverage collection, crash or hang dumps, filter errors, or unrecognized options. Not for platform identification alone (use platform-detection), writing or debugging test code, interpreting a coverage report (use coverage-analysis), CI investigation, migration, or a persistent hot-reload loop.'
+description: Use before running .NET tests or choosing test commands, flags and filters, including command failures and dump collection. Not for platform identification alone, test authoring or interpreting coverage reports.
 license: MIT
 metadata:
   portability: portable
@@ -88,6 +88,15 @@ SDK assumption or ask for the SDK version when the syntax cannot otherwise be
 resolved. Route identification-only requests to `platform-detection`.
 
 ## Decision table
+
+For supported Cratis xUnit v3, TUnit and native-runner suites, restore/build once
+and run each project's built executable directly, or `dotnet <TargetPath.dll>`
+when there is no apphost. Use the matching configuration/TFM and runner-specific
+filter/report flags; see [running-specs](../cratis-specifications-csharp/references/running-specs.md).
+Only identified VSTest projects default to `dotnet test <project> --no-build`.
+Mixed suites run per project, never solution-wide `dotnet test`. The command-mode
+forms below remain valid when the user explicitly requires dotnet-test syntax;
+do not switch an executable suite to them as an automatic fallback.
 
 | Detected mode / platform | Command shape | Never use |
 |---|---|---|

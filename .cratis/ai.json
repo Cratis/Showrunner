@@ -7,6 +7,7 @@
     "pi"
   ],
   "profiles": [
+    "cratis/documentation",
     "cratis/application",
     "cratis/application/csharp",
     "cratis/application/typescript",

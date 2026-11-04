@@ -3,7 +3,7 @@ title: Herald
 description: Herald sends the email an application needs, from templates and images in files, over SMTP, and records every email as a fact.
 ---
 
-Herald is the email part of Showrunner. An application asks Herald to send an email of a kind, such as an invitation, with the values it is about. Herald fills the template for that kind and language, makes the HTML safe for email clients, adds a plain-text alternative and the images, sends it, and records whether it was sent.
+Use Herald to send the emails your application has decided to send, such as an invitation. The application supplies the email kind, language and values. Herald renders the matching template, adds a plain-text alternative and images, and queues the email for background delivery. Accepting the request is not the same as the mail server accepting the email.
 
 Herald is a library, not a service. It runs in the process of the application that hosts it, the way [Usher](../Usher/index.md) and [Marquee](../Marquee/index.md) do, and it keeps its state as events in the application's own Chronicle event store.
 
@@ -18,5 +18,5 @@ Herald is a library, not a service. It runs in the process of the application th
 
 - **Nothing is sent with a hole in it.** A value the email does not declare, a required value that is missing, a placeholder the template can not fill, an image that is not there: each stops the email before it is queued, and the error names the problem.
 - **A person's words stay words.** Every value is HTML-encoded, so a message someone wrote can not become markup. Templates can not switch the encoding off.
-- **A failing server loses nothing.** The email waits in the event log and is retried with growing delays until it is sent or the attempts run out.
+- **Retries are bounded.** Temporary delivery failures are retried with growing delays until delivery succeeds or the configured attempts run out; a permanent failure can end delivery sooner. Read the [single-worker and at-least-once limits](./add-herald-to-an-application.md#run-one-worker) before running delivery.
 - **Secrets stay where they came from.** The mail server's password comes from configuration. It is not a command, an event, a read model, a log line or an exception message.

@@ -22,4 +22,13 @@ public class OfferingOptions
     /// another one. <c>BoxOfficeOptions.EventStore</c> sets it too.
     /// </summary>
     public EventStoreName EventStore { get; set; } = EventStoreName.NotSet;
+
+    /// <summary>
+    /// Gets or sets the audience of the operator the product reports to. When set, everything the product appends to its
+    /// outbox for the operator (the offering, the default offering, seat and compute reports, closed compute days) is
+    /// addressed to it, so an operator that subscribes to the product's outbox with <c>ForAudience</c> receives only what
+    /// is meant for it. Defaults to <see langword="null" />: nothing is addressed, which is how products behaved before audiences.
+    /// <c>BoxOfficeOptions.OperatorAudience</c> sets it too.
+    /// </summary>
+    public string? OperatorAudience { get; set; }
 }

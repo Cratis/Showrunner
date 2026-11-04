@@ -33,11 +33,17 @@ public class a_product_with_a_default_offering : Specification
         return (defaultOffer is null ? builder : builder.DefaultOffering(defaultOffer)).Build();
     }
 
-    protected DefaultOffering StartingWith(ProductOffering offering)
+    protected DefaultOffering StartingWith(ProductOffering offering, string? operatorAudience = null)
     {
         var offers = Substitute.For<IPublishedOffers>();
         offers.All(Arg.Any<CancellationToken>()).Returns(_ => Task.FromResult<IEnumerable<PublishedOffer>>(_catalog));
-        return new(offering, offers, _client, BoxOfficeEventStore.ForClientOptions(Options.Create(new ChronicleClientOptions())), Microsoft.Extensions.Logging.Abstractions.NullLogger<DefaultOffering>.Instance);
+        return new(
+            offering,
+            offers,
+            _client,
+            BoxOfficeEventStore.ForClientOptions(Options.Create(new ChronicleClientOptions())),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<DefaultOffering>.Instance,
+            Options.Create(new OfferingOptions { OperatorAudience = operatorAudience }));
     }
 
     protected async Task<IImmutableList<AppendedEvent>> Told() =>

@@ -4,6 +4,7 @@
 using Cratis.Chronicle;
 using Cratis.Chronicle.EventSequences;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Cratis.Showrunner.BoxOffice.Offering.Declaration;
 
@@ -25,7 +26,8 @@ namespace Cratis.Showrunner.BoxOffice.Offering.Declaration;
 /// </remarks>
 /// <param name="offering">The product's offering.</param>
 /// <param name="logger">The logger.</param>
-public class OfferingReporter(ProductOffering offering, ILogger<OfferingReporter> logger)
+/// <param name="options">The <see cref="OfferingOptions"/>, which name the audience of the operator the product reports to; <see langword="null" /> addresses nothing.</param>
+public class OfferingReporter(ProductOffering offering, ILogger<OfferingReporter> logger, IOptions<OfferingOptions>? options = null)
 {
     /// <summary>
     /// Reports the offering to the outbox of an event store unless it already reports exactly this.
@@ -48,6 +50,7 @@ public class OfferingReporter(ProductOffering offering, ILogger<OfferingReporter
         }
 
         var key = new IdempotencyKey($"boxoffice-offering-{OfferingDeclarations.Fingerprint(declaration)}-{last?.Context.SequenceNumber.Value.ToString() ?? "first"}");
+        using var audience = options?.Value.AddressedToOperator();
         var result = await outbox.AppendOnce(offering.Product, declaration, key);
         if (result.HasIdempotencyConflicts)
         {
@@ -90,6 +93,7 @@ public class OfferingReporter(ProductOffering offering, ILogger<OfferingReporter
         }
 
         var key = new IdempotencyKey($"boxoffice-default-offering-declared-{Uri.EscapeDataString(offer.Value)}-{last?.Context.SequenceNumber.Value.ToString() ?? "first"}");
+        using var audience = options?.Value.AddressedToOperator();
         var result = await outbox.AppendOnce(offering.Product, new DefaultOfferingDeclared(offer), key);
         if (result.HasIdempotencyConflicts)
         {

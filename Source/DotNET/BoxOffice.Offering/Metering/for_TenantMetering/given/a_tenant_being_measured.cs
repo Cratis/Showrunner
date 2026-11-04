@@ -42,13 +42,15 @@ public class a_tenant_being_measured : Specification
     /// <summary>
     /// Creates the metering, as one run of the product would, over the same buckets as the runs before it.
     /// </summary>
+    /// <param name="operatorAudience">The audience of the operator the product reports to; <see langword="null" /> addresses nothing.</param>
     /// <returns>The metering.</returns>
-    protected TenantMetering StartTheProduct() => new(
+    protected TenantMetering StartTheProduct(string? operatorAudience = null) => new(
         _store,
         [new EventMeter<SessionEnded>("compute", (@event, _) => new MeterReading(@event.Organization, DateOnly.FromDateTime(@event.Started.UtcDateTime), @event.Minutes))],
         Options.Create(new MeteringOptions()),
         new Meter<TenantMetering>(_instruments),
-        Microsoft.Extensions.Logging.Abstractions.NullLogger<TenantMetering>.Instance);
+        Microsoft.Extensions.Logging.Abstractions.NullLogger<TenantMetering>.Instance,
+        Options.Create(new Declaration.OfferingOptions { OperatorAudience = operatorAudience }));
 
     /// <summary>
     /// Records a session that ended, which used compute.

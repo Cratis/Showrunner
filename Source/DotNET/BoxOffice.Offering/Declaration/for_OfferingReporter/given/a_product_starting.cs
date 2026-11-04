@@ -29,12 +29,16 @@ public class a_product_starting : Specification
     /// Creates the reporter of an offering of the product, as one start of it would.
     /// </summary>
     /// <param name="declare">Declares the modules and meters.</param>
+    /// <param name="operatorAudience">The audience of the operator the product reports to; <see langword="null" /> addresses nothing.</param>
     /// <returns>The reporter.</returns>
-    protected OfferingReporter ReporterFor(Action<ProductOfferingBuilder> declare)
+    protected OfferingReporter ReporterFor(Action<ProductOfferingBuilder> declare, string? operatorAudience = null)
     {
         var builder = new ProductOfferingBuilder().Product(_product);
         declare(builder);
-        return new(builder.Build(), Microsoft.Extensions.Logging.Abstractions.NullLogger<OfferingReporter>.Instance);
+        return new(
+            builder.Build(),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<OfferingReporter>.Instance,
+            Microsoft.Extensions.Options.Options.Create(new OfferingOptions { OperatorAudience = operatorAudience }));
     }
 
     /// <summary>

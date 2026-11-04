@@ -110,6 +110,7 @@ public class OutboxPublisher(IChronicleClient client, ILogger<OutboxPublisher> l
     async Task Publish(object publicEvent, EventContext context, ReactorDelivery delivery)
     {
         var eventStore = await client.GetEventStore(context.EventStore, context.Namespace);
+        using var audience = string.IsNullOrWhiteSpace(options.Value.CollectorAudience) ? null : EventTags.Audience(options.Value.CollectorAudience);
         var result = await eventStore.GetEventSequence(EventSequenceId.Outbox).AppendOnce(
             context.EventSourceId,
             publicEvent,

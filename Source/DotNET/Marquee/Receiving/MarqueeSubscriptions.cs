@@ -70,6 +70,19 @@ public class MarqueeSubscriptions(MarqueeInbox inbox, IOptions<MarqueeOptions> o
     public static EventStoreSubscriptionId SubscriptionFor(EventStoreName authoringStore) => new($"marquee-{authoringStore.Value}");
 
     /// <summary>
+    /// Narrows a subscription to the events addressed to this product, when it has an audience.
+    /// </summary>
+    /// <param name="subscription">The subscription being defined.</param>
+    /// <param name="audience">The product's audience; <see langword="null" /> or blank leaves the subscription unfiltered.</param>
+    public static void FilterByAudience(IEventStoreSubscriptionBuilder subscription, string? audience)
+    {
+        if (!string.IsNullOrWhiteSpace(audience))
+        {
+            subscription.ForAudience(audience);
+        }
+    }
+
+    /// <summary>
     /// Observes the inbox of every authoring store, unless it already does.
     /// </summary>
     /// <param name="eventStore">The event store in the product's own namespace.</param>
@@ -121,6 +134,8 @@ public class MarqueeSubscriptions(MarqueeInbox inbox, IOptions<MarqueeOptions> o
                     {
                         subscription.WithEventType(eventStore.EventTypes.GetEventTypeFor(eventType).Id);
                     }
+
+                    FilterByAudience(subscription, options.Value.SubscribeForProduct ? options.Value.Product.Value : null);
                 });
 
             lock (_lock)

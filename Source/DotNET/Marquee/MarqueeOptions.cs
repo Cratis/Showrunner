@@ -24,6 +24,15 @@ public class MarqueeOptions
     public IEnumerable<EventStoreName> AuthoringStores { get; set; } = ["Direct"];
 
     /// <summary>
+    /// Gets or sets whether Marquee subscribes to the outbox of each authoring store for this product's audience only (the
+    /// value of <see cref="Product"/>), so it receives the announcements authored for this product and nothing meant for
+    /// another product on the same authoring store. Turn it on only when the authoring side addresses announcements to
+    /// products (<c>MarqueeAuthoringOptions.AddressToProducts</c>), or nothing arrives. Defaults to <see langword="false" />:
+    /// the subscription is unfiltered, as before audiences.
+    /// </summary>
+    public bool SubscribeForProduct { get; set; }
+
+    /// <summary>
     /// Gets or sets how often Marquee makes sure the product is subscribed to the authoring stores and observes their
     /// inbox. Everything it acts on is durable, so a round that fails is retried at the next one. Defaults to one minute.
     /// </summary>

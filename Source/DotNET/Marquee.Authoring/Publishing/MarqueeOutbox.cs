@@ -5,6 +5,7 @@ using Cratis.Chronicle;
 using Cratis.Chronicle.EventSequences;
 using Cratis.Chronicle.Reactors;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Cratis.Showrunner.Marquee.Authoring.Publishing;
 
@@ -31,8 +32,9 @@ namespace Cratis.Showrunner.Marquee.Authoring.Publishing;
 /// </remarks>
 /// <param name="client">The Chronicle client, to reach the event log and the outbox of the namespace of the event.</param>
 /// <param name="logger">The logger.</param>
+/// <param name="options">The <see cref="MarqueeAuthoringOptions"/>; <see langword="null" /> addresses nothing.</param>
 [Reactor(Id)]
-public class MarqueeOutbox(IChronicleClient client, ILogger<MarqueeOutbox> logger) : IReactor
+public class MarqueeOutbox(IChronicleClient client, ILogger<MarqueeOutbox> logger, IOptions<MarqueeAuthoringOptions>? options = null) : IReactor
 {
     /// <summary>
     /// The stable identity of the reactor; its position in the event log and its idempotency keys hang on it.
@@ -103,6 +105,7 @@ public class MarqueeOutbox(IChronicleClient client, ILogger<MarqueeOutbox> logge
         }
 
         var publicEvent = publication(authored);
+        using var audience = options?.Value.AddressToProducts == true ? EventTags.Audience(authored.Product.Value) : null;
         var result = await eventStore.GetEventSequence(EventSequenceId.Outbox).AppendOnce(
             new EventSourceId(authored.Product.Value),
             publicEvent,

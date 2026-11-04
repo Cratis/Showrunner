@@ -53,6 +53,19 @@ public class DeskSubscriptions(DeskEventTranslator translator, IOptions<UsherOpt
     public static EventSequenceId InboxFor(EventStoreName deskStore) => new($"{EventSequenceId.InboxPrefix}{deskStore.Value}");
 
     /// <summary>
+    /// Narrows a subscription to the events addressed to this application, when it has an audience.
+    /// </summary>
+    /// <param name="subscription">The subscription being defined.</param>
+    /// <param name="audience">The application's audience; <see langword="null" /> or blank leaves the subscription unfiltered.</param>
+    public static void FilterByAudience(IEventStoreSubscriptionBuilder subscription, string? audience)
+    {
+        if (!string.IsNullOrWhiteSpace(audience))
+        {
+            subscription.ForAudience(audience);
+        }
+    }
+
+    /// <summary>
     /// Observes the inbox of every desk store in a namespace, unless it already does.
     /// </summary>
     /// <param name="eventStore">The event store of the namespace.</param>
@@ -110,6 +123,8 @@ public class DeskSubscriptions(DeskEventTranslator translator, IOptions<UsherOpt
                     {
                         subscription.WithEventType(eventStore.EventTypes.GetEventTypeFor(eventType).Id);
                     }
+
+                    FilterByAudience(subscription, options.Value.Audience);
                 });
 
             lock (_lock)

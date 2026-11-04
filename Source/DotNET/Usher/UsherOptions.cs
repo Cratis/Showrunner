@@ -26,6 +26,20 @@ public class UsherOptions
     public IEnumerable<EventStoreName> DeskStores { get; set; } = ["Direct"];
 
     /// <summary>
+    /// Gets or sets the audience that identifies this application to its desks. When set, Usher subscribes to the outbox of
+    /// each desk store for this audience only, so a desk that serves several applications reaches this one with what it
+    /// addresses to it. Defaults to <see langword="null" />: the subscription is unfiltered, as before audiences.
+    /// </summary>
+    public string? Audience { get; set; }
+
+    /// <summary>
+    /// Gets or sets the audience that identifies the desk the application reports to. When set, everything Usher
+    /// publishes to the desk is addressed to it, so the desk can subscribe to this application's outbox for its own
+    /// audience. Defaults to <see langword="null" />: nothing is addressed, as before audiences.
+    /// </summary>
+    public string? DeskAudience { get; set; }
+
+    /// <summary>
     /// Gets or sets the version of the application, recorded with errors the backend captures. Defaults to
     /// <see cref="ApplicationVersion.NotSet"/>, which means the informational version of the entry assembly, without
     /// its build metadata (the part after <c>+</c>).

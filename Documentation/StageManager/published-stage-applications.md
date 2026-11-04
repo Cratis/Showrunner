@@ -5,6 +5,17 @@ description: Run an exported Stage application package on the generic Stage runt
 
 A published Stage application is the generic Stage runtime image (`cratis/stage:<runtime version>`) in published mode, with an application package mounted into it. A `Performance` runs one when `application.published` is set. Nothing is built per application: a new version is a new package ConfigMap, and the image changes only when the runtime does.
 
+A published application needs `authProxy.enabled` and `ingress.hosts` (Stage answers only the hosts it is published under) and runs one replica. It does not take a `chronicle` or `productionRef`: Stage hosts its own Chronicle kernel in the container. `onboarding` is not supported for it.
+
+Prepare these inputs before using the manifest:
+
+- Prepare the [environment and secrets](./environments-and-secrets.md): supply the environment file in its ConfigMap and any passphrase in the referenced Secret, and make the sign-in provider's values available for Stage Manager to resolve.
+- Export the Stage package into an immutable ConfigMap in the Performance's namespace, with one ConfigMap per version. The archive goes in `binaryData` under `package.tar.gz` unless you set `key`; the ConfigMap must fit within 1 MiB.
+- Provision MongoDB with a separate database for this application, and put its connection string in the Secret named by `storageConnectionSecretRef`. The publisher owns this database; Stage Manager does not provision it.
+- Configure AuthProxy, the ingress hosts and `trustedProxies` for your cluster. AuthProxy has its own pods, so use their pod network, not an assumed copy of the example CIDR. The cluster needs a network plugin that enforces NetworkPolicy.
+- Prepare the cert-manager issuer named by `tlsIssuer` if you use it.
+- If you keep the optional `notes` section shown below, have the collector configuration and token Secret ready too.
+
 ```yaml
 apiVersion: showrunner.cratis.io/v1alpha1
 kind: Performance
@@ -46,7 +57,7 @@ spec:
     until: 2026-12-31T00:00:00Z      # or permanent: true; omit for permanent
 ```
 
-A published application needs `authProxy.enabled` and `ingress.hosts` (Stage answers only the hosts it is published under) and runs one replica. It does not take a `chronicle` or `productionRef`: Stage hosts its own Chronicle kernel in the container. `onboarding` is not supported for it. Like every Performance it is never half applied: when the package, the storage Secret, the Notes token Secret or the environment is not there, the phase is `Blocked` and the conditions `PackageAvailable`, `StorageConnection`, `NotesCollectorToken` and `EnvironmentComplete` say which.
+Like every Performance it is never half applied: when the package, the storage Secret, the Notes token Secret or the environment is not there, the phase is `Blocked` and the conditions `PackageAvailable`, `StorageConnection`, `NotesCollectorToken` and `EnvironmentComplete` say which.
 
 ## The package
 
@@ -62,7 +73,7 @@ The operator does not run MongoDB for a published application. Stage Manager tak
 
 AuthProxy is the only public entry point, as for every Performance. It signs users in and forwards each request to the application with the `x-ms-client-principal*` headers. Stage believes those headers only from the addresses in `trustedProxies` and strips them from any other caller.
 
-AuthProxy runs as its own Deployment, so Stage sees the address of an AuthProxy pod: set `trustedProxies` to the pod network of the cluster (for example `10.244.0.0/16` on kind). That is safe because the operator also creates the NetworkPolicy `<name>-app`, which lets only the AuthProxy pods of the same Performance connect to Stage's port 9090. Nothing else in the cluster can reach Stage, and Chronicle's port 35000 is never exposed by a Service or the Ingress. The cluster needs a network plugin that enforces NetworkPolicy.
+AuthProxy runs as its own Deployment, so Stage sees the address of an AuthProxy pod: set `trustedProxies` to the pod network of the cluster (for example `10.244.0.0/16` on kind). The operator also creates the NetworkPolicy `<name>-app`, which lets only the AuthProxy pods of the same Performance connect to Stage's port 9090. With NetworkPolicy enforcement, nothing else in the cluster can reach Stage. Chronicle's port 35000 is never exposed by a Service or the Ingress.
 
 The Ingress routes every host to AuthProxy and nothing else, so `/scalar`, `/openapi`, `/workbench`, `/read-models`, `/stage/load` and `/stage/semantic` are not reachable from outside, and published mode does not map them in the first place.
 
@@ -74,20 +85,22 @@ With `notes` set, the application hosts the Notes backend and sends notes over H
 
 ## Rollouts
 
-A release is the application `version`, the runtime `image` and the package ConfigMap. Changing any of them rolls out. The application Deployment stops the old pod before it starts the new one (`strategy: Recreate`), and readiness is checked on `/stage/status`.
+Stage runs its Chronicle kernel in-process against the application's database, so two pods must never run at once: a rollout stops the application briefly, until the new pod is ready. A rollback is a rollout too.
+
+A release is the application `version`, the runtime `image` and the package ConfigMap. Changing any of them starts a rollout: the application Deployment stops the old pod before it starts the new one (`strategy: Recreate`), and readiness is checked on `/stage/status`.
 
 - When the new release is ready, `status.versions` gets an entry with outcome `RolledOut` and `status.runningVersion` is the new version.
 - When it is not ready within `rolloutTimeoutSeconds` (300), `status.versions` gets an entry for it with outcome `Failed` and a `reason`, another for the previous release with outcome `RolledBack`, and the previous image and package are deployed again. The condition `RolloutSucceeded` is `False`, `runningVersion` is the old version and the phase can be `Ready`.
 - A release that failed is not tried again while the spec asks for it. Ask for something else, such as a new package ConfigMap, to try again.
 - A first release that never becomes ready is recorded as `Failed` and stays deployed, because there is nothing to roll back to.
 
-`status.versions` keeps the last twenty entries, the newest last. Stage's own data stays in the storage the Secret names.
+A `Ready` phase alone does not mean the requested release succeeded: the previous release can be ready after a rollback. Check readiness and `status.runningVersion`, then look in `status.versions` for the requested combination of version, runtime image and package ConfigMap. A `RolledOut` entry records success; a `Failed` entry followed by `RolledBack` records restoration of the previous release.
 
-Stage runs its Chronicle kernel in-process against the application's database, so two pods must never run at once: a rollout stops the application briefly, until the new pod is ready. A rollback is a rollout too.
+`status.versions` keeps the last twenty entries, the newest last. Stage's own data stays in the storage the Secret names.
 
 ## Lifetime
 
-`lifetime` is either `permanent: true` or `until`, and applies to any Performance. When `until` passes:
+`lifetime` is either `permanent: true` or `until`, and applies to any Performance, ordinary or published. When `until` passes:
 
 1. The Ingress is deleted, so the public route is gone.
 2. Every Deployment is scaled to zero.

@@ -5,6 +5,16 @@ description: A Performance runs one application and environment, with AuthProxy 
 
 A `Performance` is one application in one Cratis environment. It runs the application, its AuthProxy when the application has `authentication`, and its own Ante when the application has `onboarding`: exactly one Ante per Performance, not one per Chronicle or per Production.
 
+Prepare the [environment and secrets](./environments-and-secrets.md) before using the manifest. The example names an environment ConfigMap and an existing Chronicle connection Secret; it does not create those inputs. A passphrase environment also needs the referenced passphrase Secret. For onboarding, prepare the legal ConfigMap with `terms.md` and `privacy.md`, and supply `ante.mongodb.server` in the environment.
+
+The keys needed per provider kind are the ones AuthProxy's application contract requires: `tenantId`, `clientId` and `clientSecret` for `EntraId`; `authority`, `clientId` and `clientSecret` for `OpenId`; `clientId` and `clientSecret` for `GitHub`, `Google` and `Apple`. Each is addressed as `authentication.providers.<identity>.<key>`.
+
+## Which Chronicle
+
+Start with an existing Chronicle connection Secret named by `chronicle.connectionSecretRef`. It takes precedence over `productionRef`, as shown in the example below.
+
+`productionRef` reads the connection Secret name from the Production's status. Production reconciliation is not implemented yet, so do not rely on creating a Production to provision Chronicle or populate that status. Either reference mounts the connection Secret into the workloads as a file; it is never copied.
+
 ```yaml
 apiVersion: showrunner.cratis.io/v1alpha1
 kind: Performance
@@ -50,10 +60,6 @@ spec:
       name: letsencrypt              # a cert-manager ClusterIssuer
 ```
 
-## Which Chronicle
-
-`productionRef` reads the connection Secret name from the Production's status, which the Production reconciliation fills in once it exists. Until then, or when you run your own Chronicle, name an existing Secret with `chronicle.connectionSecretRef`. Either way the Secret is mounted into the workloads as a file; it is never copied.
-
 ## What is created
 
 For a Performance named `crm`:
@@ -75,7 +81,7 @@ Ante gets its own event store, `ante-<name>` by default, so two Performances on 
 
 Nothing is created or changed until everything the Performance needs is in hand: a valid spec, the Chronicle connection, the resolved environment and every environment key the providers and onboarding need. When something is missing the phase is `Blocked`, the missing keys are listed in `status.missingEnvironmentKeys`, a condition says why, and the Deployments that already run are left as they are.
 
-The keys needed per provider kind are the ones AuthProxy's application contract requires: `tenantId`, `clientId` and `clientSecret` for `EntraId`; `authority`, `clientId` and `clientSecret` for `OpenId`; `clientId` and `clientSecret` for `GitHub`, `Google` and `Apple`. Each is addressed as `authentication.providers.<identity>.<key>`.
+Use the condition to identify the missing input, supply the referenced resource or environment key, then inspect the status again.
 
 ## Status
 
@@ -90,11 +96,15 @@ The keys needed per provider kind are the ones AuthProxy's application contract 
 | `expiresAt`, `dataRetainedUntil` | When a [lifetime](./published-stage-applications.md#lifetime) ends, and until when the publisher should keep the data |
 | `resourceUsage`, `currentPeriodUsage`, `lastPeriodUsage` | CPU and memory of the pods, accumulated from `metrics.k8s.io` |
 
+After the workloads are applied, `Progressing` means one or more enabled component Deployments are not ready; `Ready` means they are all ready. Use `ApplicationReady`, `AuthProxyReady` and `AnteReady` to see which enabled component is still waiting. `publicUrl` reports the ingress address; it does not confirm DNS, TLS or sign-in.
+
 Conditions and the status never contain a secret value.
 
 ## Application, lifetime and usage
 
-`application.published` runs the application as a published Stage application instead of an image you built; see [Run a published Stage application](./published-stage-applications.md). `lifetime` (`permanent: true`, or `until`) applies to every Performance: at `until` the workloads are scaled to zero, the Ingress is removed and the phase is `Expired`. Usage is sampled from the metrics API on every reconciliation, which is every 30 seconds for a published application.
+`application.published` runs the application as a published Stage application instead of an image you built; see [Run a published Stage application](./published-stage-applications.md). It is an alternative application path, not a further step in deploying an ordinary image.
+
+`lifetime` (`permanent: true`, or `until`) applies to every Performance: at `until` the workloads are scaled to zero, the Ingress is removed and the phase is `Expired`. The shared [lifetime reference](./published-stage-applications.md#lifetime) covers retention and resuming a Performance as well as expiry. Usage is sampled from the metrics API on every reconciliation, which is every 30 seconds for a published application.
 
 ## Signing keys
 

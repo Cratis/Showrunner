@@ -1,6 +1,6 @@
 ---
 name: cratis-screenplay-toolchain
-description: "How to run and check Cratis Screenplay `.play` models: locating the model, choosing the standalone `screenplay` tool or the `cratis` CLI, the exact command behind each verdict V1 to V5 and what a pass looks like, the executable and renderable subsets, reading PLAY, STAGE and CLI-RENDER diagnostics, traps, and a compiled cheat-sheet. Use when choosing a compiler, running or reading a verdict, fixing a diagnostic, or deciding whether syntax binds or renders. Not for: what to model or the phase workflow (use `cratis-screenplay-modeling-lifecycle`), the MCP editing loop (use `cratis-screenplay-model-authoring`), rendering workflow (use `cratis-screenplay-render-and-gap-fill`)."
+description: Use when selecting a Screenplay compiler, running verdict checks or interpreting PLAY, STAGE and CLI diagnostics. Not for modeling phase decisions, AST editing proposals or the end-to-end rendering workflow.
 license: MIT
 ---
 <!-- cratis-ai-managed: skills/cratis-screenplay-toolchain/SKILL.md -->
@@ -115,9 +115,9 @@ with ordered imports means future files need explicit imports.
   filters, opaque `scoped to` and a `by` block on a list query remain PLAY0268; a `performer` query is an opaque read left out of the executable model (PLAY0270; [version gate](references/executable-subset.md#code-attachments-what-binds-what-never-does)). Read
   read-surface [equality filters](../cratis-screenplay-read-surface/references/equality-filters.md).
   Pending handlers beside unconditional productions bind as described commands (v23),
-  but reached bodies are Unsupported; attached file/inline handlers refuse PLAY0800
-  and require constrained implementation attachments (code gap-fill, not future ESM
-  admission).
+  but reached bodies are Unsupported; attached file/inline handlers bind the same way
+  beside unconditional `produces` with a resolved body and otherwise
+  refuse PLAY0800.
   Requires Screenplay 4.210.0 (`screenplay --version`); older binders use PLAY0268 for this refusal. Read `arguments.subject`, not the message, for the command.
   Eligible protected reads opt into v25; legacy reads and `concurrency` retain PLAY0271.
   Concept compliance binds as v13 (precise refusals: command-surface `references/compliance.md`);

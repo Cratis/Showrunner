@@ -297,11 +297,11 @@ Routes do not by themselves select v17: redelivery executes as v17 (Requires Scr
 
 | Code | Severity | Meaning / fix |
 | --- | --- | --- |
-| PLAY0560 | E | Alternatives on a non-item trigger; only click/double click/select admit them. |
+| PLAY0560 | E | Alternatives on a non-item trigger; only click, double click, select or change admit them. |
 | PLAY0561 | E | Alternatives mixed with plain actions or `where`; choose one form. |
 | PLAY0562 | E | Empty branch; supply a nonempty action list. |
 | PLAY0563 | E | One-line labeled-action `when … execute …` in an interaction; use an indented list. C# offers a typed repair. |
-| PLAY0564 | W/I | Item-trigger opaque `where` deprecated: a strict item condition warns with a C# repair to one `when`, no fallback; other text is information with no repair. Other triggers unchanged. |
+| PLAY0564 | W/I | Item-trigger opaque `where` deprecated: a strict item condition warns with a C# repair to one `when`, no fallback; other text is information with no repair. Other triggers unchanged, including `change`, which keeps opaque `where`. |
 
 PLAY0563/0564 repairs need individual review and canonical formatting, refuse
 comment loss and do not support pinned evidence. TypeScript diagnoses but does
@@ -426,7 +426,7 @@ refusal reasons. Read [language admission](language-admission.md) before changin
 | PLAY0787 (W) | Exact deprecated Studio text-rule pattern; repair to literal rule or equality, preserving message/severity |
 | STAGE-ESM-043 | Atomic mode not realized in admitted v22–v27; retain declaration and gap-fill (v22 admission Requires Stage 4.139.0; older Stage reports -016) |
 | STAGE-ESM-047 | Single-instance query by composite key parts (v27) in the renderer, until Chronicle can look up composite keys (Chronicle#4265); keep the query, gap-fill |
-| STAGE-ESM-048 | Read model with several key parts, or projection keyed by parts (v27), in the renderer or legacy syntax engine; keep the model, gap-fill |
+| STAGE-ESM-048 | Read model with several key parts, or projection keyed by parts (v27), in the renderer or legacy syntax engine; also a DateTime part or a decimal part (`Decimal` or concept over `Decimal`, replay can split `1.0`/`1.00`; lifts with Stage#847 once Chronicle#5427 lands). Keep the model, gap-fill |
 | STAGE-ESM-044 | Renderer refuses a protected read despite v25 admission: any protected read in a bundle that predates protected-read rendering, afterwards only shapes it cannot preserve (constrained events, read paths in `produces when`, optional/collection/composite/mistyped mapping targets, freshness scopes), naming the reason; the legacy Host/structural runner refuse the preamble. Semantic Host/executor support is separate; keep protection and gap-fill generated-app scope |
 | STAGE-ESM-045 | Non-Error protected requirement; semantic Host/executor refuse before execution, including reaction-invoked commands; keep severity and report Unsupported |
 | STAGE-IMPL-002 | Described handler body not realized by Stage, even Stub mode; no stubs emitted |
@@ -444,12 +444,12 @@ Requires Stage 4.129.0 for semantic Host/executor protected reads; older engines
 
 ## Binding (V2 and V3) - see `executable-subset.md` for the full table
 
-Requires Screenplay 4.210.0 (`screenplay --version`) for PLAY0800 and its required typed `subject`; older binders attribute attached command handlers to PLAY0268. Other PLAY0268 refusal families are unchanged.
+Requires Screenplay 4.210.0 (`screenplay --version`) for PLAY0800 and its required typed `subject`; older binders attribute attached command handlers to PLAY0268. From Screenplay 4.250.0 an attached handler beside unconditional `produces` with a resolved body binds instead. Other PLAY0268 refusal families are unchanged.
 
 | Code | Meaning | Fix |
 |---|---|---|
 | PLAY0268 | construct not representable in a supported ESM version yet (`executable-subset.md` lists unsupported query shapes, protected enum/identity concepts, read paths without opt-in or in `produces when`, Uuid ordering, different Uuid concepts and Uuid rules, and older bundled-compiler limits) | stay in design mode, or change the construct if the domain allows; never strip `pii`/authorization |
-| PLAY0800 | error `CommandHandlerRequiresAttachment`: a file/inline command handler requires a constrained implementation attachment; required typed `subject` identifies the command | permanent limitation: gap-fill the slice in code, not by waiting for ESM admission; hosts switch on the code and read `arguments.subject`, never match the message |
+| PLAY0800 | error `CommandHandlerRequiresAttachment`: a file/inline command handler has no unconditional `produces` result contract or no resolved, nonempty, language-tagged body; required typed `subject` identifies the command | declare unconditional `produces` beside a resolved body, split variable outcomes into separate commands, or gap-fill the slice in code; hosts switch on the code and read `arguments.subject`, never match the message |
 | PLAY0269 / 0270 | UI deferred / authoring metadata (I) | none |
 | PLAY0271 | legacy `reads` or a `concurrency` block keeps its legacy meaning and cannot bind (error) | opt eligible command reads into v25 with reviewed preamble repair; `concurrency` remains unbound; uniqueness uses a constraint, target realization stays separate |
 | PLAY0273 | incoherent: ambiguous `for`, property not on event revision, operand type mismatch, derived `$eventContext` path, unparsable date literal or offset-less DateTime literal in an admitted v26 comparison, or a Uuid comparison literal that is not lowercase hyphenated (v28) | fix the reference or literal; DateTime needs offset/Z; Uuid literals are lowercase hyphenated |

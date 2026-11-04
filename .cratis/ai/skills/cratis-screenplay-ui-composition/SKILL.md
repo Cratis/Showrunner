@@ -1,6 +1,6 @@
 ---
 name: cratis-screenplay-ui-composition
-description: Compose the user interface of a Cratis Screenplay `.play` model — `layout` and responsive `arrangement`, screen/dialog templates, component data-context bindings, exposed template configuration, command forms and columns, navigation contributions, application navigation regions (topbar/sidebar, module inherit/extend/override), toolbar slice buttons, blueprint template references, sample data packs, hierarchical outlets/routes, toolbar dialogs, package/icon selection, interaction `behavior`/`on`/`uses` wiring, `ui profile` (root template, shell options, appearance, new screens default), `theme`, localized `$strings`, and `file` references. Use when declaring the application shell, reusable screen shapes, component/package configuration, command forms, navigation/toolbars, click or submit behavior, or theming. Do not use for a screen's own data and actions.
+description: Use when declaring Screenplay shells, reusable templates, forms, navigation, interaction wiring or themes. Not for a screen's own query data and action contract; use cratis-screenplay-read-surface.
 license: MIT
 ---
 <!-- cratis-ai-managed: skills/cratis-screenplay-ui-composition/SKILL.md -->
@@ -41,8 +41,8 @@ Every construct on this page is deferred from the executable model with
 information `PLAY0269`: it never blocks binding, and it is not evidence that a
 target renders it.
 
-The screens-release surface adds component data-context bindings, exposed template
-configuration, package/icon catalogs, manual form columns, hierarchical outlets,
+The screens-release surface adds component data-context bindings,
+exposed template configuration, package/icon catalogs, manual form columns, hierarchical outlets,
 routes, toolbars and dialog destinations, each with a separate support level
 (authoring accepted, executable admitted, runtime implemented). Discover the
 installed shape through MCP `syntax-schema`; details:
@@ -203,6 +203,9 @@ capability gap, never a flat-list fallback; Studio production proof is separate.
 
 ## The application shell: regions, slice buttons, blueprint references, sample data
 
+This covers application navigation regions (topbar/sidebar, module inherit/extend/override)
+and toolbar slice buttons alongside blueprint references and sample data.
+
 The shell's navigation is declared in the `layout` (`navigation topbar` / `navigation sidebar`, with `logo` and nested
 `item` lines) and each `module` states how it relates to a region: **inherit** (the default), **extend** (the
 application's items plus its own) or **override** (its own only). Toolbars gain `button <id> title "<text>" slice
@@ -241,9 +244,17 @@ and [guarded interactions](references/guarded-interactions.md).
 
 Guarded alternatives and `where` deprecation:
 [guarded interactions](references/guarded-interactions.md).
+Read [change alternatives](references/change-alternatives.md) when a component's
+`on change` should choose an action list by the changed item, such as a kanban move.
 
 Read [interaction example](references/interaction-example.md) when wiring a
 named confirmation behavior and an inline refresh to the same screen.
+
+State every plain and toolbar `action`'s subject: `for item` (the chosen record fills its
+inputs) or `for screen` (no row does). Omitted, the compiler infers it from types, and a
+create action on a list can bind the selected row's id. Read
+[action subjects](references/action-subjects.md) when adding a screen action or when
+PLAY0817-PLAY0821 appear.
 Scalar/named `returns` bind and reference-execute (ESM v7).
 Renderer generation/response limits: command-surface `references/generated-values-and-responses.md`.
 Screenplay resolves response names in form submit and execute success (Requires Screenplay 4.148.0 or later);

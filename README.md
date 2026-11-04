@@ -11,7 +11,7 @@
 
 **Usher** is the support part: it lets the users of an application report issues and hold support conversations with the people running it. It is a library an application hosts, not a service of its own — the backend package adds Usher's commands, queries and events to the host's Arc application and Chronicle event store, and the frontend packages give the host's React UI the generated proxies and components to drive them.
 
-Usher is in its earliest stage: the packages are scaffolded and published, but carry no behavior yet. See [Documentation](./Documentation/index.md).
+Usher covers reporting an issue, error capture, the conversation, time-limited support access through AuthProxy's on-behalf sessions and the exchange of events with a desk; see [Documentation](./Documentation/Usher/index.md).
 
 **Box Office** is the licensing part: trials, seats, modules, compute allowances and suspension, decided by the operator of a managed product and honored by the product. Its event contracts, its catalog of offers and prices, and a product's offering declaration and compute metering are in place; see [Documentation](./Documentation/BoxOffice/index.md).
 

@@ -1,6 +1,6 @@
 ---
 name: cratis-screenplay-command-surface
-description: Write the write side of a Cratis Screenplay `.play` model — the `command` block and its `identifier`, `reads`, `validate`, `authorize`, `produces`, `handler` and `concurrency` clauses, plus `event`, `constraint`, `policy`, `persona`, `concept`, `type` and `seed`. Use when declaring or changing a command, an event shape, a validation or authorization rule, an append-time constraint, or a strongly-typed value in Screenplay. Do not use for projections, queries, screens, captures or reactions.
+description: Use when writing Screenplay command, event, constraint, authorization or strongly-typed value syntax. Not for deciding stream boundaries or declaring queries, screens, projections and reactive edges.
 license: MIT
 ---
 <!-- cratis-ai-managed: skills/cratis-screenplay-command-surface/SKILL.md -->
@@ -106,11 +106,12 @@ fix to migrate. `--warnaserror` does not reject information diagnostics.
 properties, `reads`, `authorize`, `validate`, `produces`/`handler`, `concurrency`.
 Keep to it.
 
-A file/code `handler` cannot coexist with `produces` and fails binding
-with PLAY0800 (`CommandHandlerRequiresAttachment`): gap-fill the slice in code
-with a constrained implementation attachment, not by waiting for a new ESM version.
+A file/code `handler` beside unconditional `produces`, with a resolved nonempty body,
+binds as the v23 result contract: `produces` fixes the
+events and the body owns their property values. Without `produces`, with `produces ... when`,
+or with an unresolved body it fails binding with PLAY0800 (`CommandHandlerRequiresAttachment`).
 Read the required typed `subject` argument for the command, never parse the message.
-Requires Screenplay 4.210.0 (`screenplay --version`) for PLAY0800; older binders use PLAY0268 for this refusal. A pending `handler implementation` beside unconditional `produces`
+Requires Screenplay 4.250.0 (`screenplay --version`); 4.210.0 to 4.249.x refuse every attached handler with PLAY0800 and older binders use PLAY0268. A pending `handler implementation` beside unconditional `produces`
 is a described command (ESM v23): the body owns payload values only. Prefer plain
 `produces` for declarative logic. Read [described handlers](references/described-handlers.md)
 when logic needs prose, for the result contract, PLAY0695–0698, Unsupported

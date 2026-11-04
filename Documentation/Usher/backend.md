@@ -23,6 +23,7 @@ builder.AddUsher(usher =>
 | --- | --- | --- |
 | `ApplicationName` | none, required | The name the support desk sees on every report. A desk serves several applications and tells them apart by it. |
 | `DeskStores` | `["Direct"]` | The event stores of the support desks the application talks to. |
+| `Audience`, `DeskAudience` | unset | The audience that identifies this application to its desks (filters the subscription), and the audience of the desk (addresses what Usher publishes). See [Audience routing](../BoxOffice/audience-routing.md). |
 | `PollingInterval` | one minute | How often Usher looks for new tenant namespaces and for grants of access whose end has passed. A grant lapses at most this long after its end. |
 | `OnBehalf` | unset | How Usher answers AuthProxy's on-behalf sessions, in which support signs in as a reporter. Unset, support cannot. See [Access and support sessions](./access-and-sessions.md#configure-authproxy-and-usher-together). |
 

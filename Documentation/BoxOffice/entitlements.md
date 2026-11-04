@@ -19,6 +19,8 @@ builder.AddBoxOffice(boxOffice => boxOffice.OperatorStores = ["Direct"]);
 | --- | --- | --- |
 | `OperatorStores` | `["Direct"]` | The event stores of the operators whose decisions the product honors. |
 | `EventStore` | the application's own event store | The event store Box Office reads and records in. In an `AddCratis` or `AddCratisChronicle` host it is the application's own, without naming it; set it only to use another one. It also sets `OfferingOptions.EventStore`, which the [offering](./offering.md), its reporting and [metering](./metering.md) use. |
+| `ProductAudience` | unset | The audience that identifies this product; when set, the subscription to each operator store receives only what is addressed to it. See [Audience routing](./audience-routing.md). |
+| `OperatorAudience` | unset | The audience of the operator the product reports to; when set, every report is addressed to it. See [Audience routing](./audience-routing.md). |
 | `PollingInterval` | one minute | How often Box Office looks for tenant namespaces it does not serve yet. |
 | `EnforceModules` | `true` | Whether commands, queries and reactors of a module the tenant does not have are refused; see [Module gating](./gating.md). |
 | `MaximumWorkDuration` | 12 hours | How long admitted work holds a concurrency slot when nobody ends it; see [Compute admission](./compute-admission.md). |

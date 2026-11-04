@@ -4,6 +4,7 @@
     <Project Path="Source/DotNET/BoxOffice.Contracts/BoxOffice.Contracts.csproj" />
     <Project Path="Source/DotNET/BoxOffice/BoxOffice.csproj" />
     <Project Path="Source/DotNET/BoxOffice.Offering/BoxOffice.Offering.csproj" />
+    <Project Path="Source/DotNET/BoxOffice.Product/BoxOffice.Product.csproj" />
     <Project Path="Source/DotNET/Herald.Contracts/Herald.Contracts.csproj" />
     <Project Path="Source/DotNET/Herald/Herald.csproj" />
     <Project Path="Source/DotNET/StageManager/StageManager.csproj" />

@@ -36,6 +36,19 @@ public class OperatorSubscriptions(OperatorEventTranslator translator, IOptions<
     public static EventSequenceId InboxFor(EventStoreName operatorStore) => new($"{EventSequenceId.InboxPrefix}{operatorStore.Value}");
 
     /// <summary>
+    /// Narrows a subscription to the events an operator addresses to the product, when the product has an audience.
+    /// </summary>
+    /// <param name="subscription">The subscription being defined.</param>
+    /// <param name="productAudience">The product's audience; <see langword="null" /> or blank leaves the subscription unfiltered.</param>
+    public static void FilterByAudience(IEventStoreSubscriptionBuilder subscription, string? productAudience)
+    {
+        if (!string.IsNullOrWhiteSpace(productAudience))
+        {
+            subscription.ForAudience(productAudience);
+        }
+    }
+
+    /// <summary>
     /// Observes the inbox of every operator store in a namespace, unless it already does.
     /// </summary>
     /// <param name="eventStore">The event store of the namespace.</param>
@@ -93,6 +106,8 @@ public class OperatorSubscriptions(OperatorEventTranslator translator, IOptions<
                     {
                         subscription.WithEventType(eventStore.EventTypes.GetEventTypeFor(eventType).Id);
                     }
+
+                    FilterByAudience(subscription, options.Value.ProductAudience);
                 });
 
             lock (_lock)

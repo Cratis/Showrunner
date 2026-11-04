@@ -4,7 +4,10 @@
 using Cratis.Chronicle;
 using Cratis.Chronicle.EventSequences;
 using Cratis.Chronicle.Reactors;
+using Cratis.Showrunner.BoxOffice.Offering;
+using Cratis.Showrunner.BoxOffice.Offering.Declaration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Cratis.Showrunner.BoxOffice.Compute.Reporting;
 
@@ -13,9 +16,10 @@ namespace Cratis.Showrunner.BoxOffice.Compute.Reporting;
 /// </summary>
 /// <param name="client">The <see cref="IChronicleClient"/>.</param>
 /// <param name="logger">The logger.</param>
+/// <param name="options">The <see cref="OfferingOptions"/>, which name the audience of the operator the product reports to; <see langword="null" /> addresses nothing.</param>
 [Reactor(Id)]
 [OnceOnly]
-public class ComputeReporter(IChronicleClient client, ILogger<ComputeReporter> logger) : IReactor
+public class ComputeReporter(IChronicleClient client, ILogger<ComputeReporter> logger, IOptions<OfferingOptions>? options = null) : IReactor
 {
     /// <summary>
     /// The identity of the reactor.
@@ -54,6 +58,7 @@ public class ComputeReporter(IChronicleClient client, ILogger<ComputeReporter> l
         }
 
         var publicEvent = PublicEventFor(@event, new TenantId(context.Namespace.Value));
+        using var audience = options?.Value.AddressedToOperator();
         var result = await eventStore.GetEventSequence(EventSequenceId.Outbox).AppendOnce(
             organization,
             publicEvent,

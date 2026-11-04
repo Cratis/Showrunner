@@ -37,6 +37,8 @@ public static class BoxOfficeServiceCollectionExtensions
             .AddOptions<BoxOfficeOptions>()
             .Configure(options => configure?.Invoke(options))
             .Validate(options => options.OperatorStores.Any(), "Box Office needs at least one operator store: set BoxOfficeOptions.OperatorStores in AddBoxOffice.")
+            .Validate(options => options.ProductAudience is null || !string.IsNullOrWhiteSpace(options.ProductAudience), "BoxOfficeOptions.ProductAudience must name an audience, or be left unset to receive everything the operator stores publish.")
+            .Validate(options => options.OperatorAudience is null || !string.IsNullOrWhiteSpace(options.OperatorAudience), "BoxOfficeOptions.OperatorAudience must name an audience, or be left unset to report without addressing.")
             .Validate(options => options.PollingInterval > TimeSpan.Zero, "Box Office looks for new tenants at an interval: BoxOfficeOptions.PollingInterval must be more than zero.")
             .Validate(options => options.MaximumWorkDuration > TimeSpan.Zero && options.MaximumWorkDuration <= TimeSpan.FromDays(7), "Work admitted against a concurrency limit counts as running for at most a while: BoxOfficeOptions.MaximumWorkDuration must be more than zero and at most seven days.")
             .Validate(options => (options.CustomerPortalUrl is null) == string.IsNullOrEmpty(options.CustomerPortalSigningKey), "A customer portal needs both its address and the key links to it are signed with: set BoxOfficeOptions.CustomerPortalUrl and BoxOfficeOptions.CustomerPortalSigningKey together, or neither.")
@@ -51,6 +53,8 @@ public static class BoxOfficeServiceCollectionExtensions
                 {
                     offering.EventStore = boxOffice.Value.EventStore;
                 }
+
+                offering.OperatorAudience ??= boxOffice.Value.OperatorAudience;
             });
         services.TryAddSingleton<BoxOfficeEventStore>();
         services.TryAddSingleton(TimeProvider.System);

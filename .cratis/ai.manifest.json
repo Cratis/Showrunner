@@ -1,5 +1,5 @@
 {
-  "SourceRevision": "30b6c46dfe97f8d9d67fcc0185a00f35e76f024a",
+  "SourceRevision": "ffcdd0807adbbe1219dd3f4e14b9ed665e13acd4",
   "Files": [
     {
       "Source": "agents/backend-developer.md",
@@ -684,7 +684,7 @@
     {
       "Source": "hooks/scripts/cratis-guard-writes.sh",
       "Destination": "hooks/scripts/cratis-guard-writes.sh",
-      "Hash": "B03924F75FDFB1C2C6C4EECAD8E533F4743875C14D2FE8B447C45BF221858F0E"
+      "Hash": "3C1FECFAC2351AEC32310B81BDD3767A6EEE0EFB127BE82B8E7717EAE381AB78"
     },
     {
       "Source": "hooks/scripts/cratis-nuget-pins.txt",

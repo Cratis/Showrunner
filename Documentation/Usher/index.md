@@ -1,6 +1,6 @@
 ---
 title: Usher
-description: Usher is the Showrunner support part - issue reporting and support conversations for applications built on Cratis.
+description: Add issue reporting and support conversations to Cratis applications with Showrunner Usher backend libraries, public event contracts and React components.
 ---
 
 Usher is the support part of Showrunner. It lets the users of an application report issues and hold support conversations with the people running it, without the application building that machinery itself.

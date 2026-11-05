@@ -1,6 +1,6 @@
 ---
 title: React components
-description: The @cratis/showrunner.notes.react package - give the users of a React application one feedback button that knows what they are looking at, with NotesProvider, NotesButton, the component picker and the user's own feedback.
+description: Integrate Showrunner Notes in React with NotesProvider, feedback buttons, contextual dialogs and a component picker, plus users' own feedback history.
 ---
 
 `@cratis/showrunner.notes.react` is the user interface of Notes: a feedback button for the top bar and for dialogs, the dialogs that send a note, a way to point at a component, and the list of the user's own feedback. It is built on `@cratis/components` and the generated [frontend proxies](./frontend-proxies.md), so every dialog is a Cratis Components dialog bound to Notes' commands and queries.

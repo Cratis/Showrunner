@@ -2,9 +2,9 @@
   href: index.md
 - name: Install the operator
   href: install.md
+- name: Environments and secrets
+  href: environments-and-secrets.md
 - name: Run an application with a Performance
   href: performance.md
 - name: Run a published Stage application
   href: published-stage-applications.md
-- name: Environments and secrets
-  href: environments-and-secrets.md

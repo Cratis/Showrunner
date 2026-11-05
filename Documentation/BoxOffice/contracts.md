@@ -1,5 +1,5 @@
 ---
-title: Contracts
+title: Public event contracts in Cratis Showrunner Box Office
 description: The public events Box Office exchanges between an operator such as Direct and a managed product, their payloads, and how each replaces a v1 Admin contract.
 ---
 
@@ -62,6 +62,8 @@ An `OfferPrice` is an `Interval: BillingInterval` (`Monthly`, `Yearly`), an `Amo
 | `SeatTaken` | `Seats` | `OrganizationId` | `TenantId`; `Holder: Person` |
 | `SeatReleased` | `Seats` | `OrganizationId` | `TenantId`; `Holder: Person` |
 | `ActivitySummarized` | `Activity` | `OrganizationId` | `TenantId`; `Day: ActivityDay`; `ActiveUsers: ActiveUserCount`; `Sessions: SessionCount`; `SignIns: SignInCount` |
+| `TenantNotProvisioned` | `Tenants` | `OrganizationId` | `TenantId`; `Reason: NotProvisionedReason` |
+| `SeatHolderActive` | `Activity` | `OrganizationId` | `TenantId`; `Holder: Person`; `Day: ActivityDay` |
 | `ComputeDayClosed` | `Compute` | `OrganizationId` | `TenantId`; `Day: ComputeDay`; `Usage: IEnumerable<MeterUsage>` |
 | `ComputeDayCorrected` | `Compute` | `OrganizationId` | `TenantId`; `Day: ComputeDay`; `Usage: IEnumerable<MeterUsage>` |
 | `AllowanceExhausted` | `Compute` | `OrganizationId` | `TenantId`; `Meter: MeterId`; `Day: ComputeDay`; `Overage: OverageBehavior` |
@@ -72,6 +74,8 @@ An `OfferPrice` is an `Interval: BillingInterval` (`Monthly`, `Yearly`), an `Amo
 - `Usage` is empty when nothing was used. A `MeterUsage` pairs a `MeterId` with a `MeterQuantity` in the meter's unit.
 - `ComputeDayCorrected` replaces the usage of `ComputeDayClosed` for the same day; it carries the corrected totals, not a difference.
 - `ActivitySummarized` is published once a day per tenant.
+- `TenantNotProvisioned` says the product refused to create the tenant for a reason that retrying will not change, such as a name it already uses. A failure worth another attempt is not published; the product retries it. See [The product side](./product.md#creating-tenants).
+- `SeatHolderActive` says a person was active in the tenant on a day, in UTC. It is published at most once per person and day, so the operator can show when the person was last seen. See [The product side](./product.md#reporting-activity).
 
 ## Mapping from the v1 contracts
 

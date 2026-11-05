@@ -1,6 +1,6 @@
 ---
 title: Access and support sessions
-description: How a reporter grants support access to one issue, how support signs in as the reporter through AuthProxy's on-behalf sessions, how Usher answers AuthProxy's grant check and session notifications, and what the reporter sees of it.
+description: Configure Usher support access grants and AuthProxy on-behalf sessions, including endpoint verification, session records and reporter-visible activity.
 ---
 
 A reporter can let support act as them on one issue for a fixed time. Support then signs in as the reporter through [AuthProxy's on-behalf sessions](https://github.com/Cratis/AuthProxy/blob/main/Documentation/configuration/on-behalf-sessions.md), reproduces the problem with the reporter's own data and permissions, and everything support does is recorded as done by support on the reporter's behalf. The reporter sees every session and what was done in it, and can revoke the grant at any time.

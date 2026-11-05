@@ -1,15 +1,30 @@
 ---
-title: Box Office
-description: Box Office is the Showrunner part for licensing a managed product - trials, seats, modules, compute allowances and suspension - decided by the operator and honored by the product.
+title: "Box Office: licensing a managed product"
+description: Box Office lets a managed product enforce its operator's licensing decisions locally, from trial and seat access to modules and compute allowances.
 ---
 
-Box Office is the licensing part of Showrunner. The operator of a managed product, such as Direct, decides what each tenant may do: how long its trial runs, how many seats it has, which modules it has and how much compute it may use. The product honors those decisions and reports back what happened in it.
+Box Office is the licensing part of Showrunner: it lets a managed product enforce its operator's decisions about what each tenant may use. A tenant is a customer organization's space in the product; the operator decides its trial, seat capacity, module access and compute allowances.
 
-Box Office is a library set, not a service. The operator and the product exchange public events through Chronicle:
+Without a shared licensing contract, each product has to translate those decisions into its own access rules and reports. Box Office receives the operator's decisions through Chronicle and keeps them in the tenant's namespace, the tenant-specific area of the event store. Your application can check access there instead of calling the operator for each decision.
 
-- `Cratis.Showrunner.BoxOffice.Contracts` holds the public events both sides exchange; see [Contracts](./contracts.md).
-- `Cratis.Showrunner.BoxOffice` runs inside the product's own Arc and Chronicle process and honors the operator's decisions: it receives them, answers what a tenant may use, refuses commands from a tenant that is suspended and licenses seats; see [Receiving and entitlements](./entitlements.md), [Suspension and read-only tenants](./suspension.md), [Module gating](./gating.md), [Seat licensing](./seats.md) and [Compute admission](./compute-admission.md).
-- `@cratis/showrunner.boxoffice` is the generated TypeScript proxies for the product's frontend; see [Frontend proxies](./frontend-proxies.md).
-- `@cratis/showrunner.boxoffice.react` is the user interface: entitlements and module filtering, trial and suspension banners, the seats, usage and plan pages and the buttons that open the customer portal; see [React components](./react.md) and [The customer portal](./portal.md).
-- `Cratis.Showrunner.BoxOffice.Catalog` holds the offers the operator sells, their prices and the pricing arithmetic, and publishes the catalog to products; see [Catalog](./catalog.md).
-- `Cratis.Showrunner.BoxOffice.Offering` is what a product references: it declares what the product sells and reports it to the operator, see [Offering](./offering.md), and it measures compute per tenant and day, see [Metering compute](./metering.md).
+Box Office is a set of libraries, not a separate service. It runs inside the product's Arc and Chronicle application. The product still owns its tenant data and the work needed to create it.
+
+## Connect your product to its operator
+
+Start with [the product-side integration](./product.md). `Cratis.Showrunner.BoxOffice.Product` adds Box Office with `AddBoxOfficeProduct` and connects your tenant-creation code to the operator's registrations. It reports when a tenant is ready, provides seat and read-only checks, and reports who was active.
+
+The two sides exchange public events from `Cratis.Showrunner.BoxOffice.Contracts`. The [contracts reference](./contracts.md) explains which side publishes each event and how it identifies the tenant and organization.
+
+## Apply licensing decisions where work happens
+
+`Cratis.Showrunner.BoxOffice` turns the received decisions into entitlements: the seats, modules and allowances a tenant may use. [Receiving and entitlements](./entitlements.md) explains how a decision reaches the tenant and becomes available to your application.
+
+Use those entitlements to [control module access](./gating.md), [assign seats](./seats.md) and [admit compute work](./compute-admission.md). When a tenant is suspended or its trial closes without seats, [read-only enforcement](./suspension.md) refuses commands while leaving queries available. Work outside the command pipeline needs an explicit access check.
+
+Your frontend can explain that access to the person using the product. `@cratis/showrunner.boxoffice` provides [generated TypeScript proxies](./frontend-proxies.md); `@cratis/showrunner.boxoffice.react` supplies [React components](./react.md) for entitlements, module filtering, trial and suspension banners, and seats, usage and plan pages. [Customer portal buttons](./portal.md) take the person to the operator to manage their subscription.
+
+## Declare what the product sells
+
+`Cratis.Showrunner.BoxOffice.Offering` lets a product [declare its modules, meters and seat licensing](./offering.md) and report them to the operator. It also [meters compute per tenant and day](./metering.md), so the operator receives usage alongside the product's declaration.
+
+On the operator side, `Cratis.Showrunner.BoxOffice.Catalog` holds the offers for sale, their prices and pricing arithmetic, and publishes the catalog to products. See [Catalog](./catalog.md) when you need to define those offers rather than consume licensing decisions in a product.

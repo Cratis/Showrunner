@@ -51,7 +51,7 @@ Call `Send` from the decision point: the reactor for an issued invitation, or an
 The event log of the application gets, against `About`:
 
 1. `EmailQueued` when `Send` accepted the email. It holds the recipient and the values, marked as personal data, so erasing the subject erases them.
-2. `EmailAttemptFailed` for each delivery the server did not take, with when the next one happens.
+2. `EmailAttemptFailed` for a failed delivery that will be retried, with when the next one happens.
 3. `EmailSent`, or `EmailFailed` when the email will not be sent. These two are in [`Cratis.Showrunner.Herald.Contracts`](./event-reference.md); the application can project and react to them.
 
 ## Bounces

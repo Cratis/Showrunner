@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.Json;
 using Cratis.Chronicle;
 using Cratis.Chronicle.EventSequences;
+using Cratis.Showrunner.Notes.Collecting.Publishing;
 using Cratis.Showrunner.Notes.Collecting.Tenancy;
 using Microsoft.Extensions.Logging;
 
@@ -102,6 +103,9 @@ public class AppEventTranslator(IChronicleClient client, ILogger<AppEventTransla
         }
 
         var tenant = await client.GetEventStore(context.EventStore, @namespace);
+
+        // The private fact remembers which application sent the note, so the answer can be addressed back to it.
+        using var requester = ReplyAudience.Inbound(context);
         await Record(
             tenant,
             @namespace,

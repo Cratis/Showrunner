@@ -28,6 +28,12 @@ namespace Cratis.Showrunner.Notes.Collecting.Publishing;
 /// a replay does not even try. A refused append throws, so the partition fails and the publication is retried rather than
 /// lost.
 /// </para>
+/// <para>
+/// A reply is addressed to the application that sent the note when that application named itself: the private fact the
+/// translator recorded carries the application's <c>from</c> tag, and the public event is appended with it as its
+/// audience, so the application's subscription for its own audience receives it. A note from an application that did not
+/// name itself is answered unaddressed, as before audiences.
+/// </para>
 /// </remarks>
 /// <param name="client">The Chronicle client, to reach the outbox of the namespace the fact was recorded in.</param>
 /// <param name="logger">The logger.</param>
@@ -75,6 +81,7 @@ public class ResponsePublisher(IChronicleClient client, ILogger<ResponsePublishe
     async Task Publish(object publicEvent, EventContext context, ReactorDelivery delivery)
     {
         var eventStore = await client.GetEventStore(context.EventStore, context.Namespace);
+        using var audience = ReplyAudience.Address(await ReplyAudience.Resolve(eventStore, context));
         var result = await eventStore.GetEventSequence(EventSequenceId.Outbox).AppendOnce(
             context.EventSourceId,
             publicEvent,

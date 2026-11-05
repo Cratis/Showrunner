@@ -15,7 +15,8 @@ Audience routing is opt-in everywhere. Every option below defaults to unset, whi
 | Offering, default offering, started tenants (`OfferingDeclared`, `DefaultOfferingDeclared`, `TenantStartedOnOffer`) | product to operator | Addressed to the operator: `OperatorAudience`. |
 | Seat reports (`SeatTaken`, `SeatReleased`) and compute reports (`AllowanceExhausted`, `ComputeDayClosed`, `ComputeDayCorrected`) | product to operator | Addressed to the operator: `OperatorAudience`. |
 | Support desk traffic (Usher) | both | `UsherOptions.Audience` filters; `UsherOptions.DeskAudience` addresses. |
-| Notes published to a collector | application to collector | `NotesOptions.CollectorAudience` addresses; `NotesOptions.Audience` filters what comes back. |
+| Notes published to a collector | application to collector | `NotesOptions.CollectorAudience` addresses; `NotesOptions.Audience` filters what comes back and names the sender. |
+| Collector replies to a note | collector to application | Addressed automatically to the application that named itself with `NotesOptions.Audience`. |
 | Marquee announcements | authoring to a product | `MarqueeAuthoringOptions.AddressToProducts` addresses by product; `MarqueeOptions.SubscribeForProduct` filters. |
 
 Two kinds of traffic are left alone on purpose. `TenantRegistered` and `TenantProvisioned` are one-to-one between an operator and the product that owns the tenant, and the event source (the organization) already identifies the pair. The Notes HTTP relay moves one application's outbox to one collector and has no other recipient to tell apart. Note replies from the collector to an application are not addressed yet; see the limits below.
@@ -84,4 +85,5 @@ Chronicle's `[Audience]` on an event type makes an audience mandatory: appending
 
 - A subscription that changes its filter applies the new filter to events from then on; events already forwarded stay in the inbox.
 - Chronicle filters in the kernel, so the kernel has to be a version that supports filtered subscriptions.
-- Note replies from the collector (`OperatorAcknowledgedNote`, `OperatorAddressedNote`, `OperatorDeclinedNote`) are not addressed to the application that sent the note yet, so an application that sets `NotesOptions.Audience` receives none of them. Leave it unset until the collector addresses its replies.
+- A note carries the sending application's `NotesOptions.Audience` as a `from` tag. The collector keeps it on the private fact it records and addresses `OperatorAcknowledgedNote`, `OperatorAddressedNote` and `OperatorDeclinedNote` to it, so an application that sets `NotesOptions.Audience` receives the answers to its own notes. A note from an application that set no `Audience` is answered unaddressed, so an application that wants its subscription filtered must set `Audience`; a collector that serves several applications needs every one of them to set it.
+- Notes over the HTTP transport relays event content, not tags, so `from` does not reach the collector and its answers come back unaddressed. Audience routing for notes applies to the Chronicle transport.

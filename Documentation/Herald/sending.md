@@ -1,6 +1,6 @@
 ---
 title: Sending
-description: Send an email with IEmails, what the request contains, what is recorded and how a bounce is reported.
+description: Send Herald emails with IEmails, map recipients and template values, choose compliance subjects and understand queued records and bounce reporting.
 ---
 
 After [adding Herald to the application](./add-herald-to-an-application.md) and preparing the [invitation template](./templates.md) and any [images](./images.md), inject `IEmails` where the application decides to invite someone. The reactor below is an application excerpt, not a complete host or template setup.

@@ -1,6 +1,6 @@
 ---
 title: Compute admission
-description: How a product decides, before a unit of work starts, whether the tenant may run it - concurrency, the operator's allowance, the tenant's budget and what happens beyond them.
+description: Admit tenant compute work through Box Office using concurrency facts, operator allowances and tenant budgets, with explicit overage decisions.
 ---
 
 Metering says what a tenant used. Admission decides, before a unit of work starts, whether the tenant may start it. A product calls `IComputeAdmission.Admit` before it starts work, such as an agent run, and ends the work when it stops.

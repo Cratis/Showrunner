@@ -1,6 +1,6 @@
 ---
 title: Frontend proxies
-description: The @cratis/showrunner.boxoffice package - the generated TypeScript proxies for the product's commands and queries.
+description: Install and use @cratis/showrunner.boxoffice generated TypeScript proxies to call Box Office commands and queries from a product's frontend.
 ---
 
 `@cratis/showrunner.boxoffice` is the TypeScript side of `Cratis.Showrunner.BoxOffice`: the proxies Arc generates for its commands and queries. It has no components.

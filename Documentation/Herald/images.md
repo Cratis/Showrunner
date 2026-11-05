@@ -1,6 +1,6 @@
 ---
 title: Images
-description: Which images Herald embeds in an email, how a template refers to them, and why SVG is refused.
+description: Embed images in Herald email templates using cid references, configure the images folder and understand the security boundary that rejects SVG files.
 ---
 
 Images live in the images folder (`ImagesFolder`). A template refers to an image by its file name with the `cid:` scheme:

@@ -1,6 +1,6 @@
 ---
 title: Replace the banner or the dialog
-description: How to draw announcements yourself - give Marquee your own banner, dialog or Markdown renderer through its slots, or take the announcements with useAnnouncements and draw any surface.
+description: Customize Marquee announcements with banner, dialog and Markdown renderer slots, or use useAnnouncements to draw your own announcement surface.
 ---
 
 `<Marquee />` is made of three parts you can replace and one hook you can use instead. The windows, the order of dialogs, the acknowledgement and the safety of links stay in Marquee either way.

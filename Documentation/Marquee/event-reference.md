@@ -1,6 +1,6 @@
 ---
 title: Event reference
-description: Every event Marquee records - the public contract events and their generations, and the private events behind them.
+description: Reference Marquee's public announcement contract events, generation compatibility rules and private authoring, receiving and acknowledgement events.
 ---
 
 Marquee has two layers of events. The **contract events** are public: they travel between the authoring store and a product and are the compatibility promise. The **private events** are an implementation detail of each side, and are free to change as long as the contract holds. Payloads and shared types are in [Contracts](./contracts.md); this page lists the events and says what to do when one changes.

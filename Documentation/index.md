@@ -1,6 +1,6 @@
 ---
 title: Showrunner
-description: Showrunner is a set of ready-made product parts for Cratis applications, delivered as NuGet and npm packages.
+description: Equip Cratis applications with Showrunner packages for support, licensing, announcements, feedback and email, plus a Kubernetes deployment operator.
 ---
 
 Showrunner is a set of ready-made product parts for applications built on [Cratis](https://www.cratis.io): support, licensing, announcements, feedback and email, plus the Kubernetes operator that runs an application.

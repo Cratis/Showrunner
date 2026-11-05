@@ -1,6 +1,6 @@
 ---
 title: Transports
-description: How notes travel from an application to the receiving side and the answers travel back - Chronicle's own outbox and inbox in a shared kernel, or an HTTP relay when the application runs its own kernel - with the configuration, the endpoints and the security model.
+description: Configure Notes transport over a shared Chronicle kernel or HTTP relay, including feedback delivery, returned answers, collector endpoints and security.
 ---
 
 Notes moves two kinds of events: the application's notes to the receiving side, and the receiving side's answers back. The application chooses how with `NotesOptions.Transport`. Everything on each side of the transport is the same either way: the application records the same private facts, the collecting side records the same `…Received` facts, and the giver sees the same status.

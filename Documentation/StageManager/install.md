@@ -1,6 +1,6 @@
 ---
 title: Install the operator
-description: Install the Stage Manager operator with the cratis/showrunner-operator Helm chart, give it an identity for your secrets providers and see what it may do in the cluster.
+description: Install the Stage Manager Helm chart, configure secret-provider identities and review the operator's Kubernetes permissions and managed MongoDB options.
 ---
 
 The operator is published as a container image, `cratis/showrunner-operator`, and as a Helm chart of the same version, so a chart always installs the operator it was released with.

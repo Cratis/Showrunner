@@ -1,6 +1,6 @@
 ---
 title: Stage Manager
-description: Stage Manager is Showrunner's Kubernetes operator. A Performance runs an application, or a published Stage application, with its AuthProxy and its own Ante from a Cratis environment.
+description: Run Cratis applications with Showrunner's Stage Manager Kubernetes operator, using Performance resources for environment, AuthProxy and Ante deployment.
 ---
 
 Stage Manager is the Kubernetes operator of Showrunner. Unlike the other parts it is not a library an application hosts: it is a service you install in a cluster, and it owns the custom resources of the `showrunner.cratis.io` API group, version `v1alpha1`.

@@ -1,6 +1,6 @@
 ---
 title: React components
-description: The @cratis/showrunner.usher.react package - slot Usher into a React application with UsherProvider and the Usher buttons, open its dialogs from your own menus, replace its texts, and show an issue on a page of your own.
+description: Add Usher support dialogs and issue conversations to React with UsherProvider and buttons, customize localized texts and open reports from your own menus.
 ---
 
 `@cratis/showrunner.usher.react` is the user interface of Usher: the report a problem and report this error dialogs, the my issues side sheet with each issue's conversation, and two buttons that open them. It is built on `@cratis/components` and the generated [frontend proxies](./frontend-proxies.md), so every dialog is a Cratis Components dialog bound to Usher's commands and queries.

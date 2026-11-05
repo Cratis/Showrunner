@@ -1,6 +1,6 @@
 ---
 title: Notes
-description: Notes lets the users of an application give product feedback tied to exactly what they were looking at, and delivers it as events to the people building the application.
+description: Collect contextual product feedback with Showrunner Notes, linking user reports to screens, slices and components and delivering them as events to builders.
 ---
 
 Notes is the product feedback part of Showrunner. A user of an application gives a note about what is on screen, about slices they pick, about the screen itself or about one component, and can suggest a change to a presentation property of that component. The note carries where the user was: the module, feature and slice, the screen, the route, the open dialog and identifiers of model elements. The people building the application receive it as events, and the giver sees what became of it.

@@ -1,6 +1,6 @@
 ---
 title: React components
-description: The @cratis/showrunner.boxoffice.react package - slot Box Office into a React application with BoxOfficeProvider, hide navigation and pages of modules the tenant lacks, show trial and suspension banners, send people to the customer portal, and render the seats, usage and plan pages.
+description: Add Box Office React components for tenant module access, trial and suspension banners, customer portal links, and seats, usage and plan pages.
 ---
 
 `@cratis/showrunner.boxoffice.react` is the user interface of Box Office. It tells the signed-in user what their tenant may do, keeps the product from showing what the tenant has no module for, and gives the product's maintainers a seats page, a usage page and a plan page. It is built on `@cratis/components` and the generated [frontend proxies](./frontend-proxies.md), so every dialog and table is a Cratis Components one bound to Box Office's commands and queries.

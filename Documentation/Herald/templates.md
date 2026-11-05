@@ -1,6 +1,6 @@
 ---
 title: Templates
-description: One file per email kind and language, a manifest of the values an email accepts, and the constructs a template can use.
+description: Author Herald email manifests and language-specific templates, declare accepted values and follow supported rendering constructs and language rules.
 ---
 
 An email kind is a name such as `invitation` or `sign-up-declined`: lowercase letters, digits and dashes. The templates folder holds, for each kind, a manifest and one template per language:

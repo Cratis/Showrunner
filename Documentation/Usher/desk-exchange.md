@@ -1,6 +1,6 @@
 ---
 title: Exchanging events with a desk
-description: How Usher publishes the reporter's facts to a support desk, records the desk's answers in the right tenant, lapses grants of access, and what a desk must set up on its side.
+description: Exchange Usher events with support desks through Chronicle outboxes and inboxes, route answers to tenants and manage background access-grant expiry.
 ---
 
 `AddUsher` connects the application to the support desks named in `DeskStores` with no further code. The application publishes what the reporter does to its outbox, and records what the desk does as private `Support…` facts in the tenant's namespace. This page explains how that works, what a desk has to do on its side, and what to expect in operation. The events themselves and the mapping between public and private events are in [Contracts](./contracts.md).

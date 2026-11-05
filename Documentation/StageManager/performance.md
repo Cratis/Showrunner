@@ -1,6 +1,6 @@
 ---
 title: Run an application with a Performance
-description: A Performance runs one application and environment, with AuthProxy and its own Ante, reachable only through AuthProxy.
+description: Deploy a Cratis application with a Stage Manager Performance, preparing environment secrets, Chronicle connections, AuthProxy and optional Ante onboarding.
 ---
 
 A `Performance` is one application in one Cratis environment. It runs the application, its AuthProxy when the application has `authentication`, and its own Ante when the application has `onboarding`: exactly one Ante per Performance, not one per Chronicle or per Production.

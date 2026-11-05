@@ -1,6 +1,6 @@
 ---
 title: Acknowledging
-description: How a person acknowledges a dialog once, why a banner can not be acknowledged, and why looking is never recorded.
+description: Record a user's acknowledgement of a Marquee DialogOnce announcement in the tenant namespace, and distinguish explicit acknowledgement from viewing.
 ---
 
 An announcement shown with `Display.DialogOnce` is shown to a person until they acknowledge it. The acknowledgement is a fact: `AnnouncementAcknowledged(AnnouncementId, UserSubject)`, recorded in the **tenant's** namespace under the announcement's id, with the person as compliance subject. That is the one place where a tenant's own namespace holds anything about announcements; the announcements themselves are product-wide, see [Receiving](./receiving.md).

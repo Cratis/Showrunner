@@ -1,6 +1,6 @@
 ---
 title: How Marquee works
-description: How an announcement travels from the people who write it to the people who see it - authoring, the public contract, receiving, audiences and the React component.
+description: Follow a Marquee announcement from authoring through public event delivery to product audiences, client-side timing and the React display component.
 ---
 
 Marquee is built around one idea: an announcement is a fact that belongs to a **product**, not to a tenant, and it travels as a **public event** between two event stores. The people who write it and the people who read it do not share a database, a process or a deployment.

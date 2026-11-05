@@ -1,6 +1,6 @@
 ---
 title: Marquee
-description: Marquee delivers announcements from the people running a product to the people using it.
+description: Add product announcements with Showrunner Marquee libraries for authoring, public event delivery, audience targeting and React banners or dialogs.
 ---
 
 Marquee is the announcements part of Showrunner. The people running a product publish an announcement, such as a maintenance window or a new module, and the product shows it to the audience it names.

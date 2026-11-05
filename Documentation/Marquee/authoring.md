@@ -1,6 +1,6 @@
 ---
 title: Authoring
-description: The commands and query for writing announcements, the private events they record, how the outbox publishes them to products, and what happens when a withdrawal overtakes a publication.
+description: Host Marquee authoring commands and queries, record private announcement events and publish public contracts through an outbox that handles withdrawals.
 ---
 
 `Cratis.Showrunner.Marquee.Authoring` is the backend for the screen where the people running a product write announcements. It runs in the authoring application's own Arc and Chronicle process, as [Usher](../Usher/backend.md) does: an Arc command records a private event, and a reactor publishes it to products as one of the [contract events](./contracts.md).

@@ -1,6 +1,6 @@
 ---
 title: Frontend proxies
-description: The @cratis/showrunner.notes package - the generated TypeScript proxies for Notes' commands and queries.
+description: Call Showrunner Notes commands and queries with generated @cratis/showrunner.notes TypeScript proxies, without taking a dependency on a UI framework.
 ---
 
 Arc generates a TypeScript proxy for every command and query. Notes ships them in `@cratis/showrunner.notes`, with no UI framework dependency.

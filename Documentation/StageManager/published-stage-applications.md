@@ -1,6 +1,6 @@
 ---
 title: Run a published Stage application
-description: Run an exported Stage application package on the generic Stage runtime image with a Performance - its package, storage, sign-in through AuthProxy, Notes, rollouts with rollback, lifetime and usage.
+description: Deploy a published Stage package with a Performance on the shared runtime image, configuring storage, AuthProxy trust, Notes, rollouts and usage limits.
 ---
 
 A published Stage application is the generic Stage runtime image (`cratis/stage:<runtime version>`) in published mode, with an application package mounted into it. A `Performance` runs one when `application.published` is set. Nothing is built per application: a new version is a new package ConfigMap, and the image changes only when the runtime does.

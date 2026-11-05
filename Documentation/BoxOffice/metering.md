@@ -1,6 +1,6 @@
 ---
 title: Metering compute
-description: Measure a product's compute per tenant, meter and day from the product's own events, and report each day once it is closed, with a correction when usage arrives late.
+description: Meter tenant compute from product events with Box Office, close daily usage buckets and report corrections for sessions that finish after closure.
 ---
 
 `Cratis.Showrunner.BoxOffice.Offering` also measures what a tenant used. A meter reads the events the product already records, such as the end of a session. Box Office adds no second "session started" event.

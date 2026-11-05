@@ -1,6 +1,6 @@
 ---
 title: Collecting
-description: The receiving side of Notes, hosted by the builder of an application - how it reads the application's outbox, records each note in the tenant's namespace, answers it, and what the receiving system has to configure.
+description: Host Showrunner Notes Collecting to receive product feedback, store tenant-scoped notes and publish answers through configured event or HTTP transports.
 ---
 
 `Cratis.Showrunner.Notes.Collecting` is the receiving side. The builder of an application, such as Studio, hosts it in its own Arc and Chronicle process. It reads the notes the application publishes, records each note as a private fact in the namespace its `TenantId` names, and offers commands to acknowledge, address and decline a note that publish the answers back.

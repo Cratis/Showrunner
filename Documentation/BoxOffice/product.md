@@ -1,9 +1,11 @@
 ---
-title: The product side
-description: Everything a managed product does for its operator in one call - create the tenants the operator registers and report them ready, ask before giving a seat, go read-only, and report who was active.
+title: "Box Office: integrate a managed product"
+description: Add Box Office to an Arc and Chronicle product to provision tenants for its operator, check seat and read-only access, and report activity.
 ---
 
-`Cratis.Showrunner.BoxOffice.Product` is what an Arc and Chronicle application adds to be a managed product of an operator such as Direct. One call gives it the whole of its side of the contract, and the application writes only what is its own: creating a tenant.
+`Cratis.Showrunner.BoxOffice.Product` connects an Arc and Chronicle application to the operator that manages its tenants and licensing. Use it to receive tenant registrations, report when a tenant is ready, and check access from the licensing decisions already received by the product.
+
+In a host already configured with Arc and Chronicle, call `AddBoxOfficeProduct` and register your tenant-creation implementation:
 
 ```csharp
 builder.AddBoxOfficeProduct(options => options
@@ -12,7 +14,7 @@ builder.AddBoxOfficeProduct(options => options
 builder.Services.AddScoped<IProvisionTenants, ProvisionTenants>();
 ```
 
-`AddBoxOfficeProduct` adds Box Office itself, so a product calls it instead of `AddBoxOffice` and sets Box Office's options through `ConfigureBoxOffice`. The [Offering](./offering.md) stays as it was: the product calls `AddBoxOfficeOffering` for what it sells.
+`OperatorStores` names the operator's Chronicle event stores. `AddBoxOfficeProduct` adds Box Office itself, so use it instead of `AddBoxOffice` and pass Box Office's options through `ConfigureBoxOffice`. Your product still declares what it sells separately with `AddBoxOfficeOffering`; see [Offering](./offering.md).
 
 | The operator's need | What the product has |
 | --- | --- |
@@ -23,13 +25,13 @@ builder.Services.AddScoped<IProvisionTenants, ProvisionTenants>();
 | Report who was active | [The sign-in callback](#reporting-activity) and [`IReportActivity`](#reporting-activity) |
 | Hear that the trial ended, the seats changed or the organization is being deleted | Box Office [receives them](./entitlements.md); `IClosingTenants` is told of a closing tenant |
 
-Nothing here calls the operator. The operator's decisions arrive as public events and are kept in the tenant's own namespace; every answer is read from there.
+These access checks do not call the operator. Its decisions arrive as public events and are kept in the tenant's own Chronicle namespace. The product reads them there and sends reports back through its outbox.
 
 ## Creating tenants
 
-When a person registers an organization in the operator, it publishes `TenantRegistered`. The product creates the tenant and answers with `TenantProvisioned` under the same organization; the operator starts the trial's clock from that answer.
+`TenantRegistered` asks the product to create a tenant. Box Office calls your `IProvisionTenants` implementation and reports a successful result as `TenantProvisioned`, using the registration's organization as the event source. This separates a request to create a tenant from confirmation that it is ready.
 
-The product implements `IProvisionTenants` and registers it with its services. Box Office listens to the operator's inbox, calls it for each registration, and reports the answer:
+Register `IProvisionTenants` with your services as shown above. Your implementation supplies the application's own creation logic; `CreateTenant` below represents that application-specific command:
 
 ```csharp
 public class ProvisionTenants(ICommandPipeline commands) : IProvisionTenants
@@ -45,19 +47,17 @@ public class ProvisionTenants(ICommandPipeline commands) : IProvisionTenants
 }
 ```
 
-- `Provision` must be idempotent. The registration can be delivered more than once, and creating a tenant that exists must change nothing and answer `Provisioned`.
-- **Throw** for a failure that is worth another attempt: the registration is retried and nothing is reported.
-- Answer **`Refused`** only for a refusal that retrying will not change. It is reported to the operator as `TenantNotProvisioned` with the reason, once, and the operator can show it.
-- The answer is recorded once per tenant, however often the registration is delivered, and under the operator's organization (the event source of the registration; the id is not in the payload).
-- When the tenant is created, Box Office also records which organization it is and who created it in the tenant's own namespace. Seat and activity reports need the organization, and a person without a seat is told who to ask.
+The registration can be delivered more than once, so `Provision` must be idempotent: creating a tenant that already exists must change nothing and return `Provisioned`. Box Office records the answer once per tenant under the registration's organization. That organization ID is the event source, not a field in the registration payload.
 
-A product that does not register `IProvisionTenants` creates no tenants and listens for nothing.
+Throw for a failure worth another attempt. The registration is retried without reporting a provisioning answer. Return `Refused` only when retrying will not change the outcome, such as the name conflict in this example. Box Office reports that refusal once as `TenantNotProvisioned`, including the reason.
 
-A product that wants to be told that an organization is being deleted also registers `IClosingTenants`; it is called for `TenantClosing` and the operator is told nothing back.
+After successful provisioning, Box Office records the tenant's organization and creator in the tenant's own namespace. Seat and activity reports use that organization; the seat-license check uses the creator to tell a person who to ask for a seat.
+
+Without an `IProvisionTenants` registration, Box Office installs no provisioning subscriptions and creates no tenants. If your product also needs to act when a tenant is closing, register `IClosingTenants`. Box Office calls it for `TenantClosing` and sends no acknowledgement to the operator.
 
 ## Asking before giving a seat
 
-Before the product gives someone a seat it asks whether they may take one:
+Use `ISeatLicenses` to check whether a person may take a seat before offering them one. The following excerpt assumes you have the tenant, person and an injected `ISeatLicenses` named `seatLicenses`:
 
 ```csharp
 var license = await seatLicenses.For(tenant, SeatHolder.Of(person));
@@ -70,16 +70,18 @@ if (license.Status == SeatLicenseStatus.NoLicense)
 | Status | Meaning |
 | --- | --- |
 | `Licensed` | The person already holds a seat the tenant's seats cover, or a seat is free for them to take. |
-| `NoLicense` | The tenant has no seat for them: the seats are all held, it has none, it is read-only, or the person holds a seat the tenant's seats no longer cover. `WhoToAsk` holds the people who administer the tenant: the person who registered it. |
+| `NoLicense` | The tenant has no seat for them: the seats are all held, it has none, it is read-only, or the person holds a seat the tenant's seats no longer cover. `WhoToAsk` contains the tenant's creator when known. |
 | `UnknownOrganization` | The product has no such tenant. |
 
-The answer comes from the seats and trial the operator decided and from who holds a seat, read in the tenant's namespace. Nothing calls the operator, so the answer is as current as what the operator has published, and the pool cannot be overfilled: `AssignSeat` still guards the last seat under read protection.
+This is a local check against the operator's decisions received so far and the tenant's seat roster. It does not reserve a seat. Use Box Office's [seat commands](./seats.md) to assign or release one: `AssignSeat` guards the last seat under read protection, so a competing assignment cannot overfill the pool.
 
 ## Read-only tenants
 
-A tenant is read-only while the operator has it suspended, or when its trial ended and no seats were granted or bought. Box Office's [command filter](./suspension.md) refuses every command of a read-only tenant, with `TenantSuspended` or `TrialClosed` as the reason, and lets queries through. It needs no setup, and `[AllowedWhileSuspended]` lifts it for a command that must still run. When seats are granted or the operator reinstates the tenant, the next command goes through.
+A tenant is read-only while the operator has it suspended, or when its trial ends without seats. Box Office's [command filter](./suspension.md) refuses commands with `TenantSuspended` or `TrialClosed` and leaves queries available. `AddBoxOfficeProduct` includes this filter; `[AllowedWhileSuspended]` exempts a command from the read-only check.
 
-For work that is not a command, such as a job, a reactor or an endpoint, ask:
+A seat grant removes the trial-closed restriction, but a separate suspension still requires reinstatement. Once the relevant decision reaches the tenant, subsequent commands use it.
+
+Jobs, reactors and endpoints outside the command pipeline need their own check. Inject `ITenantAccess` as `tenantAccess` and ask before changing tenant data:
 
 ```csharp
 if (await tenantAccess.IsReadOnly(tenant))
@@ -88,15 +90,15 @@ if (await tenantAccess.IsReadOnly(tenant))
 }
 ```
 
-A tenant the product does not have is read-only, because nothing in it can change.
+`IsReadOnly` also returns `true` for a tenant the product does not know, so this check does not admit work for an unknown tenant.
 
 ## Reporting activity
 
-The operator shows when each seat holder was last seen. The product tells it with `SeatHolderActive`, which carries the tenant, the person and the day, and is published **at most once per person and day**: seeing someone again the same day is not a fact. The reporter remembers who it reported today, and the event log keeps its own key of the person, tenant and day, so a restart or a second replica does not report the day again.
+Report activity so the operator can track when a person was last seen in a tenant. Box Office publishes `SeatHolderActive` with the tenant, person and UTC day, at most once per person, tenant and day. It remembers today's reports in memory and uses the same identity as an event-log key, preventing duplicate daily reports after a restart or from another replica.
 
 ### The sign-in callback
 
-AuthProxy can call the product when a person signs in, and when a returning person's session makes its first request. `AddBoxOfficeProduct` receives that call by itself, with no endpoint to map: it answers `POST /.cratis/showrunner/sign-in`, before the rest of the pipeline, and reports the person as active.
+AuthProxy can notify the product when a person signs in or returns with an existing session. Return notifications are limited by the configured interval. `AddBoxOfficeProduct` receives the callback before the rest of the pipeline at `POST /.cratis/showrunner/sign-in` and reports the person as active; you do not map an endpoint.
 
 Declare the callback on the product's service in AuthProxy's configuration, as its `SignInCallback` (it is off until declared):
 
@@ -119,7 +121,7 @@ Declare the callback on the product's service in AuthProxy's configuration, as i
 }
 ```
 
-Give the product the same secret, from its secret store or environment and never a committed file:
+Set `SignInSecret` in your earlier `AddBoxOfficeProduct` call, shown separately below. Use the same secret as AuthProxy, read from a secret store or environment rather than a committed file:
 
 ```csharp
 builder.AddBoxOfficeProduct(options => options.SignInSecret = builder.Configuration["Showrunner:SignInSecret"]!);
@@ -148,13 +150,15 @@ For activity AuthProxy cannot see, such as a person acting through a token, ask 
 await reportActivity.Report(tenant, person);
 ```
 
-`IReportActivity.Report` is idempotent per person and day, and answers with an `ActivityOutcome`: `Reported`, `AlreadyReported`, `UnknownTenant` or `OrganizationNotKnown`.
+`IReportActivity.Report` is idempotent per person, tenant and UTC day. Its `ActivityOutcome` is `Reported` or `AlreadyReported` when the daily report is recorded, `UnknownTenant` when the product cannot find the tenant, or `OrganizationNotKnown` when the tenant has not yet recorded its organization. The last two outcomes publish no activity report.
 
 ## The contract this adds
 
-Two new public events join [the contracts](./contracts.md). Nothing existing changes.
+Provisioning refusals and daily activity use these public events. Both identify the tenant in the payload and use its organization as the event source:
 
 | Event | Event source | Payload |
 | --- | --- | --- |
 | `SeatHolderActive` | `OrganizationId` | `TenantId`; `Holder: Person`; `Day: ActivityDay` |
 | `TenantNotProvisioned` | `OrganizationId` | `TenantId`; `Reason: NotProvisionedReason` |
+
+Continue with [the contracts reference](./contracts.md) for the full exchange between operator and product, or [seat licensing](./seats.md) to connect the license check to seat assignment.

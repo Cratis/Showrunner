@@ -1,5 +1,5 @@
 ---
-title: Contracts
+title: Public event contracts in Cratis Showrunner Box Office
 description: The public events Box Office exchanges between an operator such as Direct and a managed product, their payloads, and how each replaces a v1 Admin contract.
 ---
 

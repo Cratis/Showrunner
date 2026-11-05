@@ -17,7 +17,7 @@ Stage Manager is the Kubernetes operator of Showrunner. Unlike the other parts i
 
 The custom resource definitions are generated from the C# types in `Source/DotNET/StageManager`; there is no hand-written CRD. Schema-only resources can be created and read, and nothing acts on them yet.
 
-- [Install the operator](./install.md): the Helm chart, its values and the permissions it asks for.
-- [Run an application with a Performance](./performance.md): the spec, what is created, the status and how Ante and AuthProxy are configured.
-- [Run a published Stage application](./published-stage-applications.md): the Stage runtime in published mode with a package, storage, Notes, rollouts, lifetime and usage.
-- [Environments and secrets](./environments-and-secrets.md): how the Cratis environment is resolved and how values reach containers.
+Start by [installing the operator](./install.md), then prepare the [environment and secrets](./environments-and-secrets.md) it will resolve for your application. With those inputs ready, choose one application path:
+
+- [Run an application with a Performance](./performance.md) when you have an application image and a Chronicle connection. This guide also explains the resources, status, AuthProxy and Ante configuration shared by Performances.
+- [Run a published Stage application](./published-stage-applications.md) when you have an exported Stage package to run on the generic Stage runtime. This path covers its storage and sign-in requirements, releases and rollbacks, and the lifetime and usage reference used by both paths.

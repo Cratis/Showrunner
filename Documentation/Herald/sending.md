@@ -3,7 +3,11 @@ title: Sending
 description: Send an email with IEmails, what the request contains, what is recorded and how a bounce is reported.
 ---
 
-An application sends through `IEmails`:
+After [adding Herald to the application](./add-herald-to-an-application.md) and preparing the [invitation template](./templates.md) and any [images](./images.md), inject `IEmails` where the application decides to invite someone. The reactor below is an application excerpt, not a complete host or template setup.
+
+An invitation link can act as a credential. Herald records `Values` in the queued event, so that link remains there for as long as the event exists. Choose the compliance subject before sending real tokens. When `Subject` is unset, as in this excerpt, the event source is the erasure association; set `Subject` explicitly when the personal data belongs to another subject. The [delivery and retention guidance](./delivery-and-retries.md) explains the longer-lived record and erasure association.
+
+The reactor maps the invitation's recipient, language and declared values into the request:
 
 ```csharp
 public class InviteReactor(IEmails emails) : IReactor
@@ -36,16 +40,18 @@ public class InviteReactor(IEmails emails) : IReactor
 | `Language` | Optional. The language to write the email in. |
 | `Subject` | Optional. The compliance subject the personal data of the email belongs to, for erasure. |
 
-`Send` renders the email first. If it can not be rendered, an `EmailCannotBeRendered` is thrown and nothing is queued; the message says what is wrong without repeating any value. Otherwise `Send` appends the email to the event log against `About` and returns the `EmailId` every later fact carries. It does not wait for the mail server: [delivery](./delivery-and-retries.md) runs in the background.
+`Send` renders first. If rendering fails, it throws `EmailCannotBeRendered` and queues nothing; the message identifies the problem without repeating a value. Correct the named template, image or value before trying again. A rejected event-log append also throws rather than returning an identifier.
 
-Call `Send` from where the decision is made: a reactor that reacts to the fact that an invitation was issued, or an Arc command. Because the email is a fact in the event log first, an application that stops after `Send` returned still delivers the email when it starts.
+After a successful append against `About`, `Send` returns the `EmailId` carried by later facts. Keep the two together to follow this email in the application's event log. The return value means queued, not accepted by the mail server; [delivery](./delivery-and-retries.md) happens in the background.
+
+Call `Send` from the decision point: the reactor for an issued invitation, or an Arc command. Once a request is queued, use its recorded outcome to follow delivery rather than assuming a restart or another call means it reached the recipient. A worker can retry a waiting email, stop at a permanent failure or exhaust its attempts; the events below tell those outcomes apart.
 
 ## What is recorded
 
 The event log of the application gets, against `About`:
 
 1. `EmailQueued` when `Send` accepted the email. It holds the recipient and the values, marked as personal data, so erasing the subject erases them.
-2. `EmailAttemptFailed` for each delivery the server did not take, with when the next one happens.
+2. `EmailAttemptFailed` for a failed delivery that will be retried, with when the next one happens.
 3. `EmailSent`, or `EmailFailed` when the email will not be sent. These two are in [`Cratis.Showrunner.Herald.Contracts`](./event-reference.md); the application can project and react to them.
 
 ## Bounces

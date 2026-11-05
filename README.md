@@ -29,6 +29,7 @@ Usher covers reporting an issue, error capture, the conversation, time-limited s
 | --- | --- | --- |
 | `Cratis.Showrunner.BoxOffice.Catalog` | NuGet | Box Office's catalog — offers (seat plans, modules, compute packs), prices and the pricing arithmetic, published to products |
 | `Cratis.Showrunner.BoxOffice.Offering` | NuGet | Box Office for a product — declares what the product sells (modules, meters, seat licensing) and measures its compute per tenant and day |
+| `Cratis.Showrunner.BoxOffice.Product` | NuGet | Box Office for a managed product, in one call — creates the tenants the operator registers and reports them ready, answers whether a person may take a seat and whether a tenant is read-only, and reports who was active |
 | `Cratis.Showrunner.BoxOffice.Contracts` | NuGet | Box Office's event contracts: what an operator decides about a tenant and what a product reports back |
 | `Cratis.Showrunner.Herald.Contracts` | NuGet | Herald's event contracts: the facts recorded when an email was sent, failed or bounced |
 | `Cratis.Showrunner.Herald` | NuGet | Herald's backend — templates, strict rendering, images, SMTP and folder transports, queued delivery with retries, recorded in the application's Chronicle event store |

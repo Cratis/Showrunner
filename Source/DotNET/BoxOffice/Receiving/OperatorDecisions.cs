@@ -38,9 +38,19 @@ public static class OperatorDecisions
     ];
 
     /// <summary>
+    /// The public events of the operator about a tenant's life that the product acts on in its own way, rather than
+    /// Box Office recording them as a decision: asking the product to create a tenant, and to tear it down.
+    /// </summary>
+    public static readonly Type[] ForProvisioning =
+    [
+        typeof(TenantRegistered),
+        typeof(TenantClosing),
+    ];
+
+    /// <summary>
     /// Gets every public event of the operator Box Office subscribes to.
     /// </summary>
-    public static IEnumerable<Type> All => [.. ForTenants, .. ForTheProduct];
+    public static IEnumerable<Type> All => [.. ForTenants, .. ForTheProduct, .. ForProvisioning];
 
     /// <summary>
     /// Maps a decision about a tenant to the tenant and the private fact it becomes.

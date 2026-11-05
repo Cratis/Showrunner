@@ -36,6 +36,6 @@ public class when_mapping_the_operators_decisions : Specification
     [Fact] void should_map_an_offer_as_a_decision_about_the_product() => OperatorDecisions.ForProduct(new OfferPublished("Team", [], 5, [])).ShouldBeOfExactType<OperatorPublishedOffer>();
     [Fact] void should_map_a_withdrawn_offer() => OperatorDecisions.ForProduct(new OfferWithdrawn()).ShouldBeOfExactType<OperatorWithdrewOffer>();
     [Fact] void should_not_treat_a_tenant_decision_as_one_about_the_product() => OperatorDecisions.ForProduct(new TenantReinstated(_tenant)).ShouldBeNull();
-    [Fact] void should_subscribe_to_every_decision() => OperatorDecisions.All.Count().ShouldEqual(13);
+    [Fact] void should_subscribe_to_every_decision_and_the_tenant_lifecycle() => OperatorDecisions.All.Count().ShouldEqual(15);
 }
 #endif

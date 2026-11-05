@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>Cratis.Showrunner.BoxOffice.Product</AssemblyName>
+        <RootNamespace>Cratis.Showrunner.BoxOffice.Product</RootNamespace>
+        <PackageId>Cratis.Showrunner.BoxOffice.Product</PackageId>
+        <Description>Box Office Product — everything a managed product does for its operator, such as Direct, in one call: creates the tenant the operator registers and reports it ready, answers whether a person may take a seat and whether a tenant is read-only, and reports who was active, built on Cratis Arc and Chronicle.</Description>
+        <PackageTags>cratis;showrunner;boxoffice;licensing;provisioning;seats;activity;arc;chronicle;event-sourcing</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Cratis.Arc" />
+        <PackageReference Include="Cratis.Arc.Chronicle" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../BoxOffice.Contracts/BoxOffice.Contracts.csproj" />
+        <ProjectReference Include="../BoxOffice/BoxOffice.csproj" />
+    </ItemGroup>
+</Project>

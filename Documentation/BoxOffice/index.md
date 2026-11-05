@@ -8,6 +8,7 @@ Box Office is the licensing part of Showrunner. The operator of a managed produc
 Box Office is a library set, not a service. The operator and the product exchange public events through Chronicle:
 
 - `Cratis.Showrunner.BoxOffice.Contracts` holds the public events both sides exchange; see [Contracts](./contracts.md).
+- `Cratis.Showrunner.BoxOffice.Product` is what a managed product adds in one call, `AddBoxOfficeProduct`: it creates the tenants the operator registers and reports them ready, answers whether a person may take a seat and whether a tenant is read-only, and reports who was active; see [The product side](./product.md).
 - `Cratis.Showrunner.BoxOffice` runs inside the product's own Arc and Chronicle process and honors the operator's decisions: it receives them, answers what a tenant may use, refuses commands from a tenant that is suspended and licenses seats; see [Receiving and entitlements](./entitlements.md), [Suspension and read-only tenants](./suspension.md), [Module gating](./gating.md), [Seat licensing](./seats.md) and [Compute admission](./compute-admission.md).
 - `@cratis/showrunner.boxoffice` is the generated TypeScript proxies for the product's frontend; see [Frontend proxies](./frontend-proxies.md).
 - `@cratis/showrunner.boxoffice.react` is the user interface: entitlements and module filtering, trial and suspension banners, the seats, usage and plan pages and the buttons that open the customer portal; see [React components](./react.md) and [The customer portal](./portal.md).

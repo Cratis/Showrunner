@@ -2,6 +2,8 @@
   href: index.md
 - name: Contracts
   href: contracts.md
+- name: The product side
+  href: product.md
 - name: Receiving and entitlements
   href: entitlements.md
 - name: Suspension and read-only tenants

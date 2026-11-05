@@ -12,10 +12,21 @@ namespace Cratis.Showrunner.BoxOffice.Entitlements;
 /// request's namespace, which is the tenant.
 /// </summary>
 /// <param name="readModels">The <see cref="IReadModels"/> of the current tenant.</param>
-/// <param name="unitOfWorkManager">The <see cref="IUnitOfWorkManager"/> of the current tenant, which says whether the command is protected.</param>
+/// <param name="unitOfWorkManager">The <see cref="IUnitOfWorkManager"/> of the current tenant, which says whether the command is protected; <see langword="null"/> when asking outside a command.</param>
 /// <param name="time">The <see cref="TimeProvider"/> the days are counted by.</param>
-public class TenantEntitlements(IReadModels readModels, IUnitOfWorkManager unitOfWorkManager, TimeProvider time) : IEntitlements
+public class TenantEntitlements(IReadModels readModels, IUnitOfWorkManager? unitOfWorkManager, TimeProvider time) : IEntitlements
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TenantEntitlements"/> class for asking about a tenant outside a
+    /// command, such as from a job, where nothing a read decides is guarded.
+    /// </summary>
+    /// <param name="readModels">The <see cref="IReadModels"/> of the tenant.</param>
+    /// <param name="time">The <see cref="TimeProvider"/> the days are counted by.</param>
+    public TenantEntitlements(IReadModels readModels, TimeProvider time)
+        : this(readModels, null, time)
+    {
+    }
+
     DateOnly Today => DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
 
     /// <inheritdoc/>
@@ -66,7 +77,7 @@ public class TenantEntitlements(IReadModels readModels, IUnitOfWorkManager unitO
     async Task<T?> Read<T>()
         where T : class
     {
-        using var advisory = unitOfWorkManager.HasCurrent
+        using var advisory = unitOfWorkManager?.HasCurrent == true
             ? unitOfWorkManager.Current.AllowReads(ReadAllowance.Advisory, "Admission to a command is advisory; a command guards what it decides with the facts it reads itself.")
             : null;
         return await readModels.GetInstanceById<T>(TenantStream.Id.Value);

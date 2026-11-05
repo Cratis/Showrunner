@@ -31,6 +31,48 @@
     ],
     "title": "ActivitySummarized"
   },
+  "SeatHolderActive:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "holder": {
+        "type": "object",
+        "properties": {
+          "identityProvider": {
+            "type": "string"
+          },
+          "identityProviderSubject": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "identityProvider",
+          "identityProviderSubject",
+          "name",
+          "email"
+        ],
+        "title": "Person"
+      },
+      "day": {
+        "type": "string",
+        "format": "date"
+      }
+    },
+    "required": [
+      "tenantId",
+      "holder",
+      "day"
+    ],
+    "title": "SeatHolderActive"
+  },
   "AllowanceExhausted:1": {
     "type": "object",
     "properties": {
@@ -520,6 +562,22 @@
       "tenantId"
     ],
     "title": "TenantClosing"
+  },
+  "TenantNotProvisioned:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "reason": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "tenantId",
+      "reason"
+    ],
+    "title": "TenantNotProvisioned"
   },
   "TenantProvisioned:1": {
     "type": "object",

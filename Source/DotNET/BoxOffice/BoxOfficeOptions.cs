@@ -58,4 +58,19 @@ public class BoxOfficeOptions
     /// another one.
     /// </summary>
     public EventStoreName EventStore { get; set; } = EventStoreName.NotSet;
+
+    /// <summary>
+    /// Gets or sets the audience that identifies this product to its operators. When set, Box Office subscribes to the
+    /// outbox of each operator store for this audience only, so it receives what an operator addresses to this product and
+    /// nothing meant for another product on the same operator store. Defaults to <see langword="null" />: the subscription is
+    /// unfiltered and the product receives everything the operator store publishes, as before audiences.
+    /// </summary>
+    public string? ProductAudience { get; set; }
+
+    /// <summary>
+    /// Gets or sets the audience that identifies the operator this product reports to. When set, everything Box Office
+    /// reports to the operator is addressed to it, so the operator can subscribe to this product's outbox for its own
+    /// audience. Defaults to <see langword="null" />: reports are not addressed, as before audiences.
+    /// </summary>
+    public string? OperatorAudience { get; set; }
 }

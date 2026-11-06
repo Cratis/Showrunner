@@ -30,6 +30,7 @@ The same is available on the service collection as `services.AddNotes(...)`.
 | `ApplicationVersion` | the entry assembly's informational version, without build metadata | The version published with every note. |
 | `EventStore` | the application's own event store | The event store Notes records the application's facts in. Notes uses the event store of the application's `AddCratis` or `AddCratisChronicle` setup; set it only to record in another one. |
 | `CollectingStores` | `["Studio"]` | The event stores of the receiving sides the application publishes to and receives answers from. |
+| `Audience`, `CollectorAudience` | unset | The audience that identifies this application to the collecting stores (filters the subscription and is sent on every note, so the collector addresses its answers back), and the audience of the collector (addresses published notes). See [Audience routing](../BoxOffice/audience-routing.md). |
 | `PollingInterval` | one minute | How often Notes opens tenant namespaces it does not serve yet and makes sure the application is subscribed to the collecting stores. |
 | `Transport` | `SameKernel` | How notes reach the receiving side: `SameKernel` (Chronicle's outbox, subscription and inbox) or `Http`. See [Transports](./transports.md). |
 | `CollectorUrl` | none | `Http` only. The absolute `http(s)` URL of the collector. |

@@ -6,6 +6,7 @@ using Cratis.Chronicle.EventSequences;
 using Cratis.Showrunner.BoxOffice.Contracts.Tenants;
 using Cratis.Showrunner.BoxOffice.Offering.Declaration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Cratis.Showrunner.BoxOffice.Offering.Starting;
 
@@ -24,12 +25,14 @@ namespace Cratis.Showrunner.BoxOffice.Offering.Starting;
 /// <param name="client">The Chronicle client.</param>
 /// <param name="eventStore">The <see cref="BoxOfficeEventStore"/> naming the product's event store.</param>
 /// <param name="logger">The logger.</param>
+/// <param name="options">The <see cref="OfferingOptions"/>, which name the audience of the operator the product reports to; <see langword="null" /> addresses nothing.</param>
 public class DefaultOffering(
     ProductOffering offering,
     IPublishedOffers offers,
     IChronicleClient client,
     BoxOfficeEventStore eventStore,
-    ILogger<DefaultOffering> logger) : IDefaultOffering
+    ILogger<DefaultOffering> logger,
+    IOptions<OfferingOptions>? options = null) : IDefaultOffering
 {
     /// <summary>
     /// Derives the idempotency key of the start of a tenant: the same for every attempt to start it.
@@ -70,6 +73,7 @@ public class DefaultOffering(
         }
 
         var started = new TenantStartedOnOffer(tenant, offer.Name, offer.IncludedSeats, [.. offer.Modules]);
+        using var audience = options?.Value.AddressedToOperator();
         var result = await store.GetEventSequence(EventSequenceId.Outbox).AppendOnce(organization, started, KeyFor(tenant));
         if (result.WasAlreadyAppended || result.HasIdempotencyConflicts)
         {

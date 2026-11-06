@@ -15,6 +15,7 @@ using Cratis.Showrunner.Usher.Lifecycle.WithdrawIssue;
 using Cratis.Showrunner.Usher.Reporting.ReportError;
 using Cratis.Showrunner.Usher.Reporting.ReportIssue;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Cratis.Showrunner.Usher.Publishing;
 
@@ -38,9 +39,10 @@ namespace Cratis.Showrunner.Usher.Publishing;
 /// </remarks>
 /// <param name="client">The Chronicle client, to reach the outbox of the namespace the fact was recorded in.</param>
 /// <param name="logger">The logger.</param>
+/// <param name="options">Usher's options; <see cref="UsherOptions.DeskAudience"/> addresses what is published to the desk. <see langword="null" /> addresses nothing.</param>
 [Reactor(Id)]
 [OnceOnly]
-public class OutboxPublisher(IChronicleClient client, ILogger<OutboxPublisher> logger) : IReactor
+public class OutboxPublisher(IChronicleClient client, ILogger<OutboxPublisher> logger, IOptions<UsherOptions>? options = null) : IReactor
 {
     /// <summary>
     /// The stable identity of the reactor; its position in the event log and its idempotency keys hang on it.
@@ -152,6 +154,7 @@ public class OutboxPublisher(IChronicleClient client, ILogger<OutboxPublisher> l
     async Task Publish(object publicEvent, EventContext context, ReactorDelivery delivery)
     {
         var eventStore = await client.GetEventStore(context.EventStore, context.Namespace);
+        using var audience = string.IsNullOrWhiteSpace(options?.Value.DeskAudience) ? null : EventTags.Audience(options.Value.DeskAudience);
         var result = await eventStore.GetEventSequence(EventSequenceId.Outbox).AppendOnce(
             context.EventSourceId,
             publicEvent,

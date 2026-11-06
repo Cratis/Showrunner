@@ -4,6 +4,7 @@
 using Cratis.Chronicle;
 using Cratis.Chronicle.EventSequences;
 using Cratis.Metrics;
+using Cratis.Showrunner.BoxOffice.Offering.Declaration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -28,12 +29,14 @@ namespace Cratis.Showrunner.BoxOffice.Offering.Metering;
 /// <param name="options">The <see cref="MeteringOptions"/>.</param>
 /// <param name="metrics">The metrics.</param>
 /// <param name="logger">The logger.</param>
+/// <param name="offering">The <see cref="OfferingOptions"/>, which name the audience of the operator the product reports to; <see langword="null" /> addresses nothing.</param>
 public class TenantMetering(
     IMeteringStore store,
     IEnumerable<IMeter> meters,
     IOptions<MeteringOptions> options,
     IMeter<TenantMetering> metrics,
-    ILogger<TenantMetering> logger)
+    ILogger<TenantMetering> logger,
+    IOptions<OfferingOptions>? offering = null)
 {
     readonly IMeter[] _meters = [.. meters];
 
@@ -100,6 +103,7 @@ public class TenantMetering(
         foreach (var day in await store.GetOpen(tenant, through))
         {
             var key = new IdempotencyKey($"boxoffice-compute-closed-{tenant}-{day.Day.Value:yyyy-MM-dd}");
+            using var audience = offering?.Value.AddressedToOperator();
             var result = await outbox.AppendOnce(day.Organization, new ComputeDayClosed(tenant, day.Day, [.. day.Usage]), key);
             if (result.HasIdempotencyConflicts)
             {
@@ -127,6 +131,7 @@ public class TenantMetering(
         {
             var due = day.CorrectionDue!;
             var key = new IdempotencyKey($"boxoffice-compute-corrected-{tenant}-{day.Day.Value:yyyy-MM-dd}-{due.Value}");
+            using var audience = offering?.Value.AddressedToOperator();
             var result = await outbox.AppendOnce(day.Organization, new ComputeDayCorrected(tenant, day.Day, [.. day.Usage]), key);
             if (result.HasIdempotencyConflicts)
             {

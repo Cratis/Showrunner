@@ -2,6 +2,8 @@
   href: index.md
 - name: Contracts
   href: contracts.md
+- name: Audience routing
+  href: audience-routing.md
 - name: The product side
   href: product.md
 - name: Receiving and entitlements

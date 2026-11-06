@@ -43,6 +43,21 @@ public class NotesOptions
     public IEnumerable<EventStoreName> CollectingStores { get; set; } = ["Studio"];
 
     /// <summary>
+    /// Gets or sets the audience that identifies this application to the stores that collect its notes. When set, Notes
+    /// subscribes to the outbox of each collecting store for this audience only, so a collector that serves several
+    /// applications reaches this one with what it addresses to it. Defaults to <see langword="null" />: the subscription
+    /// is unfiltered, as before audiences.
+    /// </summary>
+    public string? Audience { get; set; }
+
+    /// <summary>
+    /// Gets or sets the audience that identifies the store that collects the notes. When set, every note Notes publishes is
+    /// addressed to it, so the collector can subscribe to this application's outbox for its own audience. Defaults to
+    /// <see langword="null" />: nothing is addressed, as before audiences.
+    /// </summary>
+    public string? CollectorAudience { get; set; }
+
+    /// <summary>
     /// Gets or sets how often Notes looks for tenant namespaces it does not serve yet and makes sure the application is
     /// subscribed to the receiving stores. Everything it acts on is durable, so a round that fails is retried at the next
     /// one. Defaults to one minute.

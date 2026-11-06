@@ -23,6 +23,7 @@ builder.AddMarquee(marquee =>
 | --- | --- | --- |
 | `Product` | none, required | The product this application is, as announcements name it. An authoring store serves several products; the product records only its own. |
 | `AuthoringStores` | `["Direct"]` | The names of the event stores whose outbox the announcements come from, which is where [authoring](./authoring.md) runs. |
+| `SubscribeForProduct` | `false` | Subscribe to each authoring store for this product's audience only (the value of `Product`). Needs `MarqueeAuthoringOptions.AddressToProducts` on the authoring side. See [Audience routing](../BoxOffice/audience-routing.md). |
 | `PollingInterval` | one minute | How often Marquee makes sure the subscriptions exist and the inbox is observed. |
 
 The host fails to start when `Product` is not set. A module or plan audience is answered by the `IAudienceEntitlements` in the service collection; add Box Office's before or after `AddMarquee` and it is used. Without one, only `Everyone` and `Tenants` audiences reach anybody; see [Plugging in who holds a module](./contracts.md#plugging-in-who-holds-a-module-or-is-on-a-plan).

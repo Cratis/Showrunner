@@ -20,11 +20,15 @@ public class when_using_the_connection_secret_of_a_production : a_reconciliation
     {
         _cluster.ProductionConnectionSecrets["apps/ledger"] = "ledger-connection";
         _cluster.SecretValues["apps/ledger-connection/connectionString"] = PerformanceSamples.ConnectionString;
+        _cluster.Productions["apps/ledger"] = new();
     }
 
     Task Because() => Reconcile();
 
     [Fact] void should_not_be_blocked() => _phase.ShouldEqual(PerformancePhase.Progressing);
+
+    [Fact] void should_have_its_sinks_mapped_when_it_uses_none() =>
+        _performance.Status.Conditions.Single(condition => condition.Type == "SinksMapped").Reason.ShouldEqual("NoSinksUsed");
 
     [Fact] void should_mount_the_secret_of_the_production() =>
         _cluster.AppliedOf<V1Deployment>().Single(deployment => deployment.Metadata.Name == "crm-app")

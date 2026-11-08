@@ -41,6 +41,20 @@ public static partial class SpecValidator
             problems.Add("Name the Chronicle to use with productionRef or chronicle.connectionSecretRef.");
         }
 
+        if (spec.Application.Sinks.Any(string.IsNullOrWhiteSpace))
+        {
+            problems.Add("application.sinks may not hold an empty name.");
+        }
+
+        if (spec.Application.Sinks.Count > 0 && spec.Application.Published is not null)
+        {
+            problems.Add("application.sinks is for a traditional application: a published Stage package declares its sinks in its manifest.");
+        }
+        else if (spec.Application.Sinks.Count > 0 && spec.ProductionRef is null)
+        {
+            problems.Add("application.sinks needs productionRef: the Production maps each sink to its storage.");
+        }
+
         ValidateProviders(spec, problems);
         ValidateOnboarding(spec, problems);
         ValidatePublished(spec, problems);

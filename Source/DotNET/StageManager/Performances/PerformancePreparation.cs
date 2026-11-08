@@ -41,7 +41,7 @@ public class PerformancePreparation(IClusterResources cluster, IEnvironmentResol
         else
         {
             connection = await ResolveConnectionAsync(performance, status, cancellationToken);
-            if (connection is null)
+            if (connection is null || !await CheckSinksAsync(performance, status, cancellationToken))
             {
                 status.Block();
                 return null;
@@ -102,6 +102,32 @@ public class PerformancePreparation(IClusterResources cluster, IEnvironmentResol
 
         status.Set("ChronicleConnection", connection is not null, connection is not null ? "Resolved" : "ChronicleNotAvailable", connection is not null ? $"Using the connection Secret '{connection.SecretName}'." : failure);
         return connection;
+    }
+
+    async Task<bool> CheckSinksAsync(Performance performance, PerformanceStatusBuilder status, CancellationToken cancellationToken)
+    {
+        if (performance.Spec.ProductionRef is not { } reference)
+        {
+            return true;
+        }
+
+        var used = ApplicationSinks.UsedBy(performance.Spec.Application);
+        var production = await cluster.GetProductionSpecAsync(reference.Namespace ?? performance.Metadata.NamespaceProperty, reference.Name, cancellationToken);
+        if (production is null)
+        {
+            status.Set("SinksMapped", false, "ProductionNotFound", $"The Production '{reference.Name}' does not exist, so its sinks cannot be checked.");
+            return false;
+        }
+
+        var missing = ApplicationSinks.MissingFrom(used, production);
+        var (reason, message) = (used.Count, missing.Count) switch
+        {
+            (0, _) => ("NoSinksUsed", "The application uses no named sinks."),
+            (_, 0) => ("Mapped", $"The Production '{reference.Name}' configures every sink the application uses: {string.Join(", ", used)}."),
+            _ => ("MissingSinks", $"The Production '{reference.Name}' does not configure {missing.Count} sink(s) the application uses: {string.Join(", ", missing)}.")
+        };
+        status.Set("SinksMapped", missing.Count == 0, reason, message);
+        return missing.Count == 0;
     }
 
     async Task<ResolvedEnvironment?> ResolveEnvironmentAsync(Performance performance, PerformanceStatusBuilder status, CancellationToken cancellationToken)

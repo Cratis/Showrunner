@@ -3,6 +3,7 @@
 
 #if DEBUG
 using System.Text;
+using Cratis.Showrunner.StageManager.Productions;
 
 namespace Cratis.Showrunner.StageManager.Performances.given;
 
@@ -37,6 +38,8 @@ public class FakeCluster : IClusterResources
 
     public Dictionary<string, string> ProductionConnectionSecrets { get; } = new(StringComparer.Ordinal);
 
+    public Dictionary<string, ProductionSpec> Productions { get; } = new(StringComparer.Ordinal);
+
     public List<IKubernetesObject<V1ObjectMeta>> Applied { get; } = [];
 
     public Performance? StatusWritten { get; private set; }
@@ -62,6 +65,9 @@ public class FakeCluster : IClusterResources
 
     public Task<string?> GetProductionConnectionSecretNameAsync(string @namespace, string name, CancellationToken cancellationToken) =>
         Task.FromResult(ProductionConnectionSecrets.GetValueOrDefault($"{@namespace}/{name}"));
+
+    public Task<ProductionSpec?> GetProductionSpecAsync(string @namespace, string name, CancellationToken cancellationToken) =>
+        Task.FromResult(Productions.GetValueOrDefault($"{@namespace}/{name}"));
 
     public Task ApplyAsync<TResource>(TResource desired, CancellationToken cancellationToken)
         where TResource : IKubernetesObject<V1ObjectMeta>

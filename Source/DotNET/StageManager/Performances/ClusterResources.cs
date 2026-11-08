@@ -35,6 +35,10 @@ public class ClusterResources(IKubernetesClient client) : IClusterResources
     }
 
     /// <inheritdoc/>
+    public async Task<ProductionSpec?> GetProductionSpecAsync(string @namespace, string name, CancellationToken cancellationToken) =>
+        (await client.GetAsync<Production>(name, @namespace, cancellationToken))?.Spec;
+
+    /// <inheritdoc/>
     public async Task ApplyAsync<TResource>(TResource desired, CancellationToken cancellationToken)
         where TResource : IKubernetesObject<V1ObjectMeta>
     {

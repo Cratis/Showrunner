@@ -67,11 +67,12 @@ From a valid spec, Stage Manager derives Chronicle's `storage` and `sinks` confi
 | `Cratis__Chronicle__Storage__Type` | `database.kind` |
 | `Cratis__Chronicle__Sinks__ReadModels`, `Cratis__Chronicle__Sinks__Graphs` | `sinks.readModels`, `sinks.graphs` |
 | `Cratis__Chronicle__Sinks__Configurations__<name>__Type` | `MongoDB`, `SQL` for `PostgreSql` and `SqlServer`, or `Neo4j` |
-| `Cratis__Chronicle__Storage__ConnectionDetails` | The external database's Secret, mounted as a file |
-| `Cratis__Chronicle__Sinks__Configurations__<name>__ConnectionDetails` | A MongoDB or SQL sink's Secret, mounted as a file |
-| `Cratis__Chronicle__Sinks__Configurations__<name>__Server` | A Neo4j sink's Secret, mounted as a file |
+| `Cratis__Chronicle__Storage__ConnectionDetailsFile` | The path of the external database's Secret, mounted as a file |
+| `Cratis__Chronicle__Sinks__Configurations__<name>__ConnectionDetailsFile` | The path of a MongoDB or SQL sink's Secret, mounted as a file |
 
-Connections are never written into the spec, the status or an environment value. Each is mounted from its Secret into `/run/secrets/chronicle`, as a file named after the setting it holds. The Chronicle kernel reads its settings from `chronicle.json` and environment variables only, so it cannot read those files yet; applying this configuration needs Chronicle to read a setting from a mounted file.
+Connections are never written into the spec, the status or an environment value. Each is mounted from its Secret into `/run/secrets/chronicle`, as a file named after the setting it holds, such as `/run/secrets/chronicle/Cratis__Chronicle__Storage__ConnectionDetails`. The kernel reads the file through the matching `…File` setting, once, at startup. Stage Manager sets only the `…File` form, never the value itself: Chronicle refuses to start when both are set.
+
+A Neo4j sink's Secret is mounted as `Cratis__Chronicle__Sinks__Configurations__<name>__Server`, but Chronicle has no file form of a Neo4j server, so the kernel does not read that file yet.
 
 ## Performances check their sinks
 

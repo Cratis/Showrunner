@@ -28,8 +28,8 @@ docker build -f Docker/StageManager/Dockerfile -t "$image" .
 kind load docker-image "$image" --name "$cluster"
 "$root/scripts/stage-manager-crds.sh"
 
-# The operator may reach Secrets only in the namespaces it manages, and the chart creates a Role there, so the
-# namespace of the Performances exists first.
+# The operator may reach Secrets and workloads only in the namespaces it manages, and the chart creates a Role
+# there, so the namespace of the Performances exists first.
 kubectl create namespace "$namespace" --dry-run=client -o yaml | kubectl apply -f -
 
 helm upgrade --install stage-manager Source/Helm/showrunner-operator --namespace stage-manager --create-namespace \
@@ -40,12 +40,15 @@ for crd in performances productions understudies restores rehearsals backstagepa
   kubectl wait --for=condition=Established "crd/$crd.showrunner.cratis.io" --timeout=60s
 done
 
-# The operator has no cluster-wide access to Secrets, only access in the namespaces it manages.
-kubectl auth can-i get secrets --as=system:serviceaccount:stage-manager:stage-manager-showrunner-operator -n "$namespace" >/dev/null \
-  || fail "the operator cannot read Secrets in the namespace it manages"
-if kubectl auth can-i get secrets --as=system:serviceaccount:stage-manager:stage-manager-showrunner-operator -n default >/dev/null; then
-  fail "the operator can read Secrets outside the namespaces it manages"
-fi
+# The operator has no cluster-wide access to Secrets or workloads, only access in the namespaces it manages.
+operator="system:serviceaccount:stage-manager:stage-manager-showrunner-operator"
+for access in "get secrets" "create deployments.apps"; do
+  kubectl auth can-i $access --as="$operator" -n "$namespace" >/dev/null \
+    || fail "the operator cannot $access in the namespace it manages"
+  if kubectl auth can-i $access --as="$operator" -n default >/dev/null; then
+    fail "the operator can $access outside the namespaces it manages"
+  fi
+done
 
 # A Chronicle connection Secret, an environment file with plain values and a Performance that misses one key.
 kubectl -n "$namespace" create secret generic chronicle-connection --from-literal=connectionString=chronicle://e2e:e2e@chronicle:35000 --dry-run=client -o yaml | kubectl apply -f -

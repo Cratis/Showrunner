@@ -1,6 +1,6 @@
-# What the operator may do, and nothing more. It never lists or watches Secrets, never touches namespaces or
-# nodes and deletes only the Ingress of a Performance whose lifetime ended (owner references remove everything
-# else a Performance created).
+# What the operator may do, and nothing more. It has no access to Secrets here: those rules are namespaced Roles
+# in the managed namespaces only (secrets-role.yaml). It never touches namespaces or nodes and deletes only the
+# Ingress of a Performance whose lifetime ended (owner references remove everything else a Performance created).
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -26,10 +26,6 @@ rules:
   - apiGroups: [""]
     resources: ["configmaps"]
     verbs: ["get"]
-  # The Secrets it reads (passphrase, Chronicle connection) and writes (resolved environment, signing keys).
-  - apiGroups: [""]
-    resources: ["secrets"]
-    verbs: ["get", "create", "update"]
   - apiGroups: [""]
     resources: ["services"]
     verbs: ["get", "create", "update"]

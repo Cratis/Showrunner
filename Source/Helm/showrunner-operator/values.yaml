@@ -18,6 +18,11 @@ fullnameOverride: ""
 # gives a standby, not more throughput.
 replicaCount: 1
 
+# The namespaces the operator manages Performances in. The operator may read and write Secrets only in these
+# namespaces, through a Role in each; it has no access to Secrets anywhere else. Empty means the release namespace.
+# Every namespace listed must exist before the chart is installed.
+managedNamespaces: []
+
 serviceAccount:
   # Creates the service account the operator runs as.
   create: true

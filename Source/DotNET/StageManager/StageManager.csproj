@@ -8,7 +8,7 @@
         <!-- The operator ships as a container image and a Helm chart, not as a NuGet package. -->
         <IsPackable>false</IsPackable>
 
-        <!-- The custom resource definitions are generated from the C# types by scripts/stage-manager/generate-chart-crds.sh
+        <!-- The custom resource definitions are generated from the C# types by scripts/stage-manager-crds.sh
              into the Helm chart, not as a side effect of every build. -->
         <GenerateOperatorResources>false</GenerateOperatorResources>
     </PropertyGroup>

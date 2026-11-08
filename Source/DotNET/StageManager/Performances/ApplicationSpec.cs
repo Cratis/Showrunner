@@ -34,6 +34,12 @@ public class ApplicationSpec
     public int Replicas { get; set; } = 1;
 
     /// <summary>
+    /// Gets or sets the names of the sinks the application stores read models and graphs in. The Production must configure each one.
+    /// </summary>
+    [Description("The names of the sinks a traditional application stores read models and graphs in. The Production named by productionRef must configure each one.")]
+    public IList<string> Sinks { get; set; } = [];
+
+    /// <summary>
     /// Gets or sets the published Stage application settings. When set, the application runs as a published Stage application.
     /// </summary>
     [Description("Runs the application as a published Stage application: image is the Stage runtime image and the package comes from a ConfigMap.")]

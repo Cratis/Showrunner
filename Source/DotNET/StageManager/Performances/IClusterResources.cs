@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Showrunner.StageManager.Productions;
+
 namespace Cratis.Showrunner.StageManager.Performances;
 
 /// <summary>
@@ -36,6 +38,15 @@ public interface IClusterResources
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The Secret name, or null when the Production does not exist or reports none yet.</returns>
     Task<string?> GetProductionConnectionSecretNameAsync(string @namespace, string name, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Reads the spec of a Production.
+    /// </summary>
+    /// <param name="namespace">The namespace.</param>
+    /// <param name="name">The name of the Production.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The spec, or null when the Production does not exist.</returns>
+    Task<ProductionSpec?> GetProductionSpecAsync(string @namespace, string name, CancellationToken cancellationToken);
 
     /// <summary>
     /// Creates the resource, or replaces it when it exists.

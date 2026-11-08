@@ -31,4 +31,10 @@ public class ProductionSpec
     /// </summary>
     [Description("How Chronicle's keys are stored.")]
     public ProductionVault Vault { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets the named sinks applications store read models and graphs in.
+    /// </summary>
+    [Description("The named sinks applications store read models and graphs in, and the defaults for those that name none.")]
+    public ProductionSinks Sinks { get; set; } = new();
 }

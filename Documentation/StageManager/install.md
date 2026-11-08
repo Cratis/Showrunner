@@ -3,7 +3,7 @@ title: Install the operator
 description: Install the Stage Manager Helm chart, configure secret-provider identities and review the operator's Kubernetes permissions and managed MongoDB options.
 ---
 
-The operator is published as a container image, `cratis/showrunner-operator`, and as a Helm chart of the same version, so a chart always installs the operator it was released with.
+The operator is published as a container image, `cratis/showrunner-operator-image`, and as a Helm chart, `cratis/showrunner-operator`, of the same version, so a chart always installs the operator it was released with. They live in separate repositories because a registry keeps one artifact per tag: a chart pushed under the image's tag would replace the image.
 
 Before installing, have Helm available and access to the target Kubernetes cluster with permission to install cluster-scoped CRDs and RBAC, as well as the operator's namespaced resources. If your environment uses Azure Key Vault or HashiCorp Vault, prepare the operator's identity and provider access using the chart values below.
 

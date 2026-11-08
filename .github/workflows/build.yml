@@ -170,7 +170,7 @@ jobs:
         run: dotnet publish Source/DotNET/StageManager/StageManager.csproj -c Release -p:CratisProxiesOutputPath= -o Source/DotNET/StageManager/out
 
       - name: Build the operator image
-        run: docker build -f Docker/StageManager/Dockerfile -t cratis/showrunner-operator:ci .
+        run: docker build -f Docker/StageManager/Dockerfile -t cratis/showrunner-operator-image:ci .
 
   # Installs the chart on a kind cluster and applies a Performance: a missing environment key blocks the rollout,
   # a complete environment rolls it out, only AuthProxy is public and no secret value reaches a Deployment, the

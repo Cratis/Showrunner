@@ -350,7 +350,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  # cratis/showrunner-operator on Docker Hub (as cratis/authproxy is) and the chart as an OCI artifact in the same
+  # cratis/showrunner-operator-image on Docker Hub (as cratis/authproxy is) and the chart as an OCI artifact in the same
   # Docker Hub organization, so `helm install oci://registry-1.docker.io/cratis/showrunner-operator` installs the
   # operator it was packaged with. It checks out and builds nothing but the image from the packed output.
   publish-operator:
@@ -404,9 +404,9 @@ jobs:
         run: |
           {
             echo "tags<<EOF"
-            echo "cratis/showrunner-operator:$VERSION"
+            echo "cratis/showrunner-operator-image:$VERSION"
             if [ "$PRERELEASE" != "true" ]; then
-              echo "cratis/showrunner-operator:latest"
+              echo "cratis/showrunner-operator-image:latest"
             fi
             echo "EOF"
           } >> "$GITHUB_OUTPUT"

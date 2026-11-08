@@ -19,6 +19,9 @@ public class when_building_for_sql_storage : Specification
     [Fact] void should_name_the_file_after_the_setting() =>
         Build(StorageKinds.PostgreSql).ConnectionFiles["Cratis__Chronicle__Storage__ConnectionDetails"].ShouldEqual("/run/secrets/chronicle/Cratis__Chronicle__Storage__ConnectionDetails");
 
+    [Fact] void should_point_the_kernel_at_the_file() =>
+        Build(StorageKinds.PostgreSql).EnvironmentVariables["Cratis__Chronicle__Storage__ConnectionDetailsFile"].ShouldEqual("/run/secrets/chronicle/Cratis__Chronicle__Storage__ConnectionDetails");
+
     [Fact] void should_not_put_the_connection_in_an_environment_value() =>
         Build(StorageKinds.PostgreSql).EnvironmentVariables.Keys.Any(key => key.EndsWith("ConnectionDetails", StringComparison.Ordinal)).ShouldBeFalse();
 

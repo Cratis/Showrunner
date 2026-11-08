@@ -11,8 +11,11 @@ The chart installs the custom resource definitions from its `crds` folder, the o
 
 ```shell
 helm install stage-manager oci://registry-1.docker.io/cratis/showrunner-operator \
-  --namespace stage-manager --create-namespace
+  --namespace stage-manager --create-namespace \
+  --set 'managedNamespaces={apps}'
 ```
+
+List in `managedNamespaces` every namespace you create Performances in, and create those namespaces before installing. The operator can read and write Secrets, ConfigMaps and the workloads of a Performance only there; a Performance in any other namespace cannot be prepared. Leave the list empty to manage Performances in the release namespace only.
 
 After installation, use your cluster's inspection tools to check that the CRDs are present and the operator Deployment is available. These are installation checks; they do not establish that an application is ready.
 
@@ -25,6 +28,7 @@ Every value is documented in the chart's `values.yaml`. The ones most installs t
 | Value | What it does |
 | --- | --- |
 | `image.tag` | The operator version. Defaults to the version of the chart |
+| `managedNamespaces` | The namespaces the operator manages Performances in, and so the only namespaces where it may read and write Secrets and workloads. Defaults to the release namespace |
 | `environments.azureKeyVault.workloadIdentity` | Gives the operator an Azure workload identity so it can read Azure Key Vault secrets |
 | `environments.hashiCorpVault.kubernetesRole` | The role the operator logs in to HashiCorp Vault's Kubernetes auth method with |
 | `environments.hashiCorpVault.tokenSecretName` | A Secret with a Vault token, for clusters without Kubernetes auth. Prefer Kubernetes auth |
@@ -32,16 +36,19 @@ Every value is documented in the chart's `values.yaml`. The ones most installs t
 
 ## What the operator may do
 
-The chart's ClusterRole is the whole list, and it is short:
+The chart's ClusterRole lets the operator do only this across the cluster:
 
 - Performances: get, list, watch, update and patch, and their status.
 - Productions: get, to read the connection Secret a Production reports.
+- Events: create and patch.
+
+Everything else is granted by a Role in each namespace in `managedNamespaces`, and nowhere else:
+
 - ConfigMaps: get.
-- Secrets: get, create and update. It never lists or watches Secrets.
+- Secrets: get, create and update. It never lists, watches or deletes them.
 - Services and Deployments: get, create and update. Ingresses: also delete, only for a Performance whose lifetime ended.
 - NetworkPolicies: get, create and update, for published Stage applications.
 - Pod metrics (`metrics.k8s.io`): list, to report CPU and memory usage. Without metrics-server the usage is reported as not measured.
-- Events: create and patch.
 
 The operator deletes nothing but the Ingress of an expired Performance. Everything a Performance creates carries an owner reference to it, so deleting the Performance removes it all.
 

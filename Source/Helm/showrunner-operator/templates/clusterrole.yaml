@@ -1,6 +1,6 @@
-# What the operator may do, and nothing more. It never lists or watches Secrets, never touches namespaces or
-# nodes and deletes only the Ingress of a Performance whose lifetime ended (owner references remove everything
-# else a Performance created).
+# What the operator may do across the cluster, and nothing more: watch Performances and read Productions. What it
+# reads and writes for a Performance (Secrets, ConfigMaps, workloads, routes, metrics) is granted by a Role in each
+# managed namespace only (managed-namespaces-role.yaml). It never touches namespaces or nodes.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -22,31 +22,7 @@ rules:
   - apiGroups: ["showrunner.cratis.io"]
     resources: ["productions"]
     verbs: ["get"]
-  # The environment files and legal terms a Performance names.
-  - apiGroups: [""]
-    resources: ["configmaps"]
-    verbs: ["get"]
-  # The Secrets it reads (passphrase, Chronicle connection) and writes (resolved environment, signing keys).
-  - apiGroups: [""]
-    resources: ["secrets"]
-    verbs: ["get", "create", "update"]
-  - apiGroups: [""]
-    resources: ["services"]
-    verbs: ["get", "create", "update"]
-  - apiGroups: ["apps"]
-    resources: ["deployments"]
-    verbs: ["get", "create", "update"]
-  - apiGroups: ["networking.k8s.io"]
-    resources: ["ingresses"]
-    verbs: ["get", "create", "update", "delete"]
-  # Only the application of a published Stage application may be reached by its AuthProxy.
-  - apiGroups: ["networking.k8s.io"]
-    resources: ["networkpolicies"]
-    verbs: ["get", "create", "update"]
-  # CPU and memory in use by the pods of a Performance, from the metrics API (metrics-server).
-  - apiGroups: ["metrics.k8s.io"]
-    resources: ["pods"]
-    verbs: ["list"]
+  # The events it records about Performances.
   - apiGroups: [""]
     resources: ["events"]
     verbs: ["create", "patch"]

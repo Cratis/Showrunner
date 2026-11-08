@@ -163,6 +163,9 @@ jobs:
       - name: Template the chart
         run: helm template stage-manager Source/Helm/showrunner-operator --namespace stage-manager > /dev/null
 
+      - name: Check what the chart grants
+        run: ./scripts/stage-manager-chart-checks.sh
+
       - name: Publish the operator
         run: dotnet publish Source/DotNET/StageManager/StageManager.csproj -c Release -p:CratisProxiesOutputPath= -o Source/DotNET/StageManager/out
 

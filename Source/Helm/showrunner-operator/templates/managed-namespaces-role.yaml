@@ -1,0 +1,59 @@
+{{- /*
+What the operator reads and writes for a Performance. Everything lives in the namespace of the Performance, so it
+is granted by a Role in each namespace named in managedNamespaces (the release namespace when the list is empty)
+and never cluster-wide. It never lists, watches or deletes Secrets, and deletes only the Ingress of a Performance
+whose lifetime ended (owner references remove everything else a Performance created).
+*/}}
+{{- $namespaces := .Values.managedNamespaces | default (list .Release.Namespace) | uniq }}
+{{- range $namespace := $namespaces }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "showrunner-operator.fullname" $ }}-managed
+  namespace: {{ $namespace }}
+  labels:
+    {{- include "showrunner-operator.labels" $ | nindent 4 }}
+rules:
+  # The Secrets it reads (passphrase, Chronicle connection) and writes (resolved environment, signing keys).
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "create", "update"]
+  # The environment files, legal terms and packages a Performance names.
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get", "create", "update"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "create", "update"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get", "create", "update", "delete"]
+  # Only the application of a published Stage application may be reached by its AuthProxy.
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["networkpolicies"]
+    verbs: ["get", "create", "update"]
+  # CPU and memory in use by the pods of a Performance, from the metrics API (metrics-server).
+  - apiGroups: ["metrics.k8s.io"]
+    resources: ["pods"]
+    verbs: ["list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "showrunner-operator.fullname" $ }}-managed
+  namespace: {{ $namespace }}
+  labels:
+    {{- include "showrunner-operator.labels" $ | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "showrunner-operator.fullname" $ }}-managed
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "showrunner-operator.serviceAccountName" $ }}
+    namespace: {{ $.Release.Namespace }}
+{{- end }}

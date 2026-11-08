@@ -2,7 +2,7 @@
 
 # The operator image. The tag defaults to the version of the chart, so the two are released together.
 image:
-  repository: cratis/showrunner-operator
+  repository: cratis/showrunner-operator-image
   # Overrides the tag. Leave empty to use the chart's appVersion.
   tag: ""
   pullPolicy: IfNotPresent

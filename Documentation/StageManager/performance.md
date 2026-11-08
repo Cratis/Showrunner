@@ -32,6 +32,7 @@ spec:
   application:
     image: registry.example.com/crm:1.0.0
     eventStores: [Crm]               # the first one is the store Ante observes
+    sinks: [reporting]               # named sinks; needs productionRef
   environment:
     name: production
     configMapRef:
@@ -60,6 +61,12 @@ spec:
       name: letsencrypt              # a cert-manager ClusterIssuer
 ```
 
+## Sinks
+
+`application.sinks` lists the named sinks the application stores read models and graphs in. Each name must be configured by the Production named in `productionRef`, which maps it to MongoDB, PostgreSQL, SQL Server or Neo4j; see [Production storage and named sinks](./production.md). Names match without regard to case.
+
+With a `productionRef`, the condition `SinksMapped` says whether the Production configures every sink the application uses. When it lacks one, the Performance is `Blocked`, nothing is applied, and the message names each missing sink. `application.sinks` needs `productionRef`. A published Stage application does not take it: its package declares its sinks in its manifest.
+
 ## What is created
 
 For a Performance named `crm`:
@@ -79,7 +86,7 @@ Ante gets its own event store, `ante-<name>` by default, so two Performances on 
 
 ## Never half-configured
 
-Nothing is created or changed until everything the Performance needs is in hand: a valid spec, the Chronicle connection, the resolved environment and every environment key the providers and onboarding need. When something is missing the phase is `Blocked`, the missing keys are listed in `status.missingEnvironmentKeys`, a condition says why, and the Deployments that already run are left as they are.
+Nothing is created or changed until everything the Performance needs is in hand: a valid spec, the Chronicle connection, every sink the application uses, the resolved environment and every environment key the providers and onboarding need. When something is missing the phase is `Blocked`, the missing keys are listed in `status.missingEnvironmentKeys`, a condition says why, and the Deployments that already run are left as they are.
 
 Use the condition to identify the missing input, supply the referenced resource or environment key, then inspect the status again.
 
@@ -90,7 +97,7 @@ Use the condition to identify the missing input, supply the referenced resource 
 | `phase` | `Pending`, `Blocked`, `Progressing`, `Ready` or `Expired` |
 | `publicUrl` | `https://` and the first ingress host |
 | `missingEnvironmentKeys` | The keys the environment lacks, while the phase is `Blocked` |
-| `conditions` | `SpecValid`, `ChronicleConnection`, `EnvironmentResolved`, `EnvironmentComplete`, and `ApplicationReady`, `AuthProxyReady`, `AnteReady` per component |
+| `conditions` | `SpecValid`, `ChronicleConnection`, `SinksMapped` (with `productionRef`), `EnvironmentResolved`, `EnvironmentComplete`, and `ApplicationReady`, `AuthProxyReady`, `AnteReady` per component |
 | `signingKeys` | The key ids in use, the rotation counter applied and how many previous public keys are pinned |
 | `runningVersion`, `versions`, `rollout` | The version of a [published Stage application](./published-stage-applications.md) that runs, its history and the rollout under way |
 | `expiresAt`, `dataRetainedUntil` | When a [lifetime](./published-stage-applications.md#lifetime) ends, and until when the publisher should keep the data |

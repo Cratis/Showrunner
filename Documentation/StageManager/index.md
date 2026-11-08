@@ -8,7 +8,7 @@ Stage Manager is the Kubernetes operator of Showrunner. Unlike the other parts i
 | Resource | What it is | State |
 | --- | --- | --- |
 | `Performance` | One application running in one Cratis environment, with its AuthProxy and, when it has onboarding, its own Ante. The application can be a published Stage application, and can have a lifetime | Reconciled |
-| `Production` | Chronicle, with an optional MongoDB and Vault, for one or more applications | Schema only |
+| `Production` | Chronicle, with an optional MongoDB and Vault, for one or more applications: its [storage engine and named sinks](./production.md) | Schema only |
 | `Understudy` | How a Production is backed up | Schema only |
 | `Restore` | Brings a backup back | Schema only |
 | `Rehearsal` | Proves that backups restore | Schema only |

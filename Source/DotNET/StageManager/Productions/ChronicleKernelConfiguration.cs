@@ -8,12 +8,13 @@ namespace Cratis.Showrunner.StageManager.Productions;
 /// <summary>
 /// The configuration of the Chronicle kernel of a <see cref="Production"/>: the settings that are plain values, and the connections, which are mounted from their Secrets as files and never become an environment value.
 /// </summary>
-/// <param name="EnvironmentVariables">The kernel settings that hold no secret, as environment variables.</param>
+/// <param name="EnvironmentVariables">The kernel settings that hold no secret, as environment variables, including the path of every connection file the kernel reads.</param>
 /// <param name="Connections">The Secrets mounted into the kernel, each key as a file named after the kernel setting it holds.</param>
 /// <remarks>
-/// Every connection file is named after its kernel setting, such as <c>Cratis__Chronicle__Storage__ConnectionDetails</c>, in <see cref="ConnectionsDirectory"/>:
-/// a key-per-file configuration source over that directory binds each file to its setting. The Chronicle kernel has no such source today and reads
-/// <c>connectionDetails</c> and a Neo4j <c>server</c> from its configuration file and environment only, so applying this configuration needs Chronicle to read them from files.
+/// Every connection file is named after its kernel setting, such as <c>Cratis__Chronicle__Storage__ConnectionDetails</c>, in <see cref="ConnectionsDirectory"/>.
+/// The kernel reads it through the matching <c>…File</c> setting, such as <c>Cratis__Chronicle__Storage__ConnectionDetailsFile</c>, which holds its path.
+/// Only the <c>…File</c> form is set: the kernel refuses to start when a setting and its <c>…File</c> are both set.
+/// A Neo4j <c>server</c> has no <c>…File</c> setting in the kernel, so the file mounted for it is not read yet.
 /// </remarks>
 public record ChronicleKernelConfiguration(IReadOnlyDictionary<string, string> EnvironmentVariables, SecretMount Connections)
 {
@@ -33,6 +34,7 @@ public record ChronicleKernelConfiguration(IReadOnlyDictionary<string, string> E
     const string SinksReadModels = $"{Prefix}Sinks__ReadModels";
     const string SinksGraphs = $"{Prefix}Sinks__Graphs";
     const string SinkConfigurations = $"{Prefix}Sinks__Configurations__";
+    const string FileSuffix = "File";
 
     /// <summary>
     /// Gets the kernel settings whose value is a mounted file, with the path of that file.
@@ -40,7 +42,7 @@ public record ChronicleKernelConfiguration(IReadOnlyDictionary<string, string> E
     public IReadOnlyDictionary<string, string> ConnectionFiles =>
         Connections.Sources
             .SelectMany(source => source.Items?.Values ?? [])
-            .ToDictionary(setting => setting, setting => $"{ConnectionsDirectory}/{setting}", StringComparer.Ordinal);
+            .ToDictionary(setting => setting, FileOf, StringComparer.Ordinal);
 
     /// <summary>
     /// Builds the kernel configuration of a Production. The spec must be valid by <see cref="ProductionValidator"/>.
@@ -59,6 +61,7 @@ public record ChronicleKernelConfiguration(IReadOnlyDictionary<string, string> E
         if (string.Equals(spec.Database.Mode, "External", StringComparison.Ordinal))
         {
             sources.Add(new(spec.Database.ConnectionSecretName, new Dictionary<string, string> { [ProductionSecretReference.DefaultKey] = StorageConnection }));
+            variables[$"{StorageConnection}{FileSuffix}"] = FileOf(StorageConnection);
         }
 
         var sinks = spec.Sinks;
@@ -82,6 +85,12 @@ public record ChronicleKernelConfiguration(IReadOnlyDictionary<string, string> E
             {
                 var connection = sink.Kind == StorageKinds.Neo4j ? $"{setting}Server" : $"{setting}ConnectionDetails";
                 sources.Add(new(reference.Name, new Dictionary<string, string> { [reference.KeyOrDefault()] = connection }));
+
+                // The kernel has no file form of a Neo4j server.
+                if (sink.Kind != StorageKinds.Neo4j)
+                {
+                    variables[$"{connection}{FileSuffix}"] = FileOf(connection);
+                }
             }
         }
 
@@ -111,4 +120,6 @@ public record ChronicleKernelConfiguration(IReadOnlyDictionary<string, string> E
         StorageKinds.Neo4j => "Neo4j",
         _ => "MongoDB"
     };
+
+    static string FileOf(string setting) => $"{ConnectionsDirectory}/{setting}";
 }

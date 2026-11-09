@@ -8,5 +8,5 @@
   href: performance.md
 - name: Run a published Stage application
   href: published-stage-applications.md
-- name: Production storage and named sinks
+- name: Run Chronicle with a Production
   href: production.md

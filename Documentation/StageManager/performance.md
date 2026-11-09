@@ -13,7 +13,7 @@ The keys needed per provider kind are the ones AuthProxy's application contract 
 
 Start with an existing Chronicle connection Secret named by `chronicle.connectionSecretRef`. It takes precedence over `productionRef`, as shown in the example below.
 
-`productionRef` reads the connection Secret name from the Production's status. Production reconciliation is not implemented yet, so do not rely on creating a Production to provision Chronicle or populate that status. Either reference mounts the connection Secret into the workloads as a file; it is never copied.
+`productionRef` reads the connection Secret name from the Production's status, once the Production has written it; see [Run Chronicle with a Production](./production.md). Put the Performance in the namespace of its Production: the connection Secret is mounted from the Performance's own namespace. Either reference mounts the connection Secret into the workloads as a file; it is never copied.
 
 ```yaml
 apiVersion: showrunner.cratis.io/v1alpha1

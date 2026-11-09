@@ -1,8 +1,8 @@
 {{- /*
-What the operator reads and writes for a Performance. Everything lives in the namespace of the Performance, so it
-is granted by a Role in each namespace named in managedNamespaces (the release namespace when the list is empty)
-and never cluster-wide. It never lists, watches or deletes Secrets, and deletes only the Ingress of a Performance
-whose lifetime ended (owner references remove everything else a Performance created).
+What the operator reads and writes for a Performance or a Production. Everything lives in the namespace of the
+resource, so it is granted by a Role in each namespace named in managedNamespaces (the release namespace when the
+list is empty) and never cluster-wide. It never lists, watches or deletes Secrets, and deletes only the Ingress of a
+Performance whose lifetime ended (owner references remove everything else a Performance or Production created).
 */}}
 {{- $namespaces := .Values.managedNamespaces | default (list .Release.Namespace) | uniq }}
 {{- range $namespace := $namespaces }}
@@ -15,7 +15,8 @@ metadata:
   labels:
     {{- include "showrunner-operator.labels" $ | nindent 4 }}
 rules:
-  # The Secrets it reads (passphrase, Chronicle connection) and writes (resolved environment, signing keys).
+  # The Secrets it reads (passphrase, Chronicle connection, database and sink connections, certificates) and writes
+  # (resolved environment, signing keys, Chronicle credentials and connection, graph password).
   - apiGroups: [""]
     resources: ["secrets"]
     verbs: ["get", "create", "update"]
@@ -28,6 +29,18 @@ rules:
     verbs: ["get", "create", "update"]
   - apiGroups: ["apps"]
     resources: ["deployments"]
+    verbs: ["get", "create", "update"]
+  # Chronicle and the managed Neo4j of a Production.
+  - apiGroups: ["apps"]
+    resources: ["statefulsets"]
+    verbs: ["get", "create", "update"]
+  # The certificate authority and the TLS certificate of Chronicle (cert-manager).
+  - apiGroups: ["cert-manager.io"]
+    resources: ["issuers", "certificates"]
+    verbs: ["get", "create", "update"]
+  # The managed MongoDB of a Production (Percona Operator for MongoDB).
+  - apiGroups: ["psmdb.percona.com"]
+    resources: ["perconaservermongodbs"]
     verbs: ["get", "create", "update"]
   - apiGroups: ["networking.k8s.io"]
     resources: ["ingresses"]

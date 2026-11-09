@@ -31,6 +31,7 @@ public class when_validating : Specification
     [Fact] void should_refuse_duplicate_provider_identities() => Validate(spec => spec.AuthProxy.Providers.Add(new() { Kind = AuthProxyProviderKind.Google, Identity = "github" })).Any(problem => problem.Contains("twice", StringComparison.Ordinal)).ShouldBeTrue();
     [Fact] void should_require_a_production_for_sinks() => Validate(spec => spec.Application.Sinks = ["reporting"]).Any(problem => problem.Contains("application.sinks needs productionRef", StringComparison.Ordinal)).ShouldBeTrue();
     [Fact] void should_refuse_an_empty_sink_name() => Validate(spec => OnProduction(spec, " ")).Any(problem => problem.Contains("empty name", StringComparison.Ordinal)).ShouldBeTrue();
+    [Fact] void should_require_a_production_for_the_graph() => Validate(spec => spec.Application.Graph = true).Any(problem => problem.Contains("application.graph needs productionRef", StringComparison.Ordinal)).ShouldBeTrue();
     [Fact] void should_accept_sinks_on_a_production() => Validate(spec => OnProduction(spec, "reporting")).Count.ShouldEqual(0);
     [Fact] void should_refuse_a_provider_identity_with_odd_characters() => Validate(spec => spec.AuthProxy.Providers[0].Identity = "Entra/Id").Any(problem => problem.Contains("may only hold", StringComparison.Ordinal)).ShouldBeTrue();
 }

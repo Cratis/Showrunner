@@ -67,7 +67,7 @@ Like every Performance it is never half applied: when the package, the storage S
 
 The kernel inside Stage needs MongoDB. `storageConnectionSecretRef` names a Secret with the connection string (key `connectionString` unless set). It is projected into the container as a file and Stage reads it through `Stage__Published__Storage__ConnectionStringFile`; it is never copied, never an environment variable and never in the status. Give each application a database of its own in the connection string.
 
-The operator does not run MongoDB for a published application. Stage Manager takes a connection from a Secret for the Chronicle of an ordinary Performance in the same way, and managed storage is the job of a Production, which is not reconciled yet. The publisher provisions the database and owns it, including when to remove it after the application expired.
+The operator does not run MongoDB for a published application. Stage Manager takes a connection from a Secret for the Chronicle of an ordinary Performance in the same way, and managed storage is the job of a [Production](./production.md), which a published application does not use. The publisher provisions the database and owns it, including when to remove it after the application expired.
 
 ## Sign-in and trust
 

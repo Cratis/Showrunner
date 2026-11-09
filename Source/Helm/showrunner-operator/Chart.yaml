@@ -14,13 +14,5 @@ keywords:
   - cratis
   - showrunner
   - operator
-# The Percona Operator for MongoDB is an optional dependency of the Production work that follows (managed
-# MongoDB). It could not be validated when this chart was written, so it is not declared yet: declaring a
-# dependency makes `helm lint` and `helm package` fetch it. When the managed MongoDB work lands, declare it here
-# with `condition: percona.enabled` and a default of false in values.yaml:
-#
-# dependencies:
-#   - name: psmdb-operator
-#     version: <pinned version>
-#     repository: https://percona.github.io/percona-helm-charts/
-#     condition: percona.enabled
+# cert-manager and the Percona Operator for MongoDB are prerequisites of Productions, not dependencies of this
+# chart: install them in the cluster yourself. A Production reports a clear condition when one it needs is missing.

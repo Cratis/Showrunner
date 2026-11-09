@@ -18,8 +18,9 @@ public static class DesiredPerformanceBuilder
     /// <param name="environment">The resolved Cratis environment.</param>
     /// <param name="keys">The generated signing keys.</param>
     /// <param name="published">What a published Stage application needs, null for any other application.</param>
+    /// <param name="readSide">The read side of the named sinks and the graph of the Production, or null for none.</param>
     /// <returns>The desired state.</returns>
-    public static DesiredPerformance Build(Performance performance, ChronicleConnectionRef? connection, ResolvedEnvironment environment, SigningKeyState keys, PublishedInputs? published = null)
+    public static DesiredPerformance Build(Performance performance, ChronicleConnectionRef? connection, ResolvedEnvironment environment, SigningKeyState keys, PublishedInputs? published = null, ApplicationReadSide? readSide = null)
     {
         var spec = performance.Spec;
         var names = PerformanceNames.For(performance);
@@ -32,7 +33,7 @@ public static class DesiredPerformanceBuilder
             .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
         secrets.Add(SecretFactory.Create(performance, names.ApplicationSecret, "application", applicationFiles));
         workloads.Add(published is null
-            ? Application(performance, names, connection!, applicationFiles, revisionKey)
+            ? Application(performance, names, connection!, readSide ?? ApplicationReadSide.None, applicationFiles, revisionKey)
             : PublishedApplication(performance, names, published, applicationFiles, revisionKey));
 
         if (spec.AuthProxy.Enabled)
@@ -60,7 +61,7 @@ public static class DesiredPerformanceBuilder
     static SecretSource ConnectionSource(ChronicleConnectionRef connection) =>
         new(connection.SecretName, new Dictionary<string, string> { [connection.Key] = ChronicleConnectionRef.FileName });
 
-    static WorkloadDefinition Application(Performance performance, PerformanceNames names, ChronicleConnectionRef connection, IReadOnlyDictionary<string, string> files, string revisionKey)
+    static WorkloadDefinition Application(Performance performance, PerformanceNames names, ChronicleConnectionRef connection, ApplicationReadSide readSide, IReadOnlyDictionary<string, string> files, string revisionKey)
     {
         var spec = performance.Spec;
         Dictionary<string, string> variables = new(StringComparer.Ordinal)
@@ -69,6 +70,16 @@ public static class DesiredPerformanceBuilder
             ["CRATIS_SECRETS_DIRECTORY"] = ApplicationSecretsDirectory,
             ["CRATIS_CHRONICLE_CONNECTION_STRING_FILE"] = $"{ApplicationSecretsDirectory}/{ChronicleConnectionRef.FileName}"
         };
+        foreach (var (name, value) in readSide.EnvironmentVariables)
+        {
+            variables[name] = value;
+        }
+
+        List<SecretMount> secretMounts = [new("environment", ApplicationSecretsDirectory, [new(names.ApplicationSecret), ConnectionSource(connection)])];
+        if (readSide.Mount is { } sinks)
+        {
+            secretMounts.Add(sinks);
+        }
 
         return new(
             names.Application,
@@ -77,9 +88,10 @@ public static class DesiredPerformanceBuilder
             spec.Application.Port,
             spec.Application.Replicas,
             variables,
-            [new("environment", ApplicationSecretsDirectory, [new(names.ApplicationSecret), ConnectionSource(connection)])],
+            secretMounts,
             [],
-            ConfigRevision.Of(revisionKey, files));
+            ConfigRevision.Of(revisionKey, files),
+            SecretEnvironment: readSide.SecretEnvironmentVariables);
     }
 
     static WorkloadDefinition PublishedApplication(Performance performance, PerformanceNames names, PublishedInputs published, IReadOnlyDictionary<string, string> files, string revisionKey)

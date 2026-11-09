@@ -14,7 +14,7 @@ namespace Cratis.Showrunner.StageManager.Productions;
 /// Every connection file is named after its kernel setting, such as <c>Cratis__Chronicle__Storage__ConnectionDetails</c>, in <see cref="ConnectionsDirectory"/>.
 /// The kernel reads it through the matching <c>…File</c> setting, such as <c>Cratis__Chronicle__Storage__ConnectionDetailsFile</c>, which holds its path.
 /// Only the <c>…File</c> form is set: the kernel refuses to start when a setting and its <c>…File</c> are both set.
-/// A Neo4j <c>server</c> has no <c>…File</c> setting in the kernel, so the file mounted for it is not read yet.
+/// A Neo4j server is read through <c>…ServerFile</c>, which needs the Chronicle release with Cratis/Chronicle#5771.
 /// </remarks>
 public record ChronicleKernelConfiguration(IReadOnlyDictionary<string, string> EnvironmentVariables, SecretMount Connections)
 {
@@ -34,6 +34,7 @@ public record ChronicleKernelConfiguration(IReadOnlyDictionary<string, string> E
     const string SinksReadModels = $"{Prefix}Sinks__ReadModels";
     const string SinksGraphs = $"{Prefix}Sinks__Graphs";
     const string SinkConfigurations = $"{Prefix}Sinks__Configurations__";
+    const string Neo4j = $"{Prefix}Neo4j__";
     const string FileSuffix = "File";
 
     /// <summary>
@@ -48,8 +49,9 @@ public record ChronicleKernelConfiguration(IReadOnlyDictionary<string, string> E
     /// Builds the kernel configuration of a Production. The spec must be valid by <see cref="ProductionValidator"/>.
     /// </summary>
     /// <param name="spec">The spec of the Production.</param>
+    /// <param name="names">The names of what the Production owns, for the Secrets of its managed database and graph.</param>
     /// <returns>The kernel configuration.</returns>
-    public static ChronicleKernelConfiguration Build(ProductionSpec spec)
+    public static ChronicleKernelConfiguration Build(ProductionSpec spec, ProductionNames names)
     {
         var variables = new Dictionary<string, string>(StringComparer.Ordinal)
         {
@@ -57,11 +59,20 @@ public record ChronicleKernelConfiguration(IReadOnlyDictionary<string, string> E
         };
         var sources = new List<SecretSource>();
 
-        // A managed database is the Production's own MongoDB; its connection comes with it.
-        if (string.Equals(spec.Database.Mode, "External", StringComparison.Ordinal))
+        // A managed database gets a connection Secret of its own, composed by the operator from the users Percona keeps.
+        var databaseSecret = spec.Database.IsExternal() ? spec.Database.ConnectionSecretName : names.MongoDBConnection;
+        sources.Add(new(databaseSecret, new Dictionary<string, string> { [ProductionSecretReference.DefaultKey] = StorageConnection }));
+        variables[$"{StorageConnection}{FileSuffix}"] = FileOf(StorageConnection);
+
+        var graph = GraphOf(spec, names);
+        if (graph is not null)
         {
-            sources.Add(new(spec.Database.ConnectionSecretName, new Dictionary<string, string> { [ProductionSecretReference.DefaultKey] = StorageConnection }));
-            variables[$"{StorageConnection}{FileSuffix}"] = FileOf(StorageConnection);
+            sources.Add(new(graph.SecretName, new Dictionary<string, string>
+            {
+                [ProductionGraph.ServerKey] = $"{Neo4j}Server",
+                [ProductionGraph.PasswordKey] = $"{Neo4j}Password"
+            }));
+            SetGraph(variables, Neo4j, graph);
         }
 
         var sinks = spec.Sinks;
@@ -80,17 +91,16 @@ public record ChronicleKernelConfiguration(IReadOnlyDictionary<string, string> E
             var setting = $"{SinkConfigurations}{sink.Name}__";
             variables[$"{setting}Type"] = SinkTypeOf(sink.Kind);
 
-            // A Neo4j sink on the Production's own graph gets its server from that graph.
             if (sink.ConnectionSecretRef is { } reference)
             {
                 var connection = sink.Kind == StorageKinds.Neo4j ? $"{setting}Server" : $"{setting}ConnectionDetails";
                 sources.Add(new(reference.Name, new Dictionary<string, string> { [reference.KeyOrDefault()] = connection }));
-
-                // The kernel has no file form of a Neo4j server.
-                if (sink.Kind != StorageKinds.Neo4j)
-                {
-                    variables[$"{connection}{FileSuffix}"] = FileOf(connection);
-                }
+                variables[$"{connection}{FileSuffix}"] = FileOf(connection);
+            }
+            else if (sink.Kind == StorageKinds.Neo4j && graph is not null)
+            {
+                // A sink on the Production's own graph reads the files mounted for it.
+                SetGraph(variables, setting, graph);
             }
         }
 
@@ -121,5 +131,41 @@ public record ChronicleKernelConfiguration(IReadOnlyDictionary<string, string> E
         _ => "MongoDB"
     };
 
+    /// <summary>
+    /// Gets the graph of a Production: the Secret holding its bolt URI and password, its user and how its databases are placed.
+    /// </summary>
+    /// <param name="spec">The spec of the Production.</param>
+    /// <param name="names">The names of the Production.</param>
+    /// <returns>The graph, or null when the Production has none.</returns>
+    internal static Graph? GraphOf(ProductionSpec spec, ProductionNames names) => spec.Graph.Mode switch
+    {
+        ProductionModes.Managed => new(names.Neo4j, ProductionGraph.ManagedUserName, "Single", null),
+        ProductionModes.External when spec.Graph.Edition == GraphEditions.Enterprise =>
+            new(spec.Graph.CredentialsSecretName, spec.Graph.UserName, "PerNamespace", string.IsNullOrWhiteSpace(spec.Graph.DatabasePrefix) ? names.Production : spec.Graph.DatabasePrefix),
+        ProductionModes.External => new(spec.Graph.CredentialsSecretName, spec.Graph.UserName, "Single", null),
+        _ => null
+    };
+
     static string FileOf(string setting) => $"{ConnectionsDirectory}/{setting}";
+
+    static void SetGraph(Dictionary<string, string> variables, string setting, Graph graph)
+    {
+        variables[$"{setting}ServerFile"] = FileOf($"{Neo4j}Server");
+        variables[$"{setting}PasswordFile"] = FileOf($"{Neo4j}Password");
+        variables[$"{setting}UserName"] = graph.UserName;
+        variables[$"{setting}DatabaseMode"] = graph.DatabaseMode;
+        if (graph.DatabasePrefix is { } prefix)
+        {
+            variables[$"{setting}DatabasePrefix"] = prefix;
+        }
+    }
+
+    /// <summary>
+    /// The graph of a Production.
+    /// </summary>
+    /// <param name="SecretName">The Secret holding the bolt URI under <see cref="ProductionGraph.ServerKey"/> and the password under <see cref="ProductionGraph.PasswordKey"/>.</param>
+    /// <param name="UserName">The user to authenticate with.</param>
+    /// <param name="DatabaseMode"><c>Single</c> or <c>PerNamespace</c>.</param>
+    /// <param name="DatabasePrefix">The prefix of the database names on an Enterprise server, or null.</param>
+    internal sealed record Graph(string SecretName, string UserName, string DatabaseMode, string? DatabasePrefix);
 }

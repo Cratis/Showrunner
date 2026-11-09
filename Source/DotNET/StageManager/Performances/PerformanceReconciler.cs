@@ -81,7 +81,7 @@ public class PerformanceReconciler(IClusterResources cluster, PerformancePrepara
             published = new(prepared.Storage, prepared.NotesToken, RolloutTracker.ToDeploy(performance.Status, target));
         }
 
-        var desired = DesiredPerformanceBuilder.Build(performance, prepared.Connection, prepared.Environment, keys, published);
+        var desired = DesiredPerformanceBuilder.Build(performance, prepared.Connection, prepared.Environment, keys, published, prepared.ReadSide);
         foreach (var secret in desired.Secrets)
         {
             await cluster.ApplyAsync(secret, cancellationToken);

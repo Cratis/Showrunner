@@ -26,8 +26,16 @@ public abstract class given_a_performance_on_a_production : a_reconciliation
         _cluster.ProductionConnectionSecrets["apps/ledger"] = "ledger-connection";
         _cluster.SecretValues["apps/ledger-connection/connectionString"] = PerformanceSamples.ConnectionString;
         _cluster.Productions["apps/ledger"] = ProductionSamples.WithSinks();
+        _cluster.SecretValues["apps/documents-mongo/connectionString"] = PerformanceSamples.SinkConnectionString;
+        _cluster.SecretValues["apps/ledger-neo4j/password"] = PerformanceSamples.GraphPassword;
     }
 
-    protected ResourceCondition SinksMapped => _performance.Status.Conditions.Single(condition => condition.Type == "SinksMapped");
+    protected ResourceCondition SinksMapped => Condition("SinksMapped");
+
+    protected ResourceCondition Condition(string type) => _performance.Status.Conditions.Single(condition => condition.Type == type);
+
+    protected V1Container Application => _cluster.AppliedOf<V1Deployment>().Single(deployment => deployment.Metadata.Name == "crm-app").Spec.Template.Spec.Containers[0];
+
+    protected V1Deployment ApplicationDeployment => _cluster.AppliedOf<V1Deployment>().Single(deployment => deployment.Metadata.Name == "crm-app");
 }
 #endif

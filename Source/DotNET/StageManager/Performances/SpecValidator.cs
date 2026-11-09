@@ -55,6 +55,15 @@ public static partial class SpecValidator
             problems.Add("application.sinks needs productionRef: the Production maps each sink to its storage.");
         }
 
+        if (spec.Application.Graph && spec.Application.Published is not null)
+        {
+            problems.Add("application.graph is for a traditional application on a Production.");
+        }
+        else if (spec.Application.Graph && spec.ProductionRef is null)
+        {
+            problems.Add("application.graph needs productionRef: the graph is the Production's.");
+        }
+
         ValidateProviders(spec, problems);
         ValidateOnboarding(spec, problems);
         ValidatePublished(spec, problems);

@@ -40,6 +40,12 @@ public class ApplicationSpec
     public IList<string> Sinks { get; set; } = [];
 
     /// <summary>
+    /// Gets or sets whether the application reads the graph of its Production with Cratis.Arc.Neo4j.
+    /// </summary>
+    [Description("Whether the application reads the graph of the Production named by productionRef with Cratis.Arc.Neo4j. The Performance then binds the Cratis:Neo4j settings to that graph. Using a Neo4j sink on the Production's managed graph implies it.")]
+    public bool Graph { get; set; }
+
+    /// <summary>
     /// Gets or sets the published Stage application settings. When set, the application runs as a published Stage application.
     /// </summary>
     [Description("Runs the application as a published Stage application: image is the Stage runtime image and the package comes from a ConfigMap.")]

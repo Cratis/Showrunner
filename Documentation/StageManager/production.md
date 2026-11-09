@@ -1,6 +1,6 @@
 ---
 title: Run Chronicle with a Production
-description: Run Chronicle in a cluster with a Stage Manager Production, with TLS, an external or managed MongoDB, SQL storage, an optional Neo4j graph and the named sinks of its applications.
+description: Run Chronicle in a cluster with a Stage Manager Production, covering TLS, external or managed MongoDB, SQL storage, an optional Neo4j graph and named sinks.
 ---
 
 A `Production` is Chronicle for one or more applications. Stage Manager turns it into a running Chronicle: a StatefulSet behind a headless Service, its TLS certificate, its database, an optional Neo4j graph, and a connection Secret that applications use and nothing else. Each application on it keeps its own event stores.

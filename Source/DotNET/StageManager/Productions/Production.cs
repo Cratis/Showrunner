@@ -4,7 +4,7 @@
 namespace Cratis.Showrunner.StageManager.Productions;
 
 /// <summary>
-/// Chronicle plus an optional MongoDB and Vault, for one or more applications. Schema only until the Production reconciliation lands.
+/// Chronicle, with its database and an optional Neo4j graph, for one or more applications. Reconciled by <see cref="ProductionController"/>.
 /// </summary>
 [KubernetesEntity(Group = StageManagerApi.Group, ApiVersion = StageManagerApi.Version, Kind = "Production", PluralName = "productions")]
 public partial class Production : CustomKubernetesEntity<ProductionSpec, ProductionStatus>;

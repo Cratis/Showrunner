@@ -16,8 +16,10 @@ public static class PerformanceSamples
 
     public const string StorageConnectionString = "mongodb://fake-stage:fake-storage-password-4b8@mongo.internal:27017/crm";
     public const string NotesToken = "fake-notes-collector-token-6c0";
+    public const string SinkConnectionString = "mongodb://fake-documents:fake-sink-password-2d9@documents.internal:27017";
+    public const string GraphPassword = "fake-graph-password-8e1";
 
-    public static IReadOnlyList<string> SecretValues => [EntraClientSecret, GitHubClientSecret, MongoServer, ConnectionString, StorageConnectionString, NotesToken];
+    public static IReadOnlyList<string> SecretValues => [EntraClientSecret, GitHubClientSecret, MongoServer, ConnectionString, StorageConnectionString, NotesToken, SinkConnectionString, GraphPassword];
 
     public static Performance PublishedPerformance(string name = "crm", bool notes = true)
     {

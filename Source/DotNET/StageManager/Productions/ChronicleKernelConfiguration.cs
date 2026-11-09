@@ -131,9 +131,13 @@ public record ChronicleKernelConfiguration(IReadOnlyDictionary<string, string> E
         _ => "MongoDB"
     };
 
-    static string FileOf(string setting) => $"{ConnectionsDirectory}/{setting}";
-
-    static Graph? GraphOf(ProductionSpec spec, ProductionNames names) => spec.Graph.Mode switch
+    /// <summary>
+    /// Gets the graph of a Production: the Secret holding its bolt URI and password, its user and how its databases are placed.
+    /// </summary>
+    /// <param name="spec">The spec of the Production.</param>
+    /// <param name="names">The names of the Production.</param>
+    /// <returns>The graph, or null when the Production has none.</returns>
+    internal static Graph? GraphOf(ProductionSpec spec, ProductionNames names) => spec.Graph.Mode switch
     {
         ProductionModes.Managed => new(names.Neo4j, ProductionGraph.ManagedUserName, "Single", null),
         ProductionModes.External when spec.Graph.Edition == GraphEditions.Enterprise =>
@@ -141,6 +145,8 @@ public record ChronicleKernelConfiguration(IReadOnlyDictionary<string, string> E
         ProductionModes.External => new(spec.Graph.CredentialsSecretName, spec.Graph.UserName, "Single", null),
         _ => null
     };
+
+    static string FileOf(string setting) => $"{ConnectionsDirectory}/{setting}";
 
     static void SetGraph(Dictionary<string, string> variables, string setting, Graph graph)
     {
@@ -154,5 +160,12 @@ public record ChronicleKernelConfiguration(IReadOnlyDictionary<string, string> E
         }
     }
 
-    sealed record Graph(string SecretName, string UserName, string DatabaseMode, string? DatabasePrefix);
+    /// <summary>
+    /// The graph of a Production.
+    /// </summary>
+    /// <param name="SecretName">The Secret holding the bolt URI under <see cref="ProductionGraph.ServerKey"/> and the password under <see cref="ProductionGraph.PasswordKey"/>.</param>
+    /// <param name="UserName">The user to authenticate with.</param>
+    /// <param name="DatabaseMode"><c>Single</c> or <c>PerNamespace</c>.</param>
+    /// <param name="DatabasePrefix">The prefix of the database names on an Enterprise server, or null.</param>
+    internal sealed record Graph(string SecretName, string UserName, string DatabaseMode, string? DatabasePrefix);
 }

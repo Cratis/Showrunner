@@ -61,7 +61,7 @@ public static class WorkloadFactory
                                 Name = workload.Component,
                                 Image = workload.Image,
                                 Ports = [new() { Name = "http", ContainerPort = workload.Port }],
-                                Env = [.. workload.Environment.OrderBy(pair => pair.Key, StringComparer.Ordinal).Select(pair => new V1EnvVar { Name = pair.Key, Value = pair.Value })],
+                                Env = Environment(workload),
                                 VolumeMounts = mounts,
                                 Resources = workload.Resources,
                                 ReadinessProbe = workload.ReadinessPath is { } path
@@ -94,6 +94,17 @@ public static class WorkloadFactory
             Ports = [new() { Name = "http", Port = workload.Port, TargetPort = "http" }]
         }
     };
+
+    static List<V1EnvVar> Environment(WorkloadDefinition workload) =>
+    [
+        .. workload.Environment.Select(pair => new V1EnvVar { Name = pair.Key, Value = pair.Value })
+            .Concat((workload.SecretEnvironment ?? new Dictionary<string, ResolvedSecretRef>()).Select(pair => new V1EnvVar
+            {
+                Name = pair.Key,
+                ValueFrom = new() { SecretKeyRef = new() { Name = pair.Value.SecretName, Key = pair.Value.Key } }
+            }))
+            .OrderBy(variable => variable.Name, StringComparer.Ordinal)
+    ];
 
     static V1VolumeProjection ProjectedSource(SecretSource source) => new()
     {

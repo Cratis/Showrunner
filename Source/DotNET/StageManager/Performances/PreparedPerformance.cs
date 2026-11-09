@@ -10,4 +10,5 @@ namespace Cratis.Showrunner.StageManager.Performances;
 /// <param name="Environment">The resolved Cratis environment, complete for this Performance.</param>
 /// <param name="Storage">The Secret holding the storage connection string of a published Stage application.</param>
 /// <param name="NotesToken">The Secret holding the Notes collector token of a published Stage application.</param>
-public record PreparedPerformance(ChronicleConnectionRef? Connection, ResolvedEnvironment Environment, ResolvedSecretRef? Storage = null, ResolvedSecretRef? NotesToken = null);
+/// <param name="ReadSide">The read side of the named sinks and the graph the Production gives the application, or null without a Production.</param>
+public record PreparedPerformance(ChronicleConnectionRef? Connection, ResolvedEnvironment Environment, ResolvedSecretRef? Storage = null, ResolvedSecretRef? NotesToken = null, ApplicationReadSide? ReadSide = null);

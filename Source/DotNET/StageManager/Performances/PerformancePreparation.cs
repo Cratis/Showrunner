@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Showrunner.StageManager.Productions;
+
 namespace Cratis.Showrunner.StageManager.Performances;
 
 /// <summary>
@@ -10,6 +12,8 @@ namespace Cratis.Showrunner.StageManager.Performances;
 /// <param name="resolver">The environment resolver.</param>
 public class PerformancePreparation(IClusterResources cluster, IEnvironmentResolver resolver)
 {
+    readonly ApplicationReadSideBinding _readSides = new(cluster);
+
     /// <summary>
     /// Prepares the Performance.
     /// </summary>
@@ -29,6 +33,7 @@ public class PerformancePreparation(IClusterResources cluster, IEnvironmentResol
 
         ChronicleConnectionRef? connection = null;
         PublishedSecrets? published = null;
+        ApplicationReadSide? readSide = null;
         if (PublishedStageContract.IsPublished(performance.Spec))
         {
             published = await ResolvePublishedAsync(performance, status, cancellationToken);
@@ -41,7 +46,9 @@ public class PerformancePreparation(IClusterResources cluster, IEnvironmentResol
         else
         {
             connection = await ResolveConnectionAsync(performance, status, cancellationToken);
-            if (connection is null || !await CheckSinksAsync(performance, status, cancellationToken))
+            var sinks = connection is null ? SinkCheck.Failed : await CheckSinksAsync(performance, status, cancellationToken);
+            readSide = sinks.Production is { } production ? await _readSides.BindAsync(performance, production, status, cancellationToken) : ApplicationReadSide.None;
+            if (connection is null || !sinks.Mapped || readSide is null)
             {
                 status.Block();
                 return null;
@@ -67,7 +74,7 @@ public class PerformancePreparation(IClusterResources cluster, IEnvironmentResol
             return null;
         }
 
-        return new(connection, environment, published?.Storage, published?.NotesToken);
+        return new(connection, environment, published?.Storage, published?.NotesToken, readSide);
     }
 
     async Task<ChronicleConnectionRef?> ResolveConnectionAsync(Performance performance, PerformanceStatusBuilder status, CancellationToken cancellationToken)
@@ -104,11 +111,11 @@ public class PerformancePreparation(IClusterResources cluster, IEnvironmentResol
         return connection;
     }
 
-    async Task<bool> CheckSinksAsync(Performance performance, PerformanceStatusBuilder status, CancellationToken cancellationToken)
+    async Task<SinkCheck> CheckSinksAsync(Performance performance, PerformanceStatusBuilder status, CancellationToken cancellationToken)
     {
         if (performance.Spec.ProductionRef is not { } reference)
         {
-            return true;
+            return SinkCheck.WithoutProduction;
         }
 
         var used = ApplicationSinks.UsedBy(performance.Spec.Application);
@@ -116,7 +123,7 @@ public class PerformancePreparation(IClusterResources cluster, IEnvironmentResol
         if (production is null)
         {
             status.Set("SinksMapped", false, "ProductionNotFound", $"The Production '{reference.Name}' does not exist, so its sinks cannot be checked.");
-            return false;
+            return SinkCheck.Failed;
         }
 
         var missing = ApplicationSinks.MissingFrom(used, production);
@@ -127,7 +134,7 @@ public class PerformancePreparation(IClusterResources cluster, IEnvironmentResol
             _ => ("MissingSinks", $"The Production '{reference.Name}' does not configure {missing.Count} sink(s) the application uses: {string.Join(", ", missing)}.")
         };
         status.Set("SinksMapped", missing.Count == 0, reason, message);
-        return missing.Count == 0;
+        return missing.Count == 0 ? new(true, production) : SinkCheck.Failed;
     }
 
     async Task<ResolvedEnvironment?> ResolveEnvironmentAsync(Performance performance, PerformanceStatusBuilder status, CancellationToken cancellationToken)
@@ -194,6 +201,13 @@ public class PerformancePreparation(IClusterResources cluster, IEnvironmentResol
         var found = await cluster.GetSecretValueAsync(performance.Metadata.NamespaceProperty, reference.Name, key, cancellationToken) is not null;
         status.Set(condition, found, found ? "Resolved" : "SecretNotFound", found ? $"Using the {description} '{reference.Name}'." : $"The {description} '{reference.Name}' does not exist or has no key '{key}'.");
         return found ? new(reference.Name, key) : null;
+    }
+
+    sealed record SinkCheck(bool Mapped, ProductionSpec? Production)
+    {
+        public static SinkCheck Failed { get; } = new(false, null);
+
+        public static SinkCheck WithoutProduction { get; } = new(true, null);
     }
 
     sealed record PublishedSecrets(ResolvedSecretRef Storage, ResolvedSecretRef? NotesToken);

@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #if DEBUG
+using Cratis.Showrunner.StageManager.Productions.given;
+
 namespace Cratis.Showrunner.StageManager.Productions.for_ChronicleKernelConfiguration;
 
 public class when_building_for_sql_storage : Specification
@@ -25,10 +27,9 @@ public class when_building_for_sql_storage : Specification
     [Fact] void should_not_put_the_connection_in_an_environment_value() =>
         Build(StorageKinds.PostgreSql).EnvironmentVariables.Keys.Any(key => key.EndsWith("ConnectionDetails", StringComparison.Ordinal)).ShouldBeFalse();
 
-    static ChronicleKernelConfiguration Build(string kind) => ChronicleKernelConfiguration.Build(new()
-    {
-        Database = new() { Kind = kind, Mode = "External", ConnectionSecretName = "ledger-sql" }
-    });
+    static ChronicleKernelConfiguration Build(string kind) => ChronicleKernelConfiguration.Build(
+        new() { Database = new() { Kind = kind, Mode = "External", ConnectionSecretName = "ledger-sql" } },
+        ProductionSamples.Names);
 
     static SecretSourceShape Shape(Performances.SecretSource source) => new(source.SecretName, source.Items!.Single().Key, source.Items!.Single().Value);
 

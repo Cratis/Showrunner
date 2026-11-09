@@ -8,12 +8,21 @@ namespace Cratis.Showrunner.StageManager.Productions.for_ChronicleKernelConfigur
 
 public class when_building_without_sinks : Specification
 {
-    ChronicleKernelConfiguration _configuration;
+    const string StorageFile = "Cratis__Chronicle__Storage__ConnectionDetailsFile";
+    ChronicleKernelConfiguration _external;
+    ChronicleKernelConfiguration _managed;
 
-    void Because() => _configuration = ChronicleKernelConfiguration.Build(ProductionSamples.Managed());
+    void Because()
+    {
+        _external = ChronicleKernelConfiguration.Build(ProductionSamples.External(), ProductionSamples.Names);
+        _managed = ChronicleKernelConfiguration.Build(ProductionSamples.Managed(), ProductionSamples.Names);
+    }
 
-    [Fact] void should_only_set_the_storage_type() => _configuration.EnvironmentVariables.Keys.ShouldContainOnly(["Cratis__Chronicle__Storage__Type"]);
-    [Fact] void should_store_in_mongodb() => _configuration.EnvironmentVariables["Cratis__Chronicle__Storage__Type"].ShouldEqual("MongoDB");
-    [Fact] void should_mount_no_connection_of_its_own() => _configuration.Connections.Sources.Count.ShouldEqual(0);
+    [Fact] void should_only_set_the_storage_type_and_its_connection_file() => _external.EnvironmentVariables.Keys.ShouldContainOnly(["Cratis__Chronicle__Storage__Type", StorageFile]);
+    [Fact] void should_store_in_mongodb() => _external.EnvironmentVariables["Cratis__Chronicle__Storage__Type"].ShouldEqual("MongoDB");
+    [Fact] void should_mount_only_the_database_secret() => _external.Connections.Sources.Select(source => source.SecretName).ShouldContainOnly(["ledger-mongo"]);
+    [Fact] void should_leave_the_neo4j_settings_unset() => _external.EnvironmentVariables.Keys.Any(key => key.Contains("Neo4j", StringComparison.Ordinal)).ShouldBeFalse();
+    [Fact] void should_set_the_same_settings_for_a_managed_database() => _managed.EnvironmentVariables.Keys.ShouldContainOnly(["Cratis__Chronicle__Storage__Type", StorageFile]);
+    [Fact] void should_mount_the_connection_the_operator_composes_for_a_managed_database() => _managed.Connections.Sources.Select(source => source.SecretName).ShouldContainOnly(["ledger-mongodb-connection"]);
 }
 #endif

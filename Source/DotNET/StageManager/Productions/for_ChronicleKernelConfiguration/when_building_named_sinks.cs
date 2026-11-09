@@ -11,7 +11,7 @@ public class when_building_named_sinks : Specification
     const string Sinks = "Cratis__Chronicle__Sinks__";
     ChronicleKernelConfiguration _configuration;
 
-    void Because() => _configuration = ChronicleKernelConfiguration.Build(ProductionSamples.WithSinks());
+    void Because() => _configuration = ChronicleKernelConfiguration.Build(ProductionSamples.WithSinks(), ProductionSamples.Names);
 
     [Fact] void should_set_the_default_for_read_models() => _configuration.EnvironmentVariables[$"{Sinks}ReadModels"].ShouldEqual("reporting");
     [Fact] void should_set_the_default_for_graphs() => _configuration.EnvironmentVariables[$"{Sinks}Graphs"].ShouldEqual("people");
@@ -27,9 +27,12 @@ public class when_building_named_sinks : Specification
     [Fact] void should_point_the_kernel_at_the_sql_server_file() => _configuration.EnvironmentVariables[$"{Sinks}Configurations__warehouse__ConnectionDetailsFile"].ShouldEqual($"/run/secrets/chronicle/{Sinks}Configurations__warehouse__ConnectionDetails");
     [Fact] void should_point_the_kernel_at_the_mongodb_file() => _configuration.EnvironmentVariables[$"{Sinks}Configurations__documents__ConnectionDetailsFile"].ShouldEqual($"/run/secrets/chronicle/{Sinks}Configurations__documents__ConnectionDetails");
     [Fact] void should_point_the_kernel_at_every_mounted_connection_details_file() => _configuration.EnvironmentVariables.Keys.Count(key => key.EndsWith("ConnectionDetailsFile", StringComparison.Ordinal)).ShouldEqual(4);
-    [Fact] void should_not_point_the_kernel_at_a_neo4j_server_file() => _configuration.EnvironmentVariables.Keys.Any(key => key.Contains("__organization__", StringComparison.Ordinal) && key.EndsWith("File", StringComparison.Ordinal)).ShouldBeFalse();
+    [Fact] void should_point_the_kernel_at_the_neo4j_server_file() => _configuration.EnvironmentVariables[$"{Sinks}Configurations__organization__ServerFile"].ShouldEqual($"/run/secrets/chronicle/{Sinks}Configurations__organization__Server");
+    [Fact] void should_point_a_sink_on_the_managed_graph_at_its_server_file() => _configuration.EnvironmentVariables[$"{Sinks}Configurations__people__ServerFile"].ShouldEqual("/run/secrets/chronicle/Cratis__Chronicle__Neo4j__Server");
+    [Fact] void should_point_a_sink_on_the_managed_graph_at_its_password_file() => _configuration.EnvironmentVariables[$"{Sinks}Configurations__people__PasswordFile"].ShouldEqual("/run/secrets/chronicle/Cratis__Chronicle__Neo4j__Password");
+    [Fact] void should_run_a_sink_on_the_managed_graph_in_one_database() => _configuration.EnvironmentVariables[$"{Sinks}Configurations__people__DatabaseMode"].ShouldEqual("Single");
     [Fact] void should_mount_nothing_for_a_sink_on_the_productions_graph() => _configuration.ConnectionFiles.Keys.Any(setting => setting.Contains("__people__", StringComparison.Ordinal)).ShouldBeFalse();
-    [Fact] void should_mount_the_storage_and_every_secret_sink() => _configuration.Connections.Sources.Count.ShouldEqual(5);
-    [Fact] void should_put_no_connection_in_an_environment_value() => _configuration.EnvironmentVariables.Keys.Any(key => key.EndsWith("ConnectionDetails", StringComparison.Ordinal) || key.EndsWith("Server", StringComparison.Ordinal)).ShouldBeFalse();
+    [Fact] void should_mount_the_storage_the_graph_and_every_secret_sink() => _configuration.Connections.Sources.Count.ShouldEqual(6);
+    [Fact] void should_put_no_connection_in_an_environment_value() => _configuration.EnvironmentVariables.Keys.Any(key => key.EndsWith("ConnectionDetails", StringComparison.Ordinal) || key.EndsWith("Server", StringComparison.Ordinal) || key.EndsWith("Password", StringComparison.Ordinal)).ShouldBeFalse();
 }
 #endif

@@ -206,8 +206,16 @@ Changing `database.kind`, `database.mode`, `graph.mode` or `graph.edition` on a 
 
 `vault.mode` other than `None` is not supported yet ([#17](https://github.com/Cratis/Showrunner/issues/17)); the Production is `Blocked` with `VaultSupported` false.
 
-## Performances check their sinks
+## Performances check and read their sinks
 
 A Performance on a Production lists the sinks its application uses in `application.sinks`. It is `Blocked` with the condition `SinksMapped` false, naming each sink the Production does not configure, before Chronicle would refuse the registration at run time. See [Run an application with a Performance](./performance.md#sinks).
 
-The graph and named sinks do not reach a Performance's binding yet: an application on a Production gets the Chronicle connection, and the read side of a graph or a named sink is configured by the application itself for now.
+The Production also gives the application the read side of what it uses, so queries read where the kernel writes:
+
+| Sink or graph | What the application gets |
+| --- | --- |
+| A `MongoDB` sink | Its `connectionSecretRef` key, mounted as `/run/secrets/sinks/<name>`, and `Cratis__MongoDB__Sinks__<name>__ServerFile` naming it |
+| The graph of the Production | The `Cratis__Neo4j__…` settings of Cratis.Arc.Neo4j, when the application sets `application.graph` or uses a Neo4j sink with `graphRef: managed` |
+| A `PostgreSql` or `SqlServer` sink, or a Neo4j sink on another server | Nothing: Cratis Arc cannot read it. The condition `SinksReadable` is false as a warning, and the Performance still runs |
+
+The Performance mounts these Secrets from its own namespace, so create it in the namespace of the Production. When one is not there, it is `Blocked` with `SinksBound` or `GraphBound` false, naming the Secret; nothing is copied between namespaces. Reading a named MongoDB sink needs the Cratis Arc release with [Cratis/Arc#3770](https://github.com/Cratis/Arc/issues/3770).

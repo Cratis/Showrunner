@@ -33,6 +33,7 @@ spec:
     image: registry.example.com/crm:1.0.0
     eventStores: [Crm]               # the first one is the store Ante observes
     sinks: [reporting]               # named sinks; needs productionRef
+    graph: true                      # reads the Production's graph; needs productionRef
   environment:
     name: production
     configMapRef:
@@ -67,6 +68,30 @@ spec:
 
 With a `productionRef`, the condition `SinksMapped` says whether the Production configures every sink the application uses. When it lacks one, the Performance is `Blocked`, nothing is applied, and the message names each missing sink. `application.sinks` needs `productionRef`. A published Stage application does not take it: its package declares its sinks in its manifest.
 
+### Reading named sinks
+
+Chronicle writes a read model to the sink its `[Sink("name")]` names. For the application's queries to read it from the same place, the operator binds each sink the application uses to Cratis Arc, which picks the sink from the same attribute:
+
+- **MongoDB.** The key of the sink's `connectionSecretRef` is mounted as a file, `/run/secrets/sinks/<name>`, and `Cratis__MongoDB__Sinks__<name>__ServerFile` names it. The connection string is never an environment value. This needs the Cratis Arc release with [Cratis/Arc#3770](https://github.com/Cratis/Arc/issues/3770); an older Arc ignores the setting and reads those read models from its default database, where they are not.
+- **PostgreSQL and SQL Server.** Cratis Arc cannot read a named SQL sink, so nothing is bound. The kernel still writes there, and queries over those read models would read the default storage instead. The condition `SinksReadable` is false, naming the sink, as a warning: the Performance still rolls out.
+- **Neo4j.** Cratis.Arc.Neo4j reads one graph per application, so only the graph of the Production can be bound; a Neo4j sink on another server is named by `SinksReadable` as well.
+
+The condition `SinksBound` says whether the MongoDB sinks are bound. Their Secrets are in the namespace of the Production, and a Performance mounts Secrets from its own namespace only: when one is not there, the Performance is `Blocked` with `SinksBound` false, naming the Secret, and nothing is copied across namespaces.
+
+### Reading the graph
+
+Set `application.graph: true`, or use a Neo4j sink with `graphRef: managed`, and the operator binds the graph of the Production to Cratis.Arc.Neo4j through its `Cratis:Neo4j` section:
+
+| Variable | Value |
+| --- | --- |
+| `Cratis__Neo4j__Server` | The bolt address of a managed graph, as a plain value: it is not a secret. For an external graph it comes from the `server` key of `graph.credentialsSecretName` through a `secretKeyRef` |
+| `Cratis__Neo4j__Password` | The `password` key of the graph's Secret, through a `secretKeyRef` |
+| `Cratis__Neo4j__UserName` | The user Chronicle writes with |
+| `Cratis__Neo4j__DatabaseMode`, `Cratis__Neo4j__DatabasePrefix` | `Single` on Community; `PerNamespace` and the prefix on Enterprise, as the kernel writes them |
+| `Cratis__Neo4j__EventStore` | The first of `application.eventStores` |
+
+Cratis.Arc.Neo4j takes its settings as values and has no file-based setting, so the password is a `secretKeyRef` environment variable: the Deployment names the Secret, never the value. The application reads with the credential Chronicle writes with; on Community there is only one user, and the condition `GraphBound` says so with the reason `SharedCredential`. `GraphBound` is false and the Performance `Blocked` when the Production has no graph or its Secret is not in the namespace of the Performance.
+
 ## What is created
 
 For a Performance named `crm`:
@@ -97,7 +122,7 @@ Use the condition to identify the missing input, supply the referenced resource 
 | `phase` | `Pending`, `Blocked`, `Progressing`, `Ready` or `Expired` |
 | `publicUrl` | `https://` and the first ingress host |
 | `missingEnvironmentKeys` | The keys the environment lacks, while the phase is `Blocked` |
-| `conditions` | `SpecValid`, `ChronicleConnection`, `SinksMapped` (with `productionRef`), `EnvironmentResolved`, `EnvironmentComplete`, and `ApplicationReady`, `AuthProxyReady`, `AnteReady` per component |
+| `conditions` | `SpecValid`, `ChronicleConnection`, `SinksMapped`, `SinksReadable` and `SinksBound` (with `productionRef`), `GraphBound` (when the application reads the graph), `EnvironmentResolved`, `EnvironmentComplete`, and `ApplicationReady`, `AuthProxyReady`, `AnteReady` per component |
 | `signingKeys` | The key ids in use, the rotation counter applied and how many previous public keys are pinned |
 | `runningVersion`, `versions`, `rollout` | The version of a [published Stage application](./published-stage-applications.md) that runs, its history and the rollout under way |
 | `expiresAt`, `dataRetainedUntil` | When a [lifetime](./published-stage-applications.md#lifetime) ends, and until when the publisher should keep the data |

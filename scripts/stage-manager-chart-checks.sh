@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Checks what the Stage Manager chart grants without a cluster: the operator's ClusterRole only watches
-# Performances, reads Productions and records events, and everything it does for a Performance (Secrets,
-# ConfigMaps, workloads, routes, metrics) is granted by a Role and RoleBinding rendered in the managed namespaces
-# only (the release namespace by default). Needs helm on the path. CI runs it in the "Stage Manager" job of build.yml.
+# Performances and Productions, reads three named custom resource definitions and records events, and everything it
+# does for a Performance or a Production (Secrets, ConfigMaps, workloads, certificates, databases, routes, metrics) is
+# granted by a Role and RoleBinding rendered in the managed namespaces only (the release namespace by default). Needs helm on the path. CI runs it in the "Stage Manager" job of build.yml.
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -15,8 +15,15 @@ fail() { echo "FAILED: $*" >&2; exit 1; }
 cluster_resources="$(helm template stage-manager "$chart" --namespace stage-manager --show-only templates/clusterrole.yaml \
   | awk '/^[[:space:]]*resources:/ { sub(/^[^[]*\[/, ""); sub(/\].*$/, ""); gsub(/[" ]/, ""); n = split($0, r, ","); for (i = 1; i <= n; i++) print r[i] }' \
   | sort -u | tr '\n' ' ')"
-test "$cluster_resources" = "events performances performances/finalizers performances/status productions " \
-  || fail "the ClusterRole grants more than Performances, Productions and events; grant it in the managed-namespaces Role instead (got: $cluster_resources)"
+test "$cluster_resources" = "customresourcedefinitions events performances performances/finalizers performances/status productions productions/finalizers productions/status " \
+  || fail "the ClusterRole grants more than Performances, Productions, definitions and events; grant it in the managed-namespaces Role instead (got: $cluster_resources)"
+
+# Custom resource definitions may only be read, and only the three that tell whether cert-manager and Percona are installed.
+definitions="$(helm template stage-manager "$chart" --namespace stage-manager --show-only templates/clusterrole.yaml \
+  | grep -A7 -E '^[[:space:]]*resources: \["customresourcedefinitions"\]$')"
+grep -qE '^[[:space:]]*verbs: \["get"\]$' <<<"$definitions" || fail "the ClusterRole grants more than get on custom resource definitions"
+test "$(grep -cE '^[[:space:]]*- (certificates\.cert-manager\.io|issuers\.cert-manager\.io|perconaservermongodbs\.psmdb\.percona\.com)$' <<<"$definitions")" = "3" \
+  || fail "the ClusterRole does not limit custom resource definitions to cert-manager's and Percona's"
 
 # The namespaces the Roles and RoleBindings are rendered in, sorted and unique.
 role_namespaces() {

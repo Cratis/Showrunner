@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Claims;
 using Cratis.Arc;
 using Cratis.Arc.Identity;
@@ -55,8 +56,7 @@ public class OnBehalfForwards(RequestDelegate next, IOptionsMonitor<ArcOptions> 
     public async Task InvokeAsync(HttpContext http, ITenantEventStores stores, SupportSessions sessions)
     {
         var headers = http.Request.Headers;
-        var actsOnBehalf = headers.ContainsKey(OnBehalfPaths.ActorHeader) || headers.ContainsKey(OnBehalfPaths.AssertionHeader);
-        if (arc.CurrentValue.OnBehalfOf?.Enabled != true || !actsOnBehalf || http.Request.Path.StartsWithSegments(OnBehalfPaths.Prefix, StringComparison.Ordinal))
+        if (ShouldBypass(http.Request))
         {
             await next(http);
             return;
@@ -73,9 +73,7 @@ public class OnBehalfForwards(RequestDelegate next, IOptionsMonitor<ArcOptions> 
         }
 
         var assertion = OnBehalfAssertionClaims.FromVerifiedForward(headers[OnBehalfPaths.AssertionHeader].ToString());
-        if (assertion is null ||
-            !string.Equals(assertion.Subject.Value, SubjectOf(principal.Identities.First(_ => _.Actor is not null)), StringComparison.Ordinal) ||
-            !string.Equals(assertion.Actor.Value, SubjectOf(actor), StringComparison.Ordinal))
+        if (!NamesAuthenticatedIdentities(assertion, principal, actor))
         {
             logger.ForwardWithoutSession();
             await Refuse(http);
@@ -91,6 +89,17 @@ public class OnBehalfForwards(RequestDelegate next, IOptionsMonitor<ArcOptions> 
 
         http.Items[VerifiedForward] = new VerifiedForward(assertion, await RefusalFor(assertion, stores, sessions, http.RequestAborted));
         await next(http);
+    }
+
+    static bool NamesAuthenticatedIdentities([NotNullWhen(true)] OnBehalfAssertion? assertion, ClaimsPrincipal principal, ClaimsIdentity actor)
+    {
+        if (assertion is null)
+        {
+            return false;
+        }
+
+        return string.Equals(assertion.Subject.Value, SubjectOf(principal.Identities.First(_ => _.Actor is not null)), StringComparison.Ordinal) &&
+            string.Equals(assertion.Actor.Value, SubjectOf(actor), StringComparison.Ordinal);
     }
 
     static string? SubjectOf(ClaimsIdentity identity) =>
@@ -113,5 +122,20 @@ public class OnBehalfForwards(RequestDelegate next, IOptionsMonitor<ArcOptions> 
         http.Response.StatusCode = StatusCodes.Status401Unauthorized;
         http.Response.Headers.CacheControl = "no-store";
         return Task.CompletedTask;
+    }
+
+    bool ShouldBypass(HttpRequest request)
+    {
+        if (arc.CurrentValue.OnBehalfOf?.Enabled != true)
+        {
+            return true;
+        }
+
+        if (!request.Headers.ContainsKey(OnBehalfPaths.ActorHeader) && !request.Headers.ContainsKey(OnBehalfPaths.AssertionHeader))
+        {
+            return true;
+        }
+
+        return request.Path.StartsWithSegments(OnBehalfPaths.Prefix, StringComparison.Ordinal);
     }
 }

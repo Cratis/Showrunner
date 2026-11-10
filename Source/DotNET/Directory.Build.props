@@ -2,10 +2,13 @@
     <Import Project="$(MSBuildThisFileDirectory)../../Directory.Build.props" />
 
     <!--
-        Every project under Source/DotNET is a library published to NuGet. Package metadata shared by all of
-        them lives here; each project sets its own PackageId, Description and PackageTags.
+        Libraries under Source/DotNET are published to NuGet for .NET 10 and .NET 11. Package metadata shared
+        by them lives here; each project sets its own PackageId, Description and PackageTags. Stage Manager
+        overrides the target frameworks and packability because it ships only as a .NET 11 executable.
     -->
     <PropertyGroup>
+        <TargetFramework></TargetFramework>
+        <TargetFrameworks>net10.0;net11.0</TargetFrameworks>
         <IsPackable>true</IsPackable>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <Copyright>Copyright Cratis</Copyright>

@@ -6,7 +6,7 @@
 #   dotnet publish Source/DotNET/StageManager/StageManager.csproj -c Release -p:CratisProxiesOutputPath= -o Source/DotNET/StageManager/out
 ####################################
 
-FROM mcr.microsoft.com/dotnet/runtime:10.0
+FROM mcr.microsoft.com/dotnet/runtime:11.0
 ARG VERSION=0.0.0
 
 LABEL org.opencontainers.image.title="Showrunner Stage Manager" \

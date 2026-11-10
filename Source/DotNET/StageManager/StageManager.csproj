@@ -1,5 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
+        <TargetFrameworks></TargetFrameworks>
+        <TargetFramework>net11.0</TargetFramework>
         <OutputType>Exe</OutputType>
         <AssemblyName>Cratis.Showrunner.StageManager</AssemblyName>
         <RootNamespace>Cratis.Showrunner.StageManager</RootNamespace>

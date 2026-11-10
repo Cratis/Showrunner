@@ -71,7 +71,7 @@ Choose the backend packages for the part you are hosting, then add its TypeScrip
 
 ## Building
 
-To work on Showrunner, use the .NET SDK selected by [`global.json`](./global.json) and Node.js 20 or later with Corepack enabled (`corepack enable`). Yarn is checked in under `.yarn/releases`.
+To work on Showrunner, use the .NET 11 SDK selected by [`global.json`](./global.json), the .NET 10 SDK for the libraries' net10.0 targets and inline specifications, and Node.js 20 or later with Corepack enabled (`corepack enable`). Yarn is checked in under `.yarn/releases`.
 
 Run the commands below from the repository root. The full solution test command includes container-based integration specifications, so Docker must be running.
 

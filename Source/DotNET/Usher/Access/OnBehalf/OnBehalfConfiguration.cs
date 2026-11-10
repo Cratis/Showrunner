@@ -37,7 +37,7 @@ public class OnBehalfConfiguration : IValidateOptions<ArcOptions>
             failures.Add("Usher's on-behalf sessions need the issuer and the audience of AuthProxy's OnBehalf:Attestation: set Cratis:Arc:OnBehalfOf:Issuer and Audience.");
         }
 
-        if (!onBehalfOf.SigningKeys.Any() || !OnBehalfSigningKeys.AreUsable(onBehalfOf.SigningKeys))
+        if (onBehalfOf.SigningKeys.Count == 0 || !OnBehalfSigningKeys.AreUsable(onBehalfOf.SigningKeys))
         {
             failures.Add("Every Cratis:Arc:OnBehalfOf:SigningKeys entry needs a unique KeyId and the PEM of an RSA public key of at least 2048 bits; never a private key. At least one is needed.");
         }

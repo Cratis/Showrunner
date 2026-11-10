@@ -2,7 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Net.Http.Headers;
+#if !NET11_0_OR_GREATER
 using System.Net.Http.Json;
+#endif
 using Cratis.Showrunner.Notes.Contracts.Transport;
 using Microsoft.Extensions.Options;
 

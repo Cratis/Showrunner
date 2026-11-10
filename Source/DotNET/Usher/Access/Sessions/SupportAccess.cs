@@ -126,41 +126,8 @@ public record SupportAccess(
     /// <param name="request">The <see cref="SupportSessionRequest"/>.</param>
     /// <param name="now">The point in time.</param>
     /// <returns>Why support may not, or <see langword="null"/> when it may.</returns>
-    public SupportSessionRefusal? RefusalFor(SupportSessionRequest request, DateTimeOffset now)
-    {
-        if (!IsReported)
-        {
-            return SupportSessionRefusal.IssueNotReported;
-        }
-
-        if (ReportedBy.Subject != request.Subject)
-        {
-            return SupportSessionRefusal.NotTheReporter;
-        }
-
-        // The same subject at another identity provider is somebody else; only the reporter's own identity is them.
-        if (request.Actor == ReportedBy)
-        {
-            return SupportSessionRefusal.ActorIsTheReporter;
-        }
-
-        if (HasEnded(request.SessionId))
-        {
-            return SupportSessionRefusal.SessionEnded;
-        }
-
-        if (Withdrawn)
-        {
-            return SupportSessionRefusal.IssueWithdrawn;
-        }
-
-        if (!HasLiveGrant(now))
-        {
-            return SupportSessionRefusal.NoLiveGrant;
-        }
-
-        return SharedIdentity is not null && UserIdentity.Of(SharedIdentity) == ReportedBy ? null : SupportSessionRefusal.IdentityNotShared;
-    }
+    public SupportSessionRefusal? RefusalFor(SupportSessionRequest request, DateTimeOffset now) =>
+        SupportAccessPolicy.RefusalFor(this, request, now);
 
     SupportAccess Apply(object @event, EventSequenceNumber sequenceNumber)
     {

@@ -32,7 +32,7 @@ namespace Cratis.Showrunner.Notes.Receiving;
 /// <param name="options">Notes' options, which name the collecting stores.</param>
 public class ReceiverSubscriptions(ReceiverEventTranslator translator, IOptions<NotesOptions> options)
 {
-    readonly Dictionary<IEventStore, HashSet<EventStoreName>> _served = [with(ReferenceEqualityComparer.Instance)];
+    readonly Dictionary<IEventStore, HashSet<EventStoreName>> _served = new(ReferenceEqualityComparer.Instance);
     readonly HashSet<EventStoreName> _subscribed = [];
     readonly Lock _lock = new();
 

@@ -34,7 +34,7 @@ namespace Cratis.Showrunner.Usher.Receiving;
 /// <param name="options">Usher's options, which name the desk stores.</param>
 public class DeskSubscriptions(DeskEventTranslator translator, IOptions<UsherOptions> options)
 {
-    readonly Dictionary<IEventStore, HashSet<EventStoreName>> _served = [with(ReferenceEqualityComparer.Instance)];
+    readonly Dictionary<IEventStore, HashSet<EventStoreName>> _served = new(ReferenceEqualityComparer.Instance);
     readonly HashSet<EventStoreName> _subscribed = [];
     readonly Lock _lock = new();
 

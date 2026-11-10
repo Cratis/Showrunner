@@ -13,4 +13,10 @@
         <CratisProxiesOutputPath></CratisProxiesOutputPath>
     </PropertyGroup>
 
+    <!-- Arc's proxy generator has no net11 task build yet; generate once from net10.0
+         so the two target-framework builds do not write the same proxy output concurrently. -->
+    <PropertyGroup Condition="'$(TargetFramework)' != 'net10.0'">
+        <CratisProxiesOutputPath></CratisProxiesOutputPath>
+    </PropertyGroup>
+
 </Project>

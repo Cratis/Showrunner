@@ -24,6 +24,6 @@ public class when_serializing_a_live_answer : Specification
     [Fact] void should_state_any_other_offset() => _withOffset.ShouldEqual("2026-10-26T15:00:00+02:00");
 
     static string ValidUntilOf(OnBehalfGrantAnswer answer) =>
-        JsonDocument.Parse(JsonSerializer.Serialize(answer, _serializerOptions)).RootElement.GetProperty("validUntil").GetString()!;
+        JsonElement.Parse(JsonSerializer.Serialize(answer, _serializerOptions)).GetProperty("validUntil").GetString()!;
 }
 #endif

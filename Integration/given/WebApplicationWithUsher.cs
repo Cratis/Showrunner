@@ -162,7 +162,7 @@ public sealed class WebApplicationWithUsher(WebApplication app, EventStoreName n
 
         using var response = await Http.SendAsync(request);
         var body = await response.Content.ReadAsStringAsync();
-        return (response.StatusCode, JsonDocument.Parse(body.Length == 0 ? "{}" : body).RootElement.Clone());
+        return (response.StatusCode, JsonElement.Parse(body.Length == 0 ? "{}" : body));
     }
 
     /// <summary>

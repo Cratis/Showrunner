@@ -88,7 +88,7 @@ public class through_authproxy : Specification
         using (var response = await _application.Send(grantCheck))
         {
             _grantCheckStatus = response.StatusCode;
-            _liveGrant = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.Clone();
+            _liveGrant = JsonElement.Parse(await response.Content.ReadAsStringAsync());
         }
 
         using (var replayed = await _application.Send(grantCheck))
@@ -159,7 +159,7 @@ public class through_authproxy : Specification
         // AuthProxy's next grant check is not live, and two of its replicas report the end.
         using (var afterRevoke = await _application.Send(_authProxy.GrantCheck(_session, baseUrl)))
         {
-            _grantAfterRevoke = JsonDocument.Parse(await afterRevoke.Content.ReadAsStringAsync()).RootElement.Clone();
+            _grantAfterRevoke = JsonElement.Parse(await afterRevoke.Content.ReadAsStringAsync());
         }
 
         using (var first = await _application.Send(_authProxy.Ended(_session, baseUrl, "grant-not-live")))
@@ -229,7 +229,7 @@ public class through_authproxy : Specification
     async Task<JsonElement> GrantAnswer(AuthProxyCall call)
     {
         using var response = await _application.Send(call);
-        return JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.Clone();
+        return JsonElement.Parse(await response.Content.ReadAsStringAsync());
     }
 
     ConversationEntry Added() => _conversation.Entries.Single(_ => _.Kind == ConversationEntryKind.DetailsAdded);

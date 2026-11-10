@@ -18,7 +18,7 @@ public class and_the_note_cannot_be_read : a_note_collector
             PublicationName,
             _publication,
             string.Empty,
-            [Relayed(Given(Tenant.Value), 4) with { Content = JsonDocument.Parse("{\"tenantId\":[1,2]}").RootElement }]);
+            [Relayed(Given(Tenant.Value), 4) with { Content = JsonElement.Parse("{\"tenantId\":[1,2]}") }]);
         _notANote = await _collector.Collect(
             PublicationName,
             _publication,

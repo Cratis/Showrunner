@@ -45,6 +45,7 @@ public class OnBehalfSessionCalls(
     public const int MaximumBodyLength = 64 * 1024;
 
     static readonly JsonSerializerOptions _serializerOptions = new(JsonSerializerDefaults.Web);
+    readonly OnBehalfCallVerification _verification = new(arc, tokens, logger);
 
     /// <summary>
     /// Answers the grant check: whether support may act as the user right now, and who the user is.
@@ -53,7 +54,7 @@ public class OnBehalfSessionCalls(
     /// <returns>The <see cref="IResult"/>.</returns>
     public async Task<IResult> CheckGrant(HttpContext http)
     {
-        var (assertion, failure) = await Verify(http, OnBehalfPaths.GrantCheckPurpose, ReadOnlyMemory<byte>.Empty);
+        var (assertion, failure) = await _verification.Verify(http, OnBehalfPaths.GrantCheckPurpose, ReadOnlyMemory<byte>.Empty);
         if (assertion is null)
         {
             return failure!;
@@ -89,7 +90,7 @@ public class OnBehalfSessionCalls(
     /// <returns>The <see cref="IResult"/>.</returns>
     public async Task<IResult> SessionStarted(HttpContext http)
     {
-        var (assertion, notification, failure) = await Notification(http, OnBehalfPaths.SessionStartedPurpose);
+        var (assertion, notification, failure) = await _verification.Notification(http, OnBehalfPaths.SessionStartedPurpose);
         if (assertion is null || notification is null)
         {
             return failure!;
@@ -112,7 +113,7 @@ public class OnBehalfSessionCalls(
     /// <returns>The <see cref="IResult"/>.</returns>
     public async Task<IResult> SessionEnded(HttpContext http)
     {
-        var (assertion, notification, failure) = await Notification(http, OnBehalfPaths.SessionEndedPurpose);
+        var (assertion, notification, failure) = await _verification.Notification(http, OnBehalfPaths.SessionEndedPurpose);
         if (assertion is null || notification is null)
         {
             return failure!;
@@ -130,28 +131,6 @@ public class OnBehalfSessionCalls(
     static IResult Refused(SupportSessionRefusal refusal) =>
         Results.Json(new { error = refusal.ToString() }, _serializerOptions, statusCode: StatusCodes.Status403Forbidden);
 
-    static async Task<byte[]?> ReadBody(HttpRequest request)
-    {
-        if (request.ContentLength > MaximumBodyLength)
-        {
-            return null;
-        }
-
-        await using var body = new MemoryStream();
-        var buffer = new byte[8192];
-        int read;
-        while ((read = await request.Body.ReadAsync(buffer, request.HttpContext.RequestAborted)) > 0)
-        {
-            await body.WriteAsync(buffer.AsMemory(0, read), request.HttpContext.RequestAborted);
-            if (body.Length > MaximumBodyLength)
-            {
-                return null;
-            }
-        }
-
-        return body.ToArray();
-    }
-
     SupportAuthor AuthorOf(OnBehalfAssertion assertion, OnBehalfActor actor)
     {
         var isAgent = options.CurrentValue.OnBehalf.AgentIdentityProviders.Contains(assertion.ActorIdentityProvider.Value, StringComparer.OrdinalIgnoreCase);
@@ -168,66 +147,6 @@ public class OnBehalfSessionCalls(
         }
 
         return new(eventStore, new SupportSessionRequest(issue, assertion.SessionId, assertion.Subject, new(assertion.ActorIdentityProvider, assertion.Actor)));
-    }
-
-    async Task<(OnBehalfAssertion? Assertion, OnBehalfSessionNotification? Notification, IResult? Failure)> Notification(HttpContext http, string purpose)
-    {
-        http.Response.Headers.CacheControl = "no-store";
-        if (await ReadBody(http.Request) is not { } body)
-        {
-            return (null, null, Results.StatusCode(StatusCodes.Status413PayloadTooLarge));
-        }
-
-        var (assertion, failure) = await Verify(http, purpose, body);
-        if (assertion is null)
-        {
-            return (null, null, failure);
-        }
-
-        OnBehalfSessionNotification? notification;
-        try
-        {
-            notification = JsonSerializer.Deserialize<OnBehalfSessionNotification>(body, _serializerOptions);
-        }
-        catch (JsonException)
-        {
-            // An unreadable notification is a bad request; the token already proved it came from AuthProxy.
-            notification = null;
-        }
-
-        if (notification?.Actor is null || !notification.IsAbout(assertion))
-        {
-            logger.NotificationNotAboutTheSession(purpose);
-            return (null, null, Results.BadRequest());
-        }
-
-        return (assertion, notification, null);
-    }
-
-    async Task<(OnBehalfAssertion? Assertion, IResult? Failure)> Verify(HttpContext http, string purpose, ReadOnlyMemory<byte> body)
-    {
-        http.Response.Headers.CacheControl = "no-store";
-        if (arc.CurrentValue.OnBehalfOf?.Enabled != true)
-        {
-            return (null, Results.NotFound());
-        }
-
-        var call = new OnBehalfCall(purpose, http.Request.Method, http.Request.PathBase, http.Request.Path, body);
-        var verified = await tokens.Verify(http.Request.Headers.Authorization, call);
-        if (verified.TryGetError(out var rejection) || !verified.TryGetResult(out var assertion))
-        {
-            logger.TokenRejected(purpose, rejection);
-            return (null, Results.Unauthorized());
-        }
-
-        var tenantHeader = http.Request.Headers[OnBehalfPaths.TenantHeader].ToString();
-        if (tenantHeader.Length > 0 && !string.Equals(tenantHeader, assertion.Tenant.Value, StringComparison.Ordinal))
-        {
-            logger.TenantHeaderDisagrees(purpose);
-            return (null, Results.BadRequest());
-        }
-
-        return (assertion, null);
     }
 
     sealed record SessionInTenant(IEventStore EventStore, SupportSessionRequest Request);

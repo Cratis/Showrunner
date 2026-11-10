@@ -17,7 +17,7 @@ namespace Cratis.Showrunner.BoxOffice.Receiving;
 /// <param name="options">The <see cref="BoxOfficeOptions"/>.</param>
 public class OperatorSubscriptions(OperatorEventTranslator translator, IOptions<BoxOfficeOptions> options)
 {
-    readonly Dictionary<IEventStore, HashSet<EventStoreName>> _served = new(ReferenceEqualityComparer.Instance);
+    readonly Dictionary<IEventStore, HashSet<EventStoreName>> _served = [with(ReferenceEqualityComparer.Instance)];
     readonly HashSet<EventStoreName> _subscribed = [];
     readonly Lock _lock = new();
 

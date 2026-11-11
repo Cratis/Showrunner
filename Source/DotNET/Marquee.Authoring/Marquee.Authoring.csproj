@@ -10,7 +10,7 @@
              @cratis/showrunner.marquee.authoring npm package, which is separate from the one for products because
              two generators cannot share an output folder. The Cratis.Showrunner.Marquee.Authoring namespace segments
              are skipped so a slice in Cratis.Showrunner.Marquee.Authoring.<Slice> lands in <Slice>/. Release builds
-             clear CratisProxiesOutputPath so generation only runs from the Debug build. -->
+             skip generation (CratisProxiesSkip) so generation only runs from the Debug build. -->
         <CratisProxiesOutputPath>$(MSBuildThisFileDirectory)../../JavaScript/Marquee.Authoring</CratisProxiesOutputPath>
         <CratisProxiesSegmentsToSkip>4</CratisProxiesSegmentsToSkip>
         <CratisProxiesSkipOutputDeletion>true</CratisProxiesSkipOutputDeletion>

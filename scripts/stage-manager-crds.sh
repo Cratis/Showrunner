@@ -12,7 +12,7 @@ cd "$root"
 dotnet tool restore >/dev/null
 # The generator compiles the project in memory from its restore assets (obj/project.assets.json), so the project
 # must be restored and built first; on a clean checkout it otherwise sees no package references at all.
-dotnet build "$root/Source/DotNET/StageManager/StageManager.csproj" --configuration Release -p:CratisProxiesOutputPath= --nologo -v quiet
+dotnet build "$root/Source/DotNET/StageManager/StageManager.csproj" --configuration Release -p:CratisProxiesSkip=true --nologo -v quiet
 
 # The Debug configuration compiles the inline specifications, which the generator has no test packages for.
 Configuration=Release dotnet kubeops generate operator --no-ansi --out "$work" stage-manager "$root/Source/DotNET/StageManager/StageManager.csproj" >/dev/null

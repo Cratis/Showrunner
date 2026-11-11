@@ -57,8 +57,10 @@ import { ReactNode } from 'react';
 export const AppShell = ({ children }: { children: ReactNode }) => (
     <CratisComponentsProvider>
         <Arc>
-            <Marquee />
-            {children}
+            <>
+                <Marquee />
+                {children}
+            </>
         </Arc>
     </CratisComponentsProvider>
 );

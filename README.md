@@ -80,8 +80,8 @@ Run the commands below from the repository root. The full solution test command 
 dotnet build Showrunner.slnx --configuration Debug
 dotnet test Showrunner.slnx --configuration Debug --no-build
 
-# Release is warnings-as-errors; clearing CratisProxiesOutputPath skips proxy generation
-dotnet build Showrunner.slnx --configuration Release -p:CratisProxiesOutputPath=
+# Release is warnings-as-errors; CratisProxiesSkip skips proxy generation
+dotnet build Showrunner.slnx --configuration Release -p:CratisProxiesSkip=true
 
 # Frontend
 yarn install

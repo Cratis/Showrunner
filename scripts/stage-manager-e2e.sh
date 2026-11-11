@@ -23,7 +23,7 @@ wait_for() { # description, shell condition (evaluated on every attempt)
 }
 
 cd "$root"
-dotnet publish Source/DotNET/StageManager/StageManager.csproj -c Release -p:CratisProxiesOutputPath= -o Source/DotNET/StageManager/out
+dotnet publish Source/DotNET/StageManager/StageManager.csproj -c Release -p:CratisProxiesSkip=true -o Source/DotNET/StageManager/out
 docker build -f Docker/StageManager/Dockerfile -t "$image" .
 kind load docker-image "$image" --name "$cluster"
 "$root/scripts/stage-manager-crds.sh"

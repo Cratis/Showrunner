@@ -35,31 +35,34 @@ jobs:
           global-json-file: global.json
           dotnet-version: "10.0.x"
 
-      - name: Setup Node (proxy generation runs during the Debug build)
+      - name: Setup Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22.x
 
-      # Debug regenerates the TypeScript proxies and compiles the #if DEBUG spec code. Release is a
-      # build-only check; CratisProxiesOutputPath is cleared so the proxy generator's MSBuild target
-      # no-ops instead of re-running against a second compilation of already-correct generated files.
+      # Debug compiles the #if DEBUG spec code. This backend job never generates proxies: it passes
+      # CratisProxiesSkip=true so the proxy generator's MSBuild target no-ops instead of re-running against
+      # a second compilation of already-correct generated files. The frontend job generates and verifies them.
       - name: Build (Debug)
         if: matrix.configuration == 'Debug'
-        run: dotnet build Showrunner.slnx --configuration Debug
+        run: dotnet build Showrunner.slnx --configuration Debug -p:CratisProxiesSkip=true
 
       - name: Build (Release)
         if: matrix.configuration == 'Release'
-        run: dotnet build Showrunner.slnx --configuration Release -p:CratisProxiesOutputPath=
+        run: dotnet build Showrunner.slnx --configuration Release -p:CratisProxiesSkip=true
 
+      # -m:1 runs the test assemblies one after another. Each integration assembly starts its own Chronicle
+      # and MongoDB containers; started together they starve each other and Chronicle event-store registration
+      # misses its 30-second wait (#96).
       - name: Test
         if: matrix.configuration == 'Debug'
-        run: dotnet test Showrunner.slnx --configuration Debug --no-build --logger "console;verbosity=minimal"
+        run: dotnet test Showrunner.slnx --configuration Debug --no-build -m:1 --logger "console;verbosity=minimal"
 
       # Packing is what publish.yml does on release; doing it here keeps a pull request from merging a
       # project that builds but does not pack. Release carries no Debug-only spec dependencies.
       - name: Pack
         if: matrix.configuration == 'Release'
-        run: dotnet pack Showrunner.slnx --configuration Release --no-build -p:CratisProxiesOutputPath= -o ./Artifacts/NuGet
+        run: dotnet pack Showrunner.slnx --configuration Release --no-build -p:CratisProxiesSkip=true -o ./Artifacts/NuGet
 
   frontend:
     name: Frontend
@@ -69,7 +72,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      # The Debug backend build regenerates the TypeScript proxies into Source/JavaScript/Usher, BoxOffice, Marquee and Marquee.Authoring; the
+      # This job's Debug build (no CratisProxiesSkip) is the single build that regenerates the TypeScript proxies into Source/JavaScript/Usher, BoxOffice, Marquee and Marquee.Authoring, and the drift check below verifies them; the
       # frontend gate needs them present on disk (they are committed, but a PR that changes backend
       # contracts without rebuilding would otherwise pass a stale proxy through lint/tsc).
       - name: Setup .NET
@@ -170,7 +173,7 @@ jobs:
         run: ./scripts/stage-manager-chart-checks.sh
 
       - name: Publish the operator
-        run: dotnet publish Source/DotNET/StageManager/StageManager.csproj -c Release -p:CratisProxiesOutputPath= -o Source/DotNET/StageManager/out
+        run: dotnet publish Source/DotNET/StageManager/StageManager.csproj -c Release -p:CratisProxiesSkip=true -o Source/DotNET/StageManager/out
 
       - name: Build the operator image
         run: docker build -f Docker/StageManager/Dockerfile -t cratis/showrunner-operator-image:ci .

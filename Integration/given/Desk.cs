@@ -1,8 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Diagnostics;
 using Cratis.Chronicle.EventStoreSubscriptions;
-using Cratis.Chronicle.Registrations;
 using Cratis.Showrunner.Usher.Contracts.Access;
 using Cratis.Showrunner.Usher.Contracts.Conversation;
 using Cratis.Showrunner.Usher.Contracts.Identity;
@@ -17,7 +17,8 @@ namespace Cratis.Showrunner.Usher.Integration.given;
 /// </summary>
 /// <param name="client">The desk's Chronicle client.</param>
 /// <param name="name">The name of the desk store.</param>
-public sealed class Desk(IChronicleClient client, EventStoreName name) : IDisposable
+/// <param name="infrastructure">The kernel used for registration diagnostics.</param>
+public sealed class Desk(IChronicleClient client, EventStoreName name, ChronicleInfrastructure infrastructure) : IDisposable
 {
     /// <summary>
     /// Every event the application publishes to the desk.
@@ -51,14 +52,15 @@ public sealed class Desk(IChronicleClient client, EventStoreName name) : IDispos
     {
         var name = new EventStoreName($"Direct-{Guid.NewGuid():N}");
         var client = new ChronicleClient(ChronicleOptions.FromConnectionString(infrastructure.ChronicleConnectionString), new ContractArtifacts());
+        var getStore = Stopwatch.StartNew();
         var store = await client.GetEventStore(name);
-        var registration = await store.WaitForRegistration(TimeSpan.FromSeconds(30));
-        if (!registration.IsSuccess)
-        {
-            throw new InvalidOperationException($"Desk store {name} did not register.", registration.Failure);
-        }
+        getStore.Stop();
+        await infrastructure.WaitForRegistration(
+            store,
+            $"Desk store {name} did not register. GetEventStore took {getStore.Elapsed.TotalSeconds:F1} seconds before the registration wait.",
+            TimeSpan.FromSeconds(30));
 
-        return new(client, name);
+        return new(client, name, infrastructure);
     }
 
     /// <summary>
@@ -70,7 +72,7 @@ public sealed class Desk(IChronicleClient client, EventStoreName name) : IDispos
     public async Task<IEventStore> Serve(EventStoreNamespaceName tenant)
     {
         var store = await client.GetEventStore(name, tenant);
-        await store.WaitForRegistration(TimeSpan.FromSeconds(30));
+        await infrastructure.WaitForRegistration(store, $"Desk store {name} in namespace {tenant} did not register.", TimeSpan.FromSeconds(30));
         return store;
     }
 

@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Diagnostics;
 using Cratis.Chronicle.EventStoreSubscriptions;
 using Cratis.Chronicle.Registrations;
 using Cratis.Showrunner.Usher.Contracts.Access;
@@ -52,10 +53,14 @@ public sealed class Desk(IChronicleClient client, EventStoreName name) : IDispos
         var name = new EventStoreName($"Direct-{Guid.NewGuid():N}");
         var client = new ChronicleClient(ChronicleOptions.FromConnectionString(infrastructure.ChronicleConnectionString), new ContractArtifacts());
         var store = await client.GetEventStore(name);
-        var registration = await store.WaitForRegistration(TimeSpan.FromSeconds(30));
+        var timeout = TimeSpan.FromSeconds(30);
+        var wait = Stopwatch.StartNew();
+        var registration = await store.WaitForRegistration(timeout);
+        wait.Stop();
         if (!registration.IsSuccess)
         {
-            throw new InvalidOperationException($"Desk store {name} did not register.", registration.Failure);
+            var diagnostics = await infrastructure.RegistrationDiagnostics($"Desk store {name} did not register.", wait.Elapsed, timeout);
+            throw new InvalidOperationException(diagnostics, registration.Failure);
         }
 
         return new(client, name);

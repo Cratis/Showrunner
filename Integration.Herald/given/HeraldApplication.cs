@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Diagnostics;
 using Cratis.Chronicle.Registrations;
 using Cratis.Showrunner.Herald.Sending;
 using Microsoft.Extensions.DependencyInjection;
@@ -52,10 +53,15 @@ public sealed class HeraldApplication(IHost host, EventStoreName name) : IAsyncD
         var host = builder.Build();
         await host.StartAsync();
         var application = new HeraldApplication(host, name);
-        var registration = await (await application.Store()).WaitForRegistration(TimeSpan.FromSeconds(30));
+        var store = await application.Store();
+        var timeout = TimeSpan.FromSeconds(30);
+        var wait = Stopwatch.StartNew();
+        var registration = await store.WaitForRegistration(timeout);
+        wait.Stop();
         if (!registration.IsSuccess)
         {
-            throw new InvalidOperationException($"Application store {name} did not register.", registration.Failure);
+            var diagnostics = await infrastructure.RegistrationDiagnostics($"Application store {name} did not register.", wait.Elapsed, timeout);
+            throw new InvalidOperationException(diagnostics, registration.Failure);
         }
 
         return application;

@@ -21,7 +21,7 @@ public sealed class ChronicleInfrastructure : IAsyncLifetime
     /// <summary>
     /// The kernel image used unless <c>USHER_CHRONICLE_IMAGE</c> names another.
     /// </summary>
-    public const string DefaultImage = "cratis/chronicle:19.111.0-development";
+    public const string DefaultImage = "cratis/chronicle:19.155.0-development";
 
     const ushort ChroniclePort = 35000;
     const ushort HttpPort = 8080;
@@ -79,6 +79,65 @@ public sealed class ChronicleInfrastructure : IAsyncLifetime
         if (_container is not null)
         {
             await _container.DisposeAsync();
+        }
+    }
+
+    internal async Task<string> RegistrationDiagnostics(string description, TimeSpan elapsed, TimeSpan timeout)
+    {
+        var health = await HealthAtTimeout();
+        var logs = await ContainerLogTail();
+        var diagnostics = string.Join(
+            Environment.NewLine,
+            description,
+            $"Waited {elapsed.TotalSeconds:F1} seconds for Chronicle registration (limit: {timeout.TotalSeconds:F1} seconds).",
+            $"Kernel image: {Image}; container state: {_container?.State.ToString() ?? "unavailable"}.",
+            health,
+            logs);
+        await Console.Error.WriteLineAsync(diagnostics);
+        return diagnostics;
+    }
+
+    static string LogTail(string logs)
+    {
+        // Limit both line count and characters, including logs containing a single very long line.
+        var bounded = logs.Length > 16000 ? logs[^16000..] : logs;
+        return string.Join('\n', bounded.Split('\n').TakeLast(100));
+    }
+
+    async Task<string> HealthAtTimeout()
+    {
+        var uri = new Uri($"https://localhost:{_chroniclePort}/health");
+        try
+        {
+#pragma warning disable MA0039, CA5400 // Test-only: accept the kernel's self-signed development certificate.
+            using var handler = new HttpClientHandler { ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator };
+            using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(2) };
+#pragma warning restore MA0039, CA5400
+            using var response = await client.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead);
+            return $"GET {uri}: {(int)response.StatusCode} {response.StatusCode}";
+        }
+        catch (Exception exception)
+        {
+            return $"GET {uri}: {exception.GetType().Name}: {LogTail(exception.Message)}";
+        }
+    }
+
+    async Task<string> ContainerLogTail()
+    {
+        if (_container is null)
+        {
+            return "Chronicle container logs unavailable: container was not started.";
+        }
+
+        try
+        {
+            using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            var (stdout, stderr) = await _container.GetLogsAsync(ct: cancellation.Token);
+            return $"Chronicle stdout (last 100 lines, at most 16000 characters):\n{LogTail(stdout)}\nChronicle stderr (last 100 lines, at most 16000 characters):\n{LogTail(stderr)}";
+        }
+        catch (Exception exception)
+        {
+            return $"Chronicle container logs unavailable: {exception.GetType().Name}: {LogTail(exception.Message)}";
         }
     }
 

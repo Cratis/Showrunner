@@ -31,28 +31,13 @@ public class PerformancePreparation(IClusterResources cluster, IEnvironmentResol
             return null;
         }
 
-        ChronicleConnectionRef? connection = null;
-        PublishedSecrets? published = null;
-        ApplicationReadSide? readSide = null;
-        if (PublishedStageContract.IsPublished(performance.Spec))
+        var source = PublishedStageContract.IsPublished(performance.Spec)
+            ? await PreparePublishedAsync(performance, status, cancellationToken)
+            : await PrepareChronicleAsync(performance, status, cancellationToken);
+        if (source is null)
         {
-            published = await ResolvePublishedAsync(performance, status, cancellationToken);
-            if (published is null)
-            {
-                status.Block();
-                return null;
-            }
-        }
-        else
-        {
-            connection = await ResolveConnectionAsync(performance, status, cancellationToken);
-            var sinks = connection is null ? SinkCheck.Failed : await CheckSinksAsync(performance, status, cancellationToken);
-            readSide = sinks.Production is { } production ? await _readSides.BindAsync(performance, production, status, cancellationToken) : ApplicationReadSide.None;
-            if (connection is null || !sinks.Mapped || readSide is null)
-            {
-                status.Block();
-                return null;
-            }
+            status.Block();
+            return null;
         }
 
         var environment = await ResolveEnvironmentAsync(performance, status, cancellationToken);
@@ -63,18 +48,43 @@ public class PerformancePreparation(IClusterResources cluster, IEnvironmentResol
         }
 
         var missing = environment.Missing(EnvironmentKeys.RequiredBy(performance.Spec));
-        status.Set(
-            "EnvironmentComplete",
-            missing.Count == 0,
-            missing.Count == 0 ? "Complete" : "MissingEnvironmentKeys",
-            missing.Count == 0 ? "The environment has every key the Performance needs." : $"The environment '{environment.Name}' is missing {missing.Count} key(s): {string.Join(", ", missing)}.");
+        RecordEnvironmentComplete(status, environment, missing);
         if (missing.Count > 0)
         {
             status.Block(missing);
             return null;
         }
 
-        return new(connection, environment, published?.Storage, published?.NotesToken, readSide);
+        return new(source.Connection, environment, source.Published?.Storage, source.Published?.NotesToken, source.ReadSide);
+    }
+
+    static void RecordEnvironmentComplete(PerformanceStatusBuilder status, ResolvedEnvironment environment, IReadOnlyList<string> missing) =>
+        status.Set(
+            "EnvironmentComplete",
+            missing.Count == 0,
+            missing.Count == 0 ? "Complete" : "MissingEnvironmentKeys",
+            missing.Count == 0 ? "The environment has every key the Performance needs." : $"The environment '{environment.Name}' is missing {missing.Count} key(s): {string.Join(", ", missing)}.");
+
+    static (string Reason, string Message) SinkOutcome(string production, IReadOnlyCollection<string> used, IReadOnlyCollection<string> missing) =>
+        (used.Count, missing.Count) switch
+        {
+            (0, _) => ("NoSinksUsed", "The application uses no named sinks."),
+            (_, 0) => ("Mapped", $"The Production '{production}' configures every sink the application uses: {string.Join(", ", used)}."),
+            _ => ("MissingSinks", $"The Production '{production}' does not configure {missing.Count} sink(s) the application uses: {string.Join(", ", missing)}.")
+        };
+
+    async Task<PreparationSource?> PreparePublishedAsync(Performance performance, PerformanceStatusBuilder status, CancellationToken cancellationToken)
+    {
+        var published = await ResolvePublishedAsync(performance, status, cancellationToken);
+        return published is null ? null : new(null, published, null);
+    }
+
+    async Task<PreparationSource?> PrepareChronicleAsync(Performance performance, PerformanceStatusBuilder status, CancellationToken cancellationToken)
+    {
+        var connection = await ResolveConnectionAsync(performance, status, cancellationToken);
+        var sinks = connection is null ? SinkCheck.Failed : await CheckSinksAsync(performance, status, cancellationToken);
+        var readSide = sinks.Production is { } production ? await _readSides.BindAsync(performance, production, status, cancellationToken) : ApplicationReadSide.None;
+        return connection is null || !sinks.Mapped || readSide is null ? null : new(connection, null, readSide);
     }
 
     async Task<ChronicleConnectionRef?> ResolveConnectionAsync(Performance performance, PerformanceStatusBuilder status, CancellationToken cancellationToken)
@@ -127,12 +137,7 @@ public class PerformancePreparation(IClusterResources cluster, IEnvironmentResol
         }
 
         var missing = ApplicationSinks.MissingFrom(used, production);
-        var (reason, message) = (used.Count, missing.Count) switch
-        {
-            (0, _) => ("NoSinksUsed", "The application uses no named sinks."),
-            (_, 0) => ("Mapped", $"The Production '{reference.Name}' configures every sink the application uses: {string.Join(", ", used)}."),
-            _ => ("MissingSinks", $"The Production '{reference.Name}' does not configure {missing.Count} sink(s) the application uses: {string.Join(", ", missing)}.")
-        };
+        var (reason, message) = SinkOutcome(reference.Name, used, missing);
         status.Set("SinksMapped", missing.Count == 0, reason, message);
         return missing.Count == 0 ? new(true, production) : SinkCheck.Failed;
     }
@@ -160,8 +165,13 @@ public class PerformancePreparation(IClusterResources cluster, IEnvironmentResol
             }
         }
 
-        var resolution = await resolver.ResolveAsync(spec.Name, file, passphrase, cancellationToken);
-        status.Set("EnvironmentResolved", resolution.Environment is not null, resolution.Environment is not null ? "Resolved" : "EnvironmentNotResolved", resolution.Environment is not null ? $"Resolved the environment '{spec.Name}'." : resolution.Failure);
+        return await ResolveWithAsync(spec.Name, file, passphrase, status, cancellationToken);
+    }
+
+    async Task<ResolvedEnvironment?> ResolveWithAsync(string name, string file, string? passphrase, PerformanceStatusBuilder status, CancellationToken cancellationToken)
+    {
+        var resolution = await resolver.ResolveAsync(name, file, passphrase, cancellationToken);
+        status.Set("EnvironmentResolved", resolution.Environment is not null, resolution.Environment is not null ? "Resolved" : "EnvironmentNotResolved", resolution.Environment is not null ? $"Resolved the environment '{name}'." : resolution.Failure);
         return resolution.Environment;
     }
 
@@ -182,23 +192,24 @@ public class PerformancePreparation(IClusterResources cluster, IEnvironmentResol
         var packageFound = packageReason == "PackageAvailable";
         status.Set("PackageAvailable", packageFound, packageReason, packageMessage);
 
-        var storage = await ResolveSecretAsync(performance, status, "StorageConnection", published.StorageConnectionSecretRef, ChronicleConnectionRef.DefaultKey, "storage connection Secret", cancellationToken);
+        var storage = await ResolveSecretAsync(status, "StorageConnection", new(@namespace, published.StorageConnectionSecretRef, ChronicleConnectionRef.DefaultKey, "storage connection Secret"), cancellationToken);
 
         ResolvedSecretRef? notesToken = null;
         var notesFound = true;
         if (published.Notes is { Enabled: true } notes)
         {
-            notesToken = await ResolveSecretAsync(performance, status, "NotesCollectorToken", notes.CollectorTokenSecretRef, PublishedStageContract.NotesTokenFile, "Notes collector token Secret", cancellationToken);
+            notesToken = await ResolveSecretAsync(status, "NotesCollectorToken", new(@namespace, notes.CollectorTokenSecretRef, PublishedStageContract.NotesTokenFile, "Notes collector token Secret"), cancellationToken);
             notesFound = notesToken is not null;
         }
 
         return packageFound && storage is not null && notesFound ? new(storage, notesToken) : null;
     }
 
-    async Task<ResolvedSecretRef?> ResolveSecretAsync(Performance performance, PerformanceStatusBuilder status, string condition, SecretKeyReference reference, string defaultKey, string description, CancellationToken cancellationToken)
+    async Task<ResolvedSecretRef?> ResolveSecretAsync(PerformanceStatusBuilder status, string condition, SecretRequest request, CancellationToken cancellationToken)
     {
+        var (@namespace, reference, defaultKey, description) = request;
         var key = string.IsNullOrEmpty(reference.Key) ? defaultKey : reference.Key;
-        var found = await cluster.GetSecretValueAsync(performance.Metadata.NamespaceProperty, reference.Name, key, cancellationToken) is not null;
+        var found = await cluster.GetSecretValueAsync(@namespace, reference.Name, key, cancellationToken) is not null;
         status.Set(condition, found, found ? "Resolved" : "SecretNotFound", found ? $"Using the {description} '{reference.Name}'." : $"The {description} '{reference.Name}' does not exist or has no key '{key}'.");
         return found ? new(reference.Name, key) : null;
     }
@@ -209,6 +220,10 @@ public class PerformancePreparation(IClusterResources cluster, IEnvironmentResol
 
         public static SinkCheck WithoutProduction { get; } = new(true, null);
     }
+
+    sealed record SecretRequest(string Namespace, SecretKeyReference Reference, string DefaultKey, string Description);
+
+    sealed record PreparationSource(ChronicleConnectionRef? Connection, PublishedSecrets? Published, ApplicationReadSide? ReadSide);
 
     sealed record PublishedSecrets(ResolvedSecretRef Storage, ResolvedSecretRef? NotesToken);
 }

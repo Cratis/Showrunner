@@ -51,22 +51,7 @@ public record ApplicationReadSide(IReadOnlyList<MongoDBSinkBinding> MongoDBSinks
             var variables = MongoDBSinks.ToDictionary(sink => sink.Setting, sink => sink.File, StringComparer.Ordinal);
             if (Graph is { } graph)
             {
-                if (graph.Server is { } server)
-                {
-                    variables[$"{Neo4j}Server"] = server;
-                }
-
-                variables[$"{Neo4j}UserName"] = graph.UserName;
-                variables[$"{Neo4j}DatabaseMode"] = graph.DatabaseMode;
-                if (graph.DatabasePrefix is { } prefix)
-                {
-                    variables[$"{Neo4j}DatabasePrefix"] = prefix;
-                }
-
-                if (graph.EventStore is { } eventStore)
-                {
-                    variables[$"{Neo4j}EventStore"] = eventStore;
-                }
+                AddGraphVariables(variables, graph);
             }
 
             return variables;
@@ -134,21 +119,43 @@ public record ApplicationReadSide(IReadOnlyList<MongoDBSinkBinding> MongoDBSinks
             }
         }
 
-        GraphBinding? graph = null;
-        if (graphWanted && ChronicleKernelConfiguration.GraphOf(production, names) is { } productionGraph)
+        var graph = graphWanted ? BindGraph(application, production, names) : null;
+        return new(mongoDB, graph, unreadable, graphWanted);
+    }
+
+    static GraphBinding? BindGraph(ApplicationSpec application, ProductionSpec production, ProductionNames names)
+    {
+        if (ChronicleKernelConfiguration.GraphOf(production, names) is not { } productionGraph)
         {
-            var managed = production.Graph.Mode == ProductionModes.Managed;
-            graph = new(
-                managed ? names.Neo4jServer : null,
-                managed ? null : new(productionGraph.SecretName, ProductionGraph.ServerKey),
-                productionGraph.UserName,
-                new(productionGraph.SecretName, ProductionGraph.PasswordKey),
-                productionGraph.DatabaseMode,
-                productionGraph.DatabasePrefix,
-                application.EventStores.FirstOrDefault(),
-                production.Graph.Edition == GraphEditions.Community || managed);
+            return null;
         }
 
-        return new(mongoDB, graph, unreadable, graphWanted);
+        var managed = production.Graph.Mode == ProductionModes.Managed;
+        return new(
+            managed ? names.Neo4jServer : null,
+            managed ? null : new(productionGraph.SecretName, ProductionGraph.ServerKey),
+            productionGraph.UserName,
+            new(productionGraph.SecretName, ProductionGraph.PasswordKey),
+            productionGraph.DatabaseMode,
+            productionGraph.DatabasePrefix,
+            application.EventStores.FirstOrDefault(),
+            production.Graph.Edition == GraphEditions.Community || managed);
+    }
+
+    static void AddGraphVariables(Dictionary<string, string> variables, GraphBinding graph)
+    {
+        SetIfPresent(variables, "Server", graph.Server);
+        variables[$"{Neo4j}UserName"] = graph.UserName;
+        variables[$"{Neo4j}DatabaseMode"] = graph.DatabaseMode;
+        SetIfPresent(variables, "DatabasePrefix", graph.DatabasePrefix);
+        SetIfPresent(variables, "EventStore", graph.EventStore);
+    }
+
+    static void SetIfPresent(Dictionary<string, string> variables, string setting, string? value)
+    {
+        if (value is not null)
+        {
+            variables[$"{Neo4j}{setting}"] = value;
+        }
     }
 }

@@ -35,6 +35,15 @@ public class ProductionReconciler(IProductionCluster cluster, ProductionPreparat
         return status.Phase;
     }
 
+    static bool WaitForChronicleDependencies(ProductionStatusBuilder status)
+    {
+        status.Set(ProductionConditions.ChronicleReady, false, "WaitingForDependencies", "Chronicle is applied once its certificate is issued and its database is ready.");
+        return false;
+    }
+
+    static ChronicleCredentials? ExistingCredentials(string? clientId, string? clientSecret, string? adminPassword) =>
+        clientId is not null && clientSecret is not null && adminPassword is not null ? new(clientId, clientSecret, adminPassword) : null;
+
     async Task ApplyAsync(Production production, PreparedProduction prepared, ProductionStatusBuilder status, CancellationToken cancellationToken)
     {
         var names = ProductionNames.For(production);
@@ -51,9 +60,7 @@ public class ProductionReconciler(IProductionCluster cluster, ProductionPreparat
 
         if (certificateAuthority is not null)
         {
-            await cluster.ApplyAsync(ChronicleConnectionSecret.Create(production, credentials, certificateAuthority), cancellationToken);
-            production.Status.ConnectionSecretName = names.Connection;
-            status.Set(ProductionConditions.ConnectionAvailable, true, "Written", $"Applications connect with the Secret '{names.Connection}'.");
+            await WriteConnectionAsync(production, ChronicleConnectionSecret.Create(production, credentials, certificateAuthority), status, cancellationToken);
         }
         else
         {
@@ -61,23 +68,32 @@ public class ProductionReconciler(IProductionCluster cluster, ProductionPreparat
         }
 
         // Chronicle cannot start without its certificate and its database connection, so it waits for both.
-        var chronicleReady = false;
-        if (certificateAuthority is not null && databaseReady)
-        {
-            await cluster.ApplyAsync(ChronicleWorkload.Service(production), cancellationToken);
-            await cluster.ApplyAsync(ChronicleWorkload.StatefulSet(production, prepared.Kernel), cancellationToken);
-            var readiness = await cluster.GetStatefulSetReadinessAsync(names.Namespace, names.Chronicle, cancellationToken);
-            chronicleReady = readiness?.IsReady ?? false;
-            var ready = chronicleReady ? production.Spec.Replicas : readiness?.Ready ?? 0;
-            var message = $"{ready} of {production.Spec.Replicas} replica(s) of Chronicle {production.Spec.Version} are ready.";
-            status.Set(ProductionConditions.ChronicleReady, chronicleReady, chronicleReady ? "Ready" : "NotReady", message);
-        }
-        else
-        {
-            status.Set(ProductionConditions.ChronicleReady, false, "WaitingForDependencies", "Chronicle is applied once its certificate is issued and its database is ready.");
-        }
+        var chronicleReady = certificateAuthority is not null && databaseReady
+            ? await ApplyChronicleAsync(production, prepared, status, cancellationToken)
+            : WaitForChronicleDependencies(status);
 
         status.Applied(chronicleReady && databaseReady && graphReady);
+    }
+
+    async Task WriteConnectionAsync(Production production, V1Secret secret, ProductionStatusBuilder status, CancellationToken cancellationToken)
+    {
+        var names = ProductionNames.For(production);
+        await cluster.ApplyAsync(secret, cancellationToken);
+        production.Status.ConnectionSecretName = names.Connection;
+        status.Set(ProductionConditions.ConnectionAvailable, true, "Written", $"Applications connect with the Secret '{names.Connection}'.");
+    }
+
+    async Task<bool> ApplyChronicleAsync(Production production, PreparedProduction prepared, ProductionStatusBuilder status, CancellationToken cancellationToken)
+    {
+        var names = ProductionNames.For(production);
+        await cluster.ApplyAsync(ChronicleWorkload.Service(production), cancellationToken);
+        await cluster.ApplyAsync(ChronicleWorkload.StatefulSet(production, prepared.Kernel), cancellationToken);
+        var readiness = await cluster.GetStatefulSetReadinessAsync(names.Namespace, names.Chronicle, cancellationToken);
+        var chronicleReady = readiness?.IsReady ?? false;
+        var ready = chronicleReady ? production.Spec.Replicas : readiness?.Ready ?? 0;
+        var message = $"{ready} of {production.Spec.Replicas} replica(s) of Chronicle {production.Spec.Version} are ready.";
+        status.Set(ProductionConditions.ChronicleReady, chronicleReady, chronicleReady ? "Ready" : "NotReady", message);
+        return chronicleReady;
     }
 
     async Task<string?> ApplyCertificatesAsync(Production production, ProductionNames names, ProductionStatusBuilder status, CancellationToken cancellationToken)
@@ -114,9 +130,9 @@ public class ProductionReconciler(IProductionCluster cluster, ProductionPreparat
         var clientId = await cluster.GetSecretValueAsync(names.Namespace, names.Credentials, ChronicleCredentials.ClientIdKey, cancellationToken);
         var clientSecret = await cluster.GetSecretValueAsync(names.Namespace, names.Credentials, ChronicleCredentials.ClientSecretKey, cancellationToken);
         var adminPassword = await cluster.GetSecretValueAsync(names.Namespace, names.Credentials, ChronicleCredentials.AdminPasswordKey, cancellationToken);
-        if (clientId is not null && clientSecret is not null && adminPassword is not null)
+        if (ExistingCredentials(clientId, clientSecret, adminPassword) is { } existing)
         {
-            return new(clientId, clientSecret, adminPassword);
+            return existing;
         }
 
         var credentials = ChronicleCredentials.Generate();

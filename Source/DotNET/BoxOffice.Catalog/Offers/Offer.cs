@@ -61,29 +61,6 @@ public record Offer(
     IEnumerable<OfferAllowance> IncludedAllowances,
     bool Retired)
 {
-    static readonly Offer Blank = new(
-        default!,
-        default,
-        default!,
-        default!,
-        SeatCount.NotSet,
-        false,
-        false,
-        ModuleId.NotSet,
-        ModuleCharging.PerOrganization,
-        TrialLength.NotSet,
-        ModuleAvailability.Paid,
-        MeterId.NotSet,
-        MeterQuantity.NotSet,
-        false,
-        false,
-        CurrencyCode.NotSet,
-        PriceInMinorUnits.NotSet,
-        YearlyDiscount.NotSet,
-        [],
-        [],
-        false);
-
     /// <summary>
     /// Observes every offer in the catalog, retired ones included, by name.
     /// </summary>
@@ -117,13 +94,28 @@ public record Offer(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static Offer Reduce(OfferDefined @event, Offer? current, EventContext context) =>
-        current ?? Blank with
-        {
-            Id = new OfferId(Guid.Parse(context.EventSourceId.Value)),
-            Kind = @event.Kind,
-            Name = @event.Name,
-            Description = @event.Description
-        };
+        current ?? new(
+            new OfferId(Guid.Parse(context.EventSourceId.Value)),
+            @event.Kind,
+            @event.Name,
+            @event.Description,
+            SeatCount.NotSet,
+            false,
+            false,
+            ModuleId.NotSet,
+            ModuleCharging.PerOrganization,
+            TrialLength.NotSet,
+            ModuleAvailability.Paid,
+            MeterId.NotSet,
+            MeterQuantity.NotSet,
+            false,
+            false,
+            CurrencyCode.NotSet,
+            PriceInMinorUnits.NotSet,
+            YearlyDiscount.NotSet,
+            [],
+            [],
+            false);
 
     /// <summary>
     /// Gives a seat plan its seats.
@@ -132,7 +124,7 @@ public record Offer(
     /// <param name="current">The current state.</param>
     /// <returns>The next state.</returns>
     public static Offer? Reduce(SeatPlanSpecified @event, Offer? current) =>
-        Change(current, offer => offer with { Seats = @event.Seats, UnlimitedSeats = @event.Unlimited, RequiresSalesContact = @event.RequiresSalesContact });
+        current is null ? null : current with { Seats = @event.Seats, UnlimitedSeats = @event.Unlimited, RequiresSalesContact = @event.RequiresSalesContact };
 
     /// <summary>
     /// Gives a module offer its module.
@@ -141,7 +133,7 @@ public record Offer(
     /// <param name="current">The current state.</param>
     /// <returns>The next state.</returns>
     public static Offer? Reduce(ModuleOfferSpecified @event, Offer? current) =>
-        Change(current, offer => offer with { Module = @event.Module, Charging = @event.Charging, Trial = @event.Trial, Availability = @event.Availability });
+        current is null ? null : current with { Module = @event.Module, Charging = @event.Charging, Trial = @event.Trial, Availability = @event.Availability };
 
     /// <summary>
     /// Gives a compute pack its meter.
@@ -150,7 +142,7 @@ public record Offer(
     /// <param name="current">The current state.</param>
     /// <returns>The next state.</returns>
     public static Offer? Reduce(ComputePackSpecified @event, Offer? current) =>
-        Change(current, offer => offer with { Meter = @event.Meter, PackQuantity = @event.Quantity, Stackable = @event.Stackable });
+        current is null ? null : current with { Meter = @event.Meter, PackQuantity = @event.Quantity, Stackable = @event.Stackable };
 
     /// <summary>
     /// Prices the offer.
@@ -159,7 +151,7 @@ public record Offer(
     /// <param name="current">The current state.</param>
     /// <returns>The next state.</returns>
     public static Offer? Reduce(OfferPriced @event, Offer? current) =>
-        Change(current, offer => offer with { Priced = true, Currency = @event.Currency, MonthlyPrice = @event.MonthlyPrice, YearlyDiscount = @event.YearlyDiscount });
+        current is null ? null : current with { Priced = true, Currency = @event.Currency, MonthlyPrice = @event.MonthlyPrice, YearlyDiscount = @event.YearlyDiscount };
 
     /// <summary>
     /// Adds a module to what the offer includes.
@@ -179,14 +171,16 @@ public record Offer(
     /// <param name="current">The current state.</param>
     /// <returns>The next state.</returns>
     public static Offer? Reduce(OfferIncludedAllowance @event, Offer? current) =>
-        Change(current, offer => offer with
-        {
-            IncludedAllowances =
-            [
-                .. offer.IncludedAllowances.Where(allowance => allowance.Meter != @event.Meter || allowance.Period != @event.Period),
-                new OfferAllowance(@event.Meter, @event.Quantity, @event.Period)
-            ]
-        });
+        current is null
+            ? null
+            : current with
+            {
+                IncludedAllowances =
+                [
+                    .. current.IncludedAllowances.Where(allowance => allowance.Meter != @event.Meter || allowance.Period != @event.Period),
+                    new OfferAllowance(@event.Meter, @event.Quantity, @event.Period)
+                ]
+            };
 
     /// <summary>
     /// Retires the offer.
@@ -195,7 +189,5 @@ public record Offer(
     /// <param name="current">The current state.</param>
     /// <returns>The next state.</returns>
     public static Offer? Reduce(OfferRetired @event, Offer? current) =>
-        Change(current, offer => offer with { Retired = true });
-
-    static Offer? Change(Offer? current, Func<Offer, Offer> change) => current is null ? null : change(current);
+        current is null ? null : current with { Retired = true };
 }

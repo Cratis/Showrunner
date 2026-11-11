@@ -90,7 +90,7 @@ public record SupportAccess(
     /// <param name="events">The issue's events, in order; events of other types are ignored.</param>
     /// <returns>The <see cref="SupportAccess"/>.</returns>
     public static SupportAccess From(IEnumerable<AppendedEvent> events) =>
-        events.Aggregate(None, (access, @event) => access.Apply(@event.Content, @event.Context.SequenceNumber));
+        events.Aggregate(None, (access, @event) => SupportAccessFold.Apply(access, @event.Content, @event.Context.SequenceNumber));
 
     /// <summary>
     /// Gets whether support can sign in as the reporter at a point in time.
@@ -128,26 +128,4 @@ public record SupportAccess(
     /// <returns>Why support may not, or <see langword="null"/> when it may.</returns>
     public SupportSessionRefusal? RefusalFor(SupportSessionRequest request, DateTimeOffset now) =>
         SupportAccessPolicy.RefusalFor(this, request, now);
-
-    SupportAccess Apply(object @event, EventSequenceNumber sequenceNumber)
-    {
-        var next = @event switch
-        {
-            ReporterDescribedIssue described when !IsReported => this with { ReportedBy = described.ReportedBy },
-            ReporterFlaggedError flagged when !IsReported => this with { ReportedBy = flagged.ReportedBy },
-            ReporterSharedIdentity shared => this with { SharedIdentity = shared.Reporter },
-            ReporterGrantedAccess granted when !Withdrawn => this with { Granted = true, ValidUntil = granted.ValidUntil },
-            ReporterWithdrewIssue => this with { Granted = false, Withdrawn = true },
-            ReporterRevokedAccess => this with { Granted = false },
-            AccessGrantLapsed lapsed when lapsed.ValidUntil == ValidUntil => this with { Granted = false },
-            SupportSessionPermitted permitted => this with { Permitted = Permitted.Add(permitted.SessionId) },
-            SupportSignedInAsReporter signedIn when !HasStarted(signedIn.SessionId) =>
-                this with { Sessions = Sessions.Add(signedIn.SessionId, new(signedIn.Author, sequenceNumber, false)) },
-            SupportSessionEnded ended when HasStarted(ended.SessionId) =>
-                this with { Sessions = Sessions.SetItem(ended.SessionId, Sessions[ended.SessionId] with { Ended = true }) },
-            _ => this
-        };
-
-        return next with { LastSequenceNumber = sequenceNumber };
-    }
 }

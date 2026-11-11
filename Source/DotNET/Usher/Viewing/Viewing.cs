@@ -4,6 +4,9 @@
 using System.Reactive.Subjects;
 using Cratis.Arc.Queries.ModelBound;
 using Cratis.Chronicle.ReadModels;
+using Cratis.Showrunner.Usher.Access.GrantAccess;
+using Cratis.Showrunner.Usher.Access.Lapsing;
+using Cratis.Showrunner.Usher.Access.RevokeAccess;
 using Cratis.Showrunner.Usher.Access.Sessions;
 using Cratis.Showrunner.Usher.Contracts.Access;
 using Cratis.Showrunner.Usher.Contracts.Conversation;
@@ -15,6 +18,8 @@ using Cratis.Showrunner.Usher.Conversation.AnswerQuestion;
 using Cratis.Showrunner.Usher.Identity;
 using Cratis.Showrunner.Usher.Identity.ShareIdentity;
 using Cratis.Showrunner.Usher.Issues;
+using Cratis.Showrunner.Usher.Lifecycle.ReopenIssue;
+using Cratis.Showrunner.Usher.Lifecycle.WithdrawIssue;
 using Cratis.Showrunner.Usher.Receiving;
 using Cratis.Showrunner.Usher.Reporting.ReportError;
 using Cratis.Showrunner.Usher.Reporting.ReportIssue;
@@ -293,7 +298,7 @@ public record IssueAccess(AccessState State, ValidUntil ValidUntil, AccessReques
 /// <param name="FixedInVersion">The version that has the fix; <see cref="ReleaseVersion.NotSet"/> until a release ships it.</param>
 /// <param name="ReportedBy">Who reported the issue, at their identity provider.</param>
 [ReadModel]
-public partial record IssueConversation(
+public record IssueConversation(
     IssueId Id,
     IssueTitle Title,
     IssueState State,
@@ -375,6 +380,209 @@ public partial record IssueConversation(
     /// <returns>The next state.</returns>
     public static IssueConversation? Reduce(ReporterAnsweredQuestion @event, IssueConversation? current, EventContext context) =>
         IssueConversationTransitions.Add(current, context, IssueConversationTransitions.ByReporter(context, ConversationEntryKind.QuestionAnswered, (string)@event.Answer) with { QuestionId = @event.QuestionId });
+
+    /// <summary>
+    /// Returns the issue to reported and clears the release that did not fix it.
+    /// </summary>
+    /// <param name="event">The event.</param>
+    /// <param name="current">The current state.</param>
+    /// <param name="context">The event context.</param>
+    /// <returns>The next state.</returns>
+    public static IssueConversation? Reduce(ReporterReopenedIssue @event, IssueConversation? current, EventContext context) =>
+        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.ByReporter(context, ConversationEntryKind.Reopened, (string)@event.Reason), issue => IssueConversationTransitions.Move(issue, IssueState.Reported) with { FixedInVersion = ReleaseVersion.NotSet });
+
+    /// <summary>
+    /// Withdraws the issue.
+    /// </summary>
+    /// <param name="event">The event.</param>
+    /// <param name="current">The current state.</param>
+    /// <param name="context">The event context.</param>
+    /// <returns>The next state.</returns>
+    public static IssueConversation? Reduce(ReporterWithdrewIssue @event, IssueConversation? current, EventContext context) =>
+        IssueConversationAccess.Withdraw(current, context);
+
+    /// <summary>
+    /// Records the grant of access and answers support's request for it.
+    /// </summary>
+    /// <param name="event">The event.</param>
+    /// <param name="current">The current state.</param>
+    /// <param name="context">The event context.</param>
+    /// <returns>The next state.</returns>
+    public static IssueConversation? Reduce(ReporterGrantedAccess @event, IssueConversation? current, EventContext context) =>
+        IssueConversationAccess.Grant(current, context, @event);
+
+    /// <summary>
+    /// Records that the reporter took access back.
+    /// </summary>
+    /// <param name="event">The event.</param>
+    /// <param name="current">The current state.</param>
+    /// <param name="context">The event context.</param>
+    /// <returns>The next state.</returns>
+    public static IssueConversation? Reduce(ReporterRevokedAccess @event, IssueConversation? current, EventContext context) =>
+        IssueConversationAccess.Revoke(current, context);
+
+    /// <summary>
+    /// Records that the grant ended by its time passing, when the grant that lapsed is the current one.
+    /// </summary>
+    /// <param name="event">The event.</param>
+    /// <param name="current">The current state.</param>
+    /// <param name="context">The event context.</param>
+    /// <returns>The next state.</returns>
+    public static IssueConversation? Reduce(AccessGrantLapsed @event, IssueConversation? current, EventContext context) =>
+        IssueConversationAccess.Lapse(current, context, @event);
+
+    /// <summary>
+    /// Records that the desk triaged the issue.
+    /// </summary>
+    /// <param name="event">The event.</param>
+    /// <param name="current">The current state.</param>
+    /// <param name="context">The event context.</param>
+    /// <returns>The next state.</returns>
+    public static IssueConversation? Reduce(SupportTriagedIssue @event, IssueConversation? current, EventContext context) =>
+        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.BySystem(context, ConversationEntryKind.Triaged), issue => IssueConversationTransitions.Move(issue, IssueState.Triaged));
+
+    /// <summary>
+    /// Records that the desk accepted the issue.
+    /// </summary>
+    /// <param name="event">The event.</param>
+    /// <param name="current">The current state.</param>
+    /// <param name="context">The event context.</param>
+    /// <returns>The next state.</returns>
+    public static IssueConversation? Reduce(SupportAcceptedIssue @event, IssueConversation? current, EventContext context) =>
+        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.BySystem(context, ConversationEntryKind.Accepted), issue => IssueConversationTransitions.Move(issue, IssueState.Accepted));
+
+    /// <summary>
+    /// Records that the desk will not fix the issue.
+    /// </summary>
+    /// <param name="event">The event.</param>
+    /// <param name="current">The current state.</param>
+    /// <param name="context">The event context.</param>
+    /// <returns>The next state.</returns>
+    public static IssueConversation? Reduce(SupportDeclinedToFix @event, IssueConversation? current, EventContext context) =>
+        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.BySystem(context, ConversationEntryKind.DeclinedToFix, (string)@event.Reason), issue => IssueConversationTransitions.Move(issue, IssueState.WontFix));
+
+    /// <summary>
+    /// Adds the question support asked.
+    /// </summary>
+    /// <param name="event">The event.</param>
+    /// <param name="current">The current state.</param>
+    /// <param name="context">The event context.</param>
+    /// <returns>The next state.</returns>
+    public static IssueConversation? Reduce(SupportAskedQuestion @event, IssueConversation? current, EventContext context) =>
+        current?.Entries.Any(entry => entry.Kind == ConversationEntryKind.QuestionAsked && entry.QuestionId == @event.QuestionId) != false
+            ? current
+            : IssueConversationTransitions.Add(current, context, IssueConversationTransitions.BySupport(context, ConversationEntryKind.QuestionAsked, (string)@event.Question, @event.Author) with { QuestionId = @event.QuestionId });
+
+    /// <summary>
+    /// Adds the reply support sent.
+    /// </summary>
+    /// <param name="event">The event.</param>
+    /// <param name="current">The current state.</param>
+    /// <param name="context">The event context.</param>
+    /// <returns>The next state.</returns>
+    public static IssueConversation? Reduce(SupportReplied @event, IssueConversation? current, EventContext context) =>
+        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.BySupport(context, ConversationEntryKind.Replied, (string)@event.Reply, @event.Author));
+
+    /// <summary>
+    /// Links the issue to a known issue.
+    /// </summary>
+    /// <param name="event">The event.</param>
+    /// <param name="current">The current state.</param>
+    /// <param name="context">The event context.</param>
+    /// <returns>The next state.</returns>
+    public static IssueConversation? Reduce(SupportLinkedIssueToKnownIssue @event, IssueConversation? current, EventContext context) =>
+        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.BySystem(context, ConversationEntryKind.LinkedToKnownIssue, (string)@event.Title), issue => issue with { KnownIssueTitle = @event.Title });
+
+    /// <summary>
+    /// Unlinks the issue from its known issue.
+    /// </summary>
+    /// <param name="event">The event.</param>
+    /// <param name="current">The current state.</param>
+    /// <param name="context">The event context.</param>
+    /// <returns>The next state.</returns>
+    public static IssueConversation? Reduce(SupportUnlinkedIssue @event, IssueConversation? current, EventContext context) =>
+        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.BySystem(context, ConversationEntryKind.UnlinkedFromKnownIssue), issue => issue with { KnownIssueTitle = KnownIssueTitle.NotSet });
+
+    /// <summary>
+    /// Links the issue to a work item.
+    /// </summary>
+    /// <param name="event">The event.</param>
+    /// <param name="current">The current state.</param>
+    /// <param name="context">The event context.</param>
+    /// <returns>The next state.</returns>
+    public static IssueConversation? Reduce(SupportLinkedIssueToWorkItem @event, IssueConversation? current, EventContext context) =>
+        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.BySystem(context, ConversationEntryKind.LinkedToWorkItem, (string)@event.WorkItem.Title), issue => issue with { WorkItem = @event.WorkItem });
+
+    /// <summary>
+    /// Unlinks the issue from the work item, when it is the one it is linked to.
+    /// </summary>
+    /// <param name="event">The event.</param>
+    /// <param name="current">The current state.</param>
+    /// <param name="context">The event context.</param>
+    /// <returns>The next state.</returns>
+    public static IssueConversation? Reduce(SupportUnlinkedWorkItem @event, IssueConversation? current, EventContext context) =>
+        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.BySystem(context, ConversationEntryKind.UnlinkedFromWorkItem, (string)@event.WorkItemReference), issue =>
+            issue.WorkItem.Reference == @event.WorkItemReference ? issue with { WorkItem = Unset.WorkItem } : issue);
+
+    /// <summary>
+    /// Records that the desk started work on the issue.
+    /// </summary>
+    /// <param name="event">The event.</param>
+    /// <param name="current">The current state.</param>
+    /// <param name="context">The event context.</param>
+    /// <returns>The next state.</returns>
+    public static IssueConversation? Reduce(SupportStartedWork @event, IssueConversation? current, EventContext context) =>
+        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.BySystem(context, ConversationEntryKind.WorkStarted), issue => IssueConversationTransitions.Move(issue, IssueState.InProgress));
+
+    /// <summary>
+    /// Records that the desk resolved the issue.
+    /// </summary>
+    /// <param name="event">The event.</param>
+    /// <param name="current">The current state.</param>
+    /// <param name="context">The event context.</param>
+    /// <returns>The next state.</returns>
+    public static IssueConversation? Reduce(SupportResolvedIssue @event, IssueConversation? current, EventContext context) =>
+        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.BySystem(context, ConversationEntryKind.Resolved, (string)@event.Resolution), issue => IssueConversationTransitions.Move(issue, IssueState.Resolved));
+
+    /// <summary>
+    /// Records support's request for access.
+    /// </summary>
+    /// <param name="event">The event.</param>
+    /// <param name="current">The current state.</param>
+    /// <param name="context">The event context.</param>
+    /// <returns>The next state.</returns>
+    public static IssueConversation? Reduce(SupportRequestedAccess @event, IssueConversation? current, EventContext context) =>
+        IssueConversationAccess.Request(current, context, @event);
+
+    /// <summary>
+    /// Starts a session in which support signed in as the reporter.
+    /// </summary>
+    /// <param name="event">The event.</param>
+    /// <param name="current">The current state.</param>
+    /// <param name="context">The event context.</param>
+    /// <returns>The next state.</returns>
+    public static IssueConversation? Reduce(SupportSignedInAsReporter @event, IssueConversation? current, EventContext context) =>
+        IssueConversationAccess.Start(current, context, @event);
+
+    /// <summary>
+    /// Ends a session in which support signed in as the reporter.
+    /// </summary>
+    /// <param name="event">The event.</param>
+    /// <param name="current">The current state.</param>
+    /// <param name="context">The event context.</param>
+    /// <returns>The next state.</returns>
+    public static IssueConversation? Reduce(SupportSessionEnded @event, IssueConversation? current, EventContext context) =>
+        IssueConversationAccess.End(current, context, @event);
+
+    /// <summary>
+    /// Records the version that has the fix.
+    /// </summary>
+    /// <param name="event">The event.</param>
+    /// <param name="current">The current state.</param>
+    /// <param name="context">The event context.</param>
+    /// <returns>The next state.</returns>
+    public static IssueConversation? Reduce(ReleaseShippedFix @event, IssueConversation? current, EventContext context) =>
+        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.BySystem(context, ConversationEntryKind.FixReleased, (string)@event.ReleaseVersion), issue => issue with { FixedInVersion = @event.ReleaseVersion });
 }
 
 /// <summary>

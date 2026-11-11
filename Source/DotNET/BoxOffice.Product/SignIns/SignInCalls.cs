@@ -79,24 +79,36 @@ public class SignInCalls(IReportActivity activity, IOptions<BoxOfficeProductOpti
 
     static TenantId? TenantOf(HttpRequest request, SignInNotification notification)
     {
-        var header = request.Headers[SignInHeaders.Tenant].ToString();
-        if (header.Length == 0)
-        {
-            header = request.Headers[SignInHeaders.LegacyTenant].ToString();
-        }
-
+        var header = HeaderTenant(request);
         var body = notification.Tenant ?? string.Empty;
-        if (header.Length > 0 && body.Length > 0 && !string.Equals(header, body, StringComparison.Ordinal))
-        {
-            return null;
-        }
-
-        return new(body.Length > 0 ? body : header);
+        return Disagree(header, body) ? null : new(body.Length > 0 ? body : header);
     }
+
+    static string HeaderTenant(HttpRequest request)
+    {
+        var header = request.Headers[SignInHeaders.Tenant].ToString();
+        return header.Length == 0 ? request.Headers[SignInHeaders.LegacyTenant].ToString() : header;
+    }
+
+    static bool Disagree(string header, string body) =>
+        header.Length > 0 && body.Length > 0 && !string.Equals(header, body, StringComparison.Ordinal);
 
     static bool IsKind(string kind) => string.Equals(kind, "SignedIn", StringComparison.Ordinal) || string.Equals(kind, "Returned", StringComparison.Ordinal);
 
     static async Task<SignInNotification?> ReadNotification(HttpRequest request)
+    {
+        var body = await ReadBody(request);
+        var notification = body is null ? null : Parse(body);
+        return IsValid(notification) ? notification : null;
+    }
+
+    static bool IsValid(SignInNotification? notification) =>
+        notification is not null &&
+        IsKind(notification.Kind) &&
+        !string.IsNullOrWhiteSpace(notification.Subject) &&
+        !string.IsNullOrWhiteSpace(notification.IdentityProvider);
+
+    static async Task<byte[]?> ReadBody(HttpRequest request)
     {
         if (request.ContentLength > MaximumBodyLength)
         {
@@ -115,15 +127,14 @@ public class SignInCalls(IReportActivity activity, IOptions<BoxOfficeProductOpti
             }
         }
 
+        return body.ToArray();
+    }
+
+    static SignInNotification? Parse(byte[] body)
+    {
         try
         {
-            var notification = JsonSerializer.Deserialize<SignInNotification>(body.ToArray(), _serializerOptions);
-            return notification is not null &&
-                IsKind(notification.Kind) &&
-                !string.IsNullOrWhiteSpace(notification.Subject) &&
-                !string.IsNullOrWhiteSpace(notification.IdentityProvider)
-                    ? notification
-                    : null;
+            return JsonSerializer.Deserialize<SignInNotification>(body, _serializerOptions);
         }
         catch (JsonException)
         {

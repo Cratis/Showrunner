@@ -43,17 +43,10 @@ public static class RolloutTracker
     public static void Observe(PerformanceStatus status, PublishedRelease deployed, PublishedRelease target, bool ready, DateTimeOffset now, TimeSpan timeout)
     {
         var stable = Stable(status);
-        if (deployed != target)
+        if (deployed != target || IsStable(target, stable))
         {
             status.Rollout = null;
             status.RunningVersion = deployed.Version;
-            return;
-        }
-
-        if (stable is not null && target.Is(stable))
-        {
-            status.Rollout = null;
-            status.RunningVersion = target.Version;
             return;
         }
 
@@ -65,25 +58,40 @@ public static class RolloutTracker
             return;
         }
 
+        Track(status, stable, new Observation(target, now, timeout));
+    }
+
+    static void Track(PerformanceStatus status, RolloutRecord? stable, Observation observation)
+    {
+        var target = observation.Target;
         if (status.Rollout is null || Describe(status.Rollout) != target)
         {
-            status.Rollout = new() { Version = target.Version, Image = target.Image, PackageConfigMap = target.PackageConfigMap, StartedAt = now };
+            status.Rollout = new() { Version = target.Version, Image = target.Image, PackageConfigMap = target.PackageConfigMap, StartedAt = observation.Now };
         }
 
         status.RunningVersion = stable?.Version ?? string.Empty;
-        if (now - status.Rollout.StartedAt < timeout || (status.Versions.LastOrDefault() is { } last && last.Outcome == RolloutOutcome.Failed && target.Is(last)))
+        if (!HasTimedOut(status, observation))
         {
             return;
         }
 
-        Add(status, Record(target, RolloutOutcome.Failed, now, $"The version was not ready within {(int)timeout.TotalSeconds} seconds."));
+        Add(status, Record(target, RolloutOutcome.Failed, observation.Now, $"The version was not ready within {(int)observation.Timeout.TotalSeconds} seconds."));
         if (stable is not null)
         {
-            Add(status, Record(new(stable.Version, stable.Image, stable.PackageConfigMap), RolloutOutcome.RolledBack, now, $"Restored after version {target.Version} failed."));
+            Add(status, Record(new(stable.Version, stable.Image, stable.PackageConfigMap), RolloutOutcome.RolledBack, observation.Now, $"Restored after version {target.Version} failed."));
             status.Rollout = null;
             status.RunningVersion = stable.Version;
         }
     }
+
+    static bool IsStable(PublishedRelease target, RolloutRecord? stable) =>
+        stable is not null && target.Is(stable);
+
+    static bool HasTimedOut(PerformanceStatus status, Observation observation) =>
+        observation.Now - status.Rollout!.StartedAt >= observation.Timeout && !AlreadyFailed(status, observation.Target);
+
+    static bool AlreadyFailed(PerformanceStatus status, PublishedRelease target) =>
+        status.Versions.LastOrDefault() is { } last && last.Outcome == RolloutOutcome.Failed && target.Is(last);
 
     static RolloutRecord? Stable(PerformanceStatus status) =>
         status.Versions.LastOrDefault(record => record.Outcome != RolloutOutcome.Failed);
@@ -119,4 +127,6 @@ public static class RolloutTracker
 
         return -1;
     }
+
+    readonly record struct Observation(PublishedRelease Target, DateTimeOffset Now, TimeSpan Timeout);
 }

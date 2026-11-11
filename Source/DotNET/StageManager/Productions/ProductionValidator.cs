@@ -6,7 +6,7 @@ namespace Cratis.Showrunner.StageManager.Productions;
 /// <summary>
 /// Finds what is wrong with the spec of a <see cref="Production"/> before anything is built from it. Every problem with a named sink names that sink.
 /// </summary>
-public static partial class ProductionValidator
+public static class ProductionValidator
 {
     /// <summary>
     /// The graph reference a Neo4j sink uses for the Production's own managed graph.
@@ -16,9 +16,6 @@ public static partial class ProductionValidator
     static readonly int[] _memberCounts = [1, 3, 5];
     static readonly string[] _databaseModes = [ProductionModes.Managed, ProductionModes.External];
     static readonly string[] _graphModes = [ProductionModes.None, ProductionModes.Managed, ProductionModes.External];
-
-    [System.Text.RegularExpressions.GeneratedRegex("^[A-Za-z0-9]+([_-][A-Za-z0-9]+)*$", System.Text.RegularExpressions.RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
-    private static partial System.Text.RegularExpressions.Regex SinkName { get; }
 
     /// <summary>
     /// Validates a Production.
@@ -38,7 +35,7 @@ public static partial class ProductionValidator
         ValidateChronicle(spec, problems);
         ValidateDatabase(spec.Database, problems);
         ValidateGraph(spec.Graph, problems);
-        ValidateSinks(spec, problems);
+        ProductionSinkValidator.Validate(spec, problems);
         return problems;
     }
 
@@ -55,20 +52,37 @@ public static partial class ProductionValidator
         }
     }
 
+    static bool Unknown(IEnumerable<string> known, string value) => !known.Contains(value, StringComparer.Ordinal);
+
     static void ValidateDatabase(ProductionDatabase database, List<ProductionProblem> problems)
     {
-        if (!StorageKinds.Database.Contains(database.Kind, StringComparer.Ordinal))
+        if (UnknownDatabaseSetting(database, problems))
+        {
+            return;
+        }
+
+        ValidateDatabaseShape(database, problems);
+    }
+
+    static bool UnknownDatabaseSetting(ProductionDatabase database, List<ProductionProblem> problems)
+    {
+        if (Unknown(StorageKinds.Database, database.Kind))
         {
             problems.Add(new($"database.kind '{database.Kind}' is unknown. Use one of {string.Join(", ", StorageKinds.Database)}."));
-            return;
+            return true;
         }
 
-        if (!_databaseModes.Contains(database.Mode, StringComparer.Ordinal))
+        if (Unknown(_databaseModes, database.Mode))
         {
             problems.Add(new($"database.mode '{database.Mode}' is unknown. Use one of {string.Join(", ", _databaseModes)}."));
-            return;
+            return true;
         }
 
+        return false;
+    }
+
+    static void ValidateDatabaseShape(ProductionDatabase database, List<ProductionProblem> problems)
+    {
         var external = database.IsExternal();
         if (StorageKinds.IsSql(database.Kind) && !external)
         {
@@ -88,13 +102,13 @@ public static partial class ProductionValidator
 
     static void ValidateGraph(ProductionGraph graph, List<ProductionProblem> problems)
     {
-        if (!_graphModes.Contains(graph.Mode, StringComparer.Ordinal))
+        if (Unknown(_graphModes, graph.Mode))
         {
             problems.Add(new($"graph.mode '{graph.Mode}' is unknown. Use one of {string.Join(", ", _graphModes)}."));
             return;
         }
 
-        if (!GraphEditions.All.Contains(graph.Edition, StringComparer.Ordinal))
+        if (Unknown(GraphEditions.All, graph.Edition))
         {
             problems.Add(new($"graph.edition '{graph.Edition}' is unknown. Use one of {string.Join(", ", GraphEditions.All)}."));
             return;
@@ -108,117 +122,6 @@ public static partial class ProductionValidator
         if (graph.Mode == ProductionModes.External && string.IsNullOrWhiteSpace(graph.CredentialsSecretName))
         {
             problems.Add(new("graph.credentialsSecretName is required for an External graph."));
-        }
-    }
-
-    static void ValidateSinks(ProductionSpec spec, List<ProductionProblem> problems)
-    {
-        var sinks = spec.Sinks;
-        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var sink in sinks.Configurations)
-        {
-            if (!SinkName.IsMatch(sink.Name))
-            {
-                problems.Add(new($"The sink name '{sink.Name}' may only hold letters and digits, separated by single hyphens or underscores.", sink.Name));
-                continue;
-            }
-
-            if (!seen.Add(sink.Name))
-            {
-                problems.Add(new($"The sink '{sink.Name}' is configured twice.", sink.Name));
-                continue;
-            }
-
-            ValidateSink(sink, spec.Graph, problems);
-        }
-
-        ValidateDefault(sinks, "readModels", sinks.ReadModels, graph: false, problems);
-        ValidateDefault(sinks, "graphs", sinks.Graphs, graph: true, problems);
-    }
-
-    static void ValidateSink(ProductionSinkConfiguration sink, ProductionGraph graph, List<ProductionProblem> problems)
-    {
-        if (!StorageKinds.Sinks.Contains(sink.Kind, StringComparer.Ordinal))
-        {
-            problems.Add(new($"The sink '{sink.Name}' has the unknown kind '{sink.Kind}'. Use one of {string.Join(", ", StorageKinds.Sinks)}.", sink.Name));
-            return;
-        }
-
-        ValidateSecretName(sink, problems);
-        if (sink.Kind == StorageKinds.Neo4j)
-        {
-            ValidateGraphSink(sink, graph, problems);
-            return;
-        }
-
-        ValidateStorageSink(sink, problems);
-    }
-
-    static void ValidateSecretName(ProductionSinkConfiguration sink, List<ProductionProblem> problems)
-    {
-        if (sink.ConnectionSecretRef is { } secret && string.IsNullOrWhiteSpace(secret.Name))
-        {
-            problems.Add(new($"The sink '{sink.Name}' has a connectionSecretRef without a name.", sink.Name));
-        }
-    }
-
-    static void ValidateGraphSink(ProductionSinkConfiguration sink, ProductionGraph graph, List<ProductionProblem> problems)
-    {
-        var hasGraph = !string.IsNullOrWhiteSpace(sink.GraphRef);
-        if ((sink.ConnectionSecretRef is not null) == hasGraph)
-        {
-            problems.Add(new($"The sink '{sink.Name}' is Neo4j and needs exactly one of connectionSecretRef or graphRef.", sink.Name));
-        }
-        else if (hasGraph && !string.Equals(sink.GraphRef, ManagedGraph, StringComparison.Ordinal))
-        {
-            problems.Add(new($"The sink '{sink.Name}' has graphRef '{sink.GraphRef}'. The only graph of a Production is '{ManagedGraph}'.", sink.Name));
-        }
-        else if (hasGraph && graph.Mode != ProductionModes.Managed)
-        {
-            problems.Add(new($"The sink '{sink.Name}' uses the managed graph, but graph.mode is {graph.Mode}.", sink.Name));
-        }
-    }
-
-    static void ValidateStorageSink(ProductionSinkConfiguration sink, List<ProductionProblem> problems)
-    {
-        if (!string.IsNullOrWhiteSpace(sink.GraphRef))
-        {
-            problems.Add(new($"The sink '{sink.Name}' is {sink.Kind}: graphRef is for Neo4j sinks only.", sink.Name));
-        }
-
-        if (sink.ConnectionSecretRef is null)
-        {
-            problems.Add(new($"The sink '{sink.Name}' is {sink.Kind} and needs a connectionSecretRef.", sink.Name));
-        }
-    }
-
-    static void ValidateDefault(ProductionSinks sinks, string setting, string name, bool graph, List<ProductionProblem> problems)
-    {
-        if (string.IsNullOrWhiteSpace(name))
-        {
-            return;
-        }
-
-        var configuration = sinks.Configurations.FirstOrDefault(sink => string.Equals(sink.Name, name, StringComparison.OrdinalIgnoreCase));
-        if (configuration is null)
-        {
-            problems.Add(new($"sinks.{setting} names the sink '{name}', which is not configured.", name));
-            return;
-        }
-
-        if (!StorageKinds.Sinks.Contains(configuration.Kind, StringComparer.Ordinal))
-        {
-            return;
-        }
-
-        var isGraph = configuration.Kind == StorageKinds.Neo4j;
-        if (graph && !isGraph)
-        {
-            problems.Add(new($"sinks.graphs names the sink '{name}', which is {configuration.Kind} and cannot store graphs.", configuration.Name));
-        }
-        else if (!graph && isGraph)
-        {
-            problems.Add(new($"sinks.readModels names the sink '{name}', which is Neo4j and only stores graphs.", configuration.Name));
         }
     }
 }

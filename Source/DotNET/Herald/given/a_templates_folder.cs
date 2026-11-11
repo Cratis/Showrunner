@@ -13,38 +13,35 @@ namespace Cratis.Showrunner.Herald.given;
 /// </summary>
 public class a_templates_folder : Specification
 {
-    protected const string Manifest = """
-        { "values": [
-            { "name": "invitation.link", "required": true },
-            "invitation.expiresAt",
-            "inviter.name",
-            "inviter.message",
-            "product.name"
-        ] }
-        """;
+    protected const string Manifest =
+        "{ \"values\": [\n" +
+        "    { \"name\": \"invitation.link\", \"required\": true },\n" +
+        "    \"invitation.expiresAt\",\n" +
+        "    \"inviter.name\",\n" +
+        "    \"inviter.message\",\n" +
+        "    \"product.name\"\n" +
+        "] }";
 
-    protected const string English = """
-        ---
-        subject: {{inviter.name}} invited you to {{product.name}}
-        preview: Accept the invitation to {{product.name}}
-        ---
-        <html><head><style>.button { background-color: {{look.brandColor}}; color: #ffffff; } p { font-family: Arial; }</style></head>
-        <body><table><tr><td>
-        <img src="cid:logo.png" alt="Ledger">
-        <p>Hello, {{inviter.name}} invited you.</p>
-        {{#if inviter.message}}<blockquote>{{inviter.message}}</blockquote>{{/if}}
-        <p>Expires {{date invitation.expiresAt "d MMMM"}}</p>
-        <a class="button" href="{{invitation.link}}">Accept</a>
-        </td></tr></table>
-        <p>{{look.footer}}</p></body></html>
-        """;
+    protected const string English =
+        "---\n" +
+        "subject: {{inviter.name}} invited you to {{product.name}}\n" +
+        "preview: Accept the invitation to {{product.name}}\n" +
+        "---\n" +
+        "<html><head><style>.button { background-color: {{look.brandColor}}; color: #ffffff; } p { font-family: Arial; }</style></head>\n" +
+        "<body><table><tr><td>\n" +
+        "<img src=\"cid:logo.png\" alt=\"Ledger\">\n" +
+        "<p>Hello, {{inviter.name}} invited you.</p>\n" +
+        "{{#if inviter.message}}<blockquote>{{inviter.message}}</blockquote>{{/if}}\n" +
+        "<p>Expires {{date invitation.expiresAt \"d MMMM\"}}</p>\n" +
+        "<a class=\"button\" href=\"{{invitation.link}}\">Accept</a>\n" +
+        "</td></tr></table>\n" +
+        "<p>{{look.footer}}</p></body></html>";
 
-    protected const string Norwegian = """
-        ---
-        subject: {{inviter.name}} har invitert deg til {{product.name}}
-        ---
-        <html><body><p>Utløper {{date invitation.expiresAt "d. MMMM"}}</p><a href="{{invitation.link}}">Godta</a></body></html>
-        """;
+    protected const string Norwegian =
+        "---\n" +
+        "subject: {{inviter.name}} har invitert deg til {{product.name}}\n" +
+        "---\n" +
+        "<html><body><p>Utløper {{date invitation.expiresAt \"d. MMMM\"}}</p><a href=\"{{invitation.link}}\">Godta</a></body></html>";
 
     protected static readonly byte[] Png = Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==");
 

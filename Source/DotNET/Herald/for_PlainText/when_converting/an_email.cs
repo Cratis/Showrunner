@@ -10,14 +10,13 @@ public class an_email : Specification
 {
     string _result;
 
-    void Because() => _result = PlainText.From("""
-        <html><head><title>Hidden</title><style>p { color: red; }</style></head>
-        <body><h1>Welcome</h1><p>Hello <b>Ada</b> &amp; friends.</p>
-        <ul><li>One</li><li>Two</li></ul>
-        <img src="cid:logo.png" alt="Ledger logo">
-        <p><a href="https://example.com/a?b=1">Open</a></p><p><a href="https://example.com">https://example.com</a></p>
-        <p><a href="mailto:help@example.com">help@example.com</a><br>Bye</p></body></html>
-        """);
+    void Because() => _result = PlainText.From(
+        "<html><head><title>Hidden</title><style>p { color: red; }</style></head>\n" +
+        "<body><h1>Welcome</h1><p>Hello <b>Ada</b> &amp; friends.</p>\n" +
+        "<ul><li>One</li><li>Two</li></ul>\n" +
+        "<img src=\"cid:logo.png\" alt=\"Ledger logo\">\n" +
+        "<p><a href=\"https://example.com/a?b=1\">Open</a></p><p><a href=\"https://example.com\">https://example.com</a></p>\n" +
+        "<p><a href=\"mailto:help@example.com\">help@example.com</a><br>Bye</p></body></html>");
 
     [Fact] void should_leave_out_the_head() => Assert.DoesNotContain("Hidden", _result);
     [Fact] void should_leave_out_the_styles() => Assert.DoesNotContain("color", _result);

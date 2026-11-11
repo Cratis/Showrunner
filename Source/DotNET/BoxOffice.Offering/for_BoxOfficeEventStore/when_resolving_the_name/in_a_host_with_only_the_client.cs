@@ -15,7 +15,6 @@ public class in_a_host_with_only_the_client : Specification
 
     void Because()
     {
-
         var services = new ServiceCollection();
 
         using var provider = services.BuildServiceProvider();

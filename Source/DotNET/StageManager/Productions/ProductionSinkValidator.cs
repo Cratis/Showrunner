@@ -23,18 +23,26 @@ internal static partial class ProductionSinkValidator
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var sink in sinks.Configurations)
         {
-            if (NameProblem(sink.Name, seen) is { } nameProblem)
-            {
-                problems.Add(new(nameProblem, sink.Name));
-                continue;
-            }
-
-            ValidateSink(sink, spec.Graph, problems);
+            problems.AddRange(SinkProblems(sink, spec.Graph, seen));
         }
 
-        ValidateDefault(sinks, new("readModels", sinks.ReadModels, Graph: false), problems);
-        ValidateDefault(sinks, new("graphs", sinks.Graphs, Graph: true), problems);
+        problems.AddRange(DefaultProblems(sinks, new("readModels", sinks.ReadModels, Graph: false)));
+        problems.AddRange(DefaultProblems(sinks, new("graphs", sinks.Graphs, Graph: true)));
     }
+
+    static IEnumerable<ProductionProblem> About(string sink, string? message) => message is null ? [] : [new(message, sink)];
+
+    static IEnumerable<ProductionProblem> SinkProblems(ProductionSinkConfiguration sink, ProductionGraph graph, HashSet<string> seen) =>
+        NameProblem(sink.Name, seen) is { } nameProblem ? About(sink.Name, nameProblem) : ProblemsOfKnownName(sink, graph);
+
+    static IEnumerable<ProductionProblem> ProblemsOfKnownName(ProductionSinkConfiguration sink, ProductionGraph graph) => KindProblem(sink) switch
+    {
+        { } kindProblem => About(sink.Name, kindProblem),
+        _ => [.. About(sink.Name, SecretNameProblem(sink)), .. ProblemsOfKind(sink, graph)]
+    };
+
+    static IEnumerable<ProductionProblem> ProblemsOfKind(ProductionSinkConfiguration sink, ProductionGraph graph) =>
+        sink.Kind == StorageKinds.Neo4j ? About(sink.Name, GraphSinkProblem(sink, graph)) : StorageSinkProblems(sink);
 
     static string? NameProblem(string name, HashSet<string> seen) => name switch
     {
@@ -43,36 +51,18 @@ internal static partial class ProductionSinkValidator
         _ => null
     };
 
-    static void ValidateSink(ProductionSinkConfiguration sink, ProductionGraph graph, List<ProductionProblem> problems)
-    {
-        if (!StorageKinds.Sinks.Contains(sink.Kind, StringComparer.Ordinal))
-        {
-            problems.Add(new($"The sink '{sink.Name}' has the unknown kind '{sink.Kind}'. Use one of {string.Join(", ", StorageKinds.Sinks)}.", sink.Name));
-            return;
-        }
+    static string? KindProblem(ProductionSinkConfiguration sink) => IsKnownKind(sink)
+        ? null
+        : $"The sink '{sink.Name}' has the unknown kind '{sink.Kind}'. Use one of {string.Join(", ", StorageKinds.Sinks)}.";
 
-        ValidateSecretName(sink, problems);
-        if (sink.Kind == StorageKinds.Neo4j)
-        {
-            ValidateGraphSink(sink, graph, problems);
-            return;
-        }
+    static bool IsKnownKind(ProductionSinkConfiguration sink) => StorageKinds.Sinks.Contains(sink.Kind, StringComparer.Ordinal);
 
-        ValidateStorageSink(sink, problems);
-    }
+    static string? SecretNameProblem(ProductionSinkConfiguration sink) => sink.ConnectionSecretRef is { } secret && string.IsNullOrWhiteSpace(secret.Name)
+        ? $"The sink '{sink.Name}' has a connectionSecretRef without a name."
+        : null;
 
-    static void ValidateSecretName(ProductionSinkConfiguration sink, List<ProductionProblem> problems)
-    {
-        if (sink.ConnectionSecretRef is { } secret && string.IsNullOrWhiteSpace(secret.Name))
-        {
-            problems.Add(new($"The sink '{sink.Name}' has a connectionSecretRef without a name.", sink.Name));
-        }
-    }
-
-    static void ValidateGraphSink(ProductionSinkConfiguration sink, ProductionGraph graph, List<ProductionProblem> problems)
-    {
-        var hasGraph = !string.IsNullOrWhiteSpace(sink.GraphRef);
-        var problem = (hasGraph, sink.ConnectionSecretRef is not null) switch
+    static string? GraphSinkProblem(ProductionSinkConfiguration sink, ProductionGraph graph) =>
+        (!string.IsNullOrWhiteSpace(sink.GraphRef), sink.ConnectionSecretRef is not null) switch
         {
             (true, true) or (false, false) => $"The sink '{sink.Name}' is Neo4j and needs exactly one of connectionSecretRef or graphRef.",
             (true, _) when !string.Equals(sink.GraphRef, ProductionValidator.ManagedGraph, StringComparison.Ordinal) =>
@@ -81,59 +71,29 @@ internal static partial class ProductionSinkValidator
             _ => null
         };
 
-        if (problem is not null)
-        {
-            problems.Add(new(problem, sink.Name));
-        }
-    }
+    static IEnumerable<ProductionProblem> StorageSinkProblems(ProductionSinkConfiguration sink) =>
+    [
+        .. About(sink.Name, string.IsNullOrWhiteSpace(sink.GraphRef) ? null : $"The sink '{sink.Name}' is {sink.Kind}: graphRef is for Neo4j sinks only."),
+        .. About(sink.Name, sink.ConnectionSecretRef is null ? $"The sink '{sink.Name}' is {sink.Kind} and needs a connectionSecretRef." : null)
+    ];
 
-    static void ValidateStorageSink(ProductionSinkConfiguration sink, List<ProductionProblem> problems)
+    static IEnumerable<ProductionProblem> DefaultProblems(ProductionSinks sinks, DefaultSink setting) =>
+        string.IsNullOrWhiteSpace(setting.Name)
+            ? []
+            : DefaultProblems(setting, sinks.Configurations.FirstOrDefault(sink => string.Equals(sink.Name, setting.Name, StringComparison.OrdinalIgnoreCase)));
+
+    static IEnumerable<ProductionProblem> DefaultProblems(DefaultSink setting, ProductionSinkConfiguration? configuration) => configuration switch
     {
-        if (!string.IsNullOrWhiteSpace(sink.GraphRef))
-        {
-            problems.Add(new($"The sink '{sink.Name}' is {sink.Kind}: graphRef is for Neo4j sinks only.", sink.Name));
-        }
+        null => About(setting.Name, $"sinks.{setting.Setting} names the sink '{setting.Name}', which is not configured."),
+        _ => About(configuration.Name, DefaultKindProblem(configuration, setting))
+    };
 
-        if (sink.ConnectionSecretRef is null)
-        {
-            problems.Add(new($"The sink '{sink.Name}' is {sink.Kind} and needs a connectionSecretRef.", sink.Name));
-        }
-    }
-
-    static void ValidateDefault(ProductionSinks sinks, DefaultSink setting, List<ProductionProblem> problems)
+    static string? DefaultKindProblem(ProductionSinkConfiguration configuration, DefaultSink setting) => (IsKnownKind(configuration), configuration.Kind == StorageKinds.Neo4j, setting.Graph) switch
     {
-        if (string.IsNullOrWhiteSpace(setting.Name))
-        {
-            return;
-        }
-
-        var configuration = sinks.Configurations.FirstOrDefault(sink => string.Equals(sink.Name, setting.Name, StringComparison.OrdinalIgnoreCase));
-        if (configuration is null)
-        {
-            problems.Add(new($"sinks.{setting.Setting} names the sink '{setting.Name}', which is not configured.", setting.Name));
-            return;
-        }
-
-        ValidateDefaultKind(configuration, setting, problems);
-    }
-
-    static void ValidateDefaultKind(ProductionSinkConfiguration configuration, DefaultSink setting, List<ProductionProblem> problems)
-    {
-        if (!StorageKinds.Sinks.Contains(configuration.Kind, StringComparer.Ordinal))
-        {
-            return;
-        }
-
-        var isGraph = configuration.Kind == StorageKinds.Neo4j;
-        if (setting.Graph && !isGraph)
-        {
-            problems.Add(new($"sinks.graphs names the sink '{setting.Name}', which is {configuration.Kind} and cannot store graphs.", configuration.Name));
-        }
-        else if (!setting.Graph && isGraph)
-        {
-            problems.Add(new($"sinks.readModels names the sink '{setting.Name}', which is Neo4j and only stores graphs.", configuration.Name));
-        }
-    }
+        (true, false, true) => $"sinks.graphs names the sink '{setting.Name}', which is {configuration.Kind} and cannot store graphs.",
+        (true, true, false) => $"sinks.readModels names the sink '{setting.Name}', which is Neo4j and only stores graphs.",
+        _ => null
+    };
 
     /// <summary>
     /// A default sink setting of a Production.

@@ -9,7 +9,7 @@
         <!-- The TypeScript proxies for Box Office's commands and queries are generated into the
              @cratis/showrunner.boxoffice npm package. The Cratis.Showrunner.BoxOffice namespace segments are
              skipped so a slice in Cratis.Showrunner.BoxOffice.<Feature>.<Slice> lands in <Feature>/<Slice>/.
-             Release builds clear CratisProxiesOutputPath (-p:CratisProxiesOutputPath=) so generation only
+             Release builds skip generation (-p:CratisProxiesSkip=true) so generation only
              runs from the Debug build. -->
         <CratisProxiesOutputPath>$(MSBuildThisFileDirectory)../../JavaScript/BoxOffice</CratisProxiesOutputPath>
         <CratisProxiesSegmentsToSkip>3</CratisProxiesSegmentsToSkip>

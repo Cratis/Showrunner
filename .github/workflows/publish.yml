@@ -109,7 +109,7 @@ jobs:
           dotnet-version: "10.0.x"
 
       # Release carries none of the Debug-only spec dependencies (see Source/DotNET/Directory.Build.props).
-      # CratisProxiesOutputPath is cleared so the proxy generator's MSBuild target no-ops for this Release
+      # CratisProxiesSkip=true makes the proxy generator's MSBuild target no-op for this Release
       # build instead of rewriting the committed proxies (they were verified fresh by build.yml before
       # this merged). Packing the solution packs every project under the same version, so Usher's
       # dependency on Usher.Contracts (and Herald's on Herald.Contracts) carries the released version.
@@ -119,7 +119,7 @@ jobs:
         run: >
           dotnet pack Showrunner.slnx
           --configuration Release
-          -p:CratisProxiesOutputPath=
+          -p:CratisProxiesSkip=true
           "-p:Version=$VERSION"
           -o "$NUGET_OUTPUT"
 
@@ -322,7 +322,7 @@ jobs:
         run: >
           dotnet publish Source/DotNET/StageManager/StageManager.csproj
           --configuration Release
-          -p:CratisProxiesOutputPath=
+          -p:CratisProxiesSkip=true
           "-p:Version=$VERSION"
           -o Source/DotNET/StageManager/out
 

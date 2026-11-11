@@ -9,7 +9,7 @@
         <!-- The TypeScript proxies for the commands and queries are generated into the
              @cratis/showrunner.marquee npm package. The Cratis.Showrunner.Marquee namespace segments are
              skipped so a slice in Cratis.Showrunner.Marquee.<Feature>.<Slice> lands in <Feature>/<Slice>/. Release
-             builds clear CratisProxiesOutputPath so generation only runs from the Debug build. -->
+             builds skip generation (CratisProxiesSkip) so generation only runs from the Debug build. -->
         <CratisProxiesOutputPath>$(MSBuildThisFileDirectory)../../JavaScript/Marquee</CratisProxiesOutputPath>
         <CratisProxiesSegmentsToSkip>3</CratisProxiesSegmentsToSkip>
         <CratisProxiesSkipOutputDeletion>true</CratisProxiesSkipOutputDeletion>

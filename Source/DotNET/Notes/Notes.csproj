@@ -9,7 +9,7 @@
         <!-- The TypeScript proxies for Notes' commands and queries are generated into the
              @cratis/showrunner.notes npm package. The Cratis.Showrunner.Notes namespace segments are
              skipped so a slice in Cratis.Showrunner.Notes.<Feature>.<Slice> lands in <Feature>/<Slice>/.
-             Release builds clear CratisProxiesOutputPath (-p:CratisProxiesOutputPath=) so generation only
+             Release builds skip generation (-p:CratisProxiesSkip=true) so generation only
              runs from the Debug build. -->
         <CratisProxiesOutputPath>$(MSBuildThisFileDirectory)../../JavaScript/Notes</CratisProxiesOutputPath>
         <CratisProxiesSegmentsToSkip>3</CratisProxiesSegmentsToSkip>

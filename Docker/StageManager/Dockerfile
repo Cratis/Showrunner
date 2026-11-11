@@ -3,7 +3,7 @@
 ####################################
 # Showrunner Stage Manager (operator)
 # Runtime image: the operator is published on the GitHub runner first, as the AuthProxy image is.
-#   dotnet publish Source/DotNET/StageManager/StageManager.csproj -c Release -p:CratisProxiesOutputPath= -o Source/DotNET/StageManager/out
+#   dotnet publish Source/DotNET/StageManager/StageManager.csproj -c Release -p:CratisProxiesSkip=true -o Source/DotNET/StageManager/out
 ####################################
 
 FROM mcr.microsoft.com/dotnet/runtime:11.0

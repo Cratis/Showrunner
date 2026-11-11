@@ -16,6 +16,6 @@ describe('when reading the manifest', () => {
     it('should be the notes react package', () => manifest.name.should.equal('@cratis/showrunner.notes.react'));
     it('should depend on the notes proxies package', () => (manifest.dependencies ?? {}).should.have.property('@cratis/showrunner.notes'));
     it('should need a components release that has the component picker', () => (manifest.peerDependencies ?? {})['@cratis/components'].should.equal('^4.39.0'));
-    it('should need an arc release that has the application context', () => (manifest.peerDependencies ?? {})['@cratis/arc.react'].should.equal('^22.155.0'));
+    it('should need an arc release that has the application context', () => (manifest.peerDependencies ?? {})['@cratis/arc.react'].should.equal('^22.185.1'));
     it('should not point at a local file', () => JSON.stringify(manifest).should.not.contain('file:'));
 });

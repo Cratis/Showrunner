@@ -126,18 +126,6 @@ public class MongoMeteringStore(IMongoDatabase database, IOptions<MeteringOption
                 Builders<BsonDocument>.Filter.Eq("CorrectionDue", (long)due.Value)),
             Builders<BsonDocument>.Update.Unset("CorrectionDue"));
 
-    async Task<IReadOnlyList<MeteringDay>> FindDays(TenantId tenant, params FilterDefinition<BsonDocument>[] conditions)
-    {
-        var filter = Builders<BsonDocument>.Filter.And(
-        [
-            Builders<BsonDocument>.Filter.Eq("Kind", "day"),
-            Builders<BsonDocument>.Filter.Eq("Tenant", tenant.Value),
-            .. conditions
-        ]);
-        var documents = await _collection.Find(filter).Sort(Builders<BsonDocument>.Sort.Ascending("Day")).ToListAsync();
-        return [.. documents.Select(ToDay)];
-    }
-
     static bool IsDuplicate(MongoWriteException exception) =>
         exception.WriteError.Category == ServerErrorCategory.DuplicateKey
         || exception.WriteError.Message.Contains(DuplicateKey, StringComparison.Ordinal);
@@ -167,5 +155,17 @@ public class MongoMeteringStore(IMongoDatabase database, IOptions<MeteringOption
             document["Closed"].AsBoolean,
             due,
             quantities);
+    }
+
+    async Task<IReadOnlyList<MeteringDay>> FindDays(TenantId tenant, params FilterDefinition<BsonDocument>[] conditions)
+    {
+        var filter = Builders<BsonDocument>.Filter.And(
+        [
+            Builders<BsonDocument>.Filter.Eq("Kind", "day"),
+            Builders<BsonDocument>.Filter.Eq("Tenant", tenant.Value),
+            .. conditions
+        ]);
+        var documents = await _collection.Find(filter).Sort(Builders<BsonDocument>.Sort.Ascending("Day")).ToListAsync();
+        return [.. documents.Select(ToDay)];
     }
 }

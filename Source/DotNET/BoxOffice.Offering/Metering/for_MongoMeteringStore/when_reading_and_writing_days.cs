@@ -12,7 +12,7 @@ namespace Cratis.Showrunner.BoxOffice.Offering.Metering.for_MongoMeteringStore;
 public class when_reading_and_writing_days : Specification
 {
     static readonly DateTimeOffset _now = new(2024, 5, 6, 7, 8, 9, TimeSpan.Zero);
-    static readonly Guid _organization = Guid.Parse("11111111-2222-3333-4444-555555555555");
+    static readonly Guid _organization = new("11111111-2222-3333-4444-555555555555");
 
     readonly Dictionary<string, (BsonDocument Filter, BsonDocument? Update, BsonDocument? Sort)> _calls = new(StringComparer.Ordinal);
     readonly Dictionary<string, object?> _results = new(StringComparer.Ordinal);
@@ -61,7 +61,7 @@ public class when_reading_and_writing_days : Specification
 
     async Task Because()
     {
-        string name = string.Empty;
+        var name = string.Empty;
         _collection.FindAsync(
             Arg.Any<FilterDefinition<BsonDocument>>(),
             Arg.Any<FindOptions<BsonDocument, BsonDocument>>(),
@@ -143,7 +143,7 @@ public class when_reading_and_writing_days : Specification
         new BsonDocument("upsert", true)));
 
     [Fact]
-    void should_note_the_correction_that_is_due_when_asked_to() => _calls["add_due"].Update!.ShouldEqual(
+    void should_note_the_correction_that_is_due_when_asked_to() => _calls["add_due"].Update.ShouldEqual(
         Expected("{\"$inc\": {\"Buckets.build-minutes.Quantity\": {\"$numberLong\": \"7\"}}, \"$set\": {\"Buckets.build-minutes.LastApplied\": {\"$numberLong\": \"5\"}, \"Organization\": \"11111111-2222-3333-4444-555555555555\"}, \"$setOnInsert\": {\"Kind\": \"day\", \"Tenant\": \"t1\", \"Day\": \"2024-05-04\", \"Closed\": false}, \"$max\": {\"CorrectionDue\": {\"$numberLong\": \"5\"}}}"));
 
     [Fact]

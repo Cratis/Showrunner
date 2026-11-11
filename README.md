@@ -85,11 +85,14 @@ dotnet build Showrunner.slnx --configuration Release -p:CratisProxiesSkip=true
 
 # Frontend
 yarn install
+yarn clean
 yarn lint:ci
 yarn compile
-yarn test
 yarn build
+yarn test
 ```
+
+Run `yarn clean` before `yarn compile`: a stale `tsc -b` build-info cache can report success and hide real type errors.
 
 Specifications live beside the code they specify: `for_*/when_*/` folders compiled into Debug builds only for .NET, and Vitest specs in the same layout for TypeScript. The Debug build regenerates TypeScript proxies from the backend; do not edit the generated proxies by hand. The pull request build checks that regeneration leaves the committed proxies unchanged.
 

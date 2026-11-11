@@ -98,16 +98,11 @@ public class MongoMeteringStore(IMongoDatabase database, IOptions<MeteringOption
     }
 
     /// <inheritdoc/>
-    public async Task<IReadOnlyList<MeteringDay>> GetOpen(TenantId tenant, ComputeDay through)
-    {
-        var filter = Builders<BsonDocument>.Filter.And(
-            Builders<BsonDocument>.Filter.Eq("Kind", "day"),
-            Builders<BsonDocument>.Filter.Eq("Tenant", tenant.Value),
+    public Task<IReadOnlyList<MeteringDay>> GetOpen(TenantId tenant, ComputeDay through) =>
+        FindDays(
+            tenant,
             Builders<BsonDocument>.Filter.Eq("Closed", false),
             Builders<BsonDocument>.Filter.Lte("Day", DayText(through)));
-        var documents = await _collection.Find(filter).Sort(Builders<BsonDocument>.Sort.Ascending("Day")).ToListAsync();
-        return [.. documents.Select(ToDay)];
-    }
 
     /// <inheritdoc/>
     public Task Close(TenantId tenant, ComputeDay day) =>
@@ -116,17 +111,12 @@ public class MongoMeteringStore(IMongoDatabase database, IOptions<MeteringOption
             Builders<BsonDocument>.Update.Set("Closed", true));
 
     /// <inheritdoc/>
-    public async Task<IReadOnlyList<MeteringDay>> GetAwaitingCorrection(TenantId tenant)
-    {
-        var filter = Builders<BsonDocument>.Filter.And(
-            Builders<BsonDocument>.Filter.Eq("Kind", "day"),
-            Builders<BsonDocument>.Filter.Eq("Tenant", tenant.Value),
+    public Task<IReadOnlyList<MeteringDay>> GetAwaitingCorrection(TenantId tenant) =>
+        FindDays(
+            tenant,
             Builders<BsonDocument>.Filter.Eq("Closed", true),
             Builders<BsonDocument>.Filter.Ne("CorrectionDue", BsonNull.Value),
             Builders<BsonDocument>.Filter.Exists("CorrectionDue"));
-        var documents = await _collection.Find(filter).Sort(Builders<BsonDocument>.Sort.Ascending("Day")).ToListAsync();
-        return [.. documents.Select(ToDay)];
-    }
 
     /// <inheritdoc/>
     public Task Corrected(TenantId tenant, ComputeDay day, EventSequenceNumber due) =>
@@ -165,5 +155,17 @@ public class MongoMeteringStore(IMongoDatabase database, IOptions<MeteringOption
             document["Closed"].AsBoolean,
             due,
             quantities);
+    }
+
+    async Task<IReadOnlyList<MeteringDay>> FindDays(TenantId tenant, params FilterDefinition<BsonDocument>[] conditions)
+    {
+        var filter = Builders<BsonDocument>.Filter.And(
+        [
+            Builders<BsonDocument>.Filter.Eq("Kind", "day"),
+            Builders<BsonDocument>.Filter.Eq("Tenant", tenant.Value),
+            .. conditions
+        ]);
+        var documents = await _collection.Find(filter).Sort(Builders<BsonDocument>.Sort.Ascending("Day")).ToListAsync();
+        return [.. documents.Select(ToDay)];
     }
 }

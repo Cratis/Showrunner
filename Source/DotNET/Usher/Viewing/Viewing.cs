@@ -468,10 +468,7 @@ public record IssueConversation(
     /// <param name="current">The current state.</param>
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
-    public static IssueConversation? Reduce(SupportAskedQuestion @event, IssueConversation? current, EventContext context) =>
-        current?.Entries.Any(entry => entry.Kind == ConversationEntryKind.QuestionAsked && entry.QuestionId == @event.QuestionId) != false
-            ? current
-            : IssueConversationTransitions.Add(current, context, IssueConversationTransitions.BySupport(context, ConversationEntryKind.QuestionAsked, (string)@event.Question, @event.Author) with { QuestionId = @event.QuestionId });
+    public static IssueConversation? Reduce(SupportAskedQuestion @event, IssueConversation? current, EventContext context) => IssueConversationTransitions.Ask(current, context, @event);
 
     /// <summary>
     /// Adds the reply support sent.
@@ -520,9 +517,7 @@ public record IssueConversation(
     /// <param name="current">The current state.</param>
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
-    public static IssueConversation? Reduce(SupportUnlinkedWorkItem @event, IssueConversation? current, EventContext context) =>
-        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.BySystem(context, ConversationEntryKind.UnlinkedFromWorkItem, (string)@event.WorkItemReference), issue =>
-            issue.WorkItem.Reference == @event.WorkItemReference ? issue with { WorkItem = Unset.WorkItem } : issue);
+    public static IssueConversation? Reduce(SupportUnlinkedWorkItem @event, IssueConversation? current, EventContext context) => IssueConversationTransitions.Unlink(current, context, @event);
 
     /// <summary>
     /// Records that the desk started work on the issue.
@@ -551,8 +546,7 @@ public record IssueConversation(
     /// <param name="current">The current state.</param>
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
-    public static IssueConversation? Reduce(SupportRequestedAccess @event, IssueConversation? current, EventContext context) =>
-        IssueConversationAccess.Request(current, context, @event);
+    public static IssueConversation? Reduce(SupportRequestedAccess @event, IssueConversation? current, EventContext context) => IssueConversationAccess.Request(current, context, @event);
 
     /// <summary>
     /// Starts a session in which support signed in as the reporter.
@@ -561,8 +555,7 @@ public record IssueConversation(
     /// <param name="current">The current state.</param>
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
-    public static IssueConversation? Reduce(SupportSignedInAsReporter @event, IssueConversation? current, EventContext context) =>
-        IssueConversationAccess.Start(current, context, @event);
+    public static IssueConversation? Reduce(SupportSignedInAsReporter @event, IssueConversation? current, EventContext context) => IssueConversationAccess.Start(current, context, @event);
 
     /// <summary>
     /// Ends a session in which support signed in as the reporter.
@@ -571,8 +564,7 @@ public record IssueConversation(
     /// <param name="current">The current state.</param>
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
-    public static IssueConversation? Reduce(SupportSessionEnded @event, IssueConversation? current, EventContext context) =>
-        IssueConversationAccess.End(current, context, @event);
+    public static IssueConversation? Reduce(SupportSessionEnded @event, IssueConversation? current, EventContext context) => IssueConversationAccess.End(current, context, @event);
 
     /// <summary>
     /// Records the version that has the fix.
@@ -629,6 +621,29 @@ internal static class IssueConversationTransitions
     /// <returns>The opened conversation.</returns>
     internal static IssueConversation Open(EventContext context, ReporterFlaggedError @event) =>
         Open(context, ((string)@event.SeenMessage, @event.Location, @event.ReportedBy), ByReporter(context, ConversationEntryKind.ErrorReported, (string)@event.SeenMessage));
+
+    /// <summary>
+    /// Adds the question support asked, unless that question is already in the conversation.
+    /// </summary>
+    /// <param name="current">The current state.</param>
+    /// <param name="context">The event context.</param>
+    /// <param name="event">The question.</param>
+    /// <returns>The next state.</returns>
+    internal static IssueConversation? Ask(IssueConversation? current, EventContext context, SupportAskedQuestion @event) =>
+        current?.Entries.Any(entry => entry.Kind == ConversationEntryKind.QuestionAsked && entry.QuestionId == @event.QuestionId) != false
+            ? current
+            : Add(current, context, BySupport(context, ConversationEntryKind.QuestionAsked, (string)@event.Question, @event.Author) with { QuestionId = @event.QuestionId });
+
+    /// <summary>
+    /// Records that support unlinked a work item, and forgets the work item when it is the one linked.
+    /// </summary>
+    /// <param name="current">The current state.</param>
+    /// <param name="context">The event context.</param>
+    /// <param name="event">The unlinking.</param>
+    /// <returns>The next state.</returns>
+    internal static IssueConversation? Unlink(IssueConversation? current, EventContext context, SupportUnlinkedWorkItem @event) =>
+        Add(current, context, BySystem(context, ConversationEntryKind.UnlinkedFromWorkItem, (string)@event.WorkItemReference), issue =>
+            issue.WorkItem.Reference == @event.WorkItemReference ? issue with { WorkItem = Unset.WorkItem } : issue);
 
     /// <summary>
     /// Adds an entry to an existing conversation, applies a change and finds the open question; a conversation that

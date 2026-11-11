@@ -21,6 +21,19 @@ public static partial class SpecValidator
         var spec = performance.Spec;
         var problems = new List<string>();
 
+        ValidateRequiredFields(spec, problems);
+        ValidateStorage(spec, problems);
+        ValidateProviders(spec, problems);
+        ValidateOnboarding(spec, problems);
+        ValidatePublished(spec, problems);
+        ValidateLifetime(spec, problems);
+        ValidateIngress(spec, problems);
+
+        return problems;
+    }
+
+    static void ValidateRequiredFields(PerformanceSpec spec, List<string> problems)
+    {
         if (string.IsNullOrWhiteSpace(spec.Application.Image))
         {
             problems.Add("application.image is required.");
@@ -35,12 +48,21 @@ public static partial class SpecValidator
         {
             problems.Add("environment.configMapRef.name is required.");
         }
+    }
 
-        if (spec.ProductionRef is null && spec.Chronicle is null && spec.Application.Published is null)
+    static void ValidateStorage(PerformanceSpec spec, List<string> problems)
+    {
+        if (NeedsChronicleReference(spec))
         {
             problems.Add("Name the Chronicle to use with productionRef or chronicle.connectionSecretRef.");
         }
 
+        ValidateSinks(spec, problems);
+        ValidateGraph(spec, problems);
+    }
+
+    static void ValidateSinks(PerformanceSpec spec, List<string> problems)
+    {
         if (spec.Application.Sinks.Any(string.IsNullOrWhiteSpace))
         {
             problems.Add("application.sinks may not hold an empty name.");
@@ -54,7 +76,10 @@ public static partial class SpecValidator
         {
             problems.Add("application.sinks needs productionRef: the Production maps each sink to its storage.");
         }
+    }
 
+    static void ValidateGraph(PerformanceSpec spec, List<string> problems)
+    {
         if (spec.Application.Graph && spec.Application.Published is not null)
         {
             problems.Add("application.graph is for a traditional application on a Production.");
@@ -63,12 +88,13 @@ public static partial class SpecValidator
         {
             problems.Add("application.graph needs productionRef: the graph is the Production's.");
         }
+    }
 
-        ValidateProviders(spec, problems);
-        ValidateOnboarding(spec, problems);
-        ValidatePublished(spec, problems);
-        ValidateLifetime(spec, problems);
+    static bool NeedsChronicleReference(PerformanceSpec spec) =>
+        spec.ProductionRef is null && spec.Chronicle is null && spec.Application.Published is null;
 
+    static void ValidateIngress(PerformanceSpec spec, List<string> problems)
+    {
         if (spec.Ingress.Enabled && spec.Ingress.Hosts.Count == 0)
         {
             problems.Add("ingress.hosts needs at least one host when the ingress is enabled.");
@@ -78,8 +104,6 @@ public static partial class SpecValidator
         {
             problems.Add("ingress needs authProxy.enabled: AuthProxy is the only public entry point.");
         }
-
-        return problems;
     }
 
     static void ValidateProviders(PerformanceSpec spec, List<string> problems)
@@ -162,6 +186,14 @@ public static partial class SpecValidator
             return;
         }
 
+        ValidatePublishedReferences(published, problems);
+        ValidatePublishedHosting(spec, problems);
+        ValidateTrustedProxies(published, problems);
+        ValidateNotes(published.Notes, problems);
+    }
+
+    static void ValidatePublishedReferences(PublishedSpec published, List<string> problems)
+    {
         if (string.IsNullOrWhiteSpace(published.Version))
         {
             problems.Add("application.published.version is required.");
@@ -176,7 +208,10 @@ public static partial class SpecValidator
         {
             problems.Add("application.published.storageConnectionSecretRef.name is required.");
         }
+    }
 
+    static void ValidatePublishedHosting(PerformanceSpec spec, List<string> problems)
+    {
         if (!spec.AuthProxy.Enabled)
         {
             problems.Add("a published application needs authProxy.enabled: it requires a signed-in caller and trusts only AuthProxy.");
@@ -196,7 +231,10 @@ public static partial class SpecValidator
         {
             problems.Add("a published application runs one replica: its kernel owns its storage.");
         }
+    }
 
+    static void ValidateTrustedProxies(PublishedSpec published, List<string> problems)
+    {
         if (published.RolloutTimeoutSeconds <= 0)
         {
             problems.Add("application.published.rolloutTimeoutSeconds must be positive.");
@@ -207,13 +245,19 @@ public static partial class SpecValidator
             problems.Add("application.published.trustedProxies needs at least one address or network.");
         }
 
-        foreach (var proxy in published.TrustedProxies.Where(proxy => !System.Net.IPAddress.TryParse(proxy, out _) && !System.Net.IPNetwork.TryParse(proxy, out _)))
+        foreach (var proxy in published.TrustedProxies.Where(proxy => !IsAddressOrNetwork(proxy)))
         {
             problems.Add($"The trusted proxy '{proxy}' is neither an IP address nor a CIDR network.");
         }
-
-        ValidateNotes(published.Notes, problems);
     }
+
+    static bool IsAddressOrNetwork(string proxy) =>
+        System.Net.IPAddress.TryParse(proxy, out _) || System.Net.IPNetwork.TryParse(proxy, out _);
+
+    static bool IsCollectorUrl(string value) =>
+        Uri.TryCreate(value, UriKind.Absolute, out var url) && IsHttpUrl(url);
+
+    static bool IsHttpUrl(Uri url) => url.Scheme == Uri.UriSchemeHttp || url.Scheme == Uri.UriSchemeHttps;
 
     static void ValidateNotes(PublishedNotesSpec? notes, List<string> problems)
     {
@@ -222,7 +266,7 @@ public static partial class SpecValidator
             return;
         }
 
-        if (!Uri.TryCreate(notes.CollectorUrl, UriKind.Absolute, out var url) || (url.Scheme != Uri.UriSchemeHttp && url.Scheme != Uri.UriSchemeHttps))
+        if (!IsCollectorUrl(notes.CollectorUrl))
         {
             problems.Add("application.published.notes.collectorUrl must be an absolute http or https URL.");
         }

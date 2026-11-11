@@ -144,37 +144,49 @@ public static partial class ProductionValidator
             return;
         }
 
-        var hasSecret = sink.ConnectionSecretRef is not null;
-        if (hasSecret && string.IsNullOrWhiteSpace(sink.ConnectionSecretRef!.Name))
-        {
-            problems.Add(new($"The sink '{sink.Name}' has a connectionSecretRef without a name.", sink.Name));
-        }
-
-        var hasGraph = !string.IsNullOrWhiteSpace(sink.GraphRef);
+        ValidateSecretName(sink, problems);
         if (sink.Kind == StorageKinds.Neo4j)
         {
-            if (hasSecret == hasGraph)
-            {
-                problems.Add(new($"The sink '{sink.Name}' is Neo4j and needs exactly one of connectionSecretRef or graphRef.", sink.Name));
-            }
-            else if (hasGraph && !string.Equals(sink.GraphRef, ManagedGraph, StringComparison.Ordinal))
-            {
-                problems.Add(new($"The sink '{sink.Name}' has graphRef '{sink.GraphRef}'. The only graph of a Production is '{ManagedGraph}'.", sink.Name));
-            }
-            else if (hasGraph && graph.Mode != ProductionModes.Managed)
-            {
-                problems.Add(new($"The sink '{sink.Name}' uses the managed graph, but graph.mode is {graph.Mode}.", sink.Name));
-            }
-
+            ValidateGraphSink(sink, graph, problems);
             return;
         }
 
-        if (hasGraph)
+        ValidateStorageSink(sink, problems);
+    }
+
+    static void ValidateSecretName(ProductionSinkConfiguration sink, List<ProductionProblem> problems)
+    {
+        if (sink.ConnectionSecretRef is { } secret && string.IsNullOrWhiteSpace(secret.Name))
+        {
+            problems.Add(new($"The sink '{sink.Name}' has a connectionSecretRef without a name.", sink.Name));
+        }
+    }
+
+    static void ValidateGraphSink(ProductionSinkConfiguration sink, ProductionGraph graph, List<ProductionProblem> problems)
+    {
+        var hasGraph = !string.IsNullOrWhiteSpace(sink.GraphRef);
+        if ((sink.ConnectionSecretRef is not null) == hasGraph)
+        {
+            problems.Add(new($"The sink '{sink.Name}' is Neo4j and needs exactly one of connectionSecretRef or graphRef.", sink.Name));
+        }
+        else if (hasGraph && !string.Equals(sink.GraphRef, ManagedGraph, StringComparison.Ordinal))
+        {
+            problems.Add(new($"The sink '{sink.Name}' has graphRef '{sink.GraphRef}'. The only graph of a Production is '{ManagedGraph}'.", sink.Name));
+        }
+        else if (hasGraph && graph.Mode != ProductionModes.Managed)
+        {
+            problems.Add(new($"The sink '{sink.Name}' uses the managed graph, but graph.mode is {graph.Mode}.", sink.Name));
+        }
+    }
+
+    static void ValidateStorageSink(ProductionSinkConfiguration sink, List<ProductionProblem> problems)
+    {
+        if (!string.IsNullOrWhiteSpace(sink.GraphRef))
         {
             problems.Add(new($"The sink '{sink.Name}' is {sink.Kind}: graphRef is for Neo4j sinks only.", sink.Name));
         }
 
-        if (!hasSecret)
+        if (sink.ConnectionSecretRef is null)
         {
             problems.Add(new($"The sink '{sink.Name}' is {sink.Kind} and needs a connectionSecretRef.", sink.Name));
         }

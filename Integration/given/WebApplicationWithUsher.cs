@@ -6,7 +6,6 @@ using System.Text;
 using System.Text.Json;
 using Cratis.Arc;
 using Cratis.Chronicle.Connections;
-using Cratis.Chronicle.Registrations;
 using Cratis.Showrunner.Usher.Access.OnBehalf;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
@@ -110,11 +109,8 @@ public sealed class WebApplicationWithUsher(WebApplication app, EventStoreName n
         await app.StartAsync();
 
         var application = new WebApplicationWithUsher(app, name);
-        var registration = await (await application.In(EventStoreNamespaceName.Default)).WaitForRegistration(TimeSpan.FromSeconds(30));
-        if (!registration.IsSuccess)
-        {
-            throw new InvalidOperationException($"Application store {name} did not register.", registration.Failure);
-        }
+        var store = await application.In(EventStoreNamespaceName.Default);
+        await infrastructure.WaitForRegistration(store, $"Application store {name} did not register.", TimeSpan.FromSeconds(30));
 
         return application;
     }

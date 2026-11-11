@@ -125,7 +125,7 @@ public class when_validating_database_and_sink_defaults : Specification
     [Fact] void should_refuse_four_members() => ShouldBeProblems(_problems["managed_four"], Only("database.members must be 1, 3 or 5 for a Managed database, not 4."));
     [Fact] void should_accept_five_members() => _problems["managed_five"].Count.ShouldEqual(0);
     [Fact] void should_accept_one_member() => _problems["managed_one"].Count.ShouldEqual(0);
-    [Fact] void should_report_the_sql_mode_before_the_members() => ShouldBeProblems(_problems["sql_managed_two"], 
+    [Fact] void should_report_the_sql_mode_before_the_members() => ShouldBeProblems(_problems["sql_managed_two"],
     [
         new("database.kind PostgreSql needs database.mode External: only MongoDB can be managed."),
         new("database.members must be 1, 3 or 5 for a Managed database, not 2.")
@@ -137,13 +137,13 @@ public class when_validating_database_and_sink_defaults : Specification
     [Fact] void should_refuse_a_graphs_default_that_cannot_store_graphs() => ShouldBeProblems(_problems["graphs_on_storage"], Only("sinks.graphs names the sink 'WAREHOUSE', which is SqlServer and cannot store graphs.", "warehouse"));
     [Fact] void should_refuse_a_read_models_default_that_only_stores_graphs() => ShouldBeProblems(_problems["read_models_on_neo4j"], Only("sinks.readModels names the sink 'PEOPLE', which is Neo4j and only stores graphs.", "people"));
     [Fact] void should_accept_valid_defaults() => _problems["valid_defaults"].Count.ShouldEqual(0);
-    [Fact] void should_report_the_sink_problems_before_the_read_models_default_before_the_graphs_default() => ShouldBeProblems(_problems["both_defaults_bad"], 
+    [Fact] void should_report_the_sink_problems_before_the_read_models_default_before_the_graphs_default() => ShouldBeProblems(_problems["both_defaults_bad"],
     [
         new("The sink 'documents' is MongoDB and needs a connectionSecretRef.", "documents"),
         new("sinks.readModels names the sink 'people', which is Neo4j and only stores graphs.", "people"),
         new("sinks.graphs names the sink 'warehouse', which is SqlServer and cannot store graphs.", "warehouse")
     ]);
-    [Fact] void should_report_the_database_before_the_graph_before_the_sinks() => ShouldBeProblems(_problems["all_sections"], 
+    [Fact] void should_report_the_database_before_the_graph_before_the_sinks() => ShouldBeProblems(_problems["all_sections"],
     [
         new("database.kind 'Oracle' is unknown. Use one of MongoDB, PostgreSql, SqlServer."),
         new("graph.mode 'Hosted' is unknown. Use one of None, Managed, External."),

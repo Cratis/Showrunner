@@ -94,28 +94,7 @@ public record Offer(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static Offer Reduce(OfferDefined @event, Offer? current, EventContext context) =>
-        current ?? new(
-            new OfferId(Guid.Parse(context.EventSourceId.Value)),
-            @event.Kind,
-            @event.Name,
-            @event.Description,
-            SeatCount.NotSet,
-            false,
-            false,
-            ModuleId.NotSet,
-            ModuleCharging.PerOrganization,
-            TrialLength.NotSet,
-            ModuleAvailability.Paid,
-            MeterId.NotSet,
-            MeterQuantity.NotSet,
-            false,
-            false,
-            CurrencyCode.NotSet,
-            PriceInMinorUnits.NotSet,
-            YearlyDiscount.NotSet,
-            [],
-            [],
-            false);
+        current ?? OfferOpening.From(new OfferId(Guid.Parse(context.EventSourceId.Value)), @event);
 
     /// <summary>
     /// Gives a seat plan its seats.
@@ -160,9 +139,7 @@ public record Offer(
     /// <param name="current">The current state.</param>
     /// <returns>The next state.</returns>
     public static Offer? Reduce(OfferIncludedModule @event, Offer? current) =>
-        current?.IncludedModules.Contains(@event.Module) == false
-            ? current with { IncludedModules = [.. current.IncludedModules, @event.Module] }
-            : current;
+        current is null ? null : OfferInclusions.IncludingModule(current, @event.Module);
 
     /// <summary>
     /// Adds an allowance to what the offer includes, replacing the one for the same meter and period.
@@ -171,16 +148,7 @@ public record Offer(
     /// <param name="current">The current state.</param>
     /// <returns>The next state.</returns>
     public static Offer? Reduce(OfferIncludedAllowance @event, Offer? current) =>
-        current is null
-            ? null
-            : current with
-            {
-                IncludedAllowances =
-                [
-                    .. current.IncludedAllowances.Where(allowance => allowance.Meter != @event.Meter || allowance.Period != @event.Period),
-                    new OfferAllowance(@event.Meter, @event.Quantity, @event.Period)
-                ]
-            };
+        current is null ? null : OfferInclusions.IncludingAllowance(current, @event);
 
     /// <summary>
     /// Retires the offer.

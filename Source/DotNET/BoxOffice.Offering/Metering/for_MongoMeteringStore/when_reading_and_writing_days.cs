@@ -31,7 +31,7 @@ public class when_reading_and_writing_days : Specification
 
     static BsonDocument Expected(string json) => BsonDocument.Parse(json);
 
-    static BsonDocument DayDocument(bool closed, string day, long? due, string meter, long quantity)
+    static BsonDocument DayDocument(bool closed, string day, long? due, BsonDocument buckets)
     {
         var document = new BsonDocument
         {
@@ -41,7 +41,7 @@ public class when_reading_and_writing_days : Specification
             { "Day", day },
             { "Closed", closed },
             { "Organization", _organization.ToString("D") },
-            { "Buckets", new BsonDocument(meter, new BsonDocument { { "Quantity", quantity }, { "LastApplied", 9L } }) }
+            { "Buckets", buckets }
         };
         if (due is not null)
         {
@@ -102,7 +102,7 @@ public class when_reading_and_writing_days : Specification
         name = "corrected";
         await _store.Corrected("t1", day, 5UL);
 
-        _found = [DayDocument(false, "2024-05-04", 8, "build-minutes", 42)];
+        _found = [DayDocument(false, "2024-05-04", 8, new BsonDocument("build-minutes", new BsonDocument { { "Quantity", 42L }, { "LastApplied", 9L } }))];
         name = "open";
         _results[name] = await _store.GetOpen("t1", new DateOnly(2024, 5, 6));
         name = "awaiting";

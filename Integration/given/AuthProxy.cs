@@ -67,7 +67,7 @@ public sealed class AuthProxy : IDisposable
             ["actor"] = session.Actor.UserId,
             ["session"] = session.SessionId,
         }));
-        return new(HttpMethod.Get, target, null, SignCall("on-behalf-grant-check", session, HttpMethod.Get, target, []), session.Tenant, Encode(session.Actor));
+        return new(HttpMethod.Get, target, null, SignCall(session, new("on-behalf-grant-check", HttpMethod.Get, target, [])), session.Tenant, Encode(session.Actor));
     }
 
     /// <summary>
@@ -135,15 +135,15 @@ public sealed class AuthProxy : IDisposable
     AuthProxyCall Notification(OnBehalfSession session, Uri target, string purpose, object notification)
     {
         var body = JsonSerializer.Serialize(notification, JsonSerializerOptions.Web);
-        return new(HttpMethod.Post, target, body, SignCall(purpose, session, HttpMethod.Post, target, Encoding.UTF8.GetBytes(body)), session.Tenant, Encode(session.Actor));
+        return new(HttpMethod.Post, target, body, SignCall(session, new(purpose, HttpMethod.Post, target, Encoding.UTF8.GetBytes(body))), session.Tenant, Encode(session.Actor));
     }
 
-    string SignCall(string purpose, OnBehalfSession session, HttpMethod method, Uri target, byte[] body) =>
-        Sign(purpose, session, new()
+    string SignCall(OnBehalfSession session, AuthProxyRequestBinding binding) =>
+        Sign(binding.Purpose, session, new()
         {
-            ["htm"] = method.Method,
-            ["htu"] = target.GetLeftPart(UriPartial.Path),
-            ["body_hash"] = Base64UrlEncoder.Encode(SHA256.HashData(body)),
+            ["htm"] = binding.Method.Method,
+            ["htu"] = binding.Target.GetLeftPart(UriPartial.Path),
+            ["body_hash"] = Base64UrlEncoder.Encode(SHA256.HashData(binding.Body)),
         });
 
     string Sign(string purpose, OnBehalfSession session, Dictionary<string, object> binding)

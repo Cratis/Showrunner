@@ -333,14 +333,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@cratis/fundamentals@npm:7.27.0":
-  version: 7.27.0
-  resolution: "@cratis/fundamentals@npm:7.27.0"
-  checksum: 10/986ea7a38933e510d00eccf7347c332795fc13c8b0539a6dac193b252a86383a53a86940b53d4c9fb9d83ec744a6912c15c15b7af4c98df0ace403ad224120ca
-  languageName: node
-  linkType: hard
-
-"@cratis/fundamentals@npm:^7.32.0":
+"@cratis/fundamentals@npm:7.34.0, @cratis/fundamentals@npm:^7.32.0":
   version: 7.34.0
   resolution: "@cratis/fundamentals@npm:7.34.0"
   checksum: 10/803efa51b685e86356d1542343f7efe76f08de5b1fada27323e68abd25c182a574bbb8e52fd80cea2f563aa703bc7a0f17dea017ba3a78e1aaa6ecb31b0099d5
@@ -354,7 +347,7 @@ __metadata:
     "@cratis/arc": "npm:22.185.1"
     "@cratis/arc.react": "npm:22.185.1"
     "@cratis/components": "npm:4.38.0"
-    "@cratis/fundamentals": "npm:7.27.0"
+    "@cratis/fundamentals": "npm:7.34.0"
     "@cratis/showrunner.boxoffice": "npm:1.0.0"
     react: "npm:^19.3.1"
     react-dom: "npm:^19.3.1"
@@ -363,7 +356,7 @@ __metadata:
     "@cratis/arc": ^22.185.1
     "@cratis/arc.react": ^22.185.1
     "@cratis/components": ^4.38.0
-    "@cratis/fundamentals": ^7.27.0
+    "@cratis/fundamentals": ^7.34.0
     react: ^19.0.0
   languageName: unknown
   linkType: soft
@@ -374,11 +367,11 @@ __metadata:
   dependencies:
     "@cratis/arc": "npm:22.185.1"
     "@cratis/arc.react": "npm:22.185.1"
-    "@cratis/fundamentals": "npm:7.27.0"
+    "@cratis/fundamentals": "npm:7.34.0"
   peerDependencies:
     "@cratis/arc": ^22.185.1
     "@cratis/arc.react": ^22.185.1
-    "@cratis/fundamentals": ^7.27.0
+    "@cratis/fundamentals": ^7.34.0
   languageName: unknown
   linkType: soft
 
@@ -388,11 +381,11 @@ __metadata:
   dependencies:
     "@cratis/arc": "npm:22.185.1"
     "@cratis/arc.react": "npm:22.185.1"
-    "@cratis/fundamentals": "npm:7.27.0"
+    "@cratis/fundamentals": "npm:7.34.0"
   peerDependencies:
     "@cratis/arc": ^22.185.1
     "@cratis/arc.react": ^22.185.1
-    "@cratis/fundamentals": ^7.27.0
+    "@cratis/fundamentals": ^7.34.0
   languageName: unknown
   linkType: soft
 
@@ -403,7 +396,7 @@ __metadata:
     "@cratis/arc": "npm:22.185.1"
     "@cratis/arc.react": "npm:22.185.1"
     "@cratis/components": "npm:4.38.0"
-    "@cratis/fundamentals": "npm:7.27.0"
+    "@cratis/fundamentals": "npm:7.34.0"
     "@cratis/showrunner.marquee": "npm:1.0.0"
     "@storybook/react-vite": "npm:^10.5.10"
     react: "npm:^19.3.1"
@@ -415,7 +408,7 @@ __metadata:
     "@cratis/arc": ^22.185.1
     "@cratis/arc.react": ^22.185.1
     "@cratis/components": ^4.38.0
-    "@cratis/fundamentals": ^7.27.0
+    "@cratis/fundamentals": ^7.34.0
     react: ^19.0.0
   languageName: unknown
   linkType: soft
@@ -426,11 +419,11 @@ __metadata:
   dependencies:
     "@cratis/arc": "npm:22.185.1"
     "@cratis/arc.react": "npm:22.185.1"
-    "@cratis/fundamentals": "npm:7.27.0"
+    "@cratis/fundamentals": "npm:7.34.0"
   peerDependencies:
     "@cratis/arc": ^22.185.1
     "@cratis/arc.react": ^22.185.1
-    "@cratis/fundamentals": ^7.27.0
+    "@cratis/fundamentals": ^7.34.0
   languageName: unknown
   linkType: soft
 
@@ -441,7 +434,7 @@ __metadata:
     "@cratis/arc": "npm:22.185.1"
     "@cratis/arc.react": "npm:22.185.1"
     "@cratis/components": "npm:^4.39.0"
-    "@cratis/fundamentals": "npm:7.27.0"
+    "@cratis/fundamentals": "npm:7.34.0"
     "@cratis/showrunner.notes": "npm:1.0.0"
     react: "npm:^19.3.1"
     react-dom: "npm:^19.3.1"
@@ -450,7 +443,7 @@ __metadata:
     "@cratis/arc": ^22.185.1
     "@cratis/arc.react": ^22.185.1
     "@cratis/components": ^4.39.0
-    "@cratis/fundamentals": ^7.27.0
+    "@cratis/fundamentals": ^7.34.0
     react: ^19.0.0
   languageName: unknown
   linkType: soft
@@ -461,11 +454,11 @@ __metadata:
   dependencies:
     "@cratis/arc": "npm:22.185.1"
     "@cratis/arc.react": "npm:22.185.1"
-    "@cratis/fundamentals": "npm:7.27.0"
+    "@cratis/fundamentals": "npm:7.34.0"
   peerDependencies:
     "@cratis/arc": ^22.185.1
     "@cratis/arc.react": ^22.185.1
-    "@cratis/fundamentals": ^7.27.0
+    "@cratis/fundamentals": ^7.34.0
   languageName: unknown
   linkType: soft
 
@@ -476,7 +469,7 @@ __metadata:
     "@cratis/arc": "npm:22.185.1"
     "@cratis/arc.react": "npm:22.185.1"
     "@cratis/components": "npm:4.38.0"
-    "@cratis/fundamentals": "npm:7.27.0"
+    "@cratis/fundamentals": "npm:7.34.0"
     "@cratis/showrunner.usher": "npm:1.0.0"
     react: "npm:^19.3.1"
     react-dom: "npm:^19.3.1"
@@ -485,7 +478,7 @@ __metadata:
     "@cratis/arc": ^22.185.1
     "@cratis/arc.react": ^22.185.1
     "@cratis/components": ^4.38.0
-    "@cratis/fundamentals": ^7.27.0
+    "@cratis/fundamentals": ^7.34.0
     react: ^19.0.0
   languageName: unknown
   linkType: soft
@@ -496,11 +489,11 @@ __metadata:
   dependencies:
     "@cratis/arc": "npm:22.185.1"
     "@cratis/arc.react": "npm:22.185.1"
-    "@cratis/fundamentals": "npm:7.27.0"
+    "@cratis/fundamentals": "npm:7.34.0"
   peerDependencies:
     "@cratis/arc": ^22.185.1
     "@cratis/arc.react": ^22.185.1
-    "@cratis/fundamentals": ^7.27.0
+    "@cratis/fundamentals": ^7.34.0
   languageName: unknown
   linkType: soft
 
@@ -6903,7 +6896,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "showrunner-workspace-root@workspace:."
   dependencies:
-    "@cratis/fundamentals": "npm:7.27.0"
+    "@cratis/fundamentals": "npm:7.34.0"
     "@eslint/eslintrc": "npm:3.3.7"
     "@eslint/js": "npm:10.0.1"
     "@swc/core": "npm:^1.16.18"

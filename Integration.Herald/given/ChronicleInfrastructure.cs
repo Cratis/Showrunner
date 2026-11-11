@@ -14,7 +14,7 @@ namespace Cratis.Showrunner.Herald.Integration.given;
 /// Isolation between specifications comes from unique event store names, not from a fresh container.
 /// </summary>
 /// <remarks>
-/// The image defaults to the server release matching the pinned client; override it with <c>HERALD_CHRONICLE_IMAGE</c>.
+/// The image defaults to a server release at or above the pinned client; override it with <c>HERALD_CHRONICLE_IMAGE</c>.
 /// </remarks>
 public sealed class ChronicleInfrastructure : IAsyncLifetime
 {

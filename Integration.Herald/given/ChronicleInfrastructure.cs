@@ -1,8 +1,10 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using Cratis.Chronicle.Registrations;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Configurations;
 using DotNet.Testcontainers.Containers;
@@ -14,14 +16,14 @@ namespace Cratis.Showrunner.Herald.Integration.given;
 /// Isolation between specifications comes from unique event store names, not from a fresh container.
 /// </summary>
 /// <remarks>
-/// The image defaults to the server release matching the pinned client; override it with <c>HERALD_CHRONICLE_IMAGE</c>.
+/// The image defaults to a server release at or above the pinned client; override it with <c>HERALD_CHRONICLE_IMAGE</c>.
 /// </remarks>
 public sealed class ChronicleInfrastructure : IAsyncLifetime
 {
     /// <summary>
     /// The kernel image used unless <c>HERALD_CHRONICLE_IMAGE</c> names another.
     /// </summary>
-    public const string DefaultImage = "cratis/chronicle:19.111.0-development";
+    public const string DefaultImage = "cratis/chronicle:19.155.0-development";
 
     const ushort ChroniclePort = 35000;
     const ushort HttpPort = 8080;
@@ -79,6 +81,98 @@ public sealed class ChronicleInfrastructure : IAsyncLifetime
         if (_container is not null)
         {
             await _container.DisposeAsync();
+        }
+    }
+
+    internal async Task WaitForRegistration(IEventStore store, string description, TimeSpan timeout)
+    {
+        var wait = Stopwatch.StartNew();
+        Exception? failure;
+        try
+        {
+            var registration = await store.WaitForRegistration(timeout);
+            if (registration.IsSuccess)
+            {
+                return;
+            }
+
+            failure = registration.Failure;
+        }
+        catch (OperationCanceledException exception)
+        {
+            failure = exception;
+        }
+
+        wait.Stop();
+        var diagnostics = await RegistrationDiagnostics(description, wait.Elapsed, timeout);
+        throw new InvalidOperationException(diagnostics, failure);
+    }
+
+    internal async Task<string> RegistrationDiagnostics(string description, TimeSpan elapsed, TimeSpan timeout)
+    {
+        var health = await HealthAtTimeout();
+        var logs = await ContainerLogTail();
+        var diagnostics = string.Join(
+            Environment.NewLine,
+            description,
+            $"Waited {elapsed.TotalSeconds:F1} seconds for Chronicle registration (limit: {timeout.TotalSeconds:F1} seconds).",
+            $"Kernel image: {Image}; container state: {_container?.State.ToString() ?? "unavailable"}.",
+            health,
+            logs);
+        try
+        {
+            await Console.Error.WriteLineAsync(diagnostics);
+        }
+        catch (Exception exception)
+        {
+            // A failed console sink must not hide the original registration failure.
+            return $"{diagnostics}{Environment.NewLine}Console diagnostic output failed: {exception.GetType().Name}.";
+        }
+
+        return diagnostics;
+    }
+
+    static string LogTail(string logs)
+    {
+        // Limit both line count and characters, including logs containing a single very long line.
+        var bounded = logs.Length > 16000 ? logs[^16000..] : logs;
+        return string.Join('\n', bounded.Split('\n').TakeLast(100));
+    }
+
+    async Task<string> HealthAtTimeout()
+    {
+        var uri = new Uri($"https://localhost:{_chroniclePort}/health");
+        try
+        {
+#pragma warning disable MA0039, CA5400 // Test-only: accept the kernel's self-signed development certificate.
+            using var handler = new HttpClientHandler { ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator };
+            using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(2) };
+#pragma warning restore MA0039, CA5400
+            using var response = await client.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead);
+            return $"GET {uri}: {(int)response.StatusCode} {response.StatusCode}";
+        }
+        catch (Exception exception)
+        {
+            return $"GET {uri}: {exception.GetType().Name}: {LogTail(exception.Message)}";
+        }
+    }
+
+    async Task<string> ContainerLogTail()
+    {
+        if (_container is null)
+        {
+            return "Chronicle container logs unavailable: container was not started.";
+        }
+
+        try
+        {
+            using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            var (stdout, stderr) = await _container.GetLogsAsync(ct: cancellation.Token);
+            return $"Chronicle stdout (last 100 lines, at most 16000 characters):\n{LogTail(stdout)}\nChronicle stderr (last 100 lines, at most 16000 characters):\n{LogTail(stderr)}";
+        }
+        catch (Exception exception)
+        {
+            return $"Chronicle container logs unavailable: {exception.GetType().Name}: {LogTail(exception.Message)}";
         }
     }
 

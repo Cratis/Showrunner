@@ -74,7 +74,8 @@ public record ReceivedNote(NoteId Id, bool IsWithdrawn, bool IsAcknowledged, Add
     /// <param name="event">The event.</param>
     /// <param name="current">The current state.</param>
     /// <returns>The next state.</returns>
-    public static ReceivedNote? Reduce(NoteWithdrawalReceived @event, ReceivedNote? current) => current is null ? null : current with { IsWithdrawn = true };
+    public static ReceivedNote? Reduce(NoteWithdrawalReceived @event, ReceivedNote? current) =>
+        ReceivedNoteTransitions.Change(current, note => note with { IsWithdrawn = true });
 
     /// <summary>
     /// Records that the note was acknowledged.
@@ -82,7 +83,8 @@ public record ReceivedNote(NoteId Id, bool IsWithdrawn, bool IsAcknowledged, Add
     /// <param name="event">The event.</param>
     /// <param name="current">The current state.</param>
     /// <returns>The next state.</returns>
-    public static ReceivedNote? Reduce(OperatorAcknowledgedNote @event, ReceivedNote? current) => current is null ? null : current with { IsAcknowledged = true };
+    public static ReceivedNote? Reduce(OperatorAcknowledgedNote @event, ReceivedNote? current) =>
+        ReceivedNoteTransitions.Change(current, note => note with { IsAcknowledged = true });
 
     /// <summary>
     /// Records that the note was addressed in a version; it is no longer declined.
@@ -91,7 +93,7 @@ public record ReceivedNote(NoteId Id, bool IsWithdrawn, bool IsAcknowledged, Add
     /// <param name="current">The current state.</param>
     /// <returns>The next state.</returns>
     public static ReceivedNote? Reduce(OperatorAddressedNote @event, ReceivedNote? current) =>
-        current is null ? null : current with { AddressedInVersion = @event.Version, IsDeclined = false };
+        ReceivedNoteTransitions.Change(current, note => note with { AddressedInVersion = @event.Version, IsDeclined = false });
 
     /// <summary>
     /// Records that the note was declined; it is no longer addressed.
@@ -100,7 +102,7 @@ public record ReceivedNote(NoteId Id, bool IsWithdrawn, bool IsAcknowledged, Add
     /// <param name="current">The current state.</param>
     /// <returns>The next state.</returns>
     public static ReceivedNote? Reduce(OperatorDeclinedNote @event, ReceivedNote? current) =>
-        current is null ? null : current with { AddressedInVersion = AddressedInVersion.NotSet, IsDeclined = true };
+        ReceivedNoteTransitions.Change(current, note => note with { AddressedInVersion = AddressedInVersion.NotSet, IsDeclined = true });
 }
 
 /// <summary>
@@ -115,4 +117,13 @@ internal static class ReceivedNoteTransitions
     /// <returns>The opened note.</returns>
     internal static ReceivedNote Open(EventContext context) =>
         new(new NoteId(Guid.Parse(context.EventSourceId.Value)), false, false, AddressedInVersion.NotSet, false);
+
+    /// <summary>
+    /// Changes a note that was received; a note that was not received stays that way.
+    /// </summary>
+    /// <param name="current">The current state.</param>
+    /// <param name="change">How the note changes.</param>
+    /// <returns>The next state, or <see langword="null"/> when there is no current state.</returns>
+    internal static ReceivedNote? Change(ReceivedNote? current, Func<ReceivedNote, ReceivedNote> change) =>
+        current is null ? null : change(current);
 }

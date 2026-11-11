@@ -57,7 +57,7 @@ public record Issue(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static Issue Reduce(ReporterDescribedIssue @event, Issue? current, EventContext context) =>
-        current ?? Open(context, @event.ReportedBy);
+        IssueTransitions.Open(current, context, @event.ReportedBy);
 
     /// <summary>
     /// Opens the issue from a reported error.
@@ -67,7 +67,7 @@ public record Issue(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static Issue Reduce(ReporterFlaggedError @event, Issue? current, EventContext context) =>
-        current ?? Open(context, @event.ReportedBy);
+        IssueTransitions.Open(current, context, @event.ReportedBy);
 
     /// <summary>
     /// Records that the reporter shared who they are.
@@ -76,7 +76,7 @@ public record Issue(
     /// <param name="current">The current state.</param>
     /// <returns>The next state.</returns>
     public static Issue? Reduce(ReporterSharedIdentity @event, Issue? current) =>
-        current is null ? null : current with { IdentityShared = true };
+        IssueTransitions.Change(current, issue => issue with { IdentityShared = true });
 
     /// <summary>
     /// Returns a reopened issue to reported.
@@ -84,7 +84,7 @@ public record Issue(
     /// <param name="event">The event.</param>
     /// <param name="current">The current state.</param>
     /// <returns>The next state.</returns>
-    public static Issue? Reduce(ReporterReopenedIssue @event, Issue? current) => Move(current, IssueState.Reported);
+    public static Issue? Reduce(ReporterReopenedIssue @event, Issue? current) => IssueTransitions.Move(current, IssueState.Reported);
 
     /// <summary>
     /// Withdraws the issue.
@@ -93,7 +93,7 @@ public record Issue(
     /// <param name="current">The current state.</param>
     /// <returns>The next state.</returns>
     public static Issue? Reduce(ReporterWithdrewIssue @event, Issue? current) =>
-        Move(current, IssueState.Withdrawn) is { } withdrawn ? withdrawn with { AccessGranted = false } : null;
+        IssueTransitions.Change(IssueTransitions.Move(current, IssueState.Withdrawn), issue => issue with { AccessGranted = false });
 
     /// <summary>
     /// Records a grant of access.
@@ -102,7 +102,7 @@ public record Issue(
     /// <param name="current">The current state.</param>
     /// <returns>The next state.</returns>
     public static Issue? Reduce(ReporterGrantedAccess @event, Issue? current) =>
-        current is null ? null : current with { AccessGranted = true, AccessValidUntil = @event.ValidUntil };
+        IssueTransitions.Change(current, issue => issue with { AccessGranted = true, AccessValidUntil = @event.ValidUntil });
 
     /// <summary>
     /// Ends the grant of access.
@@ -111,7 +111,7 @@ public record Issue(
     /// <param name="current">The current state.</param>
     /// <returns>The next state.</returns>
     public static Issue? Reduce(ReporterRevokedAccess @event, Issue? current) =>
-        current is null ? null : current with { AccessGranted = false };
+        IssueTransitions.Change(current, issue => issue with { AccessGranted = false });
 
     /// <summary>
     /// Ends the grant of access when the grant that lapsed is the current one.
@@ -120,7 +120,7 @@ public record Issue(
     /// <param name="current">The current state.</param>
     /// <returns>The next state.</returns>
     public static Issue? Reduce(AccessGrantLapsed @event, Issue? current) =>
-        current is null || current.AccessValidUntil != @event.ValidUntil ? current : current with { AccessGranted = false };
+        IssueTransitions.Lapse(current, @event.ValidUntil);
 
     /// <summary>
     /// Records that the desk triaged the issue.
@@ -128,7 +128,7 @@ public record Issue(
     /// <param name="event">The event.</param>
     /// <param name="current">The current state.</param>
     /// <returns>The next state.</returns>
-    public static Issue? Reduce(SupportTriagedIssue @event, Issue? current) => Move(current, IssueState.Triaged);
+    public static Issue? Reduce(SupportTriagedIssue @event, Issue? current) => IssueTransitions.Move(current, IssueState.Triaged);
 
     /// <summary>
     /// Records that the desk accepted the issue.
@@ -136,7 +136,7 @@ public record Issue(
     /// <param name="event">The event.</param>
     /// <param name="current">The current state.</param>
     /// <returns>The next state.</returns>
-    public static Issue? Reduce(SupportAcceptedIssue @event, Issue? current) => Move(current, IssueState.Accepted);
+    public static Issue? Reduce(SupportAcceptedIssue @event, Issue? current) => IssueTransitions.Move(current, IssueState.Accepted);
 
     /// <summary>
     /// Records that the desk will not fix the issue.
@@ -144,7 +144,7 @@ public record Issue(
     /// <param name="event">The event.</param>
     /// <param name="current">The current state.</param>
     /// <returns>The next state.</returns>
-    public static Issue? Reduce(SupportDeclinedToFix @event, Issue? current) => Move(current, IssueState.WontFix);
+    public static Issue? Reduce(SupportDeclinedToFix @event, Issue? current) => IssueTransitions.Move(current, IssueState.WontFix);
 
     /// <summary>
     /// Records that the desk started work on the issue.
@@ -152,7 +152,7 @@ public record Issue(
     /// <param name="event">The event.</param>
     /// <param name="current">The current state.</param>
     /// <returns>The next state.</returns>
-    public static Issue? Reduce(SupportStartedWork @event, Issue? current) => Move(current, IssueState.InProgress);
+    public static Issue? Reduce(SupportStartedWork @event, Issue? current) => IssueTransitions.Move(current, IssueState.InProgress);
 
     /// <summary>
     /// Records that the desk resolved the issue.
@@ -160,7 +160,7 @@ public record Issue(
     /// <param name="event">The event.</param>
     /// <param name="current">The current state.</param>
     /// <returns>The next state.</returns>
-    public static Issue? Reduce(SupportResolvedIssue @event, Issue? current) => Move(current, IssueState.Resolved);
+    public static Issue? Reduce(SupportResolvedIssue @event, Issue? current) => IssueTransitions.Move(current, IssueState.Resolved);
 
     /// <summary>
     /// Opens a question.
@@ -169,9 +169,7 @@ public record Issue(
     /// <param name="current">The current state.</param>
     /// <returns>The next state.</returns>
     public static Issue? Reduce(SupportAskedQuestion @event, Issue? current) =>
-        current?.OpenQuestions.Contains(@event.QuestionId) != false
-            ? current
-            : current with { OpenQuestions = [.. current.OpenQuestions, @event.QuestionId] };
+        IssueTransitions.Ask(current, @event.QuestionId);
 
     /// <summary>
     /// Closes an answered question.
@@ -180,17 +178,5 @@ public record Issue(
     /// <param name="current">The current state.</param>
     /// <returns>The next state.</returns>
     public static Issue? Reduce(ReporterAnsweredQuestion @event, Issue? current) =>
-        current is null ? null : current with { OpenQuestions = [.. current.OpenQuestions.Where(_ => _ != @event.QuestionId)] };
-
-    static Issue Open(EventContext context, UserIdentity reportedBy) => new(
-        new IssueId(Guid.Parse(context.EventSourceId.Value)),
-        reportedBy,
-        IssueState.Reported,
-        false,
-        [],
-        false,
-        Unset.ValidUntil);
-
-    static Issue? Move(Issue? current, IssueState state) =>
-        current is null || current.State == IssueState.Withdrawn ? current : current with { State = state };
+        IssueTransitions.Change(current, issue => issue with { OpenQuestions = [.. issue.OpenQuestions.Where(_ => _ != @event.QuestionId)] });
 }

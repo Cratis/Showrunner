@@ -47,20 +47,7 @@ public class OnBehalfTokens(IOptionsMonitor<ArcOptions> arc, IOptionsMonitor<Ush
             return Task.FromResult<Result<OnBehalfAssertion, OnBehalfTokenRejection>>(OnBehalfTokenRejection.Missing);
         }
 
-        return Verify(authorization[BearerPrefix.Length..].Trim(), call.Purpose, claims =>
-        {
-            if (!string.Equals(OnBehalfAssertionClaims.Text(claims, "htm"), call.Method, StringComparison.OrdinalIgnoreCase))
-            {
-                return OnBehalfTokenRejection.WrongMethod;
-            }
-
-            if (!IsBoundTo(OnBehalfAssertionClaims.Text(claims, "htu"), call, options.CurrentValue.OnBehalf.BaseUrl))
-            {
-                return OnBehalfTokenRejection.WrongTarget;
-            }
-
-            return OnBehalfAssertionClaims.Text(claims, "body_hash") != Digest(call.Body.Span) ? OnBehalfTokenRejection.WrongBody : null;
-        });
+        return Verify(authorization[BearerPrefix.Length..].Trim(), call.Purpose, claims => BindingRejection(claims, call));
     }
 
     static string Digest(ReadOnlySpan<byte> value) => Base64UrlEncoder.Encode(SHA256.HashData(value));
@@ -107,17 +94,51 @@ public class OnBehalfTokens(IOptionsMonitor<ArcOptions> arc, IOptionsMonitor<Ush
             && string.Equals(bound.AbsolutePath, expected.AbsolutePath, StringComparison.Ordinal);
     }
 
+    static bool IsExpired(DateTime validFrom, DateTime validTo, DateTime now, TimeSpan clockSkew) =>
+        validTo - validFrom > MaximumLifetime || now > validTo.Add(clockSkew);
+
+    OnBehalfTokenRejection? BindingRejection(JsonElement claims, OnBehalfCall call)
+    {
+        if (!string.Equals(OnBehalfAssertionClaims.Text(claims, "htm"), call.Method, StringComparison.OrdinalIgnoreCase))
+        {
+            return OnBehalfTokenRejection.WrongMethod;
+        }
+
+        if (!IsBoundTo(OnBehalfAssertionClaims.Text(claims, "htu"), call, options.CurrentValue.OnBehalf.BaseUrl))
+        {
+            return OnBehalfTokenRejection.WrongTarget;
+        }
+
+        return OnBehalfAssertionClaims.Text(claims, "body_hash") != Digest(call.Body.Span) ? OnBehalfTokenRejection.WrongBody : null;
+    }
+
     OnBehalfTokenRejection? LifetimeRejection(DateTime? notBefore, DateTime? expires, TimeSpan clockSkew)
     {
         // The lifetime is checked against Usher's own clock, so the whole decision runs on one notion of now, and a
         // token that would live longer than AuthProxy ever issues one for is not taken at its word.
         var now = time.GetUtcNow().UtcDateTime;
-        if (expires is not { } validTo || notBefore is not { } validFrom || validTo - validFrom > MaximumLifetime || now > validTo.Add(clockSkew))
+        if (expires is not { } validTo || notBefore is not { } validFrom)
+        {
+            return OnBehalfTokenRejection.Expired;
+        }
+
+        if (IsExpired(validFrom, validTo, now, clockSkew))
         {
             return OnBehalfTokenRejection.Expired;
         }
 
         return now.Add(clockSkew) < validFrom ? OnBehalfTokenRejection.NotYetValid : null;
+    }
+
+    TokenValidationParameters ValidationParameters(OnBehalfOfOptions settings, StrongBox<OnBehalfTokenRejection?> lifetime)
+    {
+        var parameters = ParametersFor(settings);
+        parameters.LifetimeValidator = (notBefore, expires, _, _) =>
+        {
+            lifetime.Value = LifetimeRejection(notBefore, expires, settings.ClockSkew);
+            return lifetime.Value is null;
+        };
+        return parameters;
     }
 
     async Task<Result<OnBehalfAssertion, OnBehalfTokenRejection>> Verify(
@@ -129,14 +150,7 @@ public class OnBehalfTokens(IOptionsMonitor<ArcOptions> arc, IOptionsMonitor<Ush
 
         // The lifetime validator runs inside validation; the box carries why it refused out of it.
         var lifetime = new StrongBox<OnBehalfTokenRejection?>();
-        var parameters = ParametersFor(settings);
-        parameters.LifetimeValidator = (notBefore, expires, _, _) =>
-        {
-            lifetime.Value = LifetimeRejection(notBefore, expires, settings.ClockSkew);
-            return lifetime.Value is null;
-        };
-
-        var validation = await new JsonWebTokenHandler().ValidateTokenAsync(encoded, parameters);
+        var validation = await new JsonWebTokenHandler().ValidateTokenAsync(encoded, ValidationParameters(settings, lifetime));
         if (!validation.IsValid || validation.SecurityToken is not JsonWebToken token)
         {
             return lifetime.Value ?? RejectionFor(validation.Exception);

@@ -26,7 +26,9 @@ public class ProductionPreparation(IProductionCluster cluster)
         var secretsFound = problems.Count == 0 && await CheckSecretsAsync(production, status, cancellationToken);
         var operatorsInstalled = await CheckOperatorsAsync(spec, status, cancellationToken);
 
-        if (problems.Count > 0 || !sinksValid || !vaultSupported || !modesUnchanged || !secretsFound || !operatorsInstalled)
+        var configurationValid = problems.Count == 0 && sinksValid && vaultSupported;
+        var infrastructureReady = modesUnchanged && secretsFound && operatorsInstalled;
+        if (!configurationValid || !infrastructureReady)
         {
             status.Block();
             return null;
@@ -90,6 +92,13 @@ public class ProductionPreparation(IProductionCluster cluster)
             return true;
         }
 
+        var fields = ChangedFields(running, asked, first, second);
+        message = $"Changing {string.Join(" and ", fields)} on a Production that runs is refused: the data stays where it is. Set it back to {running}, or create a new Production.";
+        return false;
+    }
+
+    static List<string> ChangedFields(string running, string asked, string first, string second)
+    {
         var before = running.Split('/');
         var after = asked.Split('/');
         var fields = new List<string>();
@@ -103,8 +112,7 @@ public class ProductionPreparation(IProductionCluster cluster)
             fields.Add($"{second} from {before.ElementAtOrDefault(1)} to {after.ElementAtOrDefault(1)}");
         }
 
-        message = $"Changing {string.Join(" and ", fields)} on a Production that runs is refused: the data stays where it is. Set it back to {running}, or create a new Production.";
-        return false;
+        return fields;
     }
 
     async Task<bool> CheckSinksAsync(Production production, IReadOnlyList<ProductionProblem> problems, ProductionStatusBuilder status, CancellationToken cancellationToken)
@@ -134,10 +142,15 @@ public class ProductionPreparation(IProductionCluster cluster)
 
     async Task<bool> CheckSecretsAsync(Production production, ProductionStatusBuilder status, CancellationToken cancellationToken)
     {
+        var databaseFound = await CheckDatabaseSecretAsync(production, status, cancellationToken);
+        var graphFound = await CheckGraphSecretAsync(production, status, cancellationToken);
+        return databaseFound && graphFound;
+    }
+
+    async Task<bool> CheckDatabaseSecretAsync(Production production, ProductionStatusBuilder status, CancellationToken cancellationToken)
+    {
         var @namespace = production.Metadata.NamespaceProperty;
         var spec = production.Spec;
-        var found = true;
-
         if (spec.Database.IsExternal())
         {
             var name = spec.Database.ConnectionSecretName;
@@ -147,9 +160,16 @@ public class ProductionPreparation(IProductionCluster cluster)
                 status.Set(ProductionConditions.DatabaseReady, false, "SecretNotFound", $"The database connection Secret '{name}' does not exist or has no key '{ProductionSecretReference.DefaultKey}'.");
             }
 
-            found &= exists;
+            return exists;
         }
 
+        return true;
+    }
+
+    async Task<bool> CheckGraphSecretAsync(Production production, ProductionStatusBuilder status, CancellationToken cancellationToken)
+    {
+        var @namespace = production.Metadata.NamespaceProperty;
+        var spec = production.Spec;
         if (spec.Graph.Mode == ProductionModes.External)
         {
             var name = spec.Graph.CredentialsSecretName;
@@ -167,10 +187,10 @@ public class ProductionPreparation(IProductionCluster cluster)
                 status.Set(ProductionConditions.GraphReady, false, "SecretNotFound", $"The graph credentials Secret '{name}' does not exist or has no key {string.Join(" or ", missing.Select(key => $"'{key}'"))}.");
             }
 
-            found &= missing.Count == 0;
+            return missing.Count == 0;
         }
 
-        return found;
+        return true;
     }
 
     async Task<bool> CheckOperatorsAsync(ProductionSpec spec, ProductionStatusBuilder status, CancellationToken cancellationToken)

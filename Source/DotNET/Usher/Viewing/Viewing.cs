@@ -328,25 +328,8 @@ public record IssueConversation(
     /// <param name="clock">The <see cref="TimeProvider"/> a grant's end is checked against.</param>
     /// <returns>The issue, or nothing, again every time it changes.</returns>
     [Authorize]
-    public static ISubject<IEnumerable<IssueConversation>> ForIssue(IssueId issueId, IReadModels readModels, ISignedInReporter reporter, TimeProvider clock)
-    {
-        if (!reporter.IsSignedIn || !reporter.MayActOn(issueId))
-        {
-            return new BehaviorSubject<IEnumerable<IssueConversation>>([]);
-        }
-
-        var identity = reporter.Identity;
-        var observed = readModels.Observe<IssueConversation>(issue => issue.Id == issueId && issue.ReportedBy == identity);
-        if (!reporter.TryGetLiveSupportSession(out var session))
-        {
-            return observed;
-        }
-
-        var sessionId = session.SessionId;
-        return ObservedQueries.Map(
-            observed,
-            issues => (IEnumerable<IssueConversation>)[.. issues.Where(issue => IssueConversationTransitions.SupportMayStillSee(issue, sessionId, clock.GetUtcNow()))]);
-    }
+    public static ISubject<IEnumerable<IssueConversation>> ForIssue(IssueId issueId, IReadModels readModels, ISignedInReporter reporter, TimeProvider clock) =>
+        IssueConversationTransitions.Observe(issueId, readModels, reporter, clock);
 
     /// <summary>
     /// Opens the conversation with a problem described by hand.
@@ -356,7 +339,7 @@ public record IssueConversation(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static IssueConversation Reduce(ReporterDescribedIssue @event, IssueConversation? current, EventContext context) =>
-        current ?? IssueConversationTransitions.Open(context, (string)@event.Summary, @event.Location, @event.ReportedBy, ConversationEntryKind.IssueDescribed, (string)@event.Description);
+        current ?? IssueConversationTransitions.Open(context, @event);
 
     /// <summary>
     /// Opens the conversation with a reported error.
@@ -366,7 +349,7 @@ public record IssueConversation(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static IssueConversation Reduce(ReporterFlaggedError @event, IssueConversation? current, EventContext context) =>
-        current ?? IssueConversationTransitions.Open(context, (string)@event.SeenMessage, @event.Location, @event.ReportedBy, ConversationEntryKind.ErrorReported, (string)@event.SeenMessage);
+        current ?? IssueConversationTransitions.Open(context, @event);
 
     /// <summary>
     /// Records that the reporter shared who they are.
@@ -416,10 +399,7 @@ public record IssueConversation(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static IssueConversation? Reduce(ReporterWithdrewIssue @event, IssueConversation? current, EventContext context) =>
-        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.ByReporter(context, ConversationEntryKind.Withdrawn), issue => IssueConversationTransitions.Move(issue, IssueState.Withdrawn) with
-        {
-            Access = issue.Access.State == AccessState.Granted ? issue.Access with { State = AccessState.EndedByWithdrawal } : issue.Access
-        });
+        IssueConversationAccess.Withdraw(current, context);
 
     /// <summary>
     /// Records the grant of access and answers support's request for it.
@@ -429,10 +409,7 @@ public record IssueConversation(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static IssueConversation? Reduce(ReporterGrantedAccess @event, IssueConversation? current, EventContext context) =>
-        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.ByReporter(context, ConversationEntryKind.AccessGranted), issue => issue with
-        {
-            Access = issue.Access with { State = AccessState.Granted, ValidUntil = @event.ValidUntil, Request = AccessRequest.None }
-        });
+        IssueConversationAccess.Grant(current, context, @event);
 
     /// <summary>
     /// Records that the reporter took access back.
@@ -442,10 +419,7 @@ public record IssueConversation(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static IssueConversation? Reduce(ReporterRevokedAccess @event, IssueConversation? current, EventContext context) =>
-        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.ByReporter(context, ConversationEntryKind.AccessRevoked), issue => issue with
-        {
-            Access = issue.Access with { State = AccessState.Revoked }
-        });
+        IssueConversationAccess.Revoke(current, context);
 
     /// <summary>
     /// Records that the grant ended by its time passing, when the grant that lapsed is the current one.
@@ -455,12 +429,7 @@ public record IssueConversation(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static IssueConversation? Reduce(AccessGrantLapsed @event, IssueConversation? current, EventContext context) =>
-        current is null || current.Access.State != AccessState.Granted || current.Access.ValidUntil != @event.ValidUntil
-            ? current
-            : IssueConversationTransitions.Add(current, context, IssueConversationTransitions.BySystem(context, ConversationEntryKind.AccessLapsed), issue => issue with
-            {
-                Access = issue.Access with { State = AccessState.Lapsed }
-            });
+        IssueConversationAccess.Lapse(current, context, @event);
 
     /// <summary>
     /// Records that the desk triaged the issue.
@@ -583,10 +552,7 @@ public record IssueConversation(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static IssueConversation? Reduce(SupportRequestedAccess @event, IssueConversation? current, EventContext context) =>
-        IssueConversationTransitions.Add(current, context, IssueConversationTransitions.BySystem(context, ConversationEntryKind.AccessRequested, (string)@event.Reason), issue => issue with
-        {
-            Access = issue.Access with { Request = new(true, @event.Reason) }
-        });
+        IssueConversationAccess.Request(current, context, @event);
 
     /// <summary>
     /// Starts a session in which support signed in as the reporter.
@@ -596,15 +562,7 @@ public record IssueConversation(
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
     public static IssueConversation? Reduce(SupportSignedInAsReporter @event, IssueConversation? current, EventContext context) =>
-        current?.Access.Sessions.Any(session => session.SessionId == @event.SessionId) != false
-            ? current
-            : IssueConversationTransitions.Add(current, context, IssueConversationTransitions.BySupport(context, ConversationEntryKind.SupportSignedIn, ConversationEntryText.NotSet, @event.Author) with { Session = @event.SessionId }, issue => issue with
-            {
-                Access = issue.Access with
-                {
-                    Sessions = [.. issue.Access.Sessions, new SupportSession(@event.SessionId, @event.Author, context.Occurred, false, Unset.Time, SupportActorKey.For(@event.Actor.Subject))]
-                }
-            });
+        IssueConversationAccess.Start(current, context, @event);
 
     /// <summary>
     /// Ends a session in which support signed in as the reporter.
@@ -613,23 +571,8 @@ public record IssueConversation(
     /// <param name="current">The current state.</param>
     /// <param name="context">The event context.</param>
     /// <returns>The next state.</returns>
-    public static IssueConversation? Reduce(SupportSessionEnded @event, IssueConversation? current, EventContext context)
-    {
-        var session = current?.Access.Sessions.FirstOrDefault(session => session.SessionId == @event.SessionId);
-        if (session is not { Ended: false })
-        {
-            return current;
-        }
-
-        var entry = IssueConversationTransitions.BySupport(context, ConversationEntryKind.SupportSessionEnded, ConversationEntryText.NotSet, session.Author) with { Session = @event.SessionId };
-        return IssueConversationTransitions.Add(current, context, entry, issue => issue with
-        {
-            Access = issue.Access with
-            {
-                Sessions = [.. issue.Access.Sessions.Select(_ => _.SessionId == @event.SessionId ? _ with { Ended = true, EndedAt = context.Occurred } : _)]
-            }
-        });
-    }
+    public static IssueConversation? Reduce(SupportSessionEnded @event, IssueConversation? current, EventContext context) =>
+        IssueConversationAccess.End(current, context, @event);
 
     /// <summary>
     /// Records the version that has the fix.
@@ -648,36 +591,44 @@ public record IssueConversation(
 /// </summary>
 internal static class IssueConversationTransitions
 {
+    /// <inheritdoc cref="IssueConversation.ForIssue"/>
+    internal static ISubject<IEnumerable<IssueConversation>> Observe(IssueId issueId, IReadModels readModels, ISignedInReporter reporter, TimeProvider clock)
+    {
+        if (!reporter.IsSignedIn || !reporter.MayActOn(issueId))
+        {
+            return new BehaviorSubject<IEnumerable<IssueConversation>>([]);
+        }
+
+        var identity = reporter.Identity;
+        var observed = readModels.Observe<IssueConversation>(issue => issue.Id == issueId && issue.ReportedBy == identity);
+        if (!reporter.TryGetLiveSupportSession(out var session))
+        {
+            return observed;
+        }
+
+        var sessionId = session.SessionId;
+        return ObservedQueries.Map(
+            observed,
+            issues => (IEnumerable<IssueConversation>)[.. issues.Where(issue => SupportMayStillSee(issue, sessionId, clock.GetUtcNow()))]);
+    }
+
     /// <summary>
     /// Opens the conversation with the reporter's first entry.
     /// </summary>
     /// <param name="context">The context of the event that opened it.</param>
-    /// <param name="title">What the issue is shown as.</param>
-    /// <param name="location">Where it was reported.</param>
-    /// <param name="reportedBy">Who reported it.</param>
-    /// <param name="kind">What the first entry records.</param>
-    /// <param name="text">The text of the first entry.</param>
+    /// <param name="event">The reporter's description.</param>
     /// <returns>The opened conversation.</returns>
-    internal static IssueConversation Open(
-        EventContext context,
-        IssueTitle title,
-        SliceLocation location,
-        UserIdentity reportedBy,
-        ConversationEntryKind kind,
-        ConversationEntryText text) => new(
-        new IssueId(Guid.Parse(context.EventSourceId.Value)),
-        title,
-        IssueState.Reported,
-        location,
-        context.Occurred,
-        false,
-        OpenQuestion.None,
-        [ByReporter(context, kind, text)],
-        IssueAccess.None,
-        KnownIssueTitle.NotSet,
-        Unset.WorkItem,
-        ReleaseVersion.NotSet,
-        reportedBy);
+    internal static IssueConversation Open(EventContext context, ReporterDescribedIssue @event) =>
+        Open(context, ((string)@event.Summary, @event.Location, @event.ReportedBy), ByReporter(context, ConversationEntryKind.IssueDescribed, (string)@event.Description));
+
+    /// <summary>
+    /// Opens the conversation with the reported error.
+    /// </summary>
+    /// <param name="context">The reporting event's context.</param>
+    /// <param name="event">The reported error.</param>
+    /// <returns>The opened conversation.</returns>
+    internal static IssueConversation Open(EventContext context, ReporterFlaggedError @event) =>
+        Open(context, ((string)@event.SeenMessage, @event.Location, @event.ReportedBy), ByReporter(context, ConversationEntryKind.ErrorReported, (string)@event.SeenMessage));
 
     /// <summary>
     /// Adds an entry to an existing conversation, applies a change and finds the open question; a conversation that
@@ -730,7 +681,7 @@ internal static class IssueConversationTransitions
     /// <param name="text">The text, if any.</param>
     /// <returns>The entry.</returns>
     internal static ConversationEntry ByReporter(EventContext context, ConversationEntryKind kind, ConversationEntryText? text = null) =>
-        Entry(context, kind, text ?? ConversationEntryText.NotSet, ConversationAuthorKind.Reporter, SupportAuthorName.NotSet);
+        Entry(context, kind, text ?? ConversationEntryText.NotSet, (ConversationAuthorKind.Reporter, SupportAuthorName.NotSet));
 
     /// <summary>
     /// Creates an entry for a state change, link or release.
@@ -740,7 +691,7 @@ internal static class IssueConversationTransitions
     /// <param name="text">The text, if any.</param>
     /// <returns>The entry.</returns>
     internal static ConversationEntry BySystem(EventContext context, ConversationEntryKind kind, ConversationEntryText? text = null) =>
-        Entry(context, kind, text ?? ConversationEntryText.NotSet, ConversationAuthorKind.System, SupportAuthorName.NotSet);
+        Entry(context, kind, text ?? ConversationEntryText.NotSet, (ConversationAuthorKind.System, SupportAuthorName.NotSet));
 
     /// <summary>
     /// Creates an entry from a support person or agent.
@@ -755,8 +706,22 @@ internal static class IssueConversationTransitions
             context,
             kind,
             text,
-            author.Kind == SupportAuthorKind.Agent ? ConversationAuthorKind.Agent : ConversationAuthorKind.Support,
-            author.Name);
+            (author.Kind == SupportAuthorKind.Agent ? ConversationAuthorKind.Agent : ConversationAuthorKind.Support, author.Name));
+
+    static IssueConversation Open(EventContext context, (IssueTitle Title, SliceLocation Location, UserIdentity ReportedBy) report, ConversationEntry entry) => new(
+        new IssueId(Guid.Parse(context.EventSourceId.Value)),
+        report.Title,
+        IssueState.Reported,
+        report.Location,
+        context.Occurred,
+        false,
+        OpenQuestion.None,
+        [entry],
+        IssueAccess.None,
+        KnownIssueTitle.NotSet,
+        Unset.WorkItem,
+        ReleaseVersion.NotSet,
+        report.ReportedBy);
 
     /// <summary>
     /// Attributes an entry support did while signed in as the reporter to the session it was done in: the most recently
@@ -825,7 +790,6 @@ internal static class IssueConversationTransitions
         EventContext context,
         ConversationEntryKind kind,
         ConversationEntryText text,
-        ConversationAuthorKind authorKind,
-        SupportAuthorName authorName) =>
-        new(new(context.SequenceNumber.Value), kind, text, authorKind, authorName, context.Occurred, Unset.QuestionId, ActedBy(context), SupportSessionId.NotSet);
+        (ConversationAuthorKind Kind, SupportAuthorName Name) author) =>
+        new(new(context.SequenceNumber.Value), kind, text, author.Kind, author.Name, context.Occurred, Unset.QuestionId, ActedBy(context), SupportSessionId.NotSet);
 }

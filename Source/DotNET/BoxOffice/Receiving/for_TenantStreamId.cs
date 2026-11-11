@@ -6,8 +6,15 @@ using Cratis.Showrunner.BoxOffice.Offering.Starting;
 
 namespace Cratis.Showrunner.BoxOffice.Receiving;
 
+/// <summary>
+/// Verifies the stream used to read tenant entitlements.
+/// </summary>
 public class for_TenantStreamId : Specification
 {
-    [Fact] void should_be_the_stream_the_tenant_entitlements_are_read_from() => TenantStreamId.Value.ShouldEqual(TenantStream.Id);
+    /// <summary>
+    /// Verifies that receiving and offering use the same tenant stream.
+    /// </summary>
+    [Fact]
+    public void should_be_the_stream_the_tenant_entitlements_are_read_from() => TenantStreamId.Value.ShouldEqual(TenantStream.Id);
 }
 #endif

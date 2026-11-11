@@ -51,9 +51,12 @@ jobs:
         if: matrix.configuration == 'Release'
         run: dotnet build Showrunner.slnx --configuration Release -p:CratisProxiesOutputPath=
 
+      # -m:1 runs the test assemblies one after another. Each integration assembly starts its own Chronicle
+      # and MongoDB containers; started together they starve each other and Chronicle event-store registration
+      # misses its 30-second wait (#96).
       - name: Test
         if: matrix.configuration == 'Debug'
-        run: dotnet test Showrunner.slnx --configuration Debug --no-build --logger "console;verbosity=minimal"
+        run: dotnet test Showrunner.slnx --configuration Debug --no-build -m:1 --logger "console;verbosity=minimal"
 
       # Packing is what publish.yml does on release; doing it here keeps a pull request from merging a
       # project that builds but does not pack. Release carries no Debug-only spec dependencies.

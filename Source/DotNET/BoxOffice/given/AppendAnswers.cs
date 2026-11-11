@@ -67,7 +67,7 @@ public static class AppendAnswers
         where T : class, IEventSequence
     {
         // AppendOnce is a default interface method, which NSubstitute cannot configure, so the real sequence is proxied instead.
-        return (T)Generator.CreateInterfaceProxyWithTarget(typeof(T), real, new AnswerOnce(answer));
+        return Generator.CreateInterfaceProxyWithTarget(real, new AnswerOnce(answer));
     }
 
     sealed class AnswerOnce(AppendResult? answer) : IInterceptor

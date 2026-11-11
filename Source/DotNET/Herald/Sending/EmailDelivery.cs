@@ -92,89 +92,72 @@ public class EmailDelivery(
     /// <exception cref="EmailNotQueued">The event log did not take the outcome.</exception>
     public async Task Deliver(IEventStore store, EventSourceId about, EmailId id, CancellationToken cancellationToken = default)
     {
-        var history = await History(store, about, id);
+        var history = await EmailHistory.Read(store, about, id);
         if (history.Settled || history.Queued is null || history.NextAttemptAt > time.GetUtcNow())
         {
             return;
         }
 
-        var queued = history.Queued;
+        var target = new DeliveryTarget(store, about, history.Queued);
         var attempt = history.Failures + 1;
-        RenderedEmail rendered;
+        if (await TryRender(target, history.Failures, cancellationToken) is not { } rendered || !await TrySend(target, rendered, attempt, cancellationToken))
+        {
+            return;
+        }
+
+        await RecordSent(target, rendered, attempt);
+    }
+
+    async Task<RenderedEmail?> TryRender(DeliveryTarget target, int failures, CancellationToken cancellationToken)
+    {
+        var queued = target.Queued;
         try
         {
-            rendered = renderer.Render(queued.Kind, queued.Language.Value.Length == 0 ? null : queued.Language, queued.Values.ToDictionary());
+            return renderer.Render(queued.Kind, queued.Language.Value.Length == 0 ? null : queued.Language, queued.Values.ToDictionary());
         }
         catch (EmailCannotBeRendered exception)
         {
-            await Fail(store, about, queued, exception, history.Failures, cancellationToken);
-            return;
+            await Fail(target, exception, failures, cancellationToken);
+            return null;
         }
+    }
 
+    async Task<bool> TrySend(DeliveryTarget target, RenderedEmail rendered, int attempt, CancellationToken cancellationToken)
+    {
         try
         {
-            await transport.Send(MessageFor(queued, rendered), cancellationToken);
+            await transport.Send(MessageFor(target.Queued, rendered), cancellationToken);
+            return true;
         }
         catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
         {
-            await Retry(store, about, queued, exception, attempt, cancellationToken);
-            return;
+            await Retry(target, exception, attempt, cancellationToken);
+            return false;
         }
+    }
 
-        var result = await store.EventLog.AppendOnce(
-            about,
-            new EmailSent(id, queued.Kind, rendered.Language, attempt),
-            new IdempotencyKey($"herald-sent-{id.Value:N}"));
+    async Task RecordSent(DeliveryTarget target, RenderedEmail rendered, int attempt)
+    {
+        var queued = target.Queued;
+        var result = await target.Store.EventLog.AppendOnce(
+            target.About,
+            new EmailSent(queued.EmailId, queued.Kind, rendered.Language, attempt),
+            new IdempotencyKey($"herald-sent-{queued.EmailId.Value:N}"));
         if (!result.IsSuccess && !result.WasAlreadyAppended)
         {
-            throw new EmailNotQueued(typeof(EmailSent), about, result);
+            throw new EmailNotQueued(typeof(EmailSent), target.About, result);
         }
 
-        logger.Sent(id, queued.Kind, attempt);
+        logger.Sent(queued.EmailId, queued.Kind, attempt);
     }
 
-    static async Task<EmailHistory> History(IEventStore store, EventSourceId about, EmailId id)
+    async Task Retry(DeliveryTarget target, Exception exception, int attempt, CancellationToken cancellationToken)
     {
-        var appended = await store.EventLog.GetForEventSourceIdAndEventTypes(
-            about,
-            [
-                store.EventTypes.GetEventTypeFor(typeof(EmailQueued)),
-                store.EventTypes.GetEventTypeFor(typeof(EmailAttemptFailed)),
-                store.EventTypes.GetEventTypeFor(typeof(EmailSent)),
-                store.EventTypes.GetEventTypeFor(typeof(EmailFailed))
-            ]);
-
-        EmailQueued? queued = null;
-        var failures = 0;
-        DateTimeOffset? next = null;
-        var settled = false;
-        foreach (var content in appended.Select(item => item.Content))
-        {
-            switch (content)
-            {
-                case EmailQueued found when found.EmailId == id:
-                    queued = found;
-                    break;
-                case EmailAttemptFailed failed when failed.EmailId == id:
-                    failures = Math.Max(failures, failed.Attempt);
-                    next = failed.NextAttemptAt;
-                    break;
-                case EmailSent sent when sent.EmailId == id:
-                case EmailFailed failedForGood when failedForGood.EmailId == id:
-                    settled = true;
-                    break;
-            }
-        }
-
-        return new(queued, failures, next, settled);
-    }
-
-    async Task Retry(IEventStore store, EventSourceId about, EmailQueued queued, Exception exception, int attempt, CancellationToken cancellationToken)
-    {
+        var (store, about, queued) = target;
         var permanent = exception is EmailTransportException { Permanent: true };
         if (permanent || attempt >= options.Value.Retry.MaxAttempts)
         {
-            await Fail(store, about, queued, exception, attempt, cancellationToken);
+            await Fail(target, exception, attempt, cancellationToken);
             return;
         }
 
@@ -189,8 +172,9 @@ public class EmailDelivery(
         logger.WillRetry(queued.EmailId, queued.Kind, attempt, next, reason.Value);
     }
 
-    async Task Fail(IEventStore store, EventSourceId about, EmailQueued queued, Exception exception, int attempts, CancellationToken cancellationToken)
+    async Task Fail(DeliveryTarget target, Exception exception, int attempts, CancellationToken cancellationToken)
     {
+        var (store, about, queued) = target;
         cancellationToken.ThrowIfCancellationRequested();
         var reason = reasons.For(exception, queued.Address.Value);
         var result = await store.EventLog.AppendOnce(
@@ -218,5 +202,5 @@ public class EmailDelivery(
             rendered.Images);
     }
 
-    sealed record EmailHistory(EmailQueued? Queued, int Failures, DateTimeOffset? NextAttemptAt, bool Settled);
+    readonly record struct DeliveryTarget(IEventStore Store, EventSourceId About, EmailQueued Queued);
 }

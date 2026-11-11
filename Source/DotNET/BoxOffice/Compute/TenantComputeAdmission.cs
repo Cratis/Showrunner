@@ -97,11 +97,13 @@ public class TenantComputeAdmission(
             new ComputeWorkStopped(work.Meter, work.Id),
             new IdempotencyKey($"boxoffice-compute-stopped-{work.Id.Value:N}"));
 
-        if (!result.IsSuccess && !result.HasIdempotencyConflicts && !result.WasAlreadyAppended)
+        if (NotRecorded(result))
         {
             throw new ComputeFactNotRecorded(typeof(ComputeWorkStopped), stream, eventStore.Namespace, result);
         }
     }
+
+    static bool NotRecorded(AppendResult result) => !result.IsSuccess && !result.HasIdempotencyConflicts && !result.WasAlreadyAppended;
 
     static EventSourceId WorkStream(MeterId meter, DateOnly day) => new($"compute-{meter.Value}-{day:yyyy-MM}");
 
@@ -165,7 +167,7 @@ public class TenantComputeAdmission(
             new ComputeAllowanceReached(meter, new ComputeDay(today), allowance.Period, allowance.Overage),
             key);
 
-        if (!result.IsSuccess && !result.HasIdempotencyConflicts && !result.WasAlreadyAppended)
+        if (NotRecorded(result))
         {
             throw new ComputeFactNotRecorded(typeof(ComputeAllowanceReached), TenantStream.Id, eventStore.Namespace, result);
         }

@@ -114,17 +114,46 @@ export function toErrorDetails(error: unknown, location?: ArcSliceLocation): Err
  * @returns True when it is.
  */
 export function isErrorDetails(value: unknown): value is ErrorDetails {
-    if (typeof value !== 'object' || value === null || value instanceof Error) {
-        return false;
-    }
+    return isObjectThatIsNotAnError(value)
+        && hasTextMembers(value)
+        && hasListMembers(value)
+        && hasLocation(value);
+}
 
-    const candidate = value as Record<string, unknown>;
-    return typeof candidate.message === 'string'
-        && typeof candidate.type === 'string'
-        && Array.isArray(candidate.correlationIds)
-        && Array.isArray(candidate.stackFrames)
-        && typeof candidate.location === 'object'
-        && candidate.location !== null;
+/**
+ * Checks whether a value is an object that is not an error.
+ * @param value The value.
+ * @returns True when it is.
+ */
+function isObjectThatIsNotAnError(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !(value instanceof Error);
+}
+
+/**
+ * Checks whether the message and the type of a candidate are text.
+ * @param candidate The candidate.
+ * @returns True when they are.
+ */
+function hasTextMembers(candidate: Record<string, unknown>): boolean {
+    return typeof candidate.message === 'string' && typeof candidate.type === 'string';
+}
+
+/**
+ * Checks whether the correlation ids and the stack frames of a candidate are lists.
+ * @param candidate The candidate.
+ * @returns True when they are.
+ */
+function hasListMembers(candidate: Record<string, unknown>): boolean {
+    return Array.isArray(candidate.correlationIds) && Array.isArray(candidate.stackFrames);
+}
+
+/**
+ * Checks whether a candidate has a location.
+ * @param candidate The candidate.
+ * @returns True when it does.
+ */
+function hasLocation(candidate: Record<string, unknown>): boolean {
+    return typeof candidate.location === 'object' && candidate.location !== null;
 }
 
 /**

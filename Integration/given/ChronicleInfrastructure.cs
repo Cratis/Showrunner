@@ -1,8 +1,10 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using Cratis.Chronicle.Registrations;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Configurations;
 using DotNet.Testcontainers.Containers;
@@ -82,6 +84,30 @@ public sealed class ChronicleInfrastructure : IAsyncLifetime
         }
     }
 
+    internal async Task WaitForRegistration(IEventStore store, string description, TimeSpan timeout)
+    {
+        var wait = Stopwatch.StartNew();
+        Exception? failure;
+        try
+        {
+            var registration = await store.WaitForRegistration(timeout);
+            if (registration.IsSuccess)
+            {
+                return;
+            }
+
+            failure = registration.Failure;
+        }
+        catch (OperationCanceledException exception)
+        {
+            failure = exception;
+        }
+
+        wait.Stop();
+        var diagnostics = await RegistrationDiagnostics(description, wait.Elapsed, timeout);
+        throw new InvalidOperationException(diagnostics, failure);
+    }
+
     internal async Task<string> RegistrationDiagnostics(string description, TimeSpan elapsed, TimeSpan timeout)
     {
         var health = await HealthAtTimeout();
@@ -93,7 +119,16 @@ public sealed class ChronicleInfrastructure : IAsyncLifetime
             $"Kernel image: {Image}; container state: {_container?.State.ToString() ?? "unavailable"}.",
             health,
             logs);
-        await Console.Error.WriteLineAsync(diagnostics);
+        try
+        {
+            await Console.Error.WriteLineAsync(diagnostics);
+        }
+        catch (Exception exception)
+        {
+            // A failed console sink must not hide the original registration failure.
+            return $"{diagnostics}{Environment.NewLine}Console diagnostic output failed: {exception.GetType().Name}.";
+        }
+
         return diagnostics;
     }
 

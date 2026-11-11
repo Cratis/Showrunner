@@ -49,6 +49,7 @@ public class TenantRegistrations(
             new(registered.TenantId, registered.Name, registered.Creator, registered.CreatorRole),
             cancellationToken);
 
+        var arrival = new Arrival(registered.TenantId, context);
         var product = await client.GetEventStore(context.EventStore, context.Namespace);
         var outbox = product.GetEventSequence(EventSequenceId.Outbox);
 
@@ -56,12 +57,12 @@ public class TenantRegistrations(
         {
             logger.Refused(registered.TenantId, answer.Reason);
             var refused = new TenantNotProvisioned(registered.TenantId, answer.Reason);
-            await Report(outbox, context, refused, NotProvisionedKeyFor(registered.TenantId), registered.TenantId);
+            await Report(outbox, arrival, refused, NotProvisionedKeyFor(registered.TenantId));
             return;
         }
 
-        await Remember(registered, context);
-        await Report(outbox, context, new TenantProvisioned(registered.TenantId), ProvisionedKeyFor(registered.TenantId), registered.TenantId);
+        await Remember(registered, arrival);
+        await Report(outbox, arrival, new TenantProvisioned(registered.TenantId), ProvisionedKeyFor(registered.TenantId));
         logger.Provisioned(registered.TenantId);
     }
 
@@ -83,56 +84,61 @@ public class TenantRegistrations(
         logger.Closing(closingTenant.TenantId);
     }
 
+    static bool IsRecorded(AppendResult result) => result.IsSuccess || result.WasAlreadyAppended;
+
     /// <summary>
     /// The tenant's own namespace learns which organization it is and who created it, so the product can report seats and
     /// activity under the organization and tell a person who to ask for a seat. Both are keyed, so a repeat records nothing.
     /// </summary>
     /// <param name="registered">The <see cref="TenantRegistered"/> event.</param>
-    /// <param name="context">The <see cref="EventContext"/> of the event.</param>
+    /// <param name="arrival">The tenant and the <see cref="EventContext"/> of the event.</param>
     /// <returns>A <see cref="Task"/> for continuation.</returns>
-    async Task Remember(TenantRegistered registered, EventContext context)
+    async Task Remember(TenantRegistered registered, Arrival arrival)
     {
+        var context = arrival.Context;
         var tenant = await client.GetEventStore(context.EventStore, new EventStoreNamespaceName(registered.TenantId.Value));
 
         if (Guid.TryParse(context.EventSourceId.Value, out var organization))
         {
             await Record(
                 tenant,
+                arrival,
                 new TenantOrganizationIdentified(new OrganizationId(organization)),
-                OperatorEventTranslator.OrganizationKeyFor(context.EventSourceId),
-                registered.TenantId,
-                context);
+                OperatorEventTranslator.OrganizationKeyFor(context.EventSourceId));
         }
 
         await Record(
             tenant,
+            arrival,
             new TenantCreatorIdentified(registered.Creator, registered.CreatorRole),
-            new($"creator-{registered.TenantId.Value}"),
-            registered.TenantId,
-            context);
+            new($"creator-{registered.TenantId.Value}"));
     }
 
-    async Task Record(IEventStore tenant, object fact, IdempotencyKey key, TenantId tenantId, EventContext context)
+    async Task Record(IEventStore tenant, Arrival arrival, object fact, IdempotencyKey key)
     {
+        var context = arrival.Context;
         var result = await tenant.EventLog.AppendOnce(TenantStream.Id, fact, key, correlationId: context.CorrelationId, occurred: context.Occurred);
-        if (!result.IsSuccess && !result.WasAlreadyAppended && !result.HasIdempotencyConflicts)
+        if (!IsRecorded(result) && !result.HasIdempotencyConflicts)
         {
-            throw new TenantNotRecorded(fact.GetType(), tenantId, result);
+            throw new TenantNotRecorded(fact.GetType(), arrival.Tenant, result);
         }
     }
 
-    async Task Report(IEventSequence outbox, EventContext context, object fact, IdempotencyKey key, TenantId tenant)
+    async Task Report(IEventSequence outbox, Arrival arrival, object fact, IdempotencyKey key)
     {
+        var context = arrival.Context;
         var result = await outbox.AppendOnce(context.EventSourceId, fact, key, correlationId: context.CorrelationId);
         if (result.HasIdempotencyConflicts)
         {
-            logger.AnsweredDifferently(tenant);
+            logger.AnsweredDifferently(arrival.Tenant);
             return;
         }
 
-        if (!result.IsSuccess && !result.WasAlreadyAppended)
+        if (!IsRecorded(result))
         {
-            throw new TenantNotRecorded(fact.GetType(), tenant, result);
+            throw new TenantNotRecorded(fact.GetType(), arrival.Tenant, result);
         }
     }
+
+    readonly record struct Arrival(TenantId Tenant, EventContext Context);
 }

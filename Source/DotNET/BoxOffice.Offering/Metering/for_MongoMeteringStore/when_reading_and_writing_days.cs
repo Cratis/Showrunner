@@ -12,7 +12,7 @@ namespace Cratis.Showrunner.BoxOffice.Offering.Metering.for_MongoMeteringStore;
 public class when_reading_and_writing_days : Specification
 {
     static readonly DateTimeOffset _now = new(2024, 5, 6, 7, 8, 9, TimeSpan.Zero);
-    static readonly Guid _organization = new("11111111-2222-3333-4444-555555555555");
+    static readonly Guid _organization = new(0x11111111, 0x2222, 0x3333, 0x44, 0x44, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55);
 
     readonly Dictionary<string, (BsonDocument Filter, BsonDocument? Update, BsonDocument? Sort)> _calls = new(StringComparer.Ordinal);
     readonly Dictionary<string, object?> _results = new(StringComparer.Ordinal);

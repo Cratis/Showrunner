@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>Cratis.Showrunner.GuestList.Availability</AssemblyName>
+        <RootNamespace>Cratis.Showrunner.GuestList.Availability</RootNamespace>
+        <PackageId>Cratis.Showrunner.GuestList.Availability</PackageId>
+        <Description>GuestList availability — feeds the Cratis Choreography availability engine from the audiences a product has recorded locally: the union of tenant, user and system grants, reactive to change, never a call to the operator.</Description>
+        <PackageTags>cratis;showrunner;guestlist;audiences;availability;choreography;chronicle;event-sourcing</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Cratis.Choreography" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../GuestList/GuestList.csproj" />
+    </ItemGroup>
+</Project>

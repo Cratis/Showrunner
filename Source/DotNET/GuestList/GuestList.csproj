@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>Cratis.Showrunner.GuestList</AssemblyName>
+        <RootNamespace>Cratis.Showrunner.GuestList</RootNamespace>
+        <PackageId>Cratis.Showrunner.GuestList</PackageId>
+        <Description>GuestList — the Showrunner audiences part for products: receive the operator's audience grants and withdrawals once, record them in each tenant's own namespace and answer which audiences a tenant, a user or the system holds, built on Cratis Arc and Chronicle.</Description>
+        <PackageTags>cratis;showrunner;guestlist;audiences;availability;arc;chronicle;event-sourcing</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Cratis.Arc" />
+        <PackageReference Include="Cratis.Arc.Chronicle" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../GuestList.Contracts/GuestList.Contracts.csproj" />
+    </ItemGroup>
+</Project>

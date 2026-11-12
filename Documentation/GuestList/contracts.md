@@ -3,7 +3,7 @@ title: GuestList contracts
 description: The public events an operator publishes to grant and withdraw an audience, the types they carry and how their schema is guarded.
 ---
 
-`Cratis.Showrunner.GuestList.Contracts` holds the events an operator and a product exchange. It has no behavior and depends only on Chronicle. The events are `[Public]` and name no origin store, because they are shared by operator stores whose names vary by deployment; the product subscribes to the operator stores explicitly.
+`Cratis.Showrunner.GuestList.Contracts` holds the events an operator and a product exchange. It has no behavior and depends only on Chronicle. The events are `[Public]` and name no origin store, because they are shared by operator stores whose names vary by deployment; the product subscribes to the operator stores explicitly, see [Receive audiences in a product](./receive-audiences-in-a-product.md).
 
 ## Events
 

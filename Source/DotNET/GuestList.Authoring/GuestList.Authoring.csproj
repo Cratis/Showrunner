@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>Cratis.Showrunner.GuestList.Authoring</AssemblyName>
+        <RootNamespace>Cratis.Showrunner.GuestList.Authoring</RootNamespace>
+        <PackageId>Cratis.Showrunner.GuestList.Authoring</PackageId>
+        <Description>GuestList authoring — the commands, queries and outbox for granting and withdrawing the audiences of tenants, users and the system, built on Cratis Arc and Chronicle. It works without Direct.</Description>
+        <PackageTags>cratis;showrunner;guestlist;audiences;availability;authoring;arc;chronicle;event-sourcing</PackageTags>
+
+        <!-- Read models a command's validator or Handle() takes as parameters are read fresh from the event log and
+             guard the append: a decision is taken against what is held now, also under concurrent requests. -->
+        <CratisReadProtection>On</CratisReadProtection>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Cratis.Arc" />
+        <PackageReference Include="Cratis.Arc.Chronicle" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../GuestList.Contracts/GuestList.Contracts.csproj" />
+    </ItemGroup>
+</Project>

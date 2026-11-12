@@ -6,6 +6,7 @@
     <Project Path="Source/DotNET/BoxOffice.Offering/BoxOffice.Offering.csproj" />
     <Project Path="Source/DotNET/BoxOffice.Product/BoxOffice.Product.csproj" />
     <Project Path="Source/DotNET/GuestList.Contracts/GuestList.Contracts.csproj" />
+    <Project Path="Source/DotNET/GuestList/GuestList.csproj" />
     <Project Path="Source/DotNET/Herald.Contracts/Herald.Contracts.csproj" />
     <Project Path="Source/DotNET/Herald/Herald.csproj" />
     <Project Path="Source/DotNET/Payments.Mollie/Payments.Mollie.csproj" />

@@ -23,6 +23,10 @@ Box Office lets a managed product honor the licensing decisions its operator mak
 
 Marquee brings product announcements to the people they concern. The people running the product choose the audience, display and time window; the product shows the announcement as a banner or dialog. Add `<Marquee />` to the application shell to use its queries and commands. Follow [the Marquee documentation](./Documentation/Marquee/index.md) to add announcements or host the authoring side.
 
+## GuestList
+
+GuestList carries audience grants: which audiences a tenant, a user or the system is in. An operator grants and withdraws an audience through public events, and the product records them once. Follow [the GuestList documentation](./Documentation/GuestList/index.md) for the contracts.
+
 ## Notes
 
 Notes connects product feedback to what the user was looking at: a slice of application behavior, a screen or a single component. The people building the application receive that context as events and answer the note. The application hosts `Cratis.Showrunner.Notes`; the builder hosts `Cratis.Showrunner.Notes.Collecting`. Use [the Notes documentation](./Documentation/Notes/index.md) to connect feedback collection and replies.
@@ -59,6 +63,7 @@ Choose the backend packages for the part you are hosting, then add its TypeScrip
 | `cratis/showrunner-operator-image`, `cratis/showrunner-operator` | Docker Hub, Helm (OCI) | Stage Manager, the Kubernetes operator: the container image and, in a separate repository, the Helm chart released with the same version |
 | `Cratis.Showrunner.Usher.Contracts` | NuGet | Usher's event contracts, for hosts that react to what Usher records |
 | `Cratis.Showrunner.Marquee.Contracts` | NuGet | Marquee's event contracts: the public events a product receives announcements through |
+| `Cratis.Showrunner.GuestList.Contracts` | NuGet | GuestList's event contracts: the public events audiences are granted and withdrawn through |
 | `Cratis.Showrunner.Marquee.Authoring` | NuGet | Marquee's authoring backend — commands, query and outbox for writing announcements, built on Arc and Chronicle |
 | `Cratis.Showrunner.Marquee` | NuGet | Marquee's backend for products — receives announcements once, shows each tenant what its audience matches and records acknowledgements |
 | `Cratis.Showrunner.Usher` | NuGet | Usher's backend — Arc commands and queries over Chronicle |

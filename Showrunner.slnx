@@ -26,6 +26,7 @@
   </Folder>
   <Folder Name="/Integration/">
     <Project Path="Integration.Herald/Herald.Integration.Specs.csproj" />
+    <Project Path="Integration.GuestList/GuestList.Integration.Specs.csproj" />
     <Project Path="Integration.BoxOffice/BoxOffice.Integration.Specs.csproj" />
     <Project Path="Integration.Notes/Notes.Integration.Specs.csproj" />
     <Project Path="Integration/Usher.Integration.Specs.csproj" />

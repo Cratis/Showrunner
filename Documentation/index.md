@@ -33,6 +33,7 @@ Where a part exchanges public events with another application, its contracts pag
 | [Usher](./Usher/index.md) | Support: issue reporting and support conversations between an application's users and the people running it |
 | [Box Office](./BoxOffice/index.md) | Licensing: trials, seats, modules, compute allowances and suspension of a managed product's tenants |
 | [Marquee](./Marquee/index.md) | Announcements: what the people running a product tell the people using it, with an audience, a display and an exact active window |
+| [GuestList](./GuestList/index.md) | Audiences: which audiences a tenant, a user or the system is in, granted by the operator and recorded once by the product |
 | [Notes](./Notes/index.md) | Feedback: product feedback from an application's users, tied to the slice, screen or component they were looking at, delivered as events to the people building the application |
 | [Herald](./Herald/index.md) | Email: templated, email-safe messages with images, sent over SMTP, retried when the server fails and recorded as facts |
 | [Stage Manager](./StageManager/index.md) | The Kubernetes operator: runs an application, or a published Stage application, with its AuthProxy and its own Ante from a Cratis environment, behind one public entry point |

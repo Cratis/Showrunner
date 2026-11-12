@@ -18,6 +18,7 @@ Audience routing is opt-in everywhere. Every option below defaults to unset, whi
 | Notes published to a collector | application to collector | `NotesOptions.CollectorAudience` addresses; `NotesOptions.Audience` filters what comes back and names the sender. |
 | Collector replies to a note | collector to application | Addressed automatically to the application that named itself with `NotesOptions.Audience`. |
 | Marquee announcements | authoring to a product | `MarqueeAuthoringOptions.AddressToProducts` addresses by product; `MarqueeOptions.SubscribeForProduct` filters. |
+| GuestList audience grants | operator to a product | `GuestListAuthoringOptions.AddressToProducts` addresses by product; `GuestListOptions.SubscribeForProduct` filters. The routing audience is separate from the `Audience` field of the events. |
 
 Two kinds of traffic are left alone on purpose. `TenantRegistered` and `TenantProvisioned` are one-to-one between an operator and the product that owns the tenant, and the event source (the organization) already identifies the pair. The Notes HTTP relay moves one application's outbox to one collector and has no other recipient to tell apart. Note replies from the collector to an application are not addressed yet; see the limits below.
 

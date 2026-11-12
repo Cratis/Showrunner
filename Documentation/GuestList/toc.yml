@@ -1,0 +1,10 @@
+- name: Overview
+  href: index.md
+- name: How GuestList works
+  href: how-guestlist-works.md
+- name: Receive audiences in a product
+  href: receive-audiences-in-a-product.md
+- name: Grant audiences as an operator
+  href: grant-audiences-as-an-operator.md
+- name: Contracts
+  href: contracts.md

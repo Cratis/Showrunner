@@ -25,7 +25,7 @@ Marquee brings product announcements to the people they concern. The people runn
 
 ## GuestList
 
-GuestList carries audience grants: which audiences a tenant, a user or the system is in. An operator grants and withdraws an audience through public events; the product hosts `Cratis.Showrunner.GuestList`, records the decisions once in each tenant's own namespace and answers from what it recorded, also when the operator is unreachable. Follow [the GuestList documentation](./Documentation/GuestList/index.md) to receive audiences.
+GuestList carries audience grants: which audiences a tenant, a user or the system is in. An operator grants and withdraws an audience with `Cratis.Showrunner.GuestList.Authoring`, with or without Direct; the product hosts `Cratis.Showrunner.GuestList`, records the decisions once in each tenant's own namespace and answers from what it recorded, also when the operator is unreachable. Follow [the GuestList documentation](./Documentation/GuestList/index.md) to receive or grant audiences.
 
 ## Notes
 
@@ -64,6 +64,7 @@ Choose the backend packages for the part you are hosting, then add its TypeScrip
 | `Cratis.Showrunner.Usher.Contracts` | NuGet | Usher's event contracts, for hosts that react to what Usher records |
 | `Cratis.Showrunner.Marquee.Contracts` | NuGet | Marquee's event contracts: the public events a product receives announcements through |
 | `Cratis.Showrunner.GuestList` | NuGet | The product side of audiences: records an operator's grants and answers which audiences apply |
+| `Cratis.Showrunner.GuestList.Authoring` | NuGet | The operator side of audiences: commands, queries and the outbox for granting and withdrawing |
 | `Cratis.Showrunner.GuestList.Contracts` | NuGet | GuestList's event contracts: the public events audiences are granted and withdrawn through |
 | `Cratis.Showrunner.Marquee.Authoring` | NuGet | Marquee's authoring backend — commands, query and outbox for writing announcements, built on Arc and Chronicle |
 | `Cratis.Showrunner.Marquee` | NuGet | Marquee's backend for products — receives announcements once, shows each tenant what its audience matches and records acknowledgements |

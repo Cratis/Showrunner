@@ -7,6 +7,7 @@
     <Project Path="Source/DotNET/BoxOffice.Product/BoxOffice.Product.csproj" />
     <Project Path="Source/DotNET/GuestList.Contracts/GuestList.Contracts.csproj" />
     <Project Path="Source/DotNET/GuestList/GuestList.csproj" />
+    <Project Path="Source/DotNET/GuestList.Authoring/GuestList.Authoring.csproj" />
     <Project Path="Source/DotNET/Herald.Contracts/Herald.Contracts.csproj" />
     <Project Path="Source/DotNET/Herald/Herald.csproj" />
     <Project Path="Source/DotNET/Payments.Mollie/Payments.Mollie.csproj" />
@@ -23,6 +24,7 @@
   </Folder>
   <Folder Name="/Integration/">
     <Project Path="Integration.Herald/Herald.Integration.Specs.csproj" />
+    <Project Path="Integration.GuestList/GuestList.Integration.Specs.csproj" />
     <Project Path="Integration.BoxOffice/BoxOffice.Integration.Specs.csproj" />
     <Project Path="Integration.Notes/Notes.Integration.Specs.csproj" />
     <Project Path="Integration/Usher.Integration.Specs.csproj" />

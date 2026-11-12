@@ -66,7 +66,7 @@ public class when_mapping_the_reporters_facts : Specification
         PublicEvents.For(new ReporterAnsweredQuestion(_questionId, "Yes."), _tenant).ShouldEqual(new QuestionAnswered(_tenant, _questionId, "Yes."));
 
     [Fact] void should_map_a_reopened_issue_to_issue_reopened() =>
-        PublicEvents.For(new ReporterReopenedIssue("It came back."), _tenant).ShouldEqual(new IssueReopened(_tenant, "It came back."));
+        PublicEvents.For(new ReporterReopenedIssue("It came back."), _tenant).ShouldEqual(new IssueReopenedByReporter(_tenant, "It came back."));
 
     [Fact] void should_map_a_withdrawn_issue_to_issue_withdrawn() =>
         PublicEvents.For(new ReporterWithdrewIssue(), _tenant).ShouldEqual(new IssueWithdrawn(_tenant));

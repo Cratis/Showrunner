@@ -100,7 +100,7 @@ public class OutboxPublisher(IChronicleClient client, ILogger<OutboxPublisher> l
         Publish(PublicEvents.For(@event, TenantOf(context)), context, delivery);
 
     /// <summary>
-    /// Publishes a reopened issue as <c>IssueReopened</c>.
+    /// Publishes a reopened issue as <c>IssueReopenedByReporter</c>.
     /// </summary>
     /// <param name="event">The private event.</param>
     /// <param name="context">The context of the private event.</param>

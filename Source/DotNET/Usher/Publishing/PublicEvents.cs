@@ -91,7 +91,7 @@ public static class PublicEvents
     /// <param name="event">The private event.</param>
     /// <param name="tenantId">The tenant the issue belongs to.</param>
     /// <returns>The public event.</returns>
-    public static IssueReopened For(ReporterReopenedIssue @event, TenantId tenantId) => new(tenantId, @event.Reason);
+    public static IssueReopenedByReporter For(ReporterReopenedIssue @event, TenantId tenantId) => new(tenantId, @event.Reason);
 
     /// <summary>
     /// Maps the reporter withdrawing the issue.

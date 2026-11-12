@@ -313,7 +313,7 @@
     ],
     "title": "IssueClosedAsWontFix"
   },
-  "IssueReopened:1": {
+  "IssueReopenedByReporter:1": {
     "type": "object",
     "properties": {
       "tenantId": {
@@ -333,7 +333,7 @@
       "tenantId",
       "reason"
     ],
-    "title": "IssueReopened"
+    "title": "IssueReopenedByReporter"
   },
   "IssueResolved:1": {
     "type": "object",
@@ -375,7 +375,7 @@
     ],
     "title": "IssueWithdrawn"
   },
-  "WorkStarted:1": {
+  "WorkStartedOnIssue:1": {
     "type": "object",
     "properties": {
       "tenantId": {
@@ -385,7 +385,7 @@
     "required": [
       "tenantId"
     ],
-    "title": "WorkStarted"
+    "title": "WorkStartedOnIssue"
   },
   "ErrorReported:1": {
     "type": "object",

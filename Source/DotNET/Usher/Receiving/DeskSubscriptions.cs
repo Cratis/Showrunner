@@ -146,7 +146,7 @@ public class DeskSubscriptions(DeskEventTranslator translator, IOptions<UsherOpt
         .On<IssueUnlinkedFromKnownIssue>((@event, context) => translator.Translate(@event, context, deskStore))
         .On<IssueLinkedToWorkItem>((@event, context) => translator.Translate(@event, context, deskStore))
         .On<IssueUnlinkedFromWorkItem>((@event, context) => translator.Translate(@event, context, deskStore))
-        .On<WorkStarted>((@event, context) => translator.Translate(@event, context, deskStore))
+        .On<WorkStartedOnIssue>((@event, context) => translator.Translate(@event, context, deskStore))
         .On<IssueResolved>((@event, context) => translator.Translate(@event, context, deskStore))
         .On<IssueFixedInRelease>((@event, context) => translator.Translate(@event, context, deskStore))
         .On<AccessRequested>((@event, context) => translator.Translate(@event, context, deskStore));

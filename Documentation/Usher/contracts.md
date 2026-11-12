@@ -28,7 +28,7 @@ The application publishes these from its outbox. They describe what the reporter
 | `IssueAttributedToReporter` | `Identity` | `TenantId: TenantId`; `Reporter: Reporter` |
 | `DetailsAdded` | `Conversation` | `TenantId: TenantId`; `Details: Details` |
 | `QuestionAnswered` | `Conversation` | `TenantId: TenantId`; `QuestionId: QuestionId`; `Answer: Answer` |
-| `IssueReopened` | `Lifecycle` | `TenantId: TenantId`; `Reason: ReopenReason` |
+| `IssueReopenedByReporter` | `Lifecycle` | `TenantId: TenantId`; `Reason: ReopenReason` |
 | `IssueWithdrawn` | `Lifecycle` | `TenantId: TenantId` |
 | `AccessGranted` | `Access` | `TenantId: TenantId`; `ValidUntil: ValidUntil` |
 | `AccessRevoked` | `Access` | `TenantId: TenantId` |
@@ -40,6 +40,7 @@ The application publishes these from its outbox. They describe what the reporter
 - `IssueWithdrawn` also ends support's access to the issue. No `AccessRevoked` follows it; a desk treats it as the end of any grant.
 - `IssueAttributedToReporter` is published only if the reporter chooses to share who they are. Until then the desk knows the issue but not the person. Granting access always shares identity first, so `IssueAttributedToReporter` comes before `AccessGranted` on the same issue.
 - `AccessExpired` is published when `ValidUntil` passes without the grant being revoked.
+- Chronicle registers an event type by its simple name in every store that references the contracts, so a desk can not host a contract event named like one of its own. `IssueReopenedByReporter` and `WorkStartedOnIssue` carry those longer names because a desk such as Direct already has an `IssueReopened` and a `WorkStarted` of its own.
 
 ## Desk to application
 
@@ -56,7 +57,7 @@ The desk publishes these from its outbox. They describe what support did with th
 | `IssueUnlinkedFromKnownIssue` | `KnownIssues` | `TenantId: TenantId`; `KnownIssueId: KnownIssueId` |
 | `IssueLinkedToWorkItem` | `WorkItems` | `TenantId: TenantId`; `WorkItem: WorkItem` |
 | `IssueUnlinkedFromWorkItem` | `WorkItems` | `TenantId: TenantId`; `WorkItemReference: WorkItemReference` |
-| `WorkStarted` | `Lifecycle` | `TenantId: TenantId` |
+| `WorkStartedOnIssue` | `Lifecycle` | `TenantId: TenantId` |
 | `IssueResolved` | `Lifecycle` | `TenantId: TenantId`; `Resolution: Resolution` |
 | `IssueFixedInRelease` | `WorkItems` | `TenantId: TenantId`; `ReleaseVersion: ReleaseVersion`; `WorkItemReference: WorkItemReference` |
 | `AccessRequested` | `Access` | `TenantId: TenantId`; `Reason: AccessRequestReason` |
@@ -122,7 +123,7 @@ The publisher adds `TenantId` to every public event and publishes the reporter o
 | `ReporterSharedIdentity` | `IssueAttributedToReporter` |
 | `ReporterAddedDetails` | `DetailsAdded` |
 | `ReporterAnsweredQuestion` | `QuestionAnswered` |
-| `ReporterReopenedIssue` | `IssueReopened` |
+| `ReporterReopenedIssue` | `IssueReopenedByReporter` |
 | `ReporterWithdrewIssue` | `IssueWithdrawn` |
 | `ReporterGrantedAccess` | `AccessGranted` |
 | `ReporterRevokedAccess` | `AccessRevoked` |
@@ -141,7 +142,7 @@ The translator appends each desk event under the same issue id, in the namespace
 | `IssueUnlinkedFromKnownIssue` | `SupportUnlinkedIssue` |
 | `IssueLinkedToWorkItem` | `SupportLinkedIssueToWorkItem` |
 | `IssueUnlinkedFromWorkItem` | `SupportUnlinkedWorkItem` |
-| `WorkStarted` | `SupportStartedWork` |
+| `WorkStartedOnIssue` | `SupportStartedWork` |
 | `IssueResolved` | `SupportResolvedIssue` |
 | `IssueFixedInRelease` | `ReleaseShippedFix` |
 | `AccessRequested` | `SupportRequestedAccess` |
@@ -167,7 +168,7 @@ await store.Subscriptions.Subscribe(
         .WithEventType<IssueAttributedToReporter>()
         .WithEventType<DetailsAdded>()
         .WithEventType<QuestionAnswered>()
-        .WithEventType<IssueReopened>()
+        .WithEventType<IssueReopenedByReporter>()
         .WithEventType<IssueWithdrawn>()
         .WithEventType<AccessGranted>()
         .WithEventType<AccessRevoked>()

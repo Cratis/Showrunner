@@ -11,4 +11,4 @@ namespace Cratis.Showrunner.Usher.Contracts.Lifecycle;
 /// <param name="Reason">Why the reporter reopened it.</param>
 [EventType]
 [Public]
-public record IssueReopened(TenantId TenantId, ReopenReason Reason);
+public record IssueReopenedByReporter(TenantId TenantId, ReopenReason Reason);

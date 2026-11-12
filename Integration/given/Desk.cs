@@ -30,7 +30,7 @@ public sealed class Desk(IChronicleClient client, EventStoreName name, Chronicle
         typeof(IssueAttributedToReporter),
         typeof(DetailsAdded),
         typeof(QuestionAnswered),
-        typeof(IssueReopened),
+        typeof(IssueReopenedByReporter),
         typeof(IssueWithdrawn),
         typeof(AccessGranted),
         typeof(AccessRevoked),

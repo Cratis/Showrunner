@@ -27,6 +27,10 @@ Marquee brings product announcements to the people they concern. The people runn
 
 Notes connects product feedback to what the user was looking at: a slice of application behavior, a screen or a single component. The people building the application receive that context as events and answer the note. The application hosts `Cratis.Showrunner.Notes`; the builder hosts `Cratis.Showrunner.Notes.Collecting`. Use [the Notes documentation](./Documentation/Notes/index.md) to connect feedback collection and replies.
 
+## Payments
+
+Payments is the contract an application takes payments through - customers, first payments, recurring charges, subscriptions and refunds - with Mollie as the first provider and a webhook that always reads the payment back from the provider. Start with [the Payments documentation](./Documentation/Payments/index.md).
+
 ## Herald
 
 Herald sends application email from templates and records what happened. The application supplies an email kind, such as an invitation, a language and its values. Herald fills the template, makes the HTML safe for email clients, embeds images and sends it over SMTP. Failed sends are queued and retried. Start with [the Herald documentation](./Documentation/Herald/index.md) to configure templates and delivery.
@@ -48,6 +52,8 @@ Choose the backend packages for the part you are hosting, then add its TypeScrip
 | `Cratis.Showrunner.BoxOffice.Offering` | NuGet | Box Office for a product — declares what the product sells (modules, meters, seat licensing) and measures its compute per tenant and day |
 | `Cratis.Showrunner.BoxOffice.Product` | NuGet | Box Office for a managed product, in one call — creates the tenants the operator registers and reports them ready, answers whether a person may take a seat and whether a tenant is read-only, and reports who was active |
 | `Cratis.Showrunner.BoxOffice.Contracts` | NuGet | Box Office's event contracts: what an operator decides about a tenant and what a product reports back |
+| `Cratis.Showrunner.Payments` | NuGet | The provider-neutral payment contract: `IPaymentProvider`, its requests and results, and `IPaymentWebhookHandler` |
+| `Cratis.Showrunner.Payments.Mollie` | NuGet | The Mollie implementation of the payment contract and its webhook endpoint |
 | `Cratis.Showrunner.Herald.Contracts` | NuGet | Herald's event contracts: the facts recorded when an email was sent, failed or bounced |
 | `Cratis.Showrunner.Herald` | NuGet | Herald's backend — templates, strict rendering, images, SMTP and folder transports, queued delivery with retries, recorded in the application's Chronicle event store |
 | `cratis/showrunner-operator-image`, `cratis/showrunner-operator` | Docker Hub, Helm (OCI) | Stage Manager, the Kubernetes operator: the container image and, in a separate repository, the Helm chart released with the same version |

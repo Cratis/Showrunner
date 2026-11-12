@@ -18,6 +18,7 @@ public class when_measuring_lag : Specification
     a_clock _clock;
     AudienceChangeFeed _feed;
     GuestListAvailabilityMetrics _metrics;
+    TestMeterFactory _factory;
     MeterListener _listener;
     TimeSpan? _beforeAnyChange;
     TimeSpan? _afterAMinute;
@@ -29,12 +30,13 @@ public class when_measuring_lag : Specification
     {
         _clock = new();
         _feed = new(_clock, NullLogger<AudienceChangeFeed>.Instance);
-        _metrics = new(new TestMeterFactory(), _feed);
+        _factory = new();
+        _metrics = new(_factory, _feed);
         _listener = new()
         {
             InstrumentPublished = (instrument, listener) =>
             {
-                if (instrument.Name == GuestListAvailabilityMetrics.LagName)
+                if (instrument.Meter == _factory.Created && instrument.Name == GuestListAvailabilityMetrics.LagName)
                 {
                     listener.EnableMeasurementEvents(instrument);
                 }
@@ -71,7 +73,9 @@ public class when_measuring_lag : Specification
 
     sealed class TestMeterFactory : IMeterFactory
     {
-        public Meter Create(MeterOptions options) => new(options);
+        public Meter Created { get; private set; }
+
+        public Meter Create(MeterOptions options) => Created = new(options);
 
         public void Dispose()
         {

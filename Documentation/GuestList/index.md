@@ -9,6 +9,7 @@ Nothing in GuestList depends on Direct. The operator side is a package any Arc a
 
 - [How GuestList works](./how-guestlist-works.md): the three levels, how the newest decision wins and what stays when the link is down.
 - [Receive audiences in a product](./receive-audiences-in-a-product.md): add the product side and read what it recorded.
+- [Feed the availability engine](./feed-the-availability-engine.md): hand the product's audiences to Choreography, reactive to change.
 - [Grant audiences as an operator](./grant-audiences-as-an-operator.md): host the commands and the outbox, with or without Direct.
 - [Contracts](./contracts.md): the public events, their fields and the schema snapshot.
 
@@ -16,4 +17,5 @@ Nothing in GuestList depends on Direct. The operator side is a package any Arc a
 | --- | --- |
 | `Cratis.Showrunner.GuestList.Contracts` | The public events and the types they carry |
 | `Cratis.Showrunner.GuestList` | The product side: inbox, read models and queries |
+| `Cratis.Showrunner.GuestList.Availability` | Optional: feeds the Choreography availability engine from the product's local audiences. See [Feed the availability engine](feed-the-availability-engine.md) |
 | `Cratis.Showrunner.GuestList.Authoring` | The operator side: commands, queries and the outbox |

@@ -33,6 +33,7 @@
 
     <ItemGroup>
         <ProjectReference Include="../Source/DotNET/GuestList/GuestList.csproj" />
+        <ProjectReference Include="../Source/DotNET/GuestList.Availability/GuestList.Availability.csproj" />
         <ProjectReference Include="../Source/DotNET/GuestList.Authoring/GuestList.Authoring.csproj" />
         <ProjectReference Include="../Source/DotNET/GuestList.Contracts/GuestList.Contracts.csproj" />
     </ItemGroup>
@@ -47,6 +48,7 @@
         <PackageReference Include="Microsoft.NET.Test.Sdk" />
         <PackageReference Include="Cratis.Specifications.XUnit" />
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+        <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.Common" />
         <PackageReference Include="Testcontainers" />
         <PackageReference Include="SSH.NET" />
     </ItemGroup>

@@ -29,13 +29,27 @@ public sealed class ProductSide(IHost host, EventStoreName name) : IAsyncDisposa
     public IGuestList GuestList => host.Services.GetRequiredService<IGuestList>();
 
     /// <summary>
+    /// Gets the engine's view of the audiences: the effective audiences of a request. Only when the product was started with
+    /// availability.
+    /// </summary>
+    public Cratis.Choreography.Availability.Audiences.IAudienceResolver Resolver => host.Services.GetRequiredService<Cratis.Choreography.Availability.Audiences.IAudienceResolver>();
+
+    /// <summary>
+    /// Gets where the engine reads the grants from, and subscribes to their changes. Only when the product was started with
+    /// availability.
+    /// </summary>
+    public Cratis.Choreography.Availability.Audiences.IAudienceSource Source => host.Services.GetRequiredService<Cratis.Choreography.Availability.Audiences.IAudienceSource>();
+
+    /// <summary>
     /// Starts a product with a unique store name, receiving from an operator store.
     /// </summary>
     /// <param name="infrastructure">The kernel.</param>
     /// <param name="operatorStore">The operator store it receives from.</param>
+    /// <param name="declaredAudiences">The audiences the application declares, which also feeds GuestList's availability to the
+    /// Choreography engine; <see langword="null"/> to run without Choreography.</param>
     /// <returns>The running host.</returns>
     /// <exception cref="InvalidOperationException">The product store did not register.</exception>
-    public static async Task<ProductSide> Start(ChronicleInfrastructure infrastructure, EventStoreName operatorStore)
+    public static async Task<ProductSide> Start(ChronicleInfrastructure infrastructure, EventStoreName operatorStore, IEnumerable<AudienceName>? declaredAudiences = null)
     {
         var name = new EventStoreName($"Ledger-{Guid.NewGuid():N}");
         var builder = Host.CreateApplicationBuilder();
@@ -49,7 +63,13 @@ public sealed class ProductSide(IHost host, EventStoreName name) : IAsyncDisposa
             guestList.Product = Product;
             guestList.OperatorStores = [operatorStore];
             guestList.PollingInterval = TimeSpan.FromMilliseconds(500);
+            guestList.DeclaredAudiences = declaredAudiences;
         });
+
+        if (declaredAudiences is not null)
+        {
+            builder.Services.AddGuestListAvailability();
+        }
 
         if (Environment.GetEnvironmentVariable("USHER_INTEGRATION_LOG") is { Length: > 0 } log)
         {

@@ -4,6 +4,8 @@
   href: how-guestlist-works.md
 - name: Receive audiences in a product
   href: receive-audiences-in-a-product.md
+- name: Feed the availability engine
+  href: feed-the-availability-engine.md
 - name: Grant audiences as an operator
   href: grant-audiences-as-an-operator.md
 - name: Contracts

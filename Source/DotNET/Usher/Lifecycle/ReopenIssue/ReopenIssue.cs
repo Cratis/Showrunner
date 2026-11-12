@@ -52,7 +52,7 @@ public class ReopenIssueValidator : CommandValidator<ReopenIssue>
 
 /// <summary>
 /// The reporter reopened a resolved issue. The issue returns to <see cref="IssueState.Reported"/>, because it is new
-/// work the desk triages again; it is published as <c>IssueReopened</c>.
+/// work the desk triages again; it is published as <c>IssueReopenedByReporter</c>.
 /// </summary>
 /// <param name="Reason">Why the reporter reopened it.</param>
 [EventType]

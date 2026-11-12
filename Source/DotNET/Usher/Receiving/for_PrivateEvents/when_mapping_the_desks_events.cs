@@ -50,7 +50,7 @@ public class when_mapping_the_desks_events : Specification
         Map(new IssueUnlinkedFromWorkItem(_tenant, _workItem.Reference)).ShouldEqual((_tenant, new SupportUnlinkedWorkItem(_workItem.Reference)));
 
     [Fact] void should_map_work_started_to_support_started_work() =>
-        Map(new WorkStarted(_tenant)).ShouldEqual((_tenant, new SupportStartedWork()));
+        Map(new WorkStartedOnIssue(_tenant)).ShouldEqual((_tenant, new SupportStartedWork()));
 
     [Fact] void should_map_issue_resolved_to_support_resolved_issue() =>
         Map(new IssueResolved(_tenant, "Fixed in 4.12.3.")).ShouldEqual((_tenant, new SupportResolvedIssue("Fixed in 4.12.3.")));

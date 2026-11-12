@@ -9,4 +9,4 @@ namespace Cratis.Showrunner.Usher.Contracts.Lifecycle;
 /// <param name="TenantId">The tenant the issue belongs to.</param>
 [EventType]
 [Public]
-public record WorkStarted(TenantId TenantId);
+public record WorkStartedOnIssue(TenantId TenantId);

@@ -79,7 +79,7 @@ public record SupportLinkedIssueToWorkItem(WorkItem WorkItem);
 public record SupportUnlinkedWorkItem(WorkItemReference WorkItemReference);
 
 /// <summary>
-/// Support started working on the issue. Translated from <c>WorkStarted</c>.
+/// Support started working on the issue. Translated from <c>WorkStartedOnIssue</c>.
 /// </summary>
 [EventType]
 public record SupportStartedWork;

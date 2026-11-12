@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>Cratis.Showrunner.Payments.Mollie</AssemblyName>
+        <RootNamespace>Cratis.Showrunner.Payments.Mollie</RootNamespace>
+        <PackageId>Cratis.Showrunner.Payments.Mollie</PackageId>
+        <Description>Mollie for Showrunner Payments: the payment provider contract implemented against Mollie's API, and the webhook endpoint that reads a changed payment back from Mollie before the application hears of it.</Description>
+        <PackageTags>cratis;showrunner;payments;mollie;billing;subscriptions</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../Payments/Payments.csproj" />
+    </ItemGroup>
+</Project>

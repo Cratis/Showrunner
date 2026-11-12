@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>Cratis.Showrunner.Payments</AssemblyName>
+        <RootNamespace>Cratis.Showrunner.Payments</RootNamespace>
+        <PackageId>Cratis.Showrunner.Payments</PackageId>
+        <Description>Payments — the Showrunner payment part for applications: a provider-neutral contract for customers, first payments, recurring charges, subscriptions and refunds, and the handler an application registers to hear that a payment changed.</Description>
+        <PackageTags>cratis;showrunner;payments;billing;subscriptions</PackageTags>
+    </PropertyGroup>
+</Project>

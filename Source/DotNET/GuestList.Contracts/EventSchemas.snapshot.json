@@ -1,0 +1,78 @@
+{
+  "AudienceGranted:1": {
+    "type": "object",
+    "properties": {
+      "product": {
+        "type": "string"
+      },
+      "level": {
+        "type": "integer",
+        "enum": [
+          0,
+          1,
+          2
+        ],
+        "x-enumNames": [
+          "Tenant",
+          "User",
+          "System"
+        ]
+      },
+      "tenantId": {
+        "type": "string"
+      },
+      "userId": {
+        "type": "string"
+      },
+      "audience": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "product",
+      "level",
+      "tenantId",
+      "userId",
+      "audience"
+    ],
+    "title": "AudienceGranted"
+  },
+  "AudienceWithdrawn:1": {
+    "type": "object",
+    "properties": {
+      "product": {
+        "type": "string"
+      },
+      "level": {
+        "type": "integer",
+        "enum": [
+          0,
+          1,
+          2
+        ],
+        "x-enumNames": [
+          "Tenant",
+          "User",
+          "System"
+        ]
+      },
+      "tenantId": {
+        "type": "string"
+      },
+      "userId": {
+        "type": "string"
+      },
+      "audience": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "product",
+      "level",
+      "tenantId",
+      "userId",
+      "audience"
+    ],
+    "title": "AudienceWithdrawn"
+  }
+}

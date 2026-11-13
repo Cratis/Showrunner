@@ -11,6 +11,9 @@ namespace Cratis.Showrunner.GuestList.Receiving;
 /// </summary>
 internal static partial class GuestListInboxLogging
 {
+    [LoggerMessage(LogLevel.Debug, "The receipt of the decision about audience '{Audience}' at level '{Level}' is already published")]
+    internal static partial void AlreadyReceived(this ILogger<AudienceReceipts> logger, AudienceLevel level, AudienceName audience);
+
     [LoggerMessage(LogLevel.Debug, "Ignoring '{EventType}' from operator store '{OperatorStore}': it is for the product '{Product}', not this one")]
     internal static partial void ForAnotherProduct(this ILogger<GuestListInbox> logger, string eventType, EventStoreName operatorStore, string product);
 

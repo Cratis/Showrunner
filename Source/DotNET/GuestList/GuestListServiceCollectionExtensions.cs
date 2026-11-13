@@ -27,11 +27,13 @@ public static class GuestListServiceCollectionExtensions
             .Validate(options => !string.IsNullOrWhiteSpace(options.Product.Value), "GuestList needs the product it records audiences for: set GuestListOptions.Product in AddGuestList.")
             .Validate(options => options.OperatorStores.Any(), "GuestList needs at least one operator store: set GuestListOptions.OperatorStores in AddGuestList.")
             .Validate(options => options.PollingInterval > TimeSpan.Zero, "GuestList polls at an interval: set GuestListOptions.PollingInterval to more than zero.")
+            .Validate(options => options.RetryInterval > TimeSpan.Zero, "GuestList retries at an interval: set GuestListOptions.RetryInterval to more than zero.")
             .ValidateOnStart();
 
         services.TryAddSingleton(TimeProvider.System);
         services.TryAddSingleton<GuestListInbox>();
         services.TryAddSingleton<GuestListSubscriptions>();
+        services.TryAddSingleton<AudienceReceipts>();
         services.TryAddSingleton<IGuestList, GuestLists>();
         services.AddHostedService<GuestListWorker>();
         return services;

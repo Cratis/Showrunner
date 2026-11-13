@@ -5,6 +5,8 @@ using Cratis.Choreography.Availability;
 using Cratis.Choreography.Availability.Audiences;
 using Cratis.Showrunner.GuestList;
 using Cratis.Showrunner.GuestList.Availability;
+using Cratis.Showrunner.GuestList.Availability.Declaration;
+using Cratis.Showrunner.GuestList.Contracts.Availability;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
@@ -40,6 +42,17 @@ public static class GuestListAvailabilityServiceCollectionExtensions
         services.TryAddSingleton<IUndeclaredAudienceObserver, LoggingUndeclaredAudienceObserver>();
         services.TryAddSingleton<GuestListAvailabilityMetrics>();
         services.AddHostedService<AudienceChangeWatcher>();
+
+        services.TryAddSingleton<IAvailabilityManifest>(new InMemoryAvailabilityManifest());
+        services.AddOptions<GuestListOptions>().PostConfigure<AvailabilityOptions>((guestList, engine) =>
+        {
+            if (guestList.Environment == EnvironmentName.NotSet && !string.IsNullOrWhiteSpace(engine.EnvironmentName))
+            {
+                guestList.Environment = engine.EnvironmentName;
+            }
+        });
+        services.TryAddSingleton<AvailabilityReporter>();
+        services.AddHostedService<AvailabilityReportingService>();
         return services;
     }
 

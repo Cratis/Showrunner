@@ -20,6 +20,7 @@ namespace Cratis.Showrunner.GuestList;
 /// <param name="client">The Chronicle client.</param>
 /// <param name="chronicle">The Chronicle client options, which name the product's event store.</param>
 /// <param name="subscriptions">Connects the product to the operator stores.</param>
+/// <param name="receipts">Tells the operator which decisions the product recorded.</param>
 /// <param name="options">GuestList's options.</param>
 /// <param name="time">The clock.</param>
 /// <param name="logger">The logger.</param>
@@ -27,6 +28,7 @@ public class GuestListWorker(
     IChronicleClient client,
     IOptions<ChronicleClientOptions> chronicle,
     GuestListSubscriptions subscriptions,
+    AudienceReceipts receipts,
     IOptions<GuestListOptions> options,
     TimeProvider time,
     ILogger<GuestListWorker> logger) : BackgroundService
@@ -40,6 +42,7 @@ public class GuestListWorker(
     {
         var eventStore = await client.GetEventStore(chronicle.Value.EventStore, EventStoreNamespaceName.Default).WaitAsync(cancellationToken);
         await subscriptions.Observe(eventStore);
+        await receipts.Observe(eventStore);
         await subscriptions.Subscribe(eventStore);
     }
 

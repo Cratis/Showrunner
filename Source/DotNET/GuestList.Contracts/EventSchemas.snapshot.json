@@ -74,5 +74,245 @@
       "audience"
     ],
     "title": "AudienceWithdrawn"
+  },
+  "AudienceDecisionReceived:1": {
+    "type": "object",
+    "properties": {
+      "product": {
+        "type": "string"
+      },
+      "environment": {
+        "type": "string"
+      },
+      "decision": {
+        "type": "integer",
+        "enum": [
+          0,
+          1
+        ],
+        "x-enumNames": [
+          "Granted",
+          "Withdrawn"
+        ]
+      },
+      "level": {
+        "type": "integer",
+        "enum": [
+          0,
+          1,
+          2
+        ],
+        "x-enumNames": [
+          "Tenant",
+          "User",
+          "System"
+        ]
+      },
+      "tenantId": {
+        "type": "string"
+      },
+      "userId": {
+        "type": "string"
+      },
+      "audience": {
+        "type": "string"
+      },
+      "decidedAt": {
+        "type": "string",
+        "format": "date-time-offset"
+      }
+    },
+    "required": [
+      "product",
+      "environment",
+      "decision",
+      "level",
+      "tenantId",
+      "userId",
+      "audience",
+      "decidedAt"
+    ],
+    "title": "AudienceDecisionReceived"
+  },
+  "AvailabilityDeclared:1": {
+    "type": "object",
+    "properties": {
+      "product": {
+        "type": "string"
+      },
+      "environment": {
+        "type": "string"
+      },
+      "version": {
+        "type": "string"
+      },
+      "origin": {
+        "type": "string"
+      },
+      "everyDeclaredAudienceGranted": {
+        "type": "boolean"
+      },
+      "audiences": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "source": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "description",
+            "source"
+          ],
+          "title": "AudienceDeclaration"
+        }
+      },
+      "availabilities": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "source": {
+              "type": "string"
+            },
+            "alternatives": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "audiences": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "conditions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "audiences",
+                  "conditions"
+                ],
+                "title": "AvailabilityAlternative"
+              }
+            }
+          },
+          "required": [
+            "name",
+            "description",
+            "source",
+            "alternatives"
+          ],
+          "title": "AvailabilityBlockDeclaration"
+        }
+      },
+      "gates": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "target": {
+              "type": "string"
+            },
+            "alternatives": {
+              "type": "array",
+              "items": {
+                "$ref": "#/properties/availabilities/items/properties/alternatives/items",
+                "title": "AvailabilityAlternative"
+              }
+            }
+          },
+          "required": [
+            "target",
+            "alternatives"
+          ],
+          "title": "GateDeclaration"
+        }
+      },
+      "contextValues": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string"
+            },
+            "origin": {
+              "type": "string"
+            },
+            "scope": {
+              "type": "string"
+            },
+            "required": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "name",
+            "type",
+            "origin",
+            "scope",
+            "required"
+          ],
+          "title": "ContextValueDeclaration"
+        }
+      },
+      "personas": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "audiences": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "name",
+            "audiences"
+          ],
+          "title": "PersonaDeclaration"
+        }
+      }
+    },
+    "required": [
+      "product",
+      "environment",
+      "version",
+      "origin",
+      "everyDeclaredAudienceGranted",
+      "audiences",
+      "availabilities",
+      "gates",
+      "contextValues",
+      "personas"
+    ],
+    "title": "AvailabilityDeclared"
   }
 }

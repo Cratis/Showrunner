@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Chronicle;
+using Cratis.Showrunner.GuestList.Contracts.Availability;
 
 namespace Cratis.Showrunner.GuestList;
 
@@ -44,4 +45,27 @@ public class GuestListOptions
     /// inbox. Everything it acts on is durable, so a round that fails is retried at the next one. Defaults to one minute.
     /// </summary>
     public TimeSpan PollingInterval { get; set; } = TimeSpan.FromMinutes(1);
+
+    /// <summary>
+    /// Gets or sets the name of the environment the product reports from, such as Production or Staging. It is told to the
+    /// operator with what the product declares and with every decision it received. Not set when the product does not name it.
+    /// </summary>
+    public EnvironmentName Environment { get; set; } = EnvironmentName.NotSet;
+
+    /// <summary>
+    /// Gets or sets the version the product reports its declaration under. When not set, it is the informational version
+    /// of the application's entry assembly.
+    /// </summary>
+    public ModelVersion Version { get; set; } = ModelVersion.NotSet;
+
+    /// <summary>
+    /// Gets or sets the audience of the operator the product reports to, when the operator listens for its own. When not
+    /// set, what the product reports is addressed to nobody in particular.
+    /// </summary>
+    public string? OperatorAudience { get; set; }
+
+    /// <summary>
+    /// Gets or sets how long to wait before reporting again after reporting failed, for instance while Chronicle is down.
+    /// </summary>
+    public TimeSpan RetryInterval { get; set; } = TimeSpan.FromSeconds(30);
 }

@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Showrunner.GuestList.Contracts.Availability;
+
 namespace Cratis.Showrunner.GuestList.Authoring;
 
 /// <summary>
@@ -20,6 +22,13 @@ public class GuestListAuthoringOptions
     /// Gets or sets, for each product, the audiences its application declares: what the operator knows of a product's model.
     /// It is what the undeclared grants report compares the grants of the product with. A product that is not in the
     /// dictionary has declared nothing the operator knows of, so nothing is reported as undeclared for it.
+    /// A declaration the product reported itself (<c>AvailabilityDeclared</c>) takes precedence over what is configured here,
+    /// which stays as the fallback for a product that has not reported.
     /// </summary>
     public IDictionary<Product, IEnumerable<AudienceName>> DeclaredAudiences { get; set; } = new Dictionary<Product, IEnumerable<AudienceName>>();
+
+    /// <summary>
+    /// Gets or sets the environment whose declaration counts when a product reports from more than one. Defaults to Production.
+    /// </summary>
+    public EnvironmentName PrimaryEnvironment { get; set; } = "Production";
 }

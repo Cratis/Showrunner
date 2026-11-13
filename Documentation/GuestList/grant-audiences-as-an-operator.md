@@ -21,7 +21,8 @@ builder.Services.AddGuestListAuthoring();
 | Option | Default | What it does |
 | --- | --- | --- |
 | `AddressToProducts` | `true` | Address each decision to its product with Chronicle's routing audience, so a product that subscribes for itself receives only its own |
-| `DeclaredAudiences` | empty | For each product, the audiences its application declares; used by the undeclared grants report |
+| `DeclaredAudiences` | empty | For each product, the audiences its application declares; used by the undeclared grants report when the product has not reported its own declaration |
+| `PrimaryEnvironment` | `Production` | The environment whose reported declaration counts when a product reports from more than one |
 
 ## Commands
 
@@ -41,7 +42,11 @@ await commands.Execute(new GrantAudience("ledger", AudienceLevel.User, "acme", "
 | Read model | Query | Returns |
 | --- | --- | --- |
 | `ProductGuestList` | `ForProduct(product)` | every grant held for the product, observable |
-| `UndeclaredAudienceGrant` | `ForProduct(product)` | the grants whose audience the product does not declare, observable; empty when no audiences are declared for the product |
+| `UndeclaredAudienceGrant` | `ForProduct(product)` | the grants whose audience the product does not declare, observable; empty when no audiences are declared for the product. What the product reported for the primary environment beats `DeclaredAudiences`, which stays as the fallback for a product that has not reported |
+| `ProductAvailability` | `ForProduct(product)` | what the product last declared in each environment it reports from, and what each report changed, observable |
+| `AudienceDelivery` | `ForProduct(product)` | for each environment, the newest decision the product told the operator it recorded, observable |
+
+The last two are built from what the product reports, see [Report what the model declares](./report-what-the-model-declares.md). Until a product reports, they hold nothing about it, and nothing is claimed.
 
 ## What is published
 

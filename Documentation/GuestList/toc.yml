@@ -6,6 +6,8 @@
   href: receive-audiences-in-a-product.md
 - name: Feed the availability engine
   href: feed-the-availability-engine.md
+- name: Report what the model declares
+  href: report-what-the-model-declares.md
 - name: Grant audiences as an operator
   href: grant-audiences-as-an-operator.md
 - name: Contracts

@@ -20,7 +20,7 @@ public class when_inspecting_their_origin : Specification
         .. typeof(AudienceGranted).Assembly.GetTypes().Where(type => Attribute.IsDefined(type, typeof(EventTypeAttribute))),
     ];
 
-    [Fact] void should_find_every_contract() => Assert.Equal(2, _eventTypes.Length);
+    [Fact] void should_find_every_contract() => Assert.Equal(4, _eventTypes.Length);
     [Fact] void should_not_declare_an_origin_store_on_the_assembly() => Assert.False(Attribute.IsDefined(typeof(AudienceGranted).Assembly, typeof(EventStoreAttribute)));
     [Fact] void should_not_declare_an_origin_store_on_any_contract() => Assert.DoesNotContain(_eventTypes, type => type.GetEventStoreName() is not null);
     [Fact] void should_declare_every_contract_public() => Assert.DoesNotContain(_eventTypes, type => !Attribute.IsDefined(type, typeof(PublicAttribute), false));

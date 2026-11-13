@@ -18,7 +18,7 @@
     <GlobalPackageReference Include="Cratis.Orleans" Version="1.27.2" Condition="'$(Configuration)' == 'Debug'" />
     <GlobalPackageReference Include="Cratis.Orleans.Storage.MongoDB" Version="1.27.2" Condition="'$(Configuration)' == 'Debug'" />
     <PackageVersion Include="MongoDB.Driver" Version="3.13.0" />
-    <PackageVersion Include="Cratis.Choreography" Version="2.7.0" />
+    <PackageVersion Include="Cratis.Choreography" Version="2.8.0" />
     <PackageVersion Include="Cratis.Chronicle" Version="19.155.0" />
     <PackageVersion Include="Cratis.Chronicle.Testing" Version="19.155.0" />
     <!-- Serves the integration specifications' web host in memory. -->

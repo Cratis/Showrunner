@@ -1,9 +1,11 @@
 ---
 title: GuestList contracts
-description: The public events an operator publishes to grant and withdraw an audience, the types they carry and how their schema is guarded.
+description: The public events an operator publishes to grant and withdraw an audience, the events a product publishes back to say what it declares and which decisions it recorded, the types they carry and how their schema is guarded.
 ---
 
 `Cratis.Showrunner.GuestList.Contracts` holds the events an operator and a product exchange. It has no behavior and depends only on Chronicle. The events are `[Public]` and name no origin store, because they are shared by operator stores whose names vary by deployment; the product subscribes to the operator stores explicitly, see [Receive audiences in a product](./receive-audiences-in-a-product.md).
+
+The operator publishes `AudienceGranted` and `AudienceWithdrawn`. The product publishes `AvailabilityDeclared` and `AudienceDecisionReceived` back, see [Product events](#product-events).
 
 ## Events
 
@@ -31,6 +33,41 @@ The meaning is the same for both events:
 
 The events carry no event source of their own. The operator appends them under the product's name, so all decisions of a product share one stream and arrive in the order they were taken.
 
+## Product events
+
+The product publishes these from its own outbox, under its own name, so all of them share the stream of the product's decisions. All types are in `Cratis.Showrunner.GuestList.Contracts.Availability`. Both events are generation 1 and additive: nothing that shipped before changes.
+
+| Event | Fields | Meaning |
+| --- | --- | --- |
+| `AvailabilityDeclared` | `Product`; `Environment: EnvironmentName`; `Version: ModelVersion`; `Origin`; `EveryDeclaredAudienceGranted`; `Audiences: AudienceDeclaration[]`; `Availabilities: AvailabilityBlockDeclaration[]`; `Gates: GateDeclaration[]`; `ContextValues: ContextValueDeclaration[]`; `Personas: PersonaDeclaration[]` | What the product's model declares, reported once per change |
+| `AudienceDecisionReceived` | `Product`; `Environment: EnvironmentName`; `Decision: AudienceDecision`; `Level: AudienceLevel`; `TenantId`; `UserId`; `Audience: AudienceName`; `DecidedAt` | The product recorded an operator decision |
+
+`AvailabilityDeclared` is data about the model, not about who holds what. Its parts:
+
+| Type | Fields |
+| --- | --- |
+| `AudienceDeclaration` | `Name: AudienceName`; `Description`; `Source` |
+| `AvailabilityBlockDeclaration` | `Name`; `Description`; `Source`; `Alternatives: AvailabilityAlternative[]` |
+| `GateDeclaration` | `Target`; `Alternatives: AvailabilityAlternative[]` |
+| `AvailabilityAlternative` | `Audiences: AudienceName[]` that must all be held; `Conditions: string[]` that must all hold, as the model wrote them |
+| `ContextValueDeclaration` | `Name`; `Type`; `Origin`; `Scope` as a dotted path, empty for the whole application; `Required` |
+| `PersonaDeclaration` | `Name`; `Audiences: AudienceName[]` |
+
+- A gate or a block opens when any one of its alternatives does, so the operator needs no expression evaluator. An alternative with no audiences and no conditions always opens.
+- Conditions are text. The operator shows them and never evaluates them; the product's own engine is the only evaluator.
+- Text the model does not give is an empty string, never null. Declarations are in a fixed order, so declaring the same things in another order is not a change.
+- `Version` is the product build's informational version. It is not part of what is compared, so a new build that declares the same is not reported again.
+- `EveryDeclaredAudienceGranted` is true when the environment grants every declared audience to everyone, whatever the operator decided. It is the engine's environment switch, which only a local or test environment may turn on.
+
+`AudienceDecisionReceived` is the one fact the operator cannot know for itself:
+
+- It is published once per decision the product recorded. A decision that is delivered again produces none, and neither does one the product ignored, for instance for a tenant it does not have, so that decision stays waiting.
+- `DecidedAt` is the operator decision's own occurred time. It is the only way to pair a receipt with the decision it answers.
+- `Decision` is `Granted = 0` or `Withdrawn = 1`. The `Level`, `TenantId` and `UserId` follow the same table as above.
+- It is not a heartbeat. Nothing is published while nothing is decided, and no event says the product is connected.
+
+How the product reports them is in [Report what the model declares](./report-what-the-model-declares.md).
+
 ## Shared types
 
 | Type | Shape |
@@ -40,6 +77,9 @@ The events carry no event source of their own. The operator appends them under t
 | `UserId` | Text; the user as the product's identity provider names them |
 | `AudienceName` | Text; starts with a letter, then letters, digits and underscores, up to 64 characters, case-sensitive |
 | `AudienceLevel` | `Tenant = 0`, `User = 1`, `System = 2` |
+| `EnvironmentName` | Text; the environment the product reports from, such as `Production`; empty when the product does not name it |
+| `ModelVersion` | Text; the product build's informational version |
+| `AudienceDecision` | `Granted = 0`, `Withdrawn = 1` |
 
 ## Audience is also a routing label
 

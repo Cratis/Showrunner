@@ -19,7 +19,7 @@ The two sides exchange public events from `Cratis.Showrunner.BoxOffice.Contracts
 
 `Cratis.Showrunner.BoxOffice` turns the received decisions into entitlements: the seats, modules and allowances a tenant may use. [Receiving and entitlements](./entitlements.md) explains how a decision reaches the tenant and becomes available to your application.
 
-Use those entitlements to [control module access](./gating.md), [assign seats](./seats.md) and [admit compute work](./compute-admission.md). When a tenant is suspended or its trial closes without seats, [read-only enforcement](./suspension.md) refuses commands while leaving queries available. Work outside the command pipeline needs an explicit access check.
+Use those entitlements to [control module access](./gating.md), [assign seats](./seats.md) and [admit compute work](./compute-admission.md). A product that evaluates availability with Cratis Choreography can also [read them in availability conditions](./entitlements-in-availability.md). When a tenant is suspended or its trial closes without seats, [read-only enforcement](./suspension.md) refuses commands while leaving queries available. Work outside the command pipeline needs an explicit access check.
 
 Your frontend can explain that access to the person using the product. `@cratis/showrunner.boxoffice` provides [generated TypeScript proxies](./frontend-proxies.md); `@cratis/showrunner.boxoffice.react` supplies [React components](./react.md) for entitlements, module filtering, trial and suspension banners, and seats, usage and plan pages. [Customer portal buttons](./portal.md) take the person to the operator to manage their subscription.
 

@@ -12,6 +12,8 @@
   href: suspension.md
 - name: Module gating
   href: gating.md
+- name: Entitlements in availability
+  href: entitlements-in-availability.md
 - name: Seat licensing
   href: seats.md
 - name: Frontend proxies

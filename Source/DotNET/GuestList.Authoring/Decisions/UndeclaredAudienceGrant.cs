@@ -5,6 +5,7 @@ using System.Reactive;
 using System.Reactive.Linq;
 using Cratis.Arc.Queries.ModelBound;
 using Cratis.Chronicle.ReadModels;
+using Cratis.Showrunner.GuestList.Authoring.Availability;
 using Microsoft.Extensions.Options;
 using ReactiveSubject = System.Reactive.Subjects.Subject;
 
@@ -35,9 +36,12 @@ public record UndeclaredAudienceGrant(AudienceLevel Level, TenantId TenantId, Us
     public static System.Reactive.Subjects.ISubject<IEnumerable<UndeclaredAudienceGrant>> ForProduct(Product product, IReadModels readModels, IOptions<GuestListAuthoringOptions> options)
     {
         var observed = readModels.Observe<ProductGuestList>(list => list.Product == product);
-        var report = observed.Select(lists => options.Value.DeclaredAudiences.TryGetValue(product, out var declared)
-            ? Among(lists.SelectMany(list => list.Grants), declared)
-            : []);
+        var reported = readModels.Observe<ProductAvailability>(availability => availability.Product == product);
+        var report = observed.CombineLatest(
+            reported,
+            (lists, availabilities) => DeclaredAudiencesOf.Product(product, availabilities, options.Value) is { } declared
+                ? Among(lists.SelectMany(list => list.Grants), declared)
+                : []);
         return ReactiveSubject.Create<IEnumerable<UndeclaredAudienceGrant>>(Observer.Create<IEnumerable<UndeclaredAudienceGrant>>(_ => { }, observed.OnError, observed.OnCompleted), report);
     }
 

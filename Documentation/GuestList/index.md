@@ -10,6 +10,7 @@ Nothing in GuestList depends on Direct. The operator side is a package any Arc a
 - [How GuestList works](./how-guestlist-works.md): the three levels, how the newest decision wins and what stays when the link is down.
 - [Receive audiences in a product](./receive-audiences-in-a-product.md): add the product side and read what it recorded.
 - [Feed the availability engine](./feed-the-availability-engine.md): hand the product's audiences to Choreography, reactive to change.
+- [Report what the model declares](./report-what-the-model-declares.md): tell the operator which audiences and gates the model declares and which decisions arrived.
 - [Grant audiences as an operator](./grant-audiences-as-an-operator.md): host the commands and the outbox, with or without Direct.
 - [Contracts](./contracts.md): the public events, their fields and the schema snapshot.
 

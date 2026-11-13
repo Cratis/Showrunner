@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>Cratis.Showrunner.BoxOffice.Product.Availability</AssemblyName>
+        <RootNamespace>Cratis.Showrunner.BoxOffice.Product.Availability</RootNamespace>
+        <PackageId>Cratis.Showrunner.BoxOffice.Product.Availability</PackageId>
+        <Description>Box Office Product availability — lets a Cratis Choreography availability gate read what Box Office entitles the tenant to, such as a module's level, whether the tenant is active and how many seats it has, as the host-provided context value entitlements.</Description>
+        <PackageTags>cratis;showrunner;boxoffice;entitlements;availability;choreography;modules;seats</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Cratis.Choreography" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../BoxOffice.Product/BoxOffice.Product.csproj" />
+    </ItemGroup>
+</Project>

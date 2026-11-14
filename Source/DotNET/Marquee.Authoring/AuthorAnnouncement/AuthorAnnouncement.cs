@@ -14,8 +14,8 @@ namespace Cratis.Showrunner.Marquee.Authoring.AuthorAnnouncement;
 /// <param name="AnnouncementId">The new announcement; create it with <c>AnnouncementId.New()</c>.</param>
 /// <param name="Product">The product the announcement is for.</param>
 /// <param name="Audience">Who it is for.</param>
-/// <param name="Title">Its title, up to 100 characters.</param>
-/// <param name="Body">What it says, up to 2,000 characters.</param>
+/// <param name="Title">Its title, up to 100 characters; it can use inline Markdown such as a link, emphasis or code.</param>
+/// <param name="Body">What it says, in Markdown, up to 2,000 characters; optional, empty when the title says it all.</param>
 /// <param name="Display">How it is shown; it cannot change afterwards.</param>
 /// <param name="Importance">How important it is.</param>
 /// <param name="ActiveFrom">When it starts to be shown; the default date means immediately.</param>
@@ -27,7 +27,7 @@ public record AuthorAnnouncement(
     Product Product,
     Audience Audience,
     AnnouncementTitle Title,
-    AnnouncementBody Body,
+    AnnouncementBody? Body,
     Display Display,
     Importance Importance,
     ActiveFrom ActiveFrom,
@@ -41,7 +41,7 @@ public record AuthorAnnouncement(
         Product,
         Audience,
         Title,
-        Body,
+        Body ?? AnnouncementBody.NotSet,
         Display,
         Importance,
         AnnouncementRules.StartOf(ActiveFrom),
@@ -63,7 +63,7 @@ public class AuthorAnnouncementValidator : CommandValidator<AuthorAnnouncement>
         RuleFor(c => (string)c.Product).NotEmpty().WithMessage("Say which product the announcement is for.");
         RuleFor(c => c.Audience).MustNameWhoItIsFor();
         RuleFor(c => (string)c.Title).MustBeTitled();
-        RuleFor(c => (string)c.Body).MustFit();
+        RuleFor(c => (string)c.Body!).MustFit().When(c => c.Body is not null);
         RuleFor(c => c).MustStartBeforeItEnds(c => c.ActiveFrom, c => c.ActiveUntil);
         RuleFor(c => c.Display).IsInEnum();
         RuleFor(c => c.Importance).IsInEnum();

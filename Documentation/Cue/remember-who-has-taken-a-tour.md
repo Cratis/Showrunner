@@ -1,6 +1,6 @@
 ---
 title: Remember who has taken a tour
-description: The Cue backend records the first time a person starts a guided tour as an event, exposes what they started as a query, and validates tour names against the application's list.
+description: The Cue backend records the first time a person starts a guided tour as an event, exposes started tours as a query and validates tour names against your list.
 ---
 
 A button that points at a tour should stop pointing once the person has taken it, on every device they use. `Cratis.Showrunner.Cue` records that and nothing more: it does not play tours and holds no script.

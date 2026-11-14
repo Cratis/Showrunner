@@ -1,6 +1,6 @@
 ---
 title: Event reference
-description: The event Cue records when a person starts a guided tour, what it carries and how it is kept as personal data.
+description: The TourStarted event Cue records when a person first starts a guided tour, the properties it carries and how it is kept as personal data in the event log.
 ---
 
 Cue appends one event.

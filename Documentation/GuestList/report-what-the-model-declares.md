@@ -1,6 +1,6 @@
 ---
 title: Report what the model declares
-description: Have a product tell its operator which audiences, blocks and gates its availability model declares and which decisions it recorded, and read both on the operator side.
+description: Have a product tell its operator which audiences, blocks and gates its availability model declares and which decisions it recorded, and read both.
 ---
 
 A product that evaluates availability with [Cratis Choreography](https://github.com/Cratis/Choreography) already knows what its model declares. This page makes it tell the operator, so the operator can show what can be granted, since when, and whether a decision has reached the product. Nothing is polled, nothing ticks and the operator never claims the product is connected: the product reports a change when there is one.

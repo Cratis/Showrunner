@@ -1,6 +1,6 @@
 ---
 title: Write a tour
-description: Describe a Cue guided tour as a script of sections, chapters and steps, with narration, camera, pointer and callouts, written chapters, and your own texts and stage guard.
+description: Describe a Cue guided tour as a script of sections, chapters and steps with narration, camera, pointer, callouts, written chapters and custom texts.
 ---
 
 A tour is an array of `TourSection`, and everything the player does follows from it. The script is plain data, so it can live next to the surface it tours, be type-checked and be specified.

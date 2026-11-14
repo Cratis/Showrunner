@@ -1,6 +1,6 @@
 ---
 title: Payments
-description: Take payments in an application through a provider-neutral contract - customers, first payments, recurring charges, subscriptions and refunds - with Mollie as the first provider and one webhook that always reads the payment back.
+description: Take payments through a provider-neutral contract for customers, first and recurring payments, subscriptions and refunds, with Mollie first and one webhook.
 ---
 
 `Cratis.Showrunner.Payments` is the contract an application takes payments through. It names what an application asks of a payment provider and what it hears back, and says nothing about any one provider. `Cratis.Showrunner.Payments.Mollie` implements it against [Mollie](https://www.mollie.com/), including the webhook Mollie calls when a payment changes.

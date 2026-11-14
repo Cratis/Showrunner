@@ -2,9 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Chronicle;
-using Cratis.Chronicle.Events;
 using Cratis.Showrunner.BoxOffice.Offering;
-using Cratis.Showrunner.BoxOffice.Tenancy;
 
 namespace Cratis.Showrunner.BoxOffice.Product.Direct;
 

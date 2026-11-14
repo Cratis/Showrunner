@@ -35,7 +35,7 @@ public class GuestListAudienceSource(IGuestList guestList, AudienceChangeFeed ch
 {
     /// <inheritdoc/>
     public ValueTask<IReadOnlyCollection<AudienceGrant>> GetGrants(AudienceSubject subject, CancellationToken cancellationToken = default) =>
-        GetGrants(subject, SystemClientId.NotSet, cancellationToken);
+        GetGrants(subject, ClientOf(subject), cancellationToken);
 
     /// <summary>
     /// Gets the grants that apply to a request made by a system that names its client id: the audiences granted to every
@@ -69,6 +69,9 @@ public class GuestListAudienceSource(IGuestList guestList, AudienceChangeFeed ch
 
     /// <inheritdoc/>
     public IDisposable OnChanged(Func<AudienceChange, ValueTask> handler) => changes.Subscribe(handler);
+
+    static SystemClientId ClientOf(AudienceSubject subject) =>
+        subject.IsSystem && !string.IsNullOrWhiteSpace(subject.SystemClientId) ? new SystemClientId(subject.SystemClientId) : SystemClientId.NotSet;
 
     static IEnumerable<AudienceGrant> Tag(IEnumerable<ShowrunnerAudience> audiences, ChoreographyLevel level) =>
         audiences.Select(audience => new AudienceGrant(new ChoreographyAudience(audience.Value), level));

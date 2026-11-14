@@ -9,7 +9,7 @@ A button that points at a tour should stop pointing once the person has taken it
 
 `StartTour` is the command the application calls when a person starts a tour. It appends `TourStarted` under the person's own event source, once. Starting the same tour again appends nothing, so how often a person watches a tour changes nothing about whether they have seen it. Someone who is not signed in has nothing to remember, and the command is refused.
 
-`StartedTour.ByMe` is the query that gives the tours the signed-in person has started. The frontend reads it through `useCueTours` and `useTourNudge`, and answers `hasStarted` from the person's own history and from what they started on this device a moment ago, since a query follows the event log and may not have caught up yet.
+`StartedTour.ByMe` is an observable query that gives the tours the signed-in person has started, and gives them again whenever they start another. The frontend reads it through `useCueTours` and `useTourNudge`, so a tour taken on one device stops being pointed at on the others without a reload. `hasStarted` answers from the person's own history and from what they started on this device a moment ago, since a query follows the event log and may not have caught up yet.
 
 ## Configure the tours
 

@@ -36,4 +36,4 @@ A tour can also carry a written version of each chapter, as Markdown, keyed by c
 
 ## Who has taken a tour
 
-The backend records the first time each person starts a tour as an event under their own identity, so it holds on every device. The `useTourNudge` hook turns that into a pointer that says "start here" until the person has started the tour, and `StartTour` records the start. Starting a tour twice changes nothing. See [Remember who has taken a tour](./remember-who-has-taken-a-tour.md).
+The backend records the first time each person starts a tour as an event under their own identity, so it holds on every device, and an observable query tells every open page of theirs when one is added. The `useTourNudge` hook turns that into a pointer that says "start here" until the person has started the tour, and `StartTour` records the start. Starting a tour twice changes nothing. See [Remember who has taken a tour](./remember-who-has-taken-a-tour.md).

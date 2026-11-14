@@ -17,7 +17,7 @@ describe('when deciding whether to point at a tour', () => {
         started = [];
         isReady = true;
         executed = [];
-        query = sinon.stub(ByMe, 'use').callsFake((() => [{ data: started, isReady }, () => { /* no query */ }, () => { /* no sorting */ }]) as never);
+        query = sinon.stub(ByMe, 'use').callsFake((() => [{ data: started, isReady }, () => { /* no sorting */ }]) as never);
         execute = sinon.stub(StartTour.prototype, 'execute').callsFake(function (this: StartTour) {
             executed.push(this.tour);
             return Promise.resolve({ isSuccess: true } as never);

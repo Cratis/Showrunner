@@ -79,7 +79,7 @@ Choose the backend packages for the part you are hosting, then add its TypeScrip
 | `Cratis.Showrunner.Notes.Collecting` | NuGet | Notes' receiving side for the builder of an application — reads the applications' notes into the tenant's namespace and answers them |
 | `@cratis/showrunner.boxoffice` | npm | Generated TypeScript proxies for the product's licensing frontend |
 | `@cratis/showrunner.boxoffice.react` | npm | React components for entitlements, module filtering, trials, suspension, seats, usage and plans |
-| `@cratis/showrunner.cue` | npm | Generated TypeScript proxies for Cue's command and query |
+| `@cratis/showrunner.cue` | npm | Generated TypeScript proxies for Cue's command and observable query |
 | `@cratis/showrunner.cue.react` | npm | The Cue guided-tour player for React: the script types, the overlay, the pointer, the voice-over contract and the hooks that connect a tour to the backend, built on `@cratis/arc.react` and `@cratis/components` |
 | `@cratis/showrunner.marquee` | npm | Generated TypeScript proxies for Marquee's receiving commands and queries |
 | `@cratis/showrunner.marquee.authoring` | npm | Generated TypeScript proxies for Marquee's authoring commands and query |

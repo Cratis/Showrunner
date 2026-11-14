@@ -42,6 +42,10 @@ Registrations you made earlier win. A model that declares its own audiences, for
 
 A system grant applies to every tenant, as it does everywhere in GuestList, so it is part of every answer. Withdrawing a grant removes it at its own level only: an audience granted to the tenant and to one user stays with the user when the tenant's grant is withdrawn.
 
+### A named system
+
+`AudienceSubject` carries no client id yet, so `IAudienceSource.GetGrants(subject)` answers a system caller with the grants of every system only. A host that knows the client id of the calling system calls `GuestListAudienceSource.GetGrants(subject, clientId)`, which adds the grants of that system, tagged `System` like the others, and never another system's. A caller that names no client id gets the grants of every system only, so a missing client id never opens a gate that a named grant would open.
+
 Nothing is asked of the operator. The answer is what the product recorded, so while the link to the operator is down the last known state stays in force.
 
 ## Undeclared audiences

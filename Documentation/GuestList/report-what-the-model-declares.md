@@ -29,6 +29,20 @@ The reporter reads `IAvailabilityManifest`, the description of the model that Ch
 
 `EveryDeclaredAudienceGranted` is taken from the engine's `GrantAllDeclaredAudiences` switch, so the operator can say that an environment grants everything whatever it decided.
 
+### Report the systems that call the product
+
+An operator grants an audience to one system by its client id, so the operator has to know which systems there are. Tell the product's `IKnownSystems` about them. The default, `InMemoryKnownSystems`, knows none until you give it some; register your own `IKnownSystems` to read them from wherever your product keeps its client registrations:
+
+```csharp
+var systems = new InMemoryKnownSystems();
+systems.Set([
+    new SystemDeclaration("crm-sync", SystemKind.Api, "CRM sync"),
+    new SystemDeclaration("reports-assistant", SystemKind.Mcp, "Reports assistant")]);
+services.AddSingleton<IKnownSystems>(systems);
+```
+
+The reporting service appends `SystemsDeclared` with the whole list when it starts, once per change, and reads what was last reported from the outbox, as it does for the declaration. A product that knows no systems and never reported any publishes nothing; one that stops knowing systems it reported publishes the empty list. The operator reads them as `ProductSystems`.
+
 ### Tell the operator which decisions arrived
 
 For every decision the product records, it appends one `AudienceDecisionReceived` with `DecidedAt` set to when the operator decided. It follows what the product recorded, so a decision that is delivered again, or one the product ignored such as one for a tenant it does not have, produces no receipt and stays waiting. This part is in `Cratis.Showrunner.GuestList` itself and needs no Choreography.

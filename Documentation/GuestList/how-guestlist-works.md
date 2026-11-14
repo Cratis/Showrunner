@@ -23,8 +23,9 @@ GrantAudience / WithdrawAudience
 | Tenant | the tenant's own namespace, stream `tenant` | everyone in that tenant |
 | User | the user's tenant namespace, stream `user:<id>` | one user of that tenant |
 | System | the product's default namespace, stream `system` | the system and every tenant: automation and callers that are not a person |
+| Named system | the product's default namespace, stream `system:<client id>` | one system, identified by its client id, and every tenant it works for; it adds to what every system holds |
 
-The audiences of a request are the three added together: its tenant's, its user's and the system's. A grant and a withdrawal touch one level. If `Plus` is granted to the tenant and to one user, withdrawing it from the tenant leaves that user in it.
+A request made by a named system gets what every system holds plus its own, never another system's. The audiences of a request are the three added together: its tenant's, its user's and the system's. A grant and a withdrawal touch one level. If `Plus` is granted to the tenant and to one user, withdrawing it from the tenant leaves that user in it.
 
 ## The newest decision wins
 

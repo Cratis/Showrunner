@@ -375,6 +375,44 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@cratis/showrunner.cue.react@workspace:Source/JavaScript/Cue.React":
+  version: 0.0.0-use.local
+  resolution: "@cratis/showrunner.cue.react@workspace:Source/JavaScript/Cue.React"
+  dependencies:
+    "@cratis/arc": "npm:22.185.1"
+    "@cratis/arc.react": "npm:22.185.1"
+    "@cratis/components": "npm:4.38.0"
+    "@cratis/fundamentals": "npm:7.34.0"
+    "@cratis/showrunner.cue": "npm:1.0.0"
+    "@storybook/react-vite": "npm:^10.5.10"
+    react: "npm:^19.3.1"
+    react-dom: "npm:^19.3.1"
+    react-markdown: "npm:10.1.0"
+    reflect-metadata: "npm:0.2.2"
+    storybook: "npm:^10.5.10"
+  peerDependencies:
+    "@cratis/arc": ^22.185.1
+    "@cratis/arc.react": ^22.185.1
+    "@cratis/components": ^4.38.0
+    "@cratis/fundamentals": ^7.34.0
+    react: ^19.0.0
+  languageName: unknown
+  linkType: soft
+
+"@cratis/showrunner.cue@npm:1.0.0, @cratis/showrunner.cue@workspace:Source/JavaScript/Cue":
+  version: 0.0.0-use.local
+  resolution: "@cratis/showrunner.cue@workspace:Source/JavaScript/Cue"
+  dependencies:
+    "@cratis/arc": "npm:22.185.1"
+    "@cratis/arc.react": "npm:22.185.1"
+    "@cratis/fundamentals": "npm:7.34.0"
+  peerDependencies:
+    "@cratis/arc": ^22.185.1
+    "@cratis/arc.react": ^22.185.1
+    "@cratis/fundamentals": ^7.34.0
+  languageName: unknown
+  linkType: soft
+
 "@cratis/showrunner.marquee.authoring@workspace:Source/JavaScript/Marquee.Authoring":
   version: 0.0.0-use.local
   resolution: "@cratis/showrunner.marquee.authoring@workspace:Source/JavaScript/Marquee.Authoring"

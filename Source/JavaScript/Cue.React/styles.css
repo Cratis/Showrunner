@@ -1,0 +1,485 @@
+/* Copyright (c) Cratis. All rights reserved.
+   Licensed under the MIT license. See LICENSE file in the project root for full license information. */
+
+/*
+ * The styles of the Cue components. Import once, after the Cratis Components stylesheets:
+ *   @import '@cratis/showrunner.cue.react/styles';
+ * Every color comes from the --cratis-* tokens, so the Cratis Components theme and dark mode apply. The tour's layer
+ * sits below the application's own top bar by --cue-viewport-top (0 unless the application sets it) and above the
+ * application at --cue-z-index (9999 unless it sets another).
+ */
+
+/* TourOverlayShell */
+
+/* The layer fills the viewport below --cue-viewport-top, and sits above the application at --cue-z-index. */
+.cue-overlay {
+    position: fixed;
+    inset: 0;
+    top: var(--cue-viewport-top, 0px);
+    z-index: var(--cue-z-index, 9999);
+    background: var(--cratis-surface-ground);
+}
+
+/* TourChapterList */
+
+.cue-chapters {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    bottom: 7.5rem;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    width: 19rem;
+    padding: 1rem;
+    border: 1px solid var(--cratis-surface-border);
+    border-radius: 0.75rem;
+    background: color-mix(in srgb, var(--cratis-surface-card) 88%, transparent);
+    backdrop-filter: blur(8px);
+    overflow: hidden;
+}
+
+.cue-chapters__heading {
+    margin: 0 0 0.75rem;
+    color: var(--cratis-text-color-secondary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.cue-chapters__sections {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    overflow-y: auto;
+}
+
+.cue-chapters__section-title {
+    margin: 0 0 0.35rem;
+    padding: 0 0.6rem;
+    color: var(--cratis-primary-color);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.cue-chapters__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.cue-chapters__item {
+    display: flex;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 0.5rem 0.6rem;
+    border: none;
+    border-radius: 0.5rem;
+    background: transparent;
+    color: var(--cratis-text-color);
+    text-align: left;
+    cursor: pointer;
+}
+
+.cue-chapters__item:hover {
+    background: var(--cratis-surface-hover);
+}
+
+.cue-chapters__item--current {
+    background: var(--cratis-highlight-bg);
+}
+
+.cue-chapters__time {
+    flex: 0 0 auto;
+    padding-top: 0.05rem;
+    color: var(--cratis-text-color-secondary);
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.cue-chapters__text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+}
+
+.cue-chapters__title {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.cue-chapters__summary {
+    color: var(--cratis-text-color-secondary);
+    font-size: 0.78rem;
+    line-height: 1.3;
+}
+
+/* TourSubtitles */
+
+.cue-subtitles {
+    position: absolute;
+    bottom: 5.5rem;
+    left: 50%;
+    z-index: 40;
+    transform: translateX(-50%);
+    max-width: min(46rem, calc(100% - 24rem));
+    padding: 0.65rem 1.1rem;
+    border-radius: 0.6rem;
+    background: color-mix(in srgb, var(--cratis-surface-card) 78%, transparent);
+    pointer-events: none;
+}
+
+.cue-subtitles__line {
+    margin: 0;
+    color: var(--cratis-surface-0);
+    font-size: 1.05rem;
+    line-height: 1.45;
+    text-align: center;
+    text-wrap: balance;
+}
+
+/* TourTimelineBar */
+
+.cue-transport {
+    position: absolute;
+    right: 1rem;
+    bottom: 1rem;
+    left: 1rem;
+    z-index: 40;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.6rem 1rem;
+    border: 1px solid var(--cratis-surface-border);
+    border-radius: 0.75rem;
+    background: color-mix(in srgb, var(--cratis-surface-card) 88%, transparent);
+    backdrop-filter: blur(8px);
+}
+
+.cue-transport__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--cratis-text-color);
+    cursor: pointer;
+}
+
+.cue-transport__button:hover:not(:disabled) {
+    background: var(--cratis-surface-hover);
+}
+
+.cue-transport__button:disabled {
+    cursor: default;
+    opacity: 0.4;
+}
+
+.cue-transport__button--primary {
+    background: var(--cratis-primary-color);
+    color: var(--cratis-primary-color-text);
+}
+
+.cue-transport__button--primary:hover:not(:disabled) {
+    background: var(--cratis-primary-color);
+    filter: brightness(1.1);
+}
+
+.cue-transport__button--off {
+    color: var(--cratis-text-color-secondary);
+}
+
+/* The self-paced switch while reading — held on, the way an active tool presents itself. */
+.cue-transport__button--active {
+    background: var(--cratis-highlight-bg);
+    color: var(--cratis-primary-color);
+}
+
+/* Reading self-paced: the clock and its track are informational at best, so they recede along with the
+   disabled media buttons; chapter skipping keeps its full presence as the way to move through the tour. */
+.cue-transport--self-paced .cue-transport__track,
+.cue-transport--self-paced .cue-transport__time {
+    opacity: 0.4;
+}
+
+/* The voice-over failed and the tour is carrying on with subtitles — a quiet heads-up on the switch that
+   retries it, not an alarm. */
+.cue-transport__button--warning {
+    color: var(--cratis-orange-500);
+}
+
+.cue-transport__time {
+    color: var(--cratis-text-color-secondary);
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.cue-transport__track {
+    position: relative;
+    flex: 1 1 auto;
+    height: 0.35rem;
+    border-radius: 0.2rem;
+    background: var(--cratis-surface-border);
+}
+
+.cue-transport__elapsed {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    border-radius: 0.2rem;
+    background: var(--cratis-primary-color);
+    pointer-events: none;
+}
+
+/* The real input carries the interaction and keyboard support; the bar above is what is actually seen. */
+.cue-transport__scrubber {
+    position: absolute;
+    top: -0.6rem;
+    left: 0;
+    width: 100%;
+    height: 1.5rem;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+/* TourSelfPacedPanel */
+
+/* Docked to the left of the chapter list: its 19rem width plus its 1rem inset and a 1.5rem gap. Same visual
+   language as the list and the transport, so the three read as one set of chrome. */
+.cue-self-paced {
+    position: absolute;
+    top: 1rem;
+    right: 21.5rem;
+    bottom: 7.5rem;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    width: min(34rem, calc(100vw - 26rem));
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--cratis-surface-border);
+    border-radius: 0.75rem;
+    background: color-mix(in srgb, var(--cratis-surface-card) 92%, transparent);
+    backdrop-filter: blur(8px);
+    overflow: hidden;
+}
+
+.cue-self-paced__title {
+    margin: 0 0 0.75rem;
+    color: var(--cratis-text-color);
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+.cue-self-paced__content {
+    min-height: 0;
+    overflow-y: auto;
+}
+
+/* The chapter's text sits on the panel's translucent card, at the chrome's slightly smaller type size. */
+.cue-markdown {
+    color: var(--cratis-text-color);
+    font-size: 0.9rem;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}
+
+.cue-markdown h2,
+.cue-markdown h3 {
+    margin: 1.25rem 0 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.cue-markdown p,
+.cue-markdown ul,
+.cue-markdown ol {
+    margin: 0 0 0.75rem;
+}
+
+.cue-markdown ul,
+.cue-markdown ol {
+    padding-left: 1.25rem;
+}
+
+.cue-markdown a {
+    color: var(--cratis-primary-color);
+}
+
+.cue-markdown code {
+    padding: 0.1rem 0.3rem;
+    border-radius: 0.25rem;
+    background: var(--cratis-surface-hover);
+    font-size: 0.85em;
+}
+
+.cue-markdown pre {
+    margin: 0 0 0.75rem;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    background: var(--cratis-surface-ground);
+    overflow-x: auto;
+}
+
+.cue-markdown pre code {
+    padding: 0;
+    background: transparent;
+}
+
+.cue-markdown img {
+    max-width: 100%;
+    border: 1px solid var(--cratis-surface-border);
+    border-radius: 0.5rem;
+}
+
+/* TourCalloutBubble */
+
+.cue-callout {
+    pointer-events: none;
+    z-index: 29;
+}
+
+.cue-callout__bubble {
+    position: relative;
+    transform: translate(-50%, -100%);
+    max-width: 18rem;
+    padding: 0.5rem 0.85rem;
+    border: 1px solid var(--cratis-primary-color);
+    border-radius: 0.6rem;
+    background: var(--cratis-surface-card);
+    color: var(--cratis-text-color);
+    font-size: 0.9rem;
+    line-height: 1.3;
+    white-space: normal;
+    box-shadow: 0 6px 18px rgb(0 0 0 / 35%);
+    animation: cue-callout-appear 320ms ease-out;
+}
+
+.cue-callout__bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -0.4rem;
+    left: 50%;
+    width: 0.7rem;
+    height: 0.7rem;
+    transform: translateX(-50%) rotate(45deg);
+    border-right: 1px solid var(--cratis-primary-color);
+    border-bottom: 1px solid var(--cratis-primary-color);
+    background: var(--cratis-surface-card);
+}
+
+@keyframes cue-callout-appear {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, calc(-100% + 0.5rem));
+    }
+
+    100% {
+        opacity: 1;
+        transform: translate(-50%, -100%);
+    }
+}
+
+/* TourPointer */
+
+/* The travel between the places the cursor stops is eased in the anchor's own per-frame writes rather than
+   by a CSS transition — a transition on `transform` would fight the anchor, which writes the same property
+   every frame. Only the press scale below animates through CSS. */
+.cue-pointer {
+    pointer-events: none;
+    z-index: 30;
+}
+
+/* The press zooms the cursor down toward its own tip and springs back with a slight overshoot — both on
+   deliberate bezier curves so the click reads as a gesture, not a snap. The transform origin is the arrow's
+   tip, which is the exact point the anchor pins, so pressing never shifts what is being pressed. */
+.cue-pointer__cursor {
+    position: relative;
+    width: 20px;
+    height: 24px;
+    transform-origin: 2px 2px;
+    transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.cue-pointer__cursor--pressing {
+    transform: scale(0.78);
+    transition: transform 160ms cubic-bezier(0.16, 0.84, 0.3, 1);
+}
+
+/* The cursor drawing, offset so the SVG's arrow tip lands exactly on the anchored point. The white fill and
+   black outline are intentionally theme-independent — that is what makes a cursor readable on any background,
+   in either theme. */
+.cue-pointer__arrow {
+    position: absolute;
+    top: -1px;
+    left: -1.5px;
+    display: block;
+    filter: drop-shadow(0 1px 2px rgb(0 0 0 / 45%));
+}
+
+.cue-pointer__arrow svg {
+    display: block;
+}
+
+/* The press ripple, centered on the arrow's tip — the point being clicked. */
+.cue-pointer__ripple {
+    position: absolute;
+    top: -1.2rem;
+    left: -1.2rem;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 50%;
+    background: var(--cratis-primary-color);
+    opacity: 0;
+}
+
+.cue-pointer__cursor--pressing .cue-pointer__ripple {
+    animation: cue-pointer-press 520ms ease-out;
+}
+
+@keyframes cue-pointer-press {
+    0% {
+        opacity: 0.55;
+        transform: scale(0.35);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(1.4);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cue-pointer__cursor {
+        transition: none;
+    }
+
+    .cue-pointer__cursor--pressing .cue-pointer__ripple {
+        animation: none;
+    }
+}
+
+/* CueStageBoundary */
+
+.cue-stage-failed {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    transform: translate(-50%, -50%);
+    color: var(--cratis-text-color);
+}

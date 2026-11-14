@@ -44,7 +44,7 @@ A system grant applies to every tenant, as it does everywhere in GuestList, so i
 
 ### A named system
 
-`AudienceSubject` carries no client id yet, so `IAudienceSource.GetGrants(subject)` answers a system caller with the grants of every system only. A host that knows the client id of the calling system calls `GuestListAudienceSource.GetGrants(subject, clientId)`, which adds the grants of that system, tagged `System` like the others, and never another system's. A caller that names no client id gets the grants of every system only, so a missing client id never opens a gate that a named grant would open.
+`AudienceSubject` carries the client id of the calling system in `SystemClientId`, so the engine needs nothing more than the subject: `IAudienceSource.GetGrants(subject)` answers a system caller that names a client id with the grants of every system and the grants of that system, tagged `System` like the others, and never another system's. A caller that names no client id, or one the product holds nothing for, gets the grants of every system only, so a missing or unknown client id never opens a gate that a named grant would open. A subject that is not a system caller never gets a system's own grants, whatever client id it carries. This needs `Cratis.Choreography` 2.9.0 or later.
 
 Nothing is asked of the operator. The answer is what the product recorded, so while the link to the operator is down the last known state stays in force.
 

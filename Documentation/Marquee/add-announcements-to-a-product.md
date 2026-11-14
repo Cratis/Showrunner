@@ -72,7 +72,7 @@ That is all. The banners sit at the top of the page, above everything the shell 
 
 Author an announcement for `ledger` and:
 
-- A **banner** appears at the top within moments. It has no close button; it goes away when it is withdrawn or its window ends.
+- A **banner** appears at the top within moments. It shows the title, which can have a link. When the announcement has a message, a button at the end of the row expands it inline, and hovering or focusing the button shows it in a tooltip; without a message there is no button. It has no close button; it goes away when it is withdrawn or its window ends, and an announcement authored without an end stays until it is withdrawn.
 - A **dialog** opens, the most important first. Its button says *Got it*, or *Next* while more follow.
 - Close a `DialogOnce` and it is gone for that person on every device; close a `DialogEverySession` and it returns in the next session.
 - An announcement scheduled for later appears by itself within a minute of its start.
@@ -92,6 +92,8 @@ export const LocalizedMarquee = () => (
             acknowledge: 'Forstått',
             next: 'Neste',
             close: 'Lukk',
+            expand: 'Vis meldingen',
+            collapse: 'Skjul meldingen',
             information: 'Informasjon',
             warning: 'Advarsel',
             critical: 'Kritisk'
@@ -106,6 +108,7 @@ Labels you leave out stay English.
 - The banner region is a polite live region, named by `labels.banners`, and is always in the page, so a banner that arrives is announced.
 - A dialog is the Cratis Components dialog: it keeps focus inside until it is closed and closes with Escape. Focus lands on the title, not on the button, so the Enter or Space that was being pressed when the dialog opened does not close it unread.
 - The importance icon is named, so a screen reader hears *Warning* with the title.
+- The button that expands a banner's message is a real button named by `labels.expand` or `labels.collapse`, says whether it is expanded with `aria-expanded`, points at the message with `aria-controls` and is described by its tooltip, which a keyboard user also gets on focus and can dismiss with Escape.
 
 ## Next
 

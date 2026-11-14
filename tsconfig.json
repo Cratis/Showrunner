@@ -54,6 +54,12 @@
             "path": "./Source/JavaScript/BoxOffice.React"
         },
         {
+            "path": "./Source/JavaScript/Cue"
+        },
+        {
+            "path": "./Source/JavaScript/Cue.React"
+        },
+        {
             "path": "./Source/JavaScript/Marquee"
         },
         {

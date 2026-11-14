@@ -14,19 +14,34 @@ export interface AnnouncementSelection {
     dialogs: AnnouncementForMe[];
 }
 
+// Both ends of the window are optional. The backend sends the earliest date for an announcement that starts
+// immediately and the latest for one that never ends; a date that is missing or not a date is read the same way.
+const startOf = (announcement: AnnouncementForMe): number => {
+    const time = announcement.activeFrom?.getTime();
+    return time === undefined || Number.isNaN(time) ? Number.NEGATIVE_INFINITY : time;
+};
+
+const endOf = (announcement: AnnouncementForMe): number => {
+    const time = announcement.activeUntil?.getTime();
+    return time === undefined || Number.isNaN(time) ? Number.POSITIVE_INFINITY : time;
+};
+
+const compareTimes = (first: number, second: number): number => first === second ? 0 : first < second ? -1 : 1;
+
 /**
  * Whether an announcement is inside its window at a moment. The window starts at `activeFrom` and ends just before
- * `activeUntil`, so an announcement that ends at 18:00 is gone at 18:00.
+ * `activeUntil`, so an announcement that ends at 18:00 is gone at 18:00. An announcement without a start is shown from
+ * the beginning, and one without an end is shown until it is withdrawn: it is permanent.
  * @param announcement The announcement.
  * @param now The moment.
  * @returns True when it is to be shown.
  */
 export const isActiveAt = (announcement: AnnouncementForMe, now: Date): boolean =>
-    announcement.activeFrom.getTime() <= now.getTime() && now.getTime() < announcement.activeUntil.getTime();
+    startOf(announcement) <= now.getTime() && now.getTime() < endOf(announcement);
 
 const byImportanceThenWindow = (first: AnnouncementForMe, second: AnnouncementForMe): number =>
     (second.importance - first.importance)
-    || (first.activeFrom.getTime() - second.activeFrom.getTime())
+    || compareTimes(startOf(first), startOf(second))
     || first.id.toString().localeCompare(second.id.toString());
 
 /**

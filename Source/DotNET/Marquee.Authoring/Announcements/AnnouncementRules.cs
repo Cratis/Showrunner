@@ -49,7 +49,7 @@ static class AnnouncementRules
             .MaximumLength(AnnouncementLimits.TitleLength).WithMessage($"Keep the title within {AnnouncementLimits.TitleLength} characters.");
 
     /// <summary>
-    /// Requires an announcement's body to fit.
+    /// Requires an announcement's body to fit. The body is optional, so an empty one is accepted.
     /// </summary>
     /// <typeparam name="T">The command type.</typeparam>
     /// <param name="rule">The rule builder for the command's body.</param>

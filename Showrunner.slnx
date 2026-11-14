@@ -10,6 +10,7 @@
     <Project Path="Source/DotNET/GuestList/GuestList.csproj" />
     <Project Path="Source/DotNET/GuestList.Availability/GuestList.Availability.csproj" />
     <Project Path="Source/DotNET/GuestList.Authoring/GuestList.Authoring.csproj" />
+    <Project Path="Source/DotNET/Cue/Cue.csproj" />
     <Project Path="Source/DotNET/Herald.Contracts/Herald.Contracts.csproj" />
     <Project Path="Source/DotNET/Herald/Herald.csproj" />
     <Project Path="Source/DotNET/Payments.Mollie/Payments.Mollie.csproj" />

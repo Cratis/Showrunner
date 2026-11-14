@@ -72,7 +72,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      # This job's Debug build (no CratisProxiesSkip) is the single build that regenerates the TypeScript proxies into Source/JavaScript/Usher, BoxOffice, Marquee and Marquee.Authoring, and the drift check below verifies them; the
+      # This job's Debug build (no CratisProxiesSkip) is the single build that regenerates the TypeScript proxies into Source/JavaScript/Usher, BoxOffice, Cue, Marquee and Marquee.Authoring, and the drift check below verifies them; the
       # frontend gate needs them present on disk (they are committed, but a PR that changes backend
       # contracts without rebuilding would otherwise pass a stale proxy through lint/tsc).
       - name: Setup .NET
@@ -99,7 +99,7 @@ jobs:
           # Each backend project generates into its own npm package. The generator writes its state file when
           # it runs; without it a clean tree would prove nothing.
           failed=0
-          for pair in Usher:Usher BoxOffice:BoxOffice Marquee:Marquee Marquee.Authoring:Marquee.Authoring; do
+          for pair in Usher:Usher BoxOffice:BoxOffice Cue:Cue Marquee:Marquee Marquee.Authoring:Marquee.Authoring; do
             project="${pair%%:*}"
             package="${pair##*:}"
             if [ ! -f "Source/DotNET/$project/obj/Debug/net10.0/cratis-proxies.state.json" ]; then

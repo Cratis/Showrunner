@@ -33,9 +33,9 @@
 
 .marquee-banner__item {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
+    gap: 0.4rem;
     padding: 0.6rem 1.25rem;
     background-color: color-mix(in srgb, var(--cratis-primary-color, #3b82f6) 16%, var(--cratis-surface-card, canvas));
     border-bottom: 1px solid var(--cratis-surface-border, currentColor);
@@ -56,20 +56,114 @@
     font-size: 1.1rem;
 }
 
-.marquee-banner__text {
+.marquee-banner__row {
     display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0.5rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
     min-width: 0;
 }
 
 .marquee-banner__title {
     font-weight: 600;
+    min-width: 0;
 }
 
-.marquee-banner__body {
+/* The message shown inline when the banner is expanded. */
+
+.marquee-banner__message {
+    max-width: 60rem;
     color: var(--cratis-text-color-secondary, inherit);
+}
+
+.marquee-banner__message[hidden] {
+    display: none;
+}
+
+/* The button that expands the message, and the tooltip that shows it on hover and focus. */
+
+.marquee-banner__more {
+    position: relative;
+    display: inline-flex;
+}
+
+.marquee-banner__toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+    font-size: 1.25rem;
+    cursor: pointer;
+}
+
+.marquee-banner__toggle:hover {
+    background-color: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.marquee-banner__toggle:focus-visible {
+    outline: 2px solid var(--cratis-primary-color, currentColor);
+    outline-offset: 2px;
+}
+
+.marquee-chevron {
+    transition: transform 120ms ease;
+}
+
+.marquee-chevron--expanded {
+    transform: rotate(180deg);
+}
+
+.marquee-banner__tooltip {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: 110;
+    box-sizing: border-box;
+    width: max-content;
+    max-width: min(24rem, 90vw);
+    margin-top: 0.35rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--cratis-surface-border, currentColor);
+    border-radius: 0.375rem;
+    background-color: var(--cratis-surface-card, canvas);
+    box-shadow: 0 4px 12px color-mix(in srgb, currentColor 25%, transparent);
+    color: var(--cratis-text-color, inherit);
+    font-size: 0.9rem;
+    font-weight: 400;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 120ms ease;
+}
+
+.marquee-banner__tooltip--visible {
+    visibility: visible;
+    opacity: 1;
+}
+
+.marquee-inline-markdown a {
+    color: var(--cratis-primary-color, inherit);
+    text-decoration: underline;
+}
+
+.marquee-inline-markdown a:hover {
+    text-decoration: none;
+}
+
+.marquee-inline-markdown code {
+    font-family: var(--cratis-font-family-mono, monospace);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .marquee-chevron,
+    .marquee-banner__tooltip {
+        transition: none;
+    }
 }
 
 /* Dialog */
@@ -97,6 +191,11 @@
 
 .marquee-dialog__importance--critical {
     background-color: color-mix(in srgb, var(--cratis-red-500, #ef4444) 20%, transparent);
+}
+
+.marquee-dialog__title {
+    margin: 0;
+    font-weight: 600;
 }
 
 /* Markdown */

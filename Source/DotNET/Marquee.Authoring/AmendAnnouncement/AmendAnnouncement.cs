@@ -9,8 +9,8 @@ namespace Cratis.Showrunner.Marquee.Authoring.AmendAnnouncement;
 /// nothing.
 /// </summary>
 /// <param name="AnnouncementId">The announcement.</param>
-/// <param name="Title">Its title, up to 100 characters.</param>
-/// <param name="Body">What it says, up to 2,000 characters.</param>
+/// <param name="Title">Its title, up to 100 characters; it can use inline Markdown such as a link, emphasis or code.</param>
+/// <param name="Body">What it says, in Markdown, up to 2,000 characters; optional, empty when the title says it all.</param>
 /// <param name="Importance">How important it is.</param>
 /// <param name="ActiveFrom">When it starts to be shown; the default date means immediately.</param>
 /// <param name="ActiveUntil">When it stops being shown; the default date means indefinitely.</param>
@@ -19,7 +19,7 @@ namespace Cratis.Showrunner.Marquee.Authoring.AmendAnnouncement;
 public record AmendAnnouncement(
     AnnouncementId AnnouncementId,
     AnnouncementTitle Title,
-    AnnouncementBody Body,
+    AnnouncementBody? Body,
     Importance Importance,
     ActiveFrom ActiveFrom,
     ActiveUntil ActiveUntil)
@@ -36,7 +36,7 @@ public record AmendAnnouncement(
             yield break;
         }
 
-        var amended = new AnnouncementAmended(Title, Body, Importance, AnnouncementRules.StartOf(ActiveFrom), AnnouncementRules.EndOf(ActiveUntil));
+        var amended = new AnnouncementAmended(Title, Body ?? AnnouncementBody.NotSet, Importance, AnnouncementRules.StartOf(ActiveFrom), AnnouncementRules.EndOf(ActiveUntil));
         if (announcement.Title == amended.Title &&
             announcement.Body == amended.Body &&
             announcement.Importance == amended.Importance &&
@@ -63,7 +63,7 @@ public class AmendAnnouncementValidator : CommandValidator<AmendAnnouncement>
     {
         RuleFor(c => (Guid)c.AnnouncementId).MustBeStanding(announcement);
         RuleFor(c => (string)c.Title).MustBeTitled();
-        RuleFor(c => (string)c.Body).MustFit();
+        RuleFor(c => (string)c.Body!).MustFit().When(c => c.Body is not null);
         RuleFor(c => c).MustStartBeforeItEnds(c => c.ActiveFrom, c => c.ActiveUntil);
         RuleFor(c => c.Importance).IsInEnum();
     }

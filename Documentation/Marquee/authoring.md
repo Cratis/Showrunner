@@ -30,10 +30,51 @@ Each slice is a folder with the command, its validator and its events. An announ
 
 - **The caller chooses the id.** Create it with `AnnouncementId.New()`. A retried `AuthorAnnouncement` is refused as already authored instead of authoring a second announcement.
 - **How it is displayed never changes.** `Display` is set when the announcement is authored and no command amends it; withdraw the announcement and author another to change it.
-- **No window means always.** Leave `ActiveFrom` and `ActiveUntil` at their default date (or send `ActiveFrom.Immediately` and `ActiveUntil.Indefinitely`) and the announcement is shown from the moment it is published, with no end. A start that is not before the end is refused.
-- **Rejections are validation results.** A title is required and holds up to 100 characters, a body holds up to 2,000, an audience of tenants names at least one, an audience of a module or a plan names it, and `Display` and `Importance` are values that exist.
+- **No window means always.** Leave `ActiveFrom` and `ActiveUntil` at their default date (or send `ActiveFrom.Immediately` and `ActiveUntil.Indefinitely`) and the announcement is shown from the moment it is published, with no end. Either end can be left out on its own. A start that is not before the end is refused. See [Permanent announcements](#permanent-announcements).
+- **The title can use inline Markdown, the message is optional.** A title such as `Maintenance tonight. [Read more here.](https://status.example.com)` is shown with its link, and the `Body` can be empty or left out altogether: an announcement can be a title only. See [Markdown in titles and messages](#markdown-in-titles-and-messages).
+- **Rejections are validation results.** A title is required and holds up to 100 characters, a body is optional and holds up to 2,000, an audience of tenants names at least one, an audience of a module or a plan names it, and `Display` and `Importance` are values that exist.
 - **Only a standing announcement changes.** Amending, retargeting or withdrawing an announcement that was never authored, or that is withdrawn, is refused. Withdrawing twice is refused, so the withdrawal is published once.
 - **Looking is not a fact.** Amending to the text and window it already has, and retargeting to the audience it already has, append nothing and succeed. The same tenants in another order are the same audience.
+
+## Markdown in titles and messages
+
+Both texts are Markdown, with different reach:
+
+- **The title is inline Markdown.** Links, emphasis and code work, so a title can read `Maintenance tonight. [Read more here.](https://status.example.com)`. Block elements such as headings, lists and code blocks are not rendered in a title; their text runs on in the line. Keep it short: it is the whole banner, and at most 100 characters.
+- **The message is full Markdown and optional.** It holds up to 2,000 characters. Leave it empty, or leave `Body` out, when the title says it all: the banner then has nothing to expand, and a dialog shows only its title.
+
+Where an announcement is shown, the safety rules are the same for both: raw HTML is dropped, images are left out, and only `https`, `mailto` and `tel` links are links, each opening in a new tab. A product that needs a plain-text title, for a document title or a notification, gets one with `markdownToPlainText` from `@cratis/showrunner.marquee.react`, which keeps the text of a link and drops its address.
+
+## Permanent announcements
+
+An announcement is permanent when it has no end: it is shown until it is withdrawn. Leave `ActiveUntil` out, and the start too when it should be shown at once. Nothing about the event changes for this; `ActiveFrom.Immediately` and `ActiveUntil.Indefinitely` are the values the command is turned into, and are what every product receives, as [the contracts](./contracts.md) describe. The example below authors a permanent announcement that is only a title with a link.
+
+```ts
+import { Guid } from '@cratis/fundamentals';
+import { AuthorAnnouncement, Audience, AudienceKind, Display, Importance } from '@cratis/showrunner.marquee.authoring';
+
+export const authorPermanentNotice = async () => {
+    const audience = new Audience();
+    audience.kind = AudienceKind.everyone;
+    audience.tenantIds = [];
+    audience.module = '';
+    audience.plan = '';
+
+    const author = new AuthorAnnouncement();
+    author.announcementId = Guid.create();
+    author.product = 'ledger';
+    author.audience = audience;
+    author.title = 'Ledger moves to a new address. [Read more here.](https://status.example.com/new-address)';
+    author.display = Display.banner;
+    author.importance = Importance.information;
+
+    // No body, no activeFrom and no activeUntil: the notice is only a title, and stays until it is withdrawn.
+    const result = await author.execute();
+    return result.isSuccess;
+};
+```
+
+Withdraw it with `WithdrawAnnouncement` when it should go, or amend it to give it an end.
 
 ## Query
 

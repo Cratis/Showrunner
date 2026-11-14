@@ -4,7 +4,8 @@
 namespace Cratis.Showrunner.Marquee.Contracts.Announcements;
 
 /// <summary>
-/// The headline of an announcement.
+/// The headline of an announcement. It can use inline Markdown, such as a link, emphasis or code, so a title can read
+/// <c>Maintenance tonight. [Read more here.](https://status.example.com)</c>.
 /// </summary>
 /// <param name="Value">The underlying value.</param>
 public record AnnouncementTitle(string Value) : ConceptAs<string>(Value)

@@ -1,0 +1,95 @@
+{
+    "type": "module",
+    "name": "@cratis/showrunner.cue.react",
+    "version": "1.0.0",
+    "description": "The Cue guided-tour engine for React — a scripted, narrated, video-style walkthrough with an optional written chapter for each step, a pluggable text-to-speech voice-over, and the record of which tours a person has started, built on Cratis Arc and Cratis Components.",
+    "keywords": [
+        "cratis",
+        "showrunner",
+        "cue",
+        "guided-tour",
+        "onboarding",
+        "tour",
+        "text-to-speech",
+        "arc",
+        "react",
+        "components"
+    ],
+    "homepage": "https://github.com/Cratis/Showrunner",
+    "author": "Cratis",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Cratis/Showrunner.git"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "files": [
+        "dist",
+        "styles.css",
+        "**/*.ts",
+        "**/*.tsx",
+        "!**/for_*/**",
+        "!**/given/**",
+        "!Examples/**",
+        "!**/*.stories.tsx",
+        "!**/*.tsbuildinfo"
+    ],
+    "main": "dist/cjs/index.js",
+    "module": "dist/esm/index.js",
+    "types": "dist/esm/index.d.ts",
+    "exports": {
+        "./package.json": "./package.json",
+        ".": {
+            "import": {
+                "types": "./dist/esm/index.d.ts",
+                "default": "./dist/esm/index.js"
+            },
+            "require": {
+                "types": "./dist/cjs/index.d.ts",
+                "default": "./dist/cjs/index.js"
+            }
+        },
+        "./styles": "./styles.css"
+    },
+    "scripts": {
+        "prepare": "yarn g:build",
+        "clean": "yarn g:clean",
+        "compile": "yarn g:compile",
+        "build": "yarn g:build",
+        "lint": "yarn g:lint",
+        "lint:ci": "yarn g:lint:ci",
+        "test": "yarn g:test",
+        "test:watch": "yarn g:test:watch",
+        "ci": "yarn g:ci",
+        "up": "yarn g:up",
+        "storybook": "storybook dev -p 6008",
+        "build-storybook": "storybook build"
+    },
+    "dependencies": {
+        "@cratis/showrunner.cue": "1.0.0",
+        "react-markdown": "10.1.0"
+    },
+    "devDependencies": {
+        "@cratis/arc": "22.185.1",
+        "@cratis/arc.react": "22.185.1",
+        "@cratis/components": "4.38.0",
+        "@cratis/fundamentals": "7.34.0",
+        "@storybook/react-vite": "^10.5.10",
+        "react": "^19.3.1",
+        "react-dom": "^19.3.1",
+        "reflect-metadata": "0.2.2",
+        "storybook": "^10.5.10"
+    },
+    "peerDependencies": {
+        "@cratis/arc": "^22.185.1",
+        "@cratis/arc.react": "^22.185.1",
+        "@cratis/components": "^4.38.0",
+        "@cratis/fundamentals": "^7.34.0",
+        "react": "^19.0.0"
+    },
+    "sideEffects": [
+        "*.css"
+    ]
+}

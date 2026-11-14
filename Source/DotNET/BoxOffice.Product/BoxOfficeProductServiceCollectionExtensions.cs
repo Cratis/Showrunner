@@ -5,6 +5,7 @@ using Cratis.Showrunner.BoxOffice;
 using Cratis.Showrunner.BoxOffice.Product;
 using Cratis.Showrunner.BoxOffice.Product.Access;
 using Cratis.Showrunner.BoxOffice.Product.Activity;
+using Cratis.Showrunner.BoxOffice.Product.Direct;
 using Cratis.Showrunner.BoxOffice.Product.Licensing;
 using Cratis.Showrunner.BoxOffice.Product.Provisioning;
 using Cratis.Showrunner.BoxOffice.Product.SignIns;
@@ -38,6 +39,7 @@ public static class BoxOfficeProductServiceCollectionExtensions
         services
             .AddOptions<BoxOfficeProductOptions>()
             .Configure(options => configure?.Invoke(options))
+            .Validate(options => options.Direct.Path.StartsWith('/') && !options.Direct.Path.StartsWith("//", StringComparison.Ordinal) && options.Direct.Path.IndexOfAny(['?', '#']) < 0 && options.Direct.MaximumAttempts > 0 && options.Direct.AttemptWindow > TimeSpan.Zero, "BoxOfficeProductOptions.Direct.Path must start with a single '/' and carry no query or fragment, and its attempt limits must be positive.")
             .Validate(options => options.SignInPath.StartsWith('/') && !options.SignInPath.StartsWith("//", StringComparison.Ordinal) && options.SignInPath.IndexOfAny(['?', '#']) < 0, "AuthProxy calls the product at a path: BoxOfficeProductOptions.SignInPath must start with a single '/' and carry no query or fragment.")
             .ValidateOnStart();
 
@@ -62,6 +64,13 @@ public static class BoxOfficeProductServiceCollectionExtensions
         services.TryAddScoped<TenantRegistrations>();
         services.TryAddScoped<SignInCalls>();
         services.TryAddEnumerable(ServiceDescriptor.Transient<IStartupFilter, SignInCallbackStartupFilter>());
+        services.TryAddSingleton<IDirectLinkRecord, ChronicleDirectLinkRecord>();
+        services.TryAddSingleton<AttemptLimiter>();
+        services.TryAddSingleton<DirectForgery>();
+        services.TryAddSingleton<DirectConnection>();
+        services.TryAddScoped<DirectConnectionCalls>();
+        services.TryAddEnumerable(ServiceDescriptor.Transient<IStartupFilter, DirectConnectionStartupFilter>());
+        services.AddHostedService<DirectEnrollmentWorker>();
         services.AddHostedService<BoxOfficeProductWorker>();
         return services;
     }

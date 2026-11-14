@@ -13,6 +13,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <EmbeddedResource Include="Direct/direct.html" LogicalName="direct.html" />
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="../BoxOffice.Contracts/BoxOffice.Contracts.csproj" />
         <ProjectReference Include="../BoxOffice/BoxOffice.csproj" />
     </ItemGroup>

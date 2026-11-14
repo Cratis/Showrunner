@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>Cratis.Showrunner.Cue</AssemblyName>
+        <RootNamespace>Cratis.Showrunner.Cue</RootNamespace>
+        <PackageId>Cratis.Showrunner.Cue</PackageId>
+        <Description>Cue — the Showrunner guided-tour part: remember which guided tours each person has started, so an application can offer a tour once and stop nudging, built on Cratis Arc and Chronicle.</Description>
+        <PackageTags>cratis;showrunner;cue;guided-tour;onboarding;arc;chronicle;event-sourcing</PackageTags>
+
+        <!-- The TypeScript proxies for the commands and queries are generated into the
+             @cratis/showrunner.cue npm package. The Cratis.Showrunner.Cue namespace segments are
+             skipped so a slice in Cratis.Showrunner.Cue.<Feature>.<Slice> lands in <Feature>/<Slice>/. Release
+             builds clear CratisProxiesOutputPath so generation only runs from the Debug build. -->
+        <CratisProxiesOutputPath>$(MSBuildThisFileDirectory)../../JavaScript/Cue</CratisProxiesOutputPath>
+        <CratisProxiesSegmentsToSkip>3</CratisProxiesSegmentsToSkip>
+        <CratisProxiesSkipOutputDeletion>true</CratisProxiesSkipOutputDeletion>
+        <CratisProxiesSkipCommandNameInRoute>true</CratisProxiesSkipCommandNameInRoute>
+        <CratisProxiesUseSourceFileAsOutputFile>true</CratisProxiesUseSourceFileAsOutputFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Cratis.Arc" />
+        <PackageReference Include="Cratis.Arc.Chronicle" />
+        <PackageReference Include="Cratis.Arc.ProxyGenerator.Build">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+</Project>

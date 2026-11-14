@@ -64,3 +64,13 @@ An announcement that was retracted is never brought back, whatever order its eve
 `AnnouncementForMe.AnnouncementsForMe` is an observable query that returns the announcements the signed-in person is to see in the current tenant. It resolves the tenant from Arc's tenancy, keeps the standing announcements whose audience includes it, and leaves out a `DialogOnce` announcement the person already [acknowledged](./acknowledging.md). Nobody who is not signed in is authorized.
 
 The query does not filter by date. An announcement scheduled for later is returned, with `ActiveFrom` and `ActiveUntil`, and the client compares the window with the clock every 60 seconds, so it appears on time without a round trip.
+
+## Optional message and permanent announcements
+
+Nothing is filtered by an empty message or by a missing window, and the inbox keeps what arrives as it arrives:
+
+- **No message.** An announcement published with an empty `AnnouncementBody` is received, held and returned with an empty `Body`. The client shows only its title, and no expand button or tooltip.
+- **No start.** `ActiveFrom.Immediately` is the earliest possible time, so the announcement is active as soon as it is returned.
+- **No end.** `ActiveUntil.Indefinitely` is the latest possible time, so the announcement is permanent: it stays until a retraction arrives for it. The client reads a date that is missing the same way, as no start or no end.
+
+The title is inline Markdown and the body is Markdown. Both are stored and returned as written, and the client renders them safely; see [Markdown in titles and messages](./authoring.md#markdown-in-titles-and-messages).

@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { useAnnouncements } from '@cratis/showrunner.marquee.react';
+import { markdownToPlainText, useAnnouncements } from '@cratis/showrunner.marquee.react';
 
 export const AnnouncementBell = () => {
     const { banners, dialogs, close } = useAnnouncements();
@@ -12,7 +12,7 @@ export const AnnouncementBell = () => {
             <ul>
                 {dialogs.map(announcement => (
                     <li key={announcement.id.toString()}>
-                        {announcement.title}
+                        {markdownToPlainText(announcement.title)}
                         <button type='button' onClick={() => void close(announcement)}>Mark as read</button>
                     </li>
                 ))}

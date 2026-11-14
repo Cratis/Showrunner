@@ -17,6 +17,12 @@ export interface MarqueeLabels {
     /** The accessible name of the close button in the header of a dialog. */
     close: string;
 
+    /** The accessible name of the button of a banner that shows its message, when the message is hidden. */
+    expand: string;
+
+    /** The accessible name of the button of a banner that hides its message, when the message is shown. */
+    collapse: string;
+
     /** The accessible name of the icon of an announcement of information importance. */
     information: string;
 

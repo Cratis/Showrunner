@@ -3,6 +3,7 @@
 
 import { Display, Importance } from '@cratis/showrunner.marquee';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { anAnnouncement } from '../given/an_announcement.js';
 import { aDialog } from '../given/storyAnnouncements.js';
 import { defaultMarqueeLabels } from '../Labels/index.js';
 import { MarqueeDialog } from './MarqueeDialog.js';
@@ -24,3 +25,9 @@ export const DialogEverySessionInformation: Story = { args: { announcement: aDia
 export const DialogEverySessionWarning: Story = { args: { announcement: aDialog(Importance.warning, Display.dialogEverySession) } };
 export const DialogEverySessionCritical: Story = { args: { announcement: aDialog(Importance.critical, Display.dialogEverySession) } };
 export const WithMoreToFollow: Story = { args: { announcement: aDialog(Importance.warning, Display.dialogOnce), hasMore: true } };
+
+/** A title with a link is the heading as plain text, and is shown again with its link at the top of the content. */
+export const MarkdownTitle: Story = { args: { announcement: anAnnouncement({ title: 'Maintenance tonight. [Read more here.](https://status.example.com)', display: Display.dialogOnce }) } };
+
+/** A message is optional: the dialog is only its title. */
+export const WithoutMessage: Story = { args: { announcement: anAnnouncement({ title: 'Maintenance tonight', body: '', display: Display.dialogOnce }) } };

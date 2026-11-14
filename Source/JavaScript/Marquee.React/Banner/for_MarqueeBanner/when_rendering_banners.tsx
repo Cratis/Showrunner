@@ -47,8 +47,8 @@ describe('when rendering banners', () => {
         it('should colour a warning row', () => region.children[1].classList.contains('marquee-banner__item--warning').should.be.true);
         it('should colour an information row', () => region.children[2].classList.contains('marquee-banner__item--information').should.be.true);
         it('should name the icon for screen readers', () => region.children[0].querySelector('svg')!.getAttribute('aria-label')!.should.equal('Critical'));
-        it('should render the body as markdown', () => region.children[2].querySelector('a')!.getAttribute('href')!.should.equal('https://example.com'));
-        it('should have no close button', () => (region.querySelector('button') === null).should.be.true);
+        it('should render the message as markdown', () => region.children[2].querySelector('a')!.getAttribute('href')!.should.equal('https://example.com'));
+        it('should have no close button', () => (result.queryByRole('button', { name: 'Close' }) === null).should.be.true);
     });
 
     describe('and a markdown renderer is given', () => {

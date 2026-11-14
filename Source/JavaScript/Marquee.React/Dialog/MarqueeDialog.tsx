@@ -7,7 +7,7 @@ import { AnnouncementForMe } from '@cratis/showrunner.marquee';
 import { ComponentType } from 'react';
 import { ImportanceIcon } from '../Icons.js';
 import { MarqueeLabels } from '../Labels/index.js';
-import { MarqueeMarkdown, MarqueeMarkdownProps } from '../Markdown/index.js';
+import { hasMarkdown, markdownToPlainText, MarqueeInlineMarkdown, MarqueeMarkdown, MarqueeMarkdownProps } from '../Markdown/index.js';
 import { importancePresentation } from '../Selection/index.js';
 
 /**
@@ -33,13 +33,19 @@ export interface MarqueeDialogProps {
 /**
  * One announcement in a dialog. Focus moves into the dialog and is kept in it until it is closed, and lands on the
  * title instead of the button, so the Enter or Space that was being pressed when it opened does not close it unread.
+ *
+ * The heading is the title as plain text, with the Markdown taken out, as a dialog heading is a string. A title that
+ * uses Markdown, such as a link, is shown again with its formatting at the top of the content. The message is optional
+ * and is left out when there is none.
  */
 export const MarqueeDialog = ({ announcement, hasMore, onClose, labels, markdown: Markdown = MarqueeMarkdown }: MarqueeDialogProps) => {
     const presentation = importancePresentation(announcement.importance, labels);
+    const plainTitle = markdownToPlainText(announcement.title);
+    const titleHasMarkdown = announcement.title.trim() !== plainTitle;
 
     return (
         <Dialog
-            title={announcement.title}
+            title={plainTitle}
             width='34rem'
             buttons={DialogButtons.Ok}
             okLabel={hasMore ? labels.next : labels.acknowledge}
@@ -51,7 +57,12 @@ export const MarqueeDialog = ({ announcement, hasMore, onClose, labels, markdown
                 <div className={`marquee-dialog__importance marquee-dialog__importance--${presentation.modifier}`}>
                     <ImportanceIcon presentation={presentation} />
                 </div>
-                <Markdown source={announcement.body} />
+                {titleHasMarkdown && (
+                    <p className='marquee-dialog__title'>
+                        <MarqueeInlineMarkdown source={announcement.title} />
+                    </p>
+                )}
+                {hasMarkdown(announcement.body) && <Markdown source={announcement.body} />}
             </div>
         </Dialog>
     );

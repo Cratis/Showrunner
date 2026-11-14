@@ -10,6 +10,30 @@ const paths: Record<ImportancePresentation['modifier'], string> = {
 };
 
 /**
+ * Props for {@link ChevronIcon}.
+ */
+export interface ChevronIconProps {
+    /** Whether the message it controls is shown; the chevron then points up instead of down. */
+    expanded: boolean;
+}
+
+/**
+ * The chevron on the button of a banner that shows or hides its message. It is decorative: the button is named by its
+ * label and says whether it is expanded.
+ */
+export const ChevronIcon = ({ expanded }: ChevronIconProps) => (
+    <svg
+        className={expanded ? 'marquee-chevron marquee-chevron--expanded' : 'marquee-chevron'}
+        viewBox='0 0 24 24'
+        width='1em'
+        height='1em'
+        aria-hidden='true'
+        focusable='false'>
+        <path fill='currentColor' d='M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z' />
+    </svg>
+);
+
+/**
  * Props for {@link ImportanceIcon}.
  */
 export interface ImportanceIconProps {

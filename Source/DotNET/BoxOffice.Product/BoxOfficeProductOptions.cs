@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Showrunner.BoxOffice.Product.Direct;
+
 namespace Cratis.Showrunner.BoxOffice.Product;
 
 /// <summary>
@@ -33,6 +35,12 @@ public class BoxOfficeProductOptions
     /// secret store or the environment, never from a committed file.
     /// </summary>
     public string SignInSecret { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the options of the one-time page that links the product to its Chronicle with an enrollment code.
+    /// It is off by default.
+    /// </summary>
+    public DirectConnectionOptions Direct { get; set; } = new();
 
     /// <summary>
     /// Gets the configurations of Box Office, which the product options carry so a product configures everything in one place.

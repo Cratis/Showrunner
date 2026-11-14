@@ -23,7 +23,7 @@ public sealed class ChronicleInfrastructure : IAsyncLifetime
     /// <summary>
     /// The kernel image used unless <c>HERALD_CHRONICLE_IMAGE</c> names another.
     /// </summary>
-    public const string DefaultImage = "cratis/chronicle:19.155.0-development";
+    public const string DefaultImage = "cratis/chronicle:19.164.0-development";
 
     const ushort ChroniclePort = 35000;
     const ushort HttpPort = 8080;

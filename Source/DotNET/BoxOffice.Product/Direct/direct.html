@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>Connect to Chronicle</title>
+    <style>
+        body { font-family: system-ui, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #f5f5f5; }
+        .card { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.12); padding: 2.5rem 3rem; max-width: 520px; width: 100%; }
+        h1 { font-size: 1.5rem; font-weight: 700; margin: 0 0 .75rem; color: #333; text-align: center; }
+        p { color: #666; margin: 0 0 1.5rem; }
+        label { display: block; font-weight: 600; color: #333; margin: 0 0 .35rem; }
+        textarea, input[type=text] { display: block; width: 100%; box-sizing: border-box; padding: .6rem .75rem; margin: 0 0 1.25rem; border: 1px solid #c8c8c8; border-radius: 6px; font: .9rem ui-monospace, monospace; }
+        textarea { min-height: 7rem; resize: vertical; }
+        button { display: block; width: 100%; box-sizing: border-box; padding: .75rem 1.5rem; border: none; border-radius: 6px; background: #0078d4; color: #fff; font-size: 1rem; font-weight: 600; cursor: pointer; }
+        button:hover { background: #005a9e; }
+        .notice { border-radius: 6px; padding: .75rem 1rem; margin: 0 0 1.5rem; }
+        .notice.error { background: #fde7e9; color: #a4262c; }
+        .notice.success { background: #dff6dd; color: #107c10; }
+        .notice.info { background: #eff6fc; color: #004578; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Connect to Chronicle</h1>
+        __CRATIS_DIRECT_NOTICE__
+        <form method="post" action="__CRATIS_DIRECT_ACTION__" autocomplete="off" __CRATIS_DIRECT_FORM_ATTRIBUTES__>
+            <input type="hidden" name="token" value="__CRATIS_DIRECT_TOKEN__" />
+            __CRATIS_DIRECT_CODE_FIELD__
+            __CRATIS_DIRECT_ENDPOINT_FIELD__
+            <button type="submit">__CRATIS_DIRECT_SUBMIT__</button>
+        </form>
+    </div>
+</body>
+</html>

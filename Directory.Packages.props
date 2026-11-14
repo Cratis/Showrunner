@@ -19,8 +19,8 @@
     <GlobalPackageReference Include="Cratis.Orleans.Storage.MongoDB" Version="1.27.2" Condition="'$(Configuration)' == 'Debug'" />
     <PackageVersion Include="MongoDB.Driver" Version="3.13.0" />
     <PackageVersion Include="Cratis.Choreography" Version="2.9.0" />
-    <PackageVersion Include="Cratis.Chronicle" Version="19.155.0" />
-    <PackageVersion Include="Cratis.Chronicle.Testing" Version="19.155.0" />
+    <PackageVersion Include="Cratis.Chronicle" Version="19.164.0" />
+    <PackageVersion Include="Cratis.Chronicle.Testing" Version="19.164.0" />
     <!-- Serves the integration specifications' web host in memory. -->
     <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="11.0.0" />
     <!-- Verifies the RS256 tokens AuthProxy signs its on-behalf calls with; the same library AuthProxy signs them with. -->

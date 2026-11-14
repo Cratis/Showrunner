@@ -2,7 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 global using Cratis.Arc.Authorization;
+global using Cratis.Arc.Commands;
 global using Cratis.Arc.Commands.ModelBound;
+global using Cratis.Arc.Validation;
 global using Cratis.Chronicle.Events;
 global using Cratis.Concepts;
 global using Cratis.Showrunner.Cue.Starting;
@@ -11,7 +13,6 @@ global using Cratis.Showrunner.Cue.Viewers;
 global using FluentValidation;
 #if DEBUG
 global using Cratis.Arc.Chronicle.Testing.Commands;
-global using Cratis.Arc.Commands;
 global using Cratis.Arc.Testing.Commands;
 global using Cratis.Chronicle.Testing;
 global using Cratis.Chronicle.Testing.EventSequences;

@@ -65,6 +65,10 @@ public static class BoxOfficeProductServiceCollectionExtensions
         services.TryAddScoped<SignInCalls>();
         services.TryAddEnumerable(ServiceDescriptor.Transient<IStartupFilter, SignInCallbackStartupFilter>());
         services.TryAddSingleton<IDirectLinkRecord, ChronicleDirectLinkRecord>();
+
+        // Nothing resolves the enrollment while Direct is off: the page, its middleware and the worker only ask for it
+        // when options.Direct.Enabled is set, so it is never built (and needs no Chronicle federation) otherwise.
+        services.TryAddSingleton<IDirectEnrollment, ChronicleDirectEnrollment>();
         services.TryAddSingleton<AttemptLimiter>();
         services.TryAddSingleton<DirectForgery>();
         services.TryAddSingleton<DirectConnection>();

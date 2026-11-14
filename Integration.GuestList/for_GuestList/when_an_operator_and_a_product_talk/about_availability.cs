@@ -37,10 +37,10 @@ public class about_availability : Specification
 
         await _operator.Decide(
             ProductSide.Product,
-            new AudienceGrantDecided(Contracts.Audiences.AudienceLevel.Tenant, _tenantId, UserId.NotSet, "Plus"),
-            new AudienceGrantDecided(Contracts.Audiences.AudienceLevel.User, _tenantId, _user, "Preview"),
-            new AudienceGrantDecided(Contracts.Audiences.AudienceLevel.System, TenantId.NotSet, UserId.NotSet, "Internal"),
-            new AudienceGrantDecided(Contracts.Audiences.AudienceLevel.System, TenantId.NotSet, UserId.NotSet, "Retired"));
+            new AudienceGrantDecided(Contracts.Audiences.AudienceLevel.Tenant, _tenantId, UserId.NotSet, "Plus", SystemClientId.NotSet, SystemKind.None),
+            new AudienceGrantDecided(Contracts.Audiences.AudienceLevel.User, _tenantId, _user, "Preview", SystemClientId.NotSet, SystemKind.None),
+            new AudienceGrantDecided(Contracts.Audiences.AudienceLevel.System, TenantId.NotSet, UserId.NotSet, "Internal", SystemClientId.NotSet, SystemKind.None),
+            new AudienceGrantDecided(Contracts.Audiences.AudienceLevel.System, TenantId.NotSet, UserId.NotSet, "Retired", SystemClientId.NotSet, SystemKind.None));
 
         var subject = new AudienceSubject(_tenantId.Value, _user.Value);
         _initially = await Eventually.Get(
@@ -61,7 +61,7 @@ public class about_availability : Specification
 
             return ValueTask.CompletedTask;
         });
-        await _operator.Decide(ProductSide.Product, new AudienceGrantDecided(Contracts.Audiences.AudienceLevel.Tenant, _tenantId, UserId.NotSet, "Gold"));
+        await _operator.Decide(ProductSide.Product, new AudienceGrantDecided(Contracts.Audiences.AudienceLevel.Tenant, _tenantId, UserId.NotSet, "Gold", SystemClientId.NotSet, SystemKind.None));
         _ = await Eventually.Get(
             () =>
             {

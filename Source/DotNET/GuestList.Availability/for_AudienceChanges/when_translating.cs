@@ -17,6 +17,7 @@ public class when_translating : Specification
     AudienceChange? _tenant;
     AudienceChange? _user;
     AudienceChange? _system;
+    AudienceChange? _namedSystem;
     AudienceChange? _unknown;
     AudienceChange? _emptyUser;
 
@@ -25,6 +26,7 @@ public class when_translating : Specification
         _tenant = AudienceChanges.From(new("acme"), GuestListStreams.Tenant.Value);
         _user = AudienceChanges.From(new("acme"), GuestListStreams.User(new("alice")).Value);
         _system = AudienceChanges.From(EventStoreNamespaceName.Default, GuestListStreams.System.Value);
+        _namedSystem = AudienceChanges.From(EventStoreNamespaceName.Default, GuestListStreams.NamedSystem("crm-sync").Value);
         _unknown = AudienceChanges.From(new("acme"), "something-else");
         _emptyUser = AudienceChanges.From(new("acme"), "user:");
     }
@@ -32,6 +34,7 @@ public class when_translating : Specification
     [Fact] void should_key_the_tenant_by_its_namespace() => _tenant.ShouldEqual(new AudienceChange(AudienceLevel.Tenant, "acme"));
     [Fact] void should_key_the_user_by_the_user() => _user.ShouldEqual(new AudienceChange(AudienceLevel.User, "alice"));
     [Fact] void should_key_the_system_by_nothing() => _system.ShouldEqual(new AudienceChange(AudienceLevel.System, null));
+    [Fact] void should_key_a_named_system_by_nothing_like_every_system() => _namedSystem.ShouldEqual(new AudienceChange(AudienceLevel.System, null));
     [Fact] void should_ignore_a_stream_that_is_not_guest_lists() => _unknown.ShouldBeNull();
     [Fact] void should_ignore_a_user_without_a_name() => _emptyUser.ShouldBeNull();
 }

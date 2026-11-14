@@ -14,8 +14,8 @@ public class a_decision_for_another_product : a_guest_list_inbox
 {
     async Task Because()
     {
-        await Delivered(new AudienceGranted("another", AudienceLevel.Tenant, Guests.Acme, UserId.NotSet, Guests.Plus));
-        await Delivered(new AudienceGranted("another", AudienceLevel.System, TenantId.NotSet, UserId.NotSet, Guests.Plus));
+        await Delivered(new AudienceGranted("another", AudienceLevel.Tenant, Guests.Acme, UserId.NotSet, Guests.Plus, SystemClientId.NotSet, SystemKind.None));
+        await Delivered(new AudienceGranted("another", AudienceLevel.System, TenantId.NotSet, UserId.NotSet, Guests.Plus, SystemClientId.NotSet, SystemKind.None));
         await ReadRecorded();
     }
 

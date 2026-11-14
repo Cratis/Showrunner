@@ -70,7 +70,7 @@ public class GuestListInbox(IChronicleClient client, IOptions<GuestListOptions> 
     /// <param name="operatorStore">The operator store the event came from.</param>
     /// <returns>An awaitable task.</returns>
     public Task Receive(AudienceGranted @event, EventContext context, EventStoreName operatorStore) =>
-        Record(@event, @event.Product, @event.Level, @event.TenantId, @event.UserId, @event.Audience, new AudienceGrantRecorded(@event.Level, @event.Audience), context, operatorStore);
+        Record(@event, @event.Product, @event.Level, @event.TenantId, @event.UserId, @event.Audience, @event.ClientId ?? SystemClientId.NotSet, new AudienceGrantRecorded(@event.Level, @event.Audience), context, operatorStore);
 
     /// <summary>
     /// Receives an audience being withdrawn.
@@ -80,13 +80,14 @@ public class GuestListInbox(IChronicleClient client, IOptions<GuestListOptions> 
     /// <param name="operatorStore">The operator store the event came from.</param>
     /// <returns>An awaitable task.</returns>
     public Task Receive(AudienceWithdrawn @event, EventContext context, EventStoreName operatorStore) =>
-        Record(@event, @event.Product, @event.Level, @event.TenantId, @event.UserId, @event.Audience, new AudienceWithdrawalRecorded(@event.Level, @event.Audience), context, operatorStore);
+        Record(@event, @event.Product, @event.Level, @event.TenantId, @event.UserId, @event.Audience, @event.ClientId ?? SystemClientId.NotSet, new AudienceWithdrawalRecorded(@event.Level, @event.Audience), context, operatorStore);
 
-    static bool IsNamedFor(AudienceLevel level, TenantId tenant, UserId user) => level switch
+    static bool IsNamedFor(AudienceLevel level, TenantId tenant, UserId user, SystemClientId client) => level switch
     {
         AudienceLevel.Tenant => !string.IsNullOrWhiteSpace(tenant.Value),
         AudienceLevel.User => !string.IsNullOrWhiteSpace(tenant.Value) && !string.IsNullOrWhiteSpace(user.Value),
         AudienceLevel.System => true,
+        AudienceLevel.NamedSystem => !string.IsNullOrWhiteSpace(client.Value),
         _ => false
     };
 
@@ -97,6 +98,7 @@ public class GuestListInbox(IChronicleClient client, IOptions<GuestListOptions> 
         TenantId tenant,
         UserId user,
         AudienceName audience,
+        SystemClientId systemClient,
         object fact,
         EventContext context,
         EventStoreName operatorStore)
@@ -108,7 +110,7 @@ public class GuestListInbox(IChronicleClient client, IOptions<GuestListOptions> 
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(audience.Value) || !IsNamedFor(level, tenant, user))
+        if (string.IsNullOrWhiteSpace(audience.Value) || !IsNamedFor(level, tenant, user, systemClient))
         {
             logger.Malformed(eventType, operatorStore, level);
             return;
@@ -116,7 +118,7 @@ public class GuestListInbox(IChronicleClient client, IOptions<GuestListOptions> 
 
         var inbox = await client.GetEventStore(context.EventStore, context.Namespace);
         var @namespace = context.Namespace;
-        if (level != AudienceLevel.System)
+        if (level is not (AudienceLevel.System or AudienceLevel.NamedSystem))
         {
             var found = (await inbox.GetNamespaces()).Where(name => string.Equals(name.Value, tenant.Value, StringComparison.Ordinal)).Take(2).ToArray();
             if (found.Length != 1)
@@ -129,7 +131,7 @@ public class GuestListInbox(IChronicleClient client, IOptions<GuestListOptions> 
         }
 
         var store = await client.GetEventStore(context.EventStore, @namespace);
-        var eventSourceId = GuestListStreams.For(level, user);
+        var eventSourceId = GuestListStreams.For(level, user, systemClient);
         var result = await store.EventLog.AppendOnce(
             eventSourceId,
             fact,

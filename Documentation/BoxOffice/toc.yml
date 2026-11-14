@@ -6,6 +6,8 @@
   href: audience-routing.md
 - name: The product side
   href: product.md
+- name: The Direct connection page
+  href: direct-connection.md
 - name: Receiving and entitlements
   href: entitlements.md
 - name: Suspension and read-only tenants

@@ -33,4 +33,16 @@ public interface IAudienceDecision
     /// Gets the audience.
     /// </summary>
     AudienceName Audience { get; }
+
+    /// <summary>
+    /// Gets the client id of the system, for <see cref="AudienceLevel.NamedSystem"/>; empty for the other levels. A caller
+    /// that predates named systems sends none, so it can be <see langword="null"/>.
+    /// </summary>
+    SystemClientId? ClientId { get; }
+
+    /// <summary>
+    /// Gets the kind of the system, for <see cref="AudienceLevel.NamedSystem"/>; <see cref="SystemKind.None"/> for the other
+    /// levels.
+    /// </summary>
+    SystemKind Kind { get; }
 }

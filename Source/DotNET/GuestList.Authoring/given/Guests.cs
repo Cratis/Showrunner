@@ -30,6 +30,16 @@ public static class Guests
     public static readonly UserId Alice = "alice";
 
     /// <summary>
+    /// A system that calls the product.
+    /// </summary>
+    public static readonly SystemClientId Crm = "crm-sync";
+
+    /// <summary>
+    /// Another system that calls the product.
+    /// </summary>
+    public static readonly SystemClientId Reports = "reports-mcp";
+
+    /// <summary>
     /// An audience.
     /// </summary>
     public static readonly AudienceName Plus = "Plus";
@@ -42,21 +52,36 @@ public static class Guests
     /// <summary>
     /// The decision that grants <see cref="Plus"/> to <see cref="Acme"/>.
     /// </summary>
-    public static readonly AudienceGrantDecided TenantGrant = new(AudienceLevel.Tenant, Acme, UserId.NotSet, Plus);
+    public static readonly AudienceGrantDecided TenantGrant = new(AudienceLevel.Tenant, Acme, UserId.NotSet, Plus, SystemClientId.NotSet, SystemKind.None);
 
     /// <summary>
     /// The decision that withdraws <see cref="Plus"/> from <see cref="Acme"/>.
     /// </summary>
-    public static readonly AudienceWithdrawalDecided TenantWithdrawal = new(AudienceLevel.Tenant, Acme, UserId.NotSet, Plus);
+    public static readonly AudienceWithdrawalDecided TenantWithdrawal = new(AudienceLevel.Tenant, Acme, UserId.NotSet, Plus, SystemClientId.NotSet, SystemKind.None);
 
     /// <summary>
     /// The decision that grants <see cref="Plus"/> to <see cref="Alice"/> of <see cref="Acme"/>.
     /// </summary>
-    public static readonly AudienceGrantDecided UserGrant = new(AudienceLevel.User, Acme, Alice, Plus);
+    public static readonly AudienceGrantDecided UserGrant = new(AudienceLevel.User, Acme, Alice, Plus, SystemClientId.NotSet, SystemKind.None);
 
     /// <summary>
     /// The decision that grants <see cref="Plus"/> to the system.
     /// </summary>
-    public static readonly AudienceGrantDecided SystemGrant = new(AudienceLevel.System, TenantId.NotSet, UserId.NotSet, Plus);
+    public static readonly AudienceGrantDecided SystemGrant = new(AudienceLevel.System, TenantId.NotSet, UserId.NotSet, Plus, SystemClientId.NotSet, SystemKind.None);
+
+    /// <summary>
+    /// The decision that grants <see cref="Plus"/> to the system <see cref="Crm"/>.
+    /// </summary>
+    public static readonly AudienceGrantDecided CrmGrant = new(AudienceLevel.NamedSystem, TenantId.NotSet, UserId.NotSet, Plus, Crm, SystemKind.Mcp);
+
+    /// <summary>
+    /// The decision that grants <see cref="Plus"/> to the system <see cref="Reports"/>.
+    /// </summary>
+    public static readonly AudienceGrantDecided ReportsGrant = new(AudienceLevel.NamedSystem, TenantId.NotSet, UserId.NotSet, Plus, Reports, SystemKind.Api);
+
+    /// <summary>
+    /// The decision that withdraws <see cref="Plus"/> from the system <see cref="Crm"/>.
+    /// </summary>
+    public static readonly AudienceWithdrawalDecided CrmWithdrawal = new(AudienceLevel.NamedSystem, TenantId.NotSet, UserId.NotSet, Plus, Crm, SystemKind.Mcp);
 }
 #endif

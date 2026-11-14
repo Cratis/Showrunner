@@ -67,7 +67,7 @@ public class a_product_that_reports<TReadModel> : Specification
     /// <param name="decidedAt">When the operator decided.</param>
     /// <returns>The receipt.</returns>
     protected static AudienceDecisionReceived Received(EnvironmentName environment, DateTimeOffset decidedAt) =>
-        new(Guests.Product, environment, Contracts.Availability.AudienceDecision.Granted, AudienceLevel.Tenant, Guests.Acme, UserId.NotSet, Guests.Plus, decidedAt);
+        new(Guests.Product, environment, Contracts.Availability.AudienceDecision.Granted, AudienceLevel.Tenant, Guests.Acme, UserId.NotSet, Guests.Plus, decidedAt, SystemClientId.NotSet);
 
     void Establish() => _scenario = new();
 

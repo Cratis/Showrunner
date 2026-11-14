@@ -32,8 +32,8 @@ public class for_a_product_that_declares_audiences : Specification
         }));
         _scenario.Given.ForEventSource(new EventSourceId("ledger")).Events(
             Guests.TenantGrant,
-            new AudienceGrantDecided(AudienceLevel.Tenant, Guests.Acme, UserId.NotSet, Guests.Preview),
-            new AudienceGrantDecided(AudienceLevel.System, TenantId.NotSet, UserId.NotSet, "Retired"));
+            new AudienceGrantDecided(AudienceLevel.Tenant, Guests.Acme, UserId.NotSet, Guests.Preview, SystemClientId.NotSet, SystemKind.None),
+            new AudienceGrantDecided(AudienceLevel.System, TenantId.NotSet, UserId.NotSet, "Retired", SystemClientId.NotSet, SystemKind.None));
     }
 
     void Destroy() => _scenario.Dispose();

@@ -138,7 +138,7 @@
 
 .cue-subtitles__line {
     margin: 0;
-    color: var(--cratis-surface-0);
+    color: var(--cratis-text-color);
     font-size: 1.05rem;
     line-height: 1.45;
     text-align: center;

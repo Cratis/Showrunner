@@ -10,7 +10,7 @@ description: The public events Marquee exchanges between the people publishing a
 - **An announcement belongs to a product, not to a tenant.** Announcements of a product share one product-wide stream, so `AnnouncementId` is a payload field, not the event source id. This is the one exception to carrying a `TenantId` in every payload: tenant ids appear only inside an `Audience` that names tenants.
 - **Every event is `[Public]`, and none names an origin store.** There is no `[EventStore]` attribute on any contract or on the assembly, because store names vary by deployment. Each side subscribes to the other explicitly.
 - **Events are named for what happened**, and no name is shared with a private event.
-- **Nothing is nullable.** A value that does not apply is empty: `ModuleKey.NotSet`, `PlanId.NotSet`, no tenants. An announcement with no end uses `ActiveUntil.Indefinitely`.
+- **Nothing is nullable.** A value that does not apply is empty: `ModuleKey.NotSet`, `PlanId.NotSet`, no tenants. An announcement with no message has an empty `AnnouncementBody` (`AnnouncementBody.NotSet`), one with no start uses `ActiveFrom.Immediately`, and one with no end, a permanent announcement, uses `ActiveUntil.Indefinitely`. A reader treats an empty body and the two sentinels as "none", so no event shape needs a nullable value.
 - **The window is exact UTC times.** `ActiveFrom` and `ActiveUntil` are `DateTimeOffset` concepts, not whole days, so a maintenance window can be announced to the minute.
 
 Namespaces are relative to `Cratis.Showrunner.Marquee.Contracts`. `TenantId` sits in the root namespace.
@@ -32,7 +32,7 @@ Namespaces are relative to `Cratis.Showrunner.Marquee.Contracts`. `TenantId` sit
 | --- | --- | --- |
 | `AnnouncementId` | `Announcements` | `ConceptAs<Guid>` |
 | `Product` | `Announcements` | Text; the product an announcement is for |
-| `AnnouncementTitle`, `AnnouncementBody` | `Announcements` | Text; the body is Markdown |
+| `AnnouncementTitle`, `AnnouncementBody` | `Announcements` | Text; the title is inline Markdown (links, emphasis, code), the body is Markdown and may be empty |
 | `ActiveFrom`, `ActiveUntil` | `Announcements` | `ConceptAs<DateTimeOffset>` |
 | `Display` | `Announcements` | `Banner = 0`, `DialogOnce = 1`, `DialogEverySession = 2` |
 | `Importance` | `Announcements` | `Information = 0`, `Warning = 1`, `Critical = 2` |

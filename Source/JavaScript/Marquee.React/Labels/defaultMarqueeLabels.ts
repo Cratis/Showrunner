@@ -11,6 +11,8 @@ export const defaultMarqueeLabels: MarqueeLabels = {
     acknowledge: 'Got it',
     next: 'Next',
     close: 'Close',
+    expand: 'Show the message',
+    collapse: 'Hide the message',
     information: 'Information',
     warning: 'Warning',
     critical: 'Critical'

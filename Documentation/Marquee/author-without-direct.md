@@ -73,4 +73,4 @@ export const AnnouncementList = () => {
 };
 ```
 
-`AmendAnnouncement`, `RetargetAnnouncement` and `WithdrawAnnouncement` change what was authored. How an announcement is displayed can not be changed: withdraw it and author another. A title holds up to 100 characters, a body up to 2,000, and leaving the window at its default date means *from now* and *with no end*.
+`AmendAnnouncement`, `RetargetAnnouncement` and `WithdrawAnnouncement` change what was authored. How an announcement is displayed can not be changed: withdraw it and author another. A title holds up to 100 characters and can use inline Markdown, a body is optional and holds up to 2,000, and leaving the window at its default date means *from now* and *with no end*, a permanent announcement. See [Markdown in titles and messages](./authoring.md#markdown-in-titles-and-messages) and [Permanent announcements](./authoring.md#permanent-announcements). A title written with Markdown shows its markers in a list that prints it as it is; the Marquee React package has `markdownToPlainText` for that.

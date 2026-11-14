@@ -4,7 +4,8 @@
 namespace Cratis.Showrunner.Marquee.Contracts.Announcements;
 
 /// <summary>
-/// The text of an announcement, in Markdown.
+/// The text of an announcement, in Markdown. It is optional: an announcement can have a title only, and then the body is
+/// <see cref="NotSet"/>.
 /// </summary>
 /// <param name="Value">The underlying value.</param>
 public record AnnouncementBody(string Value) : ConceptAs<string>(Value)

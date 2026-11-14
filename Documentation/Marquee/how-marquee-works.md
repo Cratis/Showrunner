@@ -31,7 +31,7 @@ Two choices decide how an announcement looks:
 
 | Display | What the person sees | Closed by |
 | --- | --- | --- |
-| `Banner` | A row at the top of the application for as long as the window lasts | Nobody; it ends when it is withdrawn or its window ends |
+| `Banner` | A row at the top of the application with the title, and the message behind a button when there is one, for as long as the window lasts | Nobody; it ends when it is withdrawn or its window ends |
 | `DialogOnce` | A dialog, until the person acknowledges it | The person, on every device |
 | `DialogEverySession` | A dialog, at the start of every session | The person, for this session only |
 
@@ -39,12 +39,12 @@ Importance is `Information`, `Warning` or `Critical`. It sets the icon and the c
 
 ## Time is applied by the client
 
-The window is an exact UTC start and end. The backend does not filter by it: an announcement scheduled for later is returned with its window, and the React component compares the window with the clock every 60 seconds. A banner therefore appears and disappears on time without a round trip, and without keeping a query open that changes every minute. The start is inclusive and the end is exclusive.
+The window is an exact UTC start and end. The backend does not filter by it: an announcement scheduled for later is returned with its window, and the React component compares the window with the clock every 60 seconds. A banner therefore appears and disappears on time without a round trip, and without keeping a query open that changes every minute. The start is inclusive and the end is exclusive. Both ends are optional: an announcement with no start is shown at once, and one with no end is permanent, shown until it is withdrawn. The backend carries that as `ActiveFrom.Immediately` and `ActiveUntil.Indefinitely`, which are the earliest and the latest time, so the same comparison applies. See [Permanent announcements](./authoring.md#permanent-announcements).
 
 ## What the React component does and does not do
 
 `<Marquee />` is a thin layer. The decisions are pure functions that are specified on their own: which announcements are active, in which order dialogs open, which links are safe. The component renders banners and one dialog at a time, closes a dialog through the command, and remembers what was closed in the session. Everything it draws can be replaced; see [Replace the banner or the dialog](./replace-the-banner-or-the-dialog.md).
 
-An announcement is written by an operator, but it is rendered through the same path an account that is not the operator's could reach. So Markdown is rendered as React elements, never as HTML: raw HTML in a body is dropped, images are left out, a link opens in a new tab with `noopener noreferrer`, and only `https`, `mailto` and `tel` links are links at all.
+An announcement is written by an operator, but it is rendered through the same path an account that is not the operator's could reach. So Markdown is rendered as React elements, never as HTML: raw HTML in a title or a body is dropped, images are left out, a link opens in a new tab with `noopener noreferrer`, and only `https`, `mailto` and `tel` links are links at all. The title is inline Markdown, rendered by `MarqueeInlineMarkdown`, which allows links, emphasis and code only; the message is optional, and the banner and the dialog draw nothing for one that is empty. Where plain text is needed, such as the heading of the dialog, the title is turned into plain text first. See [Markdown in titles and messages](./authoring.md#markdown-in-titles-and-messages).
 
 Next: [add announcements to a product](./add-announcements-to-a-product.md).

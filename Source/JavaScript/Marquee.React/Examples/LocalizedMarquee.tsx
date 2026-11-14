@@ -11,6 +11,8 @@ export const LocalizedMarquee = () => (
             acknowledge: 'Forstått',
             next: 'Neste',
             close: 'Lukk',
+            expand: 'Vis meldingen',
+            collapse: 'Skjul meldingen',
             information: 'Informasjon',
             warning: 'Advarsel',
             critical: 'Kritisk'

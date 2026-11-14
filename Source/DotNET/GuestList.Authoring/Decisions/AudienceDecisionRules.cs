@@ -60,12 +60,12 @@ public static class AudienceDecisionRules
             .When(c => c.Level is AudienceLevel.Tenant or AudienceLevel.User && !string.IsNullOrWhiteSpace(c.TenantId?.Value) && !string.IsNullOrWhiteSpace(c.Product?.Value));
     }
 
-    static string ClientText(SystemClientId? client) => client?.Value ?? string.Empty;
-
     /// <summary>
     /// Gets the audience a decision is about, as the operator holds it.
     /// </summary>
     /// <param name="decision">The decision.</param>
     /// <returns>The audience.</returns>
     public static HeldAudience Held(this IAudienceDecision decision) => new(decision.Level, decision.TenantId, decision.UserId, decision.Audience, decision.ClientId ?? SystemClientId.NotSet, decision.Kind);
+
+    static string ClientText(SystemClientId? client) => client?.Value ?? string.Empty;
 }

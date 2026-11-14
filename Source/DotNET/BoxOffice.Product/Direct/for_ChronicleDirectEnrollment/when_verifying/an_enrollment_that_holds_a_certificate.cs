@@ -12,7 +12,7 @@ public class an_enrollment_that_holds_a_certificate : a_chronicle_direct_enrollm
 
     async Task Because()
     {
-        Status(Enrolled());
+        Status(Enrolled(connected: true, exchanged: true));
         _result = await _enrollment.Verify(CancellationToken.None);
     }
 

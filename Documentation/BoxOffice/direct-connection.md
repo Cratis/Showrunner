@@ -52,7 +52,7 @@ Set `Direct.EnrollmentCode` (from the environment or a secret) and the product r
 
 ## What Chronicle needs
 
-The code is redeemed on the Chronicle kernel the product is connected to, not by the product itself: the kernel keeps the certificate it is issued, renews it and dials the authority. This page needs a Chronicle release that has `IChronicleClient.Federation` and a kernel with hosted federation.
+The code is redeemed on the Chronicle kernel the product is connected to, not by the product itself: the kernel keeps the certificate it is issued, renews it and dials the authority. This page needs Chronicle 19.164.0 or later, which has `IChronicleClient.Federation` and the connection state in the enrollment status, and a kernel with hosted federation.
 
 **The application's Chronicle principal must be allowed to redeem.** Redeeming a code and reading the enrollment status are decided by the kernel capability `chronicle.federation.enroll`. Either:
 
@@ -99,7 +99,7 @@ Without it the kernel refuses, and the page can only say that the code was not a
 - **One answer for every failure.** The kernel answers every failure to redeem the same way, whether the code is wrong, expired or used, or the authority is unreachable, wrong or refusing. The adapter reports `Unreachable` only when the Chronicle kernel itself cannot be reached, and `Refused` for any answer from it.
 - **A typed endpoint cannot replace the code's.** The Chronicle API takes only the code, so the kernel connects to the endpoint the code carries. A typed endpoint is accepted only if it names the same authority as the code, and a code whose endpoint cannot be read is refused when a host is pinned. The pinned host is checked before the kernel connects.
 - **An enrolled kernel is a redeemed link.** If the kernel already holds a certificate that has not expired, the adapter reports `Redeemed` with the kernel's endpoint and leaves the code unspent. An expired enrollment is redeemed again with the new code.
-- **"First exchange succeeded" is the kernel's enrollment status.** `Verify` reads `FederationEnrollmentStatus`, which has no time of the last exchange with the authority. A kernel that holds a certificate that has not expired is `Healthy`; one that is not enrolled or whose certificate has expired is `Unrecoverable`, because only a new enrollment restores it; a status that cannot be read is `Unreachable`. A certificate is renewed over the same link, so it is a sound sign of the link, but it does not prove that a dial succeeded just now.
+- **"First exchange succeeded" is the kernel's connection state.** `Verify` reads `FederationEnrollmentStatus` and reports `Healthy` only when `Connected` is true and `LastExchange` has a time, which the kernel sets only after a successful exchange. A kernel that is not enrolled or whose certificate has expired is `Unrecoverable`, because only a new enrollment restores it. A status that cannot be read, or an enrolled kernel that is not connected, is `Unreachable`, so the page stays open and a retry needs no new code. A kernel that has never exchanged is given `ConnectionPatience` (ten seconds by default) to make its first exchange after enrollment, because it dials only then; one that exchanged before and has lost the connection is reported at once. The kernel's `LastError` is scrubbed of secrets by the kernel and is written to the log only, truncated; the page shows its own fixed message and never the kernel's text.
 - **The product's event store is not derived from the code.** The code and the status carry the endpoint and the identity, not an event store name. `GuestListOptions.OperatorStores` and the kernel's `Dial:EventStore` stay settings.
 
 ## The port
@@ -114,4 +114,4 @@ public interface IDirectEnrollment
 }
 ```
 
-`Redeem` redeems the code through `IChronicleClient.Federation.Redeem`, refuses an endpoint that is not on `ExpectedHost`, and returns the endpoint of the enrollment. `Verify` reads `IChronicleClient.Federation.GetStatus` and reports `Healthy`, `Unreachable` (a retry may fix it) or `Unrecoverable`. Neither logs the code.
+`Redeem` redeems the code through `IChronicleClient.Federation.Redeem`, refuses an endpoint that is not on `ExpectedHost`, and returns the endpoint of the enrollment. `Verify` reads `IChronicleClient.Federation.GetStatus` and reports `Healthy` (connected, with a last exchange), `Unreachable` (a retry may fix it) or `Unrecoverable`. Neither logs the code.

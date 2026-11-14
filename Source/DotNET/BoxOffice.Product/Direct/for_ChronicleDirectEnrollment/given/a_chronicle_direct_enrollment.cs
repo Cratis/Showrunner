@@ -33,14 +33,15 @@ public class a_chronicle_direct_enrollment : Specification
     protected IFederationEnrollments _federation;
     protected ILogger<ChronicleDirectEnrollment> _logger;
     protected ChronicleDirectEnrollment _enrollment;
+    protected IChronicleClient _client;
 
     protected static string Code(string endpoint = Endpoint) =>
         "cfe1." + Convert.ToBase64String(Encoding.UTF8.GetBytes($"{{\"e\":\"{endpoint}\",\"f\":\"ab\",\"i\":\"id\",\"s\":\"{Secret}\"}}")).TrimEnd('=').Replace('+', '-').Replace('/', '_');
 
     protected static FederationEnrollmentStatus NotEnrolled() => new(false, string.Empty, string.Empty, null, null, string.Empty, string.Empty, false);
 
-    protected static FederationEnrollmentStatus Enrolled(string endpoint = Endpoint, bool expired = false) =>
-        new(true, "spiffe://example/customer/1/kernel/a", "01", DateTimeOffset.UtcNow.AddDays(14), DateTimeOffset.UtcNow.AddDays(7), endpoint, "ab", expired);
+    protected static FederationEnrollmentStatus Enrolled(string endpoint = Endpoint, bool expired = false, bool connected = true, bool exchanged = true, string lastError = "") =>
+        new(true, "spiffe://example/customer/1/kernel/a", "01", DateTimeOffset.UtcNow.AddDays(14), DateTimeOffset.UtcNow.AddDays(7), endpoint, "ab", expired, connected, exchanged ? DateTimeOffset.UtcNow : null, lastError);
 
     protected static FederationRedemption Redemption(string endpoint = Endpoint, bool alreadyEnrolled = false) =>
         new("spiffe://example/customer/1/kernel/a", "01", DateTimeOffset.UtcNow.AddDays(14), endpoint, alreadyEnrolled);
@@ -66,7 +67,8 @@ public class a_chronicle_direct_enrollment : Specification
         ((FederationOnlyClient)(object)client).Federation = _federation;
         _logger = Substitute.For<ILogger<ChronicleDirectEnrollment>>();
         _logger.IsEnabled(Arg.Any<LogLevel>()).Returns(true);
-        _enrollment = new(client, _logger);
+        _client = client;
+        _enrollment = new(client, _logger) { ConnectionPatience = TimeSpan.Zero };
     }
 }
 #endif

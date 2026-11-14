@@ -27,4 +27,7 @@ internal static partial class ChronicleDirectEnrollmentLogging
 
     [LoggerMessage(LogLevel.Warning, "The Chronicle kernel no longer holds a usable certificate (enrolled: {Enrolled}, expired: {Expired})")]
     internal static partial void EnrollmentLost(this ILogger<ChronicleDirectEnrollment> logger, bool enrolled, bool expired);
+
+    [LoggerMessage(LogLevel.Warning, "The Chronicle kernel is enrolled but has no successful exchange over the link. Reason from the kernel: {Reason}")]
+    internal static partial void NotConnected(this ILogger<ChronicleDirectEnrollment> logger, string reason);
 }

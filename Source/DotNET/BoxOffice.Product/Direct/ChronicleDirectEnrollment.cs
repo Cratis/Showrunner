@@ -27,10 +27,11 @@ namespace Cratis.Showrunner.BoxOffice.Product.Direct;
 /// kernel itself could not be reached (a transport failure, not an answer). The code is never logged and is never part of an exception message this class makes.
 /// </para>
 /// <para>
-/// <see cref="Verify"/> reads the kernel's enrollment status. It does not prove an exchange over the link: the status does
-/// not carry when the kernel last spoke to the authority. A kernel that holds a certificate that has not expired is
-/// reported as healthy, because the redemption itself is an exchange with the authority and the kernel renews over the same
-/// link, so a certificate that is not renewed in time shows as expired.
+/// <see cref="Verify"/> reads the kernel's enrollment status and reports the link as healthy only when the kernel says it is
+/// <see cref="FederationEnrollmentStatus.Connected"/> and has a <see cref="FederationEnrollmentStatus.LastExchange"/>, which
+/// is proof of a successful exchange over the link. A kernel that has not exchanged anything yet is given
+/// <see cref="ConnectionPatience"/> to make its first exchange; its <see cref="FederationEnrollmentStatus.LastError"/> is logged
+/// (the kernel scrubs it of secrets) but never returned to the caller.
 /// </para>
 /// </remarks>
 /// <param name="client">The <see cref="IChronicleClient"/> of the product.</param>
@@ -38,6 +39,13 @@ namespace Cratis.Showrunner.BoxOffice.Product.Direct;
 public class ChronicleDirectEnrollment(IChronicleClient client, ILogger<ChronicleDirectEnrollment> logger) : IDirectEnrollment
 {
     const string CodePrefix = "cfe1.";
+    const int MaximumReasonLength = 200;
+    static readonly TimeSpan _pollInterval = TimeSpan.FromMilliseconds(250);
+
+    /// <summary>
+    /// Gets how long to wait for the first exchange of a kernel that is enrolled but has not exchanged anything yet.
+    /// </summary>
+    public TimeSpan ConnectionPatience { get; init; } = TimeSpan.FromSeconds(10);
 
     /// <inheritdoc/>
     public async Task<DirectRedemptionResult> Redeem(DirectEnrollmentRequest request, CancellationToken cancellationToken)
@@ -89,19 +97,47 @@ public class ChronicleDirectEnrollment(IChronicleClient client, ILogger<Chronicl
     /// <inheritdoc/>
     public async Task<DirectLinkHealth> Verify(CancellationToken cancellationToken)
     {
-        var status = await TryGetStatus(cancellationToken);
-        if (status is null)
+        var deadline = DateTimeOffset.UtcNow + ConnectionPatience;
+        while (true)
         {
-            return DirectLinkHealth.Unreachable;
+            var status = await TryGetStatus(cancellationToken);
+            if (status is null)
+            {
+                return DirectLinkHealth.Unreachable;
+            }
+
+            if (!status.Enrolled || status.Expired)
+            {
+                logger.EnrollmentLost(status.Enrolled, status.Expired);
+                return DirectLinkHealth.Unrecoverable;
+            }
+
+            if (status.Connected && status.LastExchange is not null)
+            {
+                return DirectLinkHealth.Healthy;
+            }
+
+            // Only a kernel that has never exchanged is given time: it dials after it is enrolled. A kernel that has
+            // exchanged before and is not connected now has lost the link, and waiting would only slow the caller.
+            if (status.LastExchange is not null || DateTimeOffset.UtcNow >= deadline)
+            {
+                logger.NotConnected(Reason(status.LastError));
+                return DirectLinkHealth.Unreachable;
+            }
+
+            await Task.Delay(_pollInterval, cancellationToken);
+        }
+    }
+
+    static string Reason(string lastError)
+    {
+        var reason = lastError.ReplaceLineEndings(" ").Trim();
+        if (reason.Length == 0)
+        {
+            return "none reported";
         }
 
-        if (!status.Enrolled || status.Expired)
-        {
-            logger.EnrollmentLost(status.Enrolled, status.Expired);
-            return DirectLinkHealth.Unrecoverable;
-        }
-
-        return DirectLinkHealth.Healthy;
+        return reason.Length > MaximumReasonLength ? reason[..MaximumReasonLength] : reason;
     }
 
     static bool KernelNotReached(Exception exception) =>

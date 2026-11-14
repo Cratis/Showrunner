@@ -1,0 +1,14 @@
+- name: Overview
+  href: index.md
+- name: How Cue works
+  href: how-cue-works.md
+- name: Add guided tours to an application
+  href: add-guided-tours-to-an-application.md
+- name: Write a tour
+  href: write-a-tour.md
+- name: Configure the voice-over
+  href: configure-the-voice-over.md
+- name: Remember who has taken a tour
+  href: remember-who-has-taken-a-tour.md
+- name: Event reference
+  href: event-reference.md

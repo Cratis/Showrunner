@@ -23,6 +23,10 @@ Box Office lets a managed product honor the licensing decisions its operator mak
 
 Marquee brings product announcements to the people they concern. The people running the product choose the audience, display and time window; the product shows the announcement as a banner or dialog. Add `<Marquee />` to the application shell to use its queries and commands. Follow [the Marquee documentation](./Documentation/Marquee/index.md) to add announcements or host the authoring side.
 
+## Cue
+
+Cue plays scripted, narrated guided tours inside an application: a pointer that moves to what the narration talks about, subtitles, a chapter list and a written version of each chapter. The voice-over comes from a text-to-speech service the application configures, and a tour without one plays silently. The backend records who has started which tour, so a button points at a tour until it has been taken. Follow [the Cue documentation](./Documentation/Cue/index.md) to add it.
+
 ## GuestList
 
 GuestList carries audience grants: which audiences a tenant, a user or the system is in. An operator grants and withdraws an audience with `Cratis.Showrunner.GuestList.Authoring`, with or without Direct; the product hosts `Cratis.Showrunner.GuestList`, records the decisions once in each tenant's own namespace and answers from what it recorded, also when the operator is unreachable. Follow [the GuestList documentation](./Documentation/GuestList/index.md) to receive or grant audiences.
@@ -62,6 +66,7 @@ Choose the backend packages for the part you are hosting, then add its TypeScrip
 | `Cratis.Showrunner.Herald` | NuGet | Herald's backend — templates, strict rendering, images, SMTP and folder transports, queued delivery with retries, recorded in the application's Chronicle event store |
 | `cratis/showrunner-operator-image`, `cratis/showrunner-operator` | Docker Hub, Helm (OCI) | Stage Manager, the Kubernetes operator: the container image and, in a separate repository, the Helm chart released with the same version |
 | `Cratis.Showrunner.Usher.Contracts` | NuGet | Usher's event contracts, for hosts that react to what Usher records |
+| `Cratis.Showrunner.Cue` | NuGet | Cue's backend — records which guided tours each person has started, built on Arc and Chronicle |
 | `Cratis.Showrunner.Marquee.Contracts` | NuGet | Marquee's event contracts: the public events a product receives announcements through |
 | `Cratis.Showrunner.GuestList` | NuGet | The product side of audiences: records an operator's grants and answers which audiences apply |
 | `Cratis.Showrunner.GuestList.Authoring` | NuGet | The operator side of audiences: commands, queries and the outbox for granting and withdrawing |
@@ -74,6 +79,8 @@ Choose the backend packages for the part you are hosting, then add its TypeScrip
 | `Cratis.Showrunner.Notes.Collecting` | NuGet | Notes' receiving side for the builder of an application — reads the applications' notes into the tenant's namespace and answers them |
 | `@cratis/showrunner.boxoffice` | npm | Generated TypeScript proxies for the product's licensing frontend |
 | `@cratis/showrunner.boxoffice.react` | npm | React components for entitlements, module filtering, trials, suspension, seats, usage and plans |
+| `@cratis/showrunner.cue` | npm | Generated TypeScript proxies for Cue's command and query |
+| `@cratis/showrunner.cue.react` | npm | The Cue guided-tour player for React: the script types, the overlay, the pointer, the voice-over contract and the hooks that connect a tour to the backend, built on `@cratis/arc.react` and `@cratis/components` |
 | `@cratis/showrunner.marquee` | npm | Generated TypeScript proxies for Marquee's receiving commands and queries |
 | `@cratis/showrunner.marquee.authoring` | npm | Generated TypeScript proxies for Marquee's authoring commands and query |
 | `@cratis/showrunner.marquee.react` | npm | The Marquee drop-in React component: banners and dialogs for a product's announcements, built on `@cratis/arc.react` and `@cratis/components` |

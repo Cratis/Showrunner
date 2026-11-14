@@ -19,7 +19,7 @@ describe('when recording a start', () => {
         startedOnTheServer = [{ id: 'event-modeling' }];
         isReady = true;
         executed = [];
-        query = sinon.stub(ByMe, 'use').callsFake((() => [{ data: startedOnTheServer, isReady }, () => { /* no query */ }, () => { /* no sorting */ }]) as never);
+        query = sinon.stub(ByMe, 'use').callsFake((() => [{ data: startedOnTheServer, isReady }, () => { /* no sorting */ }]) as never);
         execute = sinon.stub(StartTour.prototype, 'execute').callsFake(function (this: StartTour) {
             executed.push(this.tour);
             return Promise.resolve({ isSuccess: true } as never);

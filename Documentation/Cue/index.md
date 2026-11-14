@@ -1,6 +1,6 @@
 ---
 title: Cue
-description: Add scripted, narrated guided tours to an application with Showrunner Cue, with a pluggable text-to-speech voice-over and a durable record of who has taken which tour.
+description: Add scripted, narrated guided tours to an application with Showrunner Cue, using a pluggable text-to-speech voice-over and a durable record of who took a tour.
 ---
 
 Cue is the guided-tour part of Showrunner. An application describes a tour as a script of sections, chapters and steps, and Cue plays it like a short video: a narrated walkthrough with subtitles, a pointer that moves to what the narration talks about, a chapter list to jump around in, and a written version of each chapter for people who would rather read.

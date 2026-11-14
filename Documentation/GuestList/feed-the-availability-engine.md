@@ -1,6 +1,6 @@
 ---
 title: Feed the availability engine
-description: Hand the audiences a product recorded to the Cratis Choreography availability engine, so gates resolve from local state and open sessions update when a grant changes.
+description: Hand the audiences a product recorded to the Cratis Choreography availability engine so gates resolve from local state and open sessions update on changes.
 ---
 
 Use this in a product that evaluates availability with [Cratis Choreography](https://github.com/Cratis/Choreography). It adds the part of GuestList that implements the engine's `IAudienceSource`; a product that does not use Choreography does not reference it and is unaffected.

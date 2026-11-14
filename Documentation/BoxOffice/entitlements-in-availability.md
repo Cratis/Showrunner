@@ -1,6 +1,6 @@
 ---
 title: Use entitlements in availability conditions
-description: Let a Cratis Choreography availability gate read a module's level, whether the tenant is active and how many seats it has, as the host-provided value entitlements, and see how Box Office modules relate to GuestList audiences.
+description: Let a Cratis Choreography availability gate read a module level, tenant status and seat count as entitlements, and see how modules map to GuestList audiences.
 ---
 
 Use this in a product that evaluates availability with [Cratis Choreography](https://github.com/Cratis/Choreography) and wants a gate to depend on what the tenant bought. A gate can read Box Office entitlements through `$context`; Box Office itself is unchanged and does not know the engine.

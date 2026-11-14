@@ -15,7 +15,7 @@ public static class PublicEvents
     /// <param name="product">The product the decision is for.</param>
     /// <param name="event">The private event.</param>
     /// <returns>The public event.</returns>
-    public static AudienceGranted For(Product product, AudienceGrantDecided @event) => new(product, @event.Level, @event.TenantId, @event.UserId, @event.Audience);
+    public static AudienceGranted For(Product product, AudienceGrantDecided @event) => new(product, @event.Level, @event.TenantId, @event.UserId, @event.Audience, @event.ClientId, @event.Kind);
 
     /// <summary>
     /// Maps an audience being withdrawn.
@@ -23,5 +23,5 @@ public static class PublicEvents
     /// <param name="product">The product the decision is for.</param>
     /// <param name="event">The private event.</param>
     /// <returns>The public event.</returns>
-    public static AudienceWithdrawn For(Product product, AudienceWithdrawalDecided @event) => new(product, @event.Level, @event.TenantId, @event.UserId, @event.Audience);
+    public static AudienceWithdrawn For(Product product, AudienceWithdrawalDecided @event) => new(product, @event.Level, @event.TenantId, @event.UserId, @event.Audience, @event.ClientId, @event.Kind);
 }

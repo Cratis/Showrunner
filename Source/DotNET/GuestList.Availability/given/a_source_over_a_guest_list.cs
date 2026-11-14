@@ -39,9 +39,19 @@ public class a_source_over_a_guest_list : Specification
     protected void Holds(string[] system, string[] tenant, string[] user)
     {
         _guestList.ForSystem(Arg.Any<CancellationToken>()).Returns(Set(system));
+        _guestList.ForSystemCaller(Arg.Any<SystemClientId>(), Arg.Any<CancellationToken>()).Returns(Set(system));
         _guestList.ForTenant(Acme, Arg.Any<CancellationToken>()).Returns(Set(tenant));
         _guestList.ForUser(Acme, Alice, Arg.Any<CancellationToken>()).Returns(Set(user));
     }
+
+    /// <summary>
+    /// Makes the guest list answer for one named system with what every system holds and what the system holds itself.
+    /// </summary>
+    /// <param name="client">The client id of the system.</param>
+    /// <param name="system">What every system holds.</param>
+    /// <param name="named">What the named system holds itself.</param>
+    protected void HoldsForSystem(SystemClientId client, string[] system, string[] named) =>
+        _guestList.ForSystemCaller(client, Arg.Any<CancellationToken>()).Returns(Set([.. system, .. named]));
 
     static Task<IReadOnlySet<AudienceName>> Set(string[] audiences) =>
         Task.FromResult<IReadOnlySet<AudienceName>>(audiences.Select(_ => new AudienceName(_)).ToHashSet());

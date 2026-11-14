@@ -18,6 +18,25 @@ public interface IGuestList
     Task<IReadOnlySet<AudienceName>> ForSystem(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Gets the audiences granted to one named system, and only to it. The audiences granted to every system are not
+    /// included, see <see cref="ForSystemCaller"/>.
+    /// </summary>
+    /// <param name="client">The client id of the system.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/>.</param>
+    /// <returns>The audiences, empty when none is granted.</returns>
+    Task<IReadOnlySet<AudienceName>> ForNamedSystem(SystemClientId client, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the audiences that apply to a request made by a system: the ones granted to every system and the ones granted to
+    /// this system, added together. Nothing granted to another system, a tenant or a user is included. A caller with no
+    /// client id gets the audiences granted to every system only.
+    /// </summary>
+    /// <param name="client">The client id of the calling system; <see cref="SystemClientId.NotSet"/> when it names none.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/>.</param>
+    /// <returns>The audiences, empty when none applies.</returns>
+    Task<IReadOnlySet<AudienceName>> ForSystemCaller(SystemClientId client, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Gets the audiences granted to a tenant as a whole.
     /// </summary>
     /// <param name="tenant">The tenant.</param>

@@ -21,7 +21,13 @@ public enum AudienceLevel
 
     /// <summary>
     /// The audience applies to the system itself and to every tenant of the product: automation and callers that are not
-    /// a person.
+    /// a person. It names no system, so it applies to every system that calls the product.
     /// </summary>
-    System = 2
+    System = 2,
+
+    /// <summary>
+    /// The audience applies to one named system of the product, identified by its client id and described by its kind. It
+    /// adds to the audiences of <see cref="System"/>, which every system holds, and never reaches another system or a person.
+    /// </summary>
+    NamedSystem = 3
 }

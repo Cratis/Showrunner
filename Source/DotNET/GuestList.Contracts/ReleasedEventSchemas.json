@@ -1,1 +1,6 @@
-[]
+[
+  "AudienceGranted:1",
+  "AudienceWithdrawn:1",
+  "AudienceDecisionReceived:1",
+  "AvailabilityDeclared:1"
+]

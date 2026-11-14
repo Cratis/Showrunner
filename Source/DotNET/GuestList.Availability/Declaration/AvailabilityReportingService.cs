@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Chronicle;
+using Cratis.Showrunner.GuestList.Availability.Systems;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -19,13 +20,15 @@ namespace Cratis.Showrunner.GuestList.Availability.Declaration;
 /// <param name="options">The <see cref="GuestListOptions"/>.</param>
 /// <param name="time">The <see cref="TimeProvider"/>.</param>
 /// <param name="logger">The <see cref="ILogger{AvailabilityReportingService}"/>.</param>
+/// <param name="systems">The <see cref="SystemsReporter"/>, which reports the systems that call the product; none when it is not given.</param>
 public class AvailabilityReportingService(
     IChronicleClient client,
     IOptions<ChronicleClientOptions> chronicle,
     AvailabilityReporter reporter,
     IOptions<GuestListOptions> options,
     TimeProvider time,
-    ILogger<AvailabilityReportingService> logger) : BackgroundService
+    ILogger<AvailabilityReportingService> logger,
+    SystemsReporter? systems = null) : BackgroundService
 {
     /// <summary>
     /// Reports once.
@@ -35,7 +38,13 @@ public class AvailabilityReportingService(
     public async Task<AvailabilityReport> RunOnce(CancellationToken cancellationToken = default)
     {
         var eventStore = await client.GetEventStore(chronicle.Value.EventStore, EventStoreNamespaceName.Default).WaitAsync(cancellationToken);
-        return await reporter.Report(eventStore);
+        var report = await reporter.Report(eventStore);
+        if (systems is not null)
+        {
+            await systems.Report(eventStore);
+        }
+
+        return report;
     }
 
     /// <inheritdoc/>

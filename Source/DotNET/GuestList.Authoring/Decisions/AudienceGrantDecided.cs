@@ -11,5 +11,7 @@ namespace Cratis.Showrunner.GuestList.Authoring.Decisions;
 /// <param name="TenantId">The tenant, for <see cref="AudienceLevel.Tenant"/> and <see cref="AudienceLevel.User"/>.</param>
 /// <param name="UserId">The user, for <see cref="AudienceLevel.User"/>.</param>
 /// <param name="Audience">The audience granted.</param>
-[EventType]
-public record AudienceGrantDecided(AudienceLevel Level, TenantId TenantId, UserId UserId, AudienceName Audience);
+/// <param name="ClientId">The client id of the system, for <see cref="AudienceLevel.NamedSystem"/>.</param>
+/// <param name="Kind">The kind of the system, for <see cref="AudienceLevel.NamedSystem"/>.</param>
+[EventType(generation: 2)]
+public record AudienceGrantDecided(AudienceLevel Level, TenantId TenantId, UserId UserId, AudienceName Audience, SystemClientId ClientId, SystemKind Kind);

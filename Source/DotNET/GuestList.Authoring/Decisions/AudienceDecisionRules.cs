@@ -12,7 +12,7 @@ public static class AudienceDecisionRules
 {
     /// <summary>
     /// Adds the rules of an audience decision to a validator: the product and the audience are named, the audience name has
-    /// the syntax of an audience, the level names exactly the tenant and user it needs, and a tenant is a tenant that exists.
+    /// the syntax of an audience, the level names exactly the tenant, user and system it needs, and a tenant is a tenant that exists.
     /// </summary>
     /// <typeparam name="TDecision">The type of command.</typeparam>
     /// <param name="validator">The validator of the command.</param>
@@ -21,7 +21,7 @@ public static class AudienceDecisionRules
         where TDecision : IAudienceDecision
     {
         validator.RuleFor(c => (string)c.Product).NotEmpty().WithMessage("Say which product the audience is for.");
-        validator.RuleFor(c => c.Level).IsInEnum().WithMessage("Say whether the audience is for a tenant, a user or the system.");
+        validator.RuleFor(c => c.Level).IsInEnum().WithMessage("Say whether the audience is for a tenant, a user, the system or one named system.");
         validator.RuleFor(c => (string)c.Audience)
             .NotEmpty().WithMessage("Name the audience.")
             .Must(name => string.IsNullOrEmpty(name) || AudienceName.IsValidName(name))
@@ -35,10 +35,24 @@ public static class AudienceDecisionRules
             .When(c => c.Level == AudienceLevel.User);
         validator.RuleFor(c => (string)c.UserId)
             .Empty().WithMessage("Only an audience for a user names a user.")
-            .When(c => c.Level is AudienceLevel.Tenant or AudienceLevel.System);
+            .When(c => c.Level is AudienceLevel.Tenant or AudienceLevel.System or AudienceLevel.NamedSystem);
         validator.RuleFor(c => (string)c.TenantId)
             .Empty().WithMessage("An audience for the system names no tenant.")
-            .When(c => c.Level == AudienceLevel.System);
+            .When(c => c.Level is AudienceLevel.System or AudienceLevel.NamedSystem);
+
+        validator.RuleFor(c => ClientText(c.ClientId))
+            .NotEmpty().WithMessage("Name the client id of the system.")
+            .MaximumLength(SystemClientId.MaxLength).WithMessage($"A client id is at most {SystemClientId.MaxLength} characters.")
+            .When(c => c.Level == AudienceLevel.NamedSystem);
+        validator.RuleFor(c => ClientText(c.ClientId))
+            .Empty().WithMessage("Only an audience for a named system names a client id.")
+            .When(c => c.Level != AudienceLevel.NamedSystem);
+        validator.RuleFor(c => c.Kind)
+            .IsInEnum().NotEqual(SystemKind.None).WithMessage("Say what kind of system it is: MCP, API or other.")
+            .When(c => c.Level == AudienceLevel.NamedSystem);
+        validator.RuleFor(c => c.Kind)
+            .Equal(SystemKind.None).WithMessage("Only an audience for a named system names a kind.")
+            .When(c => c.Level != AudienceLevel.NamedSystem);
 
         validator.RuleFor(c => c)
             .MustAsync((c, cancellationToken) => tenants.Exists(c.Product, c.TenantId, cancellationToken))
@@ -51,5 +65,7 @@ public static class AudienceDecisionRules
     /// </summary>
     /// <param name="decision">The decision.</param>
     /// <returns>The audience.</returns>
-    public static HeldAudience Held(this IAudienceDecision decision) => new(decision.Level, decision.TenantId, decision.UserId, decision.Audience);
+    public static HeldAudience Held(this IAudienceDecision decision) => new(decision.Level, decision.TenantId, decision.UserId, decision.Audience, decision.ClientId ?? SystemClientId.NotSet, decision.Kind);
+
+    static string ClientText(SystemClientId? client) => client?.Value ?? string.Empty;
 }

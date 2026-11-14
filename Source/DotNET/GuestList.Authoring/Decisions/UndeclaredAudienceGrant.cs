@@ -20,8 +20,10 @@ namespace Cratis.Showrunner.GuestList.Authoring.Decisions;
 /// <param name="TenantId">The tenant, for <see cref="AudienceLevel.Tenant"/> and <see cref="AudienceLevel.User"/>; empty otherwise.</param>
 /// <param name="UserId">The user, for <see cref="AudienceLevel.User"/>; empty otherwise.</param>
 /// <param name="Audience">The audience that is not declared.</param>
+/// <param name="ClientId">The client id of the system, for <see cref="AudienceLevel.NamedSystem"/>; empty otherwise.</param>
+/// <param name="Kind">The kind of the system, for <see cref="AudienceLevel.NamedSystem"/>; none otherwise.</param>
 [ReadModel]
-public record UndeclaredAudienceGrant(AudienceLevel Level, TenantId TenantId, UserId UserId, AudienceName Audience)
+public record UndeclaredAudienceGrant(AudienceLevel Level, TenantId TenantId, UserId UserId, AudienceName Audience, SystemClientId ClientId, SystemKind Kind)
 {
     /// <summary>
     /// Observes the grants of a product whose audience its application does not declare. Nothing is reported for a product
@@ -54,6 +56,6 @@ public record UndeclaredAudienceGrant(AudienceLevel Level, TenantId TenantId, Us
     public static IEnumerable<UndeclaredAudienceGrant> Among(IEnumerable<HeldAudience> grants, IEnumerable<AudienceName> declared)
     {
         var names = declared.ToHashSet();
-        return [.. grants.Where(grant => !names.Contains(grant.Audience)).Select(grant => new UndeclaredAudienceGrant(grant.Level, grant.TenantId, grant.UserId, grant.Audience))];
+        return [.. grants.Where(grant => !names.Contains(grant.Audience)).Select(grant => new UndeclaredAudienceGrant(grant.Level, grant.TenantId, grant.UserId, grant.Audience, grant.ClientId ?? SystemClientId.NotSet, grant.Kind))];
     }
 }

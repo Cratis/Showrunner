@@ -22,6 +22,20 @@ public class GuestLists(IChronicleClient client, IOptions<ChronicleClientOptions
         Held(await Read(EventStoreNamespaceName.Default, GuestListStreams.System, cancellationToken));
 
     /// <inheritdoc/>
+    public async Task<IReadOnlySet<AudienceName>> ForNamedSystem(SystemClientId client, CancellationToken cancellationToken = default) =>
+        string.IsNullOrWhiteSpace(client.Value)
+            ? []
+            : Held(await Read(EventStoreNamespaceName.Default, GuestListStreams.NamedSystem(client), cancellationToken));
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlySet<AudienceName>> ForSystemCaller(SystemClientId client, CancellationToken cancellationToken = default)
+    {
+        HashSet<AudienceName> audiences = [.. await ForSystem(cancellationToken)];
+        audiences.UnionWith(await ForNamedSystem(client, cancellationToken));
+        return audiences;
+    }
+
+    /// <inheritdoc/>
     public async Task<IReadOnlySet<AudienceName>> ForTenant(TenantId tenant, CancellationToken cancellationToken = default) =>
         Held(await Read(new EventStoreNamespaceName(tenant.Value), GuestListStreams.Tenant, cancellationToken));
 

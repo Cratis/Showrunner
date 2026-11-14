@@ -6,6 +6,7 @@ using Cratis.Showrunner.GuestList.Querying;
 using ChoreographyAudience = Cratis.Choreography.Availability.Audiences.AudienceName;
 using ChoreographyLevel = Cratis.Choreography.Availability.Audiences.AudienceLevel;
 using ShowrunnerAudience = Cratis.Showrunner.GuestList.Contracts.Audiences.AudienceName;
+using SystemClientId = Cratis.Showrunner.GuestList.Contracts.Audiences.SystemClientId;
 using TenantId = Cratis.Showrunner.GuestList.Contracts.Audiences.TenantId;
 using UserId = Cratis.Showrunner.GuestList.Contracts.Audiences.UserId;
 
@@ -18,7 +19,8 @@ namespace Cratis.Showrunner.GuestList.Availability;
 /// <remarks>
 /// <para>
 /// The effective audiences are the union of the tenant's, the user's and the system's. A system grant applies to every
-/// tenant of the product, so it is part of every answer. Each grant is tagged with the level it is held at; a withdrawal at
+/// tenant of the product, so it is part of every answer; a grant to one named system adds to it for the caller that names
+/// that client id, through <see cref="GetGrants(AudienceSubject, SystemClientId, CancellationToken)"/>. Each grant is tagged with the level it is held at; a withdrawal at
 /// one level never touches another.
 /// </para>
 /// <para>
@@ -32,10 +34,22 @@ namespace Cratis.Showrunner.GuestList.Availability;
 public class GuestListAudienceSource(IGuestList guestList, AudienceChangeFeed changes) : IAudienceSource
 {
     /// <inheritdoc/>
-    public async ValueTask<IReadOnlyCollection<AudienceGrant>> GetGrants(AudienceSubject subject, CancellationToken cancellationToken = default)
+    public ValueTask<IReadOnlyCollection<AudienceGrant>> GetGrants(AudienceSubject subject, CancellationToken cancellationToken = default) =>
+        GetGrants(subject, SystemClientId.NotSet, cancellationToken);
+
+    /// <summary>
+    /// Gets the grants that apply to a request made by a system that names its client id: the audiences granted to every
+    /// system and the ones granted to this system, and the tenant's and the user's the subject names. A grant to another named
+    /// system is never part of the answer, and a caller with no client id gets the audiences granted to every system only.
+    /// </summary>
+    /// <param name="subject">Who the request is for.</param>
+    /// <param name="client">The client id of the calling system; <see cref="SystemClientId.NotSet"/> when it names none.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/>.</param>
+    /// <returns>The grants, each tagged with the level it is held at.</returns>
+    public async ValueTask<IReadOnlyCollection<AudienceGrant>> GetGrants(AudienceSubject subject, SystemClientId client, CancellationToken cancellationToken = default)
     {
         List<AudienceGrant> grants = [];
-        grants.AddRange(Tag(await guestList.ForSystem(cancellationToken), ChoreographyLevel.System));
+        grants.AddRange(Tag(await guestList.ForSystemCaller(client, cancellationToken), ChoreographyLevel.System));
 
         if (string.IsNullOrWhiteSpace(subject.Tenant))
         {

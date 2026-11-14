@@ -47,6 +47,18 @@ public class a_guest_list : Specification
         _productReadModels.GetInstanceById<AudienceHoldings>(Arg.Any<ReadModelKey>(), Arg.Any<ReadModelSessionId>()).Returns(Task.FromResult(Fold(GuestListStreams.System, facts)!));
 
     /// <summary>
+    /// Makes one named system hold what the facts, folded in order, say. Call it after <see cref="SystemRecorded"/>, which
+    /// answers for every stream it was not told about.
+    /// </summary>
+    /// <param name="client">The client id of the system.</param>
+    /// <param name="facts">The facts, with the minute the operator decided each.</param>
+    protected void NamedSystemRecorded(SystemClientId client, params (int Minute, object Fact)[] facts)
+    {
+        var stream = GuestListStreams.NamedSystem(client);
+        _productReadModels.GetInstanceById<AudienceHoldings>(Arg.Is<ReadModelKey>(key => key.Value == stream.Value), Arg.Any<ReadModelSessionId>()).Returns(Task.FromResult(Fold(stream, facts)!));
+    }
+
+    /// <summary>
     /// Makes the tenant hold what the facts, folded in order, say.
     /// </summary>
     /// <param name="facts">The facts, with the minute the operator decided each.</param>

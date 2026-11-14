@@ -13,6 +13,6 @@ public class an_audience_granted_again_after_a_withdrawal : a_product_guest_list
 {
     async Task Because() => await Happened(Guests.TenantGrant, Guests.TenantWithdrawal, Guests.TenantGrant);
 
-    [Fact] void should_hold_the_audience() => GuestList.Grants.ShouldContainOnly(new HeldAudience(AudienceLevel.Tenant, Guests.Acme, UserId.NotSet, Guests.Plus));
+    [Fact] void should_hold_the_audience() => GuestList.Grants.ShouldContainOnly(new HeldAudience(AudienceLevel.Tenant, Guests.Acme, UserId.NotSet, Guests.Plus, SystemClientId.NotSet, SystemKind.None));
 }
 #endif

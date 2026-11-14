@@ -1,4 +1,64 @@
 {
+  "AudienceGranted:2": {
+    "type": "object",
+    "properties": {
+      "product": {
+        "type": "string"
+      },
+      "level": {
+        "type": "integer",
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "x-enumNames": [
+          "Tenant",
+          "User",
+          "System",
+          "NamedSystem"
+        ]
+      },
+      "tenantId": {
+        "type": "string"
+      },
+      "userId": {
+        "type": "string"
+      },
+      "audience": {
+        "type": "string"
+      },
+      "clientId": {
+        "type": "string"
+      },
+      "kind": {
+        "type": "integer",
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "x-enumNames": [
+          "None",
+          "Mcp",
+          "Api",
+          "Other"
+        ]
+      }
+    },
+    "required": [
+      "product",
+      "level",
+      "tenantId",
+      "userId",
+      "audience",
+      "clientId",
+      "kind"
+    ],
+    "title": "AudienceGranted"
+  },
   "AudienceGranted:1": {
     "type": "object",
     "properties": {
@@ -37,6 +97,66 @@
     ],
     "title": "AudienceGranted"
   },
+  "AudienceWithdrawn:2": {
+    "type": "object",
+    "properties": {
+      "product": {
+        "type": "string"
+      },
+      "level": {
+        "type": "integer",
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "x-enumNames": [
+          "Tenant",
+          "User",
+          "System",
+          "NamedSystem"
+        ]
+      },
+      "tenantId": {
+        "type": "string"
+      },
+      "userId": {
+        "type": "string"
+      },
+      "audience": {
+        "type": "string"
+      },
+      "clientId": {
+        "type": "string"
+      },
+      "kind": {
+        "type": "integer",
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "x-enumNames": [
+          "None",
+          "Mcp",
+          "Api",
+          "Other"
+        ]
+      }
+    },
+    "required": [
+      "product",
+      "level",
+      "tenantId",
+      "userId",
+      "audience",
+      "clientId",
+      "kind"
+    ],
+    "title": "AudienceWithdrawn"
+  },
   "AudienceWithdrawn:1": {
     "type": "object",
     "properties": {
@@ -74,6 +194,71 @@
       "audience"
     ],
     "title": "AudienceWithdrawn"
+  },
+  "AudienceDecisionReceived:2": {
+    "type": "object",
+    "properties": {
+      "product": {
+        "type": "string"
+      },
+      "environment": {
+        "type": "string"
+      },
+      "decision": {
+        "type": "integer",
+        "enum": [
+          0,
+          1
+        ],
+        "x-enumNames": [
+          "Granted",
+          "Withdrawn"
+        ]
+      },
+      "level": {
+        "type": "integer",
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "x-enumNames": [
+          "Tenant",
+          "User",
+          "System",
+          "NamedSystem"
+        ]
+      },
+      "tenantId": {
+        "type": "string"
+      },
+      "userId": {
+        "type": "string"
+      },
+      "audience": {
+        "type": "string"
+      },
+      "decidedAt": {
+        "type": "string",
+        "format": "date-time-offset"
+      },
+      "clientId": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "product",
+      "environment",
+      "decision",
+      "level",
+      "tenantId",
+      "userId",
+      "audience",
+      "decidedAt",
+      "clientId"
+    ],
+    "title": "AudienceDecisionReceived"
   },
   "AudienceDecisionReceived:1": {
     "type": "object",
@@ -314,5 +499,57 @@
       "personas"
     ],
     "title": "AvailabilityDeclared"
+  },
+  "SystemsDeclared:1": {
+    "type": "object",
+    "properties": {
+      "product": {
+        "type": "string"
+      },
+      "environment": {
+        "type": "string"
+      },
+      "systems": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "clientId": {
+              "type": "string"
+            },
+            "kind": {
+              "type": "integer",
+              "enum": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "x-enumNames": [
+                "None",
+                "Mcp",
+                "Api",
+                "Other"
+              ]
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "clientId",
+            "kind",
+            "name"
+          ],
+          "title": "SystemDeclaration"
+        }
+      }
+    },
+    "required": [
+      "product",
+      "environment",
+      "systems"
+    ],
+    "title": "SystemsDeclared"
   }
 }

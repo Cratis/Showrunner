@@ -23,8 +23,8 @@ public class a_grant_at_each_level : a_guest_list_outbox
 
     [Fact] void should_publish_each_grant() => _published.Count.ShouldEqual(3);
     [Fact] void should_publish_them_under_the_product() => _published.All(_ => _.Context.EventSourceId == new EventSourceId(Guests.Product.Value)).ShouldBeTrue();
-    [Fact] void should_publish_the_tenants_grant() => _published[0].Content.ShouldEqual(new AudienceGranted(Guests.Product, AudienceLevel.Tenant, Guests.Acme, UserId.NotSet, Guests.Plus));
-    [Fact] void should_publish_the_users_grant() => _published[1].Content.ShouldEqual(new AudienceGranted(Guests.Product, AudienceLevel.User, Guests.Acme, Guests.Alice, Guests.Plus));
-    [Fact] void should_publish_the_systems_grant() => _published[2].Content.ShouldEqual(new AudienceGranted(Guests.Product, AudienceLevel.System, TenantId.NotSet, UserId.NotSet, Guests.Plus));
+    [Fact] void should_publish_the_tenants_grant() => _published[0].Content.ShouldEqual(new AudienceGranted(Guests.Product, AudienceLevel.Tenant, Guests.Acme, UserId.NotSet, Guests.Plus, SystemClientId.NotSet, SystemKind.None));
+    [Fact] void should_publish_the_users_grant() => _published[1].Content.ShouldEqual(new AudienceGranted(Guests.Product, AudienceLevel.User, Guests.Acme, Guests.Alice, Guests.Plus, SystemClientId.NotSet, SystemKind.None));
+    [Fact] void should_publish_the_systems_grant() => _published[2].Content.ShouldEqual(new AudienceGranted(Guests.Product, AudienceLevel.System, TenantId.NotSet, UserId.NotSet, Guests.Plus, SystemClientId.NotSet, SystemKind.None));
 }
 #endif

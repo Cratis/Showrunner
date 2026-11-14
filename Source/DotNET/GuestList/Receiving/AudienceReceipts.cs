@@ -78,12 +78,16 @@ public class AudienceReceipts(IChronicleClient client, IOptions<GuestListOptions
     /// <exception cref="AudienceReceiptNotPublished">The receipt could not be appended; the reactor delivers the decision again.</exception>
     public async Task Receive(ReceivedDecision decision, AudienceLevel level, AudienceName audience, EventContext context)
     {
-        var tenant = level == AudienceLevel.System ? TenantId.NotSet : new TenantId(context.Namespace.Value);
+        var tenant = level is AudienceLevel.System or AudienceLevel.NamedSystem ? TenantId.NotSet : new TenantId(context.Namespace.Value);
         var user = level == AudienceLevel.User && context.EventSourceId.Value.StartsWith(UserStreamPrefix, StringComparison.Ordinal)
             ? new UserId(context.EventSourceId.Value[UserStreamPrefix.Length..])
             : UserId.NotSet;
 
-        var received = new AudienceDecisionReceived(options.Value.Product, options.Value.Environment, decision, level, tenant, user, audience, context.Occurred);
+        var systemClient = level == AudienceLevel.NamedSystem && context.EventSourceId.Value.StartsWith(GuestListStreams.NamedSystemPrefix, StringComparison.Ordinal)
+            ? new SystemClientId(context.EventSourceId.Value[GuestListStreams.NamedSystemPrefix.Length..])
+            : SystemClientId.NotSet;
+
+        var received = new AudienceDecisionReceived(options.Value.Product, options.Value.Environment, decision, level, tenant, user, audience, context.Occurred, systemClient);
         var store = await client.GetEventStore(context.EventStore, EventStoreNamespaceName.Default);
         using var routing = string.IsNullOrWhiteSpace(options.Value.OperatorAudience) ? null : EventTags.Audience(options.Value.OperatorAudience);
         var result = await store.GetEventSequence(EventSequenceId.Outbox).AppendOnce(options.Value.Product.Value, received, KeyFor(context), occurred: context.Occurred);

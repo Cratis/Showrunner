@@ -6,6 +6,7 @@ using Cratis.Choreography.Availability.Audiences;
 using Cratis.Showrunner.GuestList;
 using Cratis.Showrunner.GuestList.Availability;
 using Cratis.Showrunner.GuestList.Availability.Declaration;
+using Cratis.Showrunner.GuestList.Availability.Systems;
 using Cratis.Showrunner.GuestList.Contracts.Availability;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
@@ -52,6 +53,8 @@ public static class GuestListAvailabilityServiceCollectionExtensions
             }
         });
         services.TryAddSingleton<AvailabilityReporter>();
+        services.TryAddSingleton<IKnownSystems, InMemoryKnownSystems>();
+        services.TryAddSingleton<SystemsReporter>();
         services.AddHostedService<AvailabilityReportingService>();
         return services;
     }

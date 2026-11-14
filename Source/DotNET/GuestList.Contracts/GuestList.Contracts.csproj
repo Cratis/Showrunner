@@ -8,7 +8,7 @@
         <AssemblyName>Cratis.Showrunner.GuestList.Contracts</AssemblyName>
         <RootNamespace>Cratis.Showrunner.GuestList.Contracts</RootNamespace>
         <PackageId>Cratis.Showrunner.GuestList.Contracts</PackageId>
-        <Description>The event contracts for GuestList — the Showrunner audiences part: the public events an operator grants and withdraws audiences through, for tenants, users and the system.</Description>
+        <Description>The event contracts for GuestList — the Showrunner audiences part: the public events an operator grants and withdraws audiences through, for tenants, users, the system and one named system.</Description>
         <PackageTags>cratis;showrunner;guestlist;audiences;availability;event-sourcing;chronicle</PackageTags>
     </PropertyGroup>
 

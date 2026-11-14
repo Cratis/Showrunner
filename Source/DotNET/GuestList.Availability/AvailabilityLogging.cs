@@ -3,6 +3,7 @@
 
 using Cratis.Choreography.Availability.Audiences;
 using Cratis.Showrunner.GuestList.Availability.Declaration;
+using Cratis.Showrunner.GuestList.Availability.Systems;
 using Microsoft.Extensions.Logging;
 using Product = Cratis.Showrunner.GuestList.Contracts.Audiences.Product;
 
@@ -21,6 +22,12 @@ internal static partial class AvailabilityLogging
 
     [LoggerMessage(LogLevel.Debug, "Product '{Product}' declares no availability; nothing to report")]
     internal static partial void NothingDeclared(this ILogger<AvailabilityReporter> logger, Product product);
+
+    [LoggerMessage(LogLevel.Information, "Reported the {Systems} system(s) product '{Product}' knows")]
+    internal static partial void SystemsReported(this ILogger<SystemsReporter> logger, Product product, int systems);
+
+    [LoggerMessage(LogLevel.Debug, "The systems product '{Product}' knows are what was last reported; nothing to report")]
+    internal static partial void SystemsUnchanged(this ILogger<SystemsReporter> logger, Product product);
 
     [LoggerMessage(LogLevel.Warning, "Could not report what the product declares; trying again soon")]
     internal static partial void ReportingFailed(this ILogger<AvailabilityReportingService> logger, Exception exception);

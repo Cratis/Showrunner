@@ -45,7 +45,9 @@ IReadOnlySet<AudienceName> audiences = await guestList.For(tenant, user);
 | --- | --- |
 | `ForTenant(tenant)` | the audiences granted to the tenant as a whole |
 | `ForUser(tenant, user)` | the audiences granted to one user |
-| `ForSystem()` | the audiences granted to the system |
+| `ForSystem()` | the audiences granted to every system |
+| `ForNamedSystem(client)` | the audiences granted to one named system only, by its client id |
+| `ForSystemCaller(client)` | what a request made by that system gets: the ones granted to every system plus its own; with no client id, the ones granted to every system only |
 | `For(tenant, user)` | the three added together; pass `UserId.NotSet` for a caller that is not a person |
 | `Granted(tenant)` | every grant that applies to the tenant, with its level |
 

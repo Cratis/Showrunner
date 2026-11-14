@@ -34,7 +34,7 @@ public record ProductGuestList(Product Product, IEnumerable<HeldAudience> Grants
     /// </summary>
     /// <param name="audience">The audience, with the level, tenant and user it is held at.</param>
     /// <returns><see langword="true"/> when it is; otherwise <see langword="false"/>.</returns>
-    public bool Holds(HeldAudience audience) => Grants.Contains(audience);
+    public bool Holds(HeldAudience audience) => Grants.Any(grant => grant.IsSameAs(audience));
 
     /// <summary>
     /// Holds an audience, unless it is held.
@@ -46,7 +46,7 @@ public record ProductGuestList(Product Product, IEnumerable<HeldAudience> Grants
     public static ProductGuestList Reduce(AudienceGrantDecided @event, ProductGuestList? current, EventContext context)
     {
         var state = current ?? new(new Product(context.EventSourceId.Value), []);
-        var held = new HeldAudience(@event.Level, @event.TenantId, @event.UserId, @event.Audience);
+        var held = new HeldAudience(@event.Level, @event.TenantId, @event.UserId, @event.Audience, @event.ClientId ?? SystemClientId.NotSet, @event.Kind);
         return state.Holds(held) ? state : state with { Grants = Ordered([.. state.Grants, held]) };
     }
 
@@ -60,8 +60,8 @@ public record ProductGuestList(Product Product, IEnumerable<HeldAudience> Grants
     public static ProductGuestList Reduce(AudienceWithdrawalDecided @event, ProductGuestList? current, EventContext context)
     {
         var state = current ?? new(new Product(context.EventSourceId.Value), []);
-        var held = new HeldAudience(@event.Level, @event.TenantId, @event.UserId, @event.Audience);
-        return state with { Grants = [.. state.Grants.Where(grant => grant != held)] };
+        var held = new HeldAudience(@event.Level, @event.TenantId, @event.UserId, @event.Audience, @event.ClientId ?? SystemClientId.NotSet, @event.Kind);
+        return state with { Grants = [.. state.Grants.Where(grant => !grant.IsSameAs(held))] };
     }
 
     static IEnumerable<HeldAudience> Ordered(IEnumerable<HeldAudience> grants) =>
@@ -70,6 +70,7 @@ public record ProductGuestList(Product Product, IEnumerable<HeldAudience> Grants
             .OrderBy(grant => grant.Level)
             .ThenBy(grant => grant.TenantId.Value, StringComparer.Ordinal)
             .ThenBy(grant => grant.UserId.Value, StringComparer.Ordinal)
+            .ThenBy(grant => grant.ClientId?.Value ?? string.Empty, StringComparer.Ordinal)
             .ThenBy(grant => grant.Audience.Value, StringComparer.Ordinal)
     ];
 }

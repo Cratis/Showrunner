@@ -35,6 +35,16 @@ public static class Guests
     public static readonly UserId Bob = "bob";
 
     /// <summary>
+    /// A system that calls the product.
+    /// </summary>
+    public static readonly SystemClientId Crm = "crm-sync";
+
+    /// <summary>
+    /// Another system that calls the product.
+    /// </summary>
+    public static readonly SystemClientId Reports = "reports-mcp";
+
+    /// <summary>
     /// An audience.
     /// </summary>
     public static readonly AudienceName Plus = "Plus";
@@ -67,7 +77,7 @@ public static class Guests
     /// <param name="audience">The audience.</param>
     /// <param name="tenant">The tenant; <see cref="Acme"/> when not given.</param>
     /// <returns>The public event.</returns>
-    public static AudienceGranted GrantToTenant(AudienceName audience, TenantId? tenant = null) => new(Product, AudienceLevel.Tenant, tenant ?? Acme, UserId.NotSet, audience);
+    public static AudienceGranted GrantToTenant(AudienceName audience, TenantId? tenant = null) => new(Product, AudienceLevel.Tenant, tenant ?? Acme, UserId.NotSet, audience, SystemClientId.NotSet, SystemKind.None);
 
     /// <summary>
     /// Gets a withdrawal at the level of a tenant.
@@ -75,7 +85,7 @@ public static class Guests
     /// <param name="audience">The audience.</param>
     /// <param name="tenant">The tenant; <see cref="Acme"/> when not given.</param>
     /// <returns>The public event.</returns>
-    public static AudienceWithdrawn WithdrawFromTenant(AudienceName audience, TenantId? tenant = null) => new(Product, AudienceLevel.Tenant, tenant ?? Acme, UserId.NotSet, audience);
+    public static AudienceWithdrawn WithdrawFromTenant(AudienceName audience, TenantId? tenant = null) => new(Product, AudienceLevel.Tenant, tenant ?? Acme, UserId.NotSet, audience, SystemClientId.NotSet, SystemKind.None);
 
     /// <summary>
     /// Gets a grant at the level of a user of <see cref="Acme"/>.
@@ -83,7 +93,7 @@ public static class Guests
     /// <param name="audience">The audience.</param>
     /// <param name="user">The user; <see cref="Alice"/> when not given.</param>
     /// <returns>The public event.</returns>
-    public static AudienceGranted GrantToUser(AudienceName audience, UserId? user = null) => new(Product, AudienceLevel.User, Acme, user ?? Alice, audience);
+    public static AudienceGranted GrantToUser(AudienceName audience, UserId? user = null) => new(Product, AudienceLevel.User, Acme, user ?? Alice, audience, SystemClientId.NotSet, SystemKind.None);
 
     /// <summary>
     /// Gets a withdrawal at the level of a user of <see cref="Acme"/>.
@@ -91,20 +101,36 @@ public static class Guests
     /// <param name="audience">The audience.</param>
     /// <param name="user">The user; <see cref="Alice"/> when not given.</param>
     /// <returns>The public event.</returns>
-    public static AudienceWithdrawn WithdrawFromUser(AudienceName audience, UserId? user = null) => new(Product, AudienceLevel.User, Acme, user ?? Alice, audience);
+    public static AudienceWithdrawn WithdrawFromUser(AudienceName audience, UserId? user = null) => new(Product, AudienceLevel.User, Acme, user ?? Alice, audience, SystemClientId.NotSet, SystemKind.None);
 
     /// <summary>
     /// Gets a grant at the level of the system.
     /// </summary>
     /// <param name="audience">The audience.</param>
     /// <returns>The public event.</returns>
-    public static AudienceGranted GrantToSystem(AudienceName audience) => new(Product, AudienceLevel.System, TenantId.NotSet, UserId.NotSet, audience);
+    public static AudienceGranted GrantToSystem(AudienceName audience) => new(Product, AudienceLevel.System, TenantId.NotSet, UserId.NotSet, audience, SystemClientId.NotSet, SystemKind.None);
 
     /// <summary>
     /// Gets a withdrawal at the level of the system.
     /// </summary>
     /// <param name="audience">The audience.</param>
     /// <returns>The public event.</returns>
-    public static AudienceWithdrawn WithdrawFromSystem(AudienceName audience) => new(Product, AudienceLevel.System, TenantId.NotSet, UserId.NotSet, audience);
+    public static AudienceWithdrawn WithdrawFromSystem(AudienceName audience) => new(Product, AudienceLevel.System, TenantId.NotSet, UserId.NotSet, audience, SystemClientId.NotSet, SystemKind.None);
+
+    /// <summary>
+    /// Gets a grant at the level of one named system.
+    /// </summary>
+    /// <param name="audience">The audience.</param>
+    /// <param name="client">The client id of the system; <see cref="Crm"/> when not given.</param>
+    /// <returns>The public event.</returns>
+    public static AudienceGranted GrantToNamedSystem(AudienceName audience, SystemClientId? client = null) => new(Product, AudienceLevel.NamedSystem, TenantId.NotSet, UserId.NotSet, audience, client ?? Crm, SystemKind.Mcp);
+
+    /// <summary>
+    /// Gets a withdrawal at the level of one named system.
+    /// </summary>
+    /// <param name="audience">The audience.</param>
+    /// <param name="client">The client id of the system; <see cref="Crm"/> when not given.</param>
+    /// <returns>The public event.</returns>
+    public static AudienceWithdrawn WithdrawFromNamedSystem(AudienceName audience, SystemClientId? client = null) => new(Product, AudienceLevel.NamedSystem, TenantId.NotSet, UserId.NotSet, audience, client ?? Crm, SystemKind.Mcp);
 }
 #endif

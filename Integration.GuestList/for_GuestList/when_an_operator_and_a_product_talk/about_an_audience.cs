@@ -27,6 +27,8 @@ public class about_an_audience : Specification
     IReadOnlySet<AudienceName> _forTheUser;
     IReadOnlySet<AudienceName> _forAnotherUser;
     IReadOnlySet<AudienceName> _forTheSystem;
+    IReadOnlySet<AudienceName> _forCrm;
+    IReadOnlySet<AudienceName> _forReports;
     IReadOnlySet<AudienceName> _afterTheOperatorWasGone;
     IReadOnlyList<GrantedAudience> _granted;
     IEnumerable<UndeclaredGrant> _undeclared;
@@ -46,18 +48,20 @@ public class about_an_audience : Specification
 
         await _operator.Decide(
             ProductSide.Product,
-            new AudienceGrantDecided(AudienceLevel.Tenant, _tenantId, UserId.NotSet, "Plus"),
-            new AudienceGrantDecided(AudienceLevel.Tenant, _tenantId, UserId.NotSet, "Beta"),
-            new AudienceGrantDecided(AudienceLevel.User, _tenantId, _user, "Preview"),
-            new AudienceGrantDecided(AudienceLevel.User, _tenantId, _user, "Plus"),
-            new AudienceGrantDecided(AudienceLevel.System, TenantId.NotSet, UserId.NotSet, "Internal"),
-            new AudienceGrantDecided(AudienceLevel.System, TenantId.NotSet, UserId.NotSet, "Retired"),
+            new AudienceGrantDecided(AudienceLevel.Tenant, _tenantId, UserId.NotSet, "Plus", SystemClientId.NotSet, SystemKind.None),
+            new AudienceGrantDecided(AudienceLevel.Tenant, _tenantId, UserId.NotSet, "Beta", SystemClientId.NotSet, SystemKind.None),
+            new AudienceGrantDecided(AudienceLevel.User, _tenantId, _user, "Preview", SystemClientId.NotSet, SystemKind.None),
+            new AudienceGrantDecided(AudienceLevel.User, _tenantId, _user, "Plus", SystemClientId.NotSet, SystemKind.None),
+            new AudienceGrantDecided(AudienceLevel.System, TenantId.NotSet, UserId.NotSet, "Internal", SystemClientId.NotSet, SystemKind.None),
+            new AudienceGrantDecided(AudienceLevel.System, TenantId.NotSet, UserId.NotSet, "Retired", SystemClientId.NotSet, SystemKind.None),
+            new AudienceGrantDecided(AudienceLevel.NamedSystem, TenantId.NotSet, UserId.NotSet, "Plus", "crm-sync", SystemKind.Mcp),
+            new AudienceGrantDecided(AudienceLevel.NamedSystem, TenantId.NotSet, UserId.NotSet, "Preview", "reports-mcp", SystemKind.Api),
 
             // A tenant the product does not have is never recorded there, and a decision for another product is not
             // delivered to this one.
-            new AudienceGrantDecided(AudienceLevel.Tenant, "initech", UserId.NotSet, "Plus"),
-            new AudienceWithdrawalDecided(AudienceLevel.Tenant, _tenantId, UserId.NotSet, "Beta"));
-        await _operator.Decide("studio", new AudienceGrantDecided(AudienceLevel.System, TenantId.NotSet, UserId.NotSet, "Other"));
+            new AudienceGrantDecided(AudienceLevel.Tenant, "initech", UserId.NotSet, "Plus", SystemClientId.NotSet, SystemKind.None),
+            new AudienceWithdrawalDecided(AudienceLevel.Tenant, _tenantId, UserId.NotSet, "Beta", SystemClientId.NotSet, SystemKind.None));
+        await _operator.Decide("studio", new AudienceGrantDecided(AudienceLevel.System, TenantId.NotSet, UserId.NotSet, "Other", SystemClientId.NotSet, SystemKind.None));
 
         // Waits for the last decision, which is the withdrawal: everything before it has then been recorded.
         _forTheTenant = await Eventually.Get(
@@ -71,6 +75,8 @@ public class about_an_audience : Specification
         _forTheUser = await _product.GuestList.For(_tenantId, _user);
         _forAnotherUser = await _product.GuestList.For(_tenantId, "grace");
         _forTheSystem = await _product.GuestList.ForSystem();
+        _forCrm = await _product.GuestList.ForSystemCaller("crm-sync");
+        _forReports = await _product.GuestList.ForSystemCaller("reports-mcp");
         _granted = await _product.GuestList.Granted(_tenantId);
         _undeclared = UndeclaredGrant.Among(_granted, ["Plus", "Preview", "Internal"]);
         _recordedForTheTenant = await (await _product.In(_tenant)).EventLog.GetFromSequenceNumber(EventSequenceNumber.First);
@@ -96,6 +102,8 @@ public class about_an_audience : Specification
     [Fact] void should_add_the_tenants_users_and_the_systems_audiences_for_a_user() => Names(_forTheUser).ShouldContainOnly("Plus", "Preview", "Internal", "Retired");
     [Fact] void should_leave_a_users_audiences_with_that_user() => Names(_forAnotherUser).ShouldContainOnly("Plus", "Internal", "Retired");
     [Fact] void should_grant_the_system_what_was_granted_at_its_level() => Names(_forTheSystem).ShouldContainOnly("Internal", "Retired");
+    [Fact] void should_give_a_named_system_what_every_system_holds_and_its_own() => Names(_forCrm).ShouldContainOnly("Internal", "Retired", "Plus");
+    [Fact] void should_not_give_a_named_system_what_another_system_holds() => Names(_forReports).ShouldContainOnly("Internal", "Retired", "Preview");
     [Fact] void should_list_every_grant_that_applies_to_the_tenant() => _granted.Count.ShouldEqual(5);
     [Fact] void should_report_the_grant_the_application_does_not_declare() => _undeclared.Select(_ => _.Audience.Value).ShouldContainOnly("Retired");
     [Fact] void should_record_the_decisions_about_the_tenant_in_its_own_namespace() => _recordedForTheTenant.Count(_ => _.Content is AudienceGrantRecorded or AudienceWithdrawalRecorded).ShouldEqual(5);

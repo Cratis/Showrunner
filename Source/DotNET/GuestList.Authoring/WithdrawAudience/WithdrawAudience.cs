@@ -18,9 +18,11 @@ namespace Cratis.Showrunner.GuestList.Authoring.WithdrawAudience;
 /// <param name="TenantId">The tenant, for a tenant or a user grant; empty for the system.</param>
 /// <param name="UserId">The user, for a user grant; empty otherwise.</param>
 /// <param name="Audience">The audience to withdraw.</param>
+/// <param name="ClientId">The client id of the system, for a named system; empty otherwise.</param>
+/// <param name="Kind">The kind of the system, for a named system; none otherwise.</param>
 [Command]
 [Authorize(Policy = GuestListAuthoring.Policy)]
-public record WithdrawAudience(Product Product, AudienceLevel Level, TenantId TenantId, UserId UserId, AudienceName Audience) : IAudienceDecision, ICanProvideEventSourceId
+public record WithdrawAudience(Product Product, AudienceLevel Level, TenantId TenantId, UserId UserId, AudienceName Audience, SystemClientId? ClientId = null, SystemKind Kind = SystemKind.None) : IAudienceDecision, ICanProvideEventSourceId
 {
     /// <inheritdoc/>
     public EventSourceId GetEventSourceId() => new(Product.Value);
@@ -31,7 +33,7 @@ public record WithdrawAudience(Product Product, AudienceLevel Level, TenantId Te
     /// <param name="guestList">What is held for the product, read fresh from the event log.</param>
     /// <returns><see cref="AudienceWithdrawalDecided"/>, or nothing when the audience is not held.</returns>
     public IEnumerable<object> Handle(ProductGuestList? guestList) =>
-        guestList?.Holds(this.Held()) == true ? [new AudienceWithdrawalDecided(Level, TenantId, UserId, Audience)] : [];
+        guestList?.Holds(this.Held()) == true ? [new AudienceWithdrawalDecided(Level, TenantId, UserId, Audience, ClientId ?? SystemClientId.NotSet, Kind)] : [];
 }
 
 /// <summary>

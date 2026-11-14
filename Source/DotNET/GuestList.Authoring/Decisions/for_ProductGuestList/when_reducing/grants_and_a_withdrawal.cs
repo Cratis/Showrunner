@@ -19,7 +19,7 @@ public class grants_and_a_withdrawal : a_product_guest_list
     [Fact]
     void should_hold_what_was_not_withdrawn() =>
         GuestList.Grants.ShouldContainOnly(
-            new HeldAudience(AudienceLevel.User, Guests.Acme, Guests.Alice, Guests.Plus),
-            new HeldAudience(AudienceLevel.System, TenantId.NotSet, UserId.NotSet, Guests.Plus));
+            new HeldAudience(AudienceLevel.User, Guests.Acme, Guests.Alice, Guests.Plus, SystemClientId.NotSet, SystemKind.None),
+            new HeldAudience(AudienceLevel.System, TenantId.NotSet, UserId.NotSet, Guests.Plus, SystemClientId.NotSet, SystemKind.None));
 }
 #endif

@@ -20,8 +20,8 @@ public class a_withdrawal : a_guest_list_outbox
     }
 
     [Fact] void should_publish_both() => _published.Count.ShouldEqual(2);
-    [Fact] void should_publish_the_grant_first() => _published[0].Content.ShouldEqual(new AudienceGranted(Guests.Product, AudienceLevel.Tenant, Guests.Acme, UserId.NotSet, Guests.Plus));
-    [Fact] void should_publish_the_withdrawal_after_it() => _published[1].Content.ShouldEqual(new AudienceWithdrawn(Guests.Product, AudienceLevel.Tenant, Guests.Acme, UserId.NotSet, Guests.Plus));
+    [Fact] void should_publish_the_grant_first() => _published[0].Content.ShouldEqual(new AudienceGranted(Guests.Product, AudienceLevel.Tenant, Guests.Acme, UserId.NotSet, Guests.Plus, SystemClientId.NotSet, SystemKind.None));
+    [Fact] void should_publish_the_withdrawal_after_it() => _published[1].Content.ShouldEqual(new AudienceWithdrawn(Guests.Product, AudienceLevel.Tenant, Guests.Acme, UserId.NotSet, Guests.Plus, SystemClientId.NotSet, SystemKind.None));
     [Fact] void should_keep_the_time_the_decision_was_taken() => (_published[1].Context.Occurred >= _published[0].Context.Occurred).ShouldBeTrue();
 }
 #endif

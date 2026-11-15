@@ -39,7 +39,8 @@ public class OutboxRelay(ICollectorClient collector, IOptions<NotesOptions> opti
         typeof(NoteOnScreenGiven),
         typeof(NoteOnComponentGiven),
         typeof(ComponentPropertyChangeSuggested),
-        typeof(NoteWithdrawn)
+        typeof(NoteWithdrawn),
+        typeof(NoteGivenOnStagedApplication)
     ];
 
     /// <summary>

@@ -16,7 +16,7 @@ public static class NoteCollectingEndpointRouteBuilderExtensions
 {
     /// <summary>
     /// Maps the HTTP transport of Notes under <c>/.cratis/notes/v1/publications/{publicationId}</c>: <c>POST notes</c>,
-    /// <c>GET notes/position</c> and <c>GET responses</c>.
+    /// <c>GET notes/position</c>, <c>GET access</c> and <c>GET responses</c>.
     /// </summary>
     /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/>.</param>
     /// <returns>The <see cref="IEndpointRouteBuilder"/> for continuation.</returns>
@@ -42,6 +42,7 @@ public static class NoteCollectingEndpointRouteBuilderExtensions
         var group = endpoints.MapGroup(NotesTransportPaths.Group).AllowAnonymous().ExcludeFromDescription();
         group.MapPost(NotesTransportPaths.Notes, (string publicationId, HttpContext http, NoteCollectingCalls calls) => calls.Receive(publicationId, http));
         group.MapGet(NotesTransportPaths.Position, (string publicationId, HttpContext http, NoteCollectingCalls calls) => calls.Position(publicationId, http));
+        group.MapGet(NotesTransportPaths.Access, (string publicationId, HttpContext http, NoteCollectingCalls calls) => calls.Access(publicationId, http));
         group.MapGet(NotesTransportPaths.Responses, (string publicationId, HttpContext http, NoteCollectingCalls calls) => calls.Responses(publicationId, http));
         return endpoints;
     }

@@ -4,6 +4,7 @@
 using System.Text.Json;
 using Cratis.Chronicle;
 using Cratis.Chronicle.EventSequences;
+using Cratis.Showrunner.Notes.Collecting.Access;
 using Cratis.Showrunner.Notes.Collecting.Receiving;
 using Cratis.Showrunner.Notes.Collecting.Responding.AcknowledgeNote;
 using Cratis.Showrunner.Notes.Collecting.Responding.AddressNote;
@@ -206,6 +207,67 @@ public class NoteCollector(IChronicleClient client, IOptions<ChronicleClientOpti
         }
 
         return (CollectOutcome.Stored, responses);
+    }
+
+    /// <summary>
+    /// Gets the users the desk lets give feedback in the publication's tenant, from the decisions recorded in its namespace.
+    /// </summary>
+    /// <param name="publicationId">The publication.</param>
+    /// <param name="publication">What is known about the publication.</param>
+    /// <param name="knownVersion">The version of the list the caller already has, <see langword="null"/> when it has none.</param>
+    /// <returns>
+    /// The list, or <see langword="null"/> in its place when <paramref name="knownVersion"/> is still current; a
+    /// <see cref="CollectOutcome"/> other than stored when the tenant has no namespace.
+    /// </returns>
+    /// <remarks>
+    /// The list is derived from the decisions themselves and never from a projection, so it cannot be behind what was
+    /// recorded. The version is one more than the highest sequence number of the decisions in the tenant's namespace, found
+    /// without reading them, so a caller that already has the current list costs one lookup. The latest decision for a user
+    /// by the time the desk made it stands, and at the same time the revocation wins, the rule the application applies when
+    /// the desk's decisions reach it through the kernel.
+    /// </remarks>
+    public async Task<(CollectOutcome Outcome, FeedbackAccessGrants? Grants)> Access(PublicationId publicationId, NotesPublication publication, ulong? knownVersion)
+    {
+        if (await Tenant(publication) is not var (tenant, _))
+        {
+            logger.UnknownTenant(publicationId);
+            return (CollectOutcome.UnknownTenant, null);
+        }
+
+        var types = AccessPrivateEvents.Facts.Select(tenant.EventTypes.GetEventTypeFor).ToArray();
+        var tail = await tenant.EventLog.GetTailSequenceNumber(filterEventTypes: types);
+        var version = tail.IsActualValue ? tail.Value + 1 : 0UL;
+        if (knownVersion == version)
+        {
+            return (CollectOutcome.Stored, null);
+        }
+
+        var decisions = await tenant.EventLog.GetFromSequenceNumber(EventSequenceNumber.First, filterEventTypes: types);
+
+        // A decision recorded since the tail was read is in the list, so the version says so.
+        version = Math.Max(version, decisions.Count == 0 ? 0UL : decisions.Max(decision => decision.Context.SequenceNumber.Value) + 1);
+
+        var latest = new Dictionary<string, (DateTimeOffset Occurred, bool Granted)>();
+        foreach (var decision in decisions.OrderBy(_ => _.Context.SequenceNumber.Value))
+        {
+            var granted = decision.Content is FeedbackAccessGrantReceived;
+            var giver = decision.Context.EventSourceId.Value;
+            var occurred = decision.Context.Occurred;
+            if (!latest.TryGetValue(giver, out var current)
+                || occurred > current.Occurred
+                || (occurred == current.Occurred && !granted))
+            {
+                latest[giver] = (occurred, granted);
+            }
+        }
+
+        var givers = latest
+            .Where(entry => entry.Value.Granted)
+            .Select(entry => Guid.TryParse(entry.Key, out var giver) ? giver : Guid.Empty)
+            .Where(giver => giver != Guid.Empty)
+            .Order()
+            .ToArray();
+        return (CollectOutcome.Stored, new FeedbackAccessGrants(version, givers));
     }
 
     static EventSourceId PositionOf(PublicationId publicationId, string source) => new($"{publicationId.Value}|{source}");

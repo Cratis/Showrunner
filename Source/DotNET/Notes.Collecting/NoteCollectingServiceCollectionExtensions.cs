@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Showrunner.Notes.Collecting;
+using Cratis.Showrunner.Notes.Collecting.Access;
 using Cratis.Showrunner.Notes.Collecting.Receiving;
 using Cratis.Showrunner.Notes.Collecting.Tenancy;
 using Cratis.Showrunner.Notes.Collecting.Transport;
@@ -34,6 +35,8 @@ public static class NoteCollectingServiceCollectionExtensions
         services.TryAddSingleton<TenantEventStores>();
         services.TryAddSingleton<AppEventTranslator>();
         services.TryAddSingleton<AppSubscriptions>();
+        services.TryAddSingleton<AccessEventTranslator>();
+        services.TryAddSingleton<AccessSubscriptions>();
         services.AddHostedService<CollectingWorker>();
         services.TryAddSingleton<NoteCollector>();
         services.TryAddSingleton<NoteCollectingCalls>();

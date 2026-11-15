@@ -130,5 +130,6 @@ public class AppSubscriptions(AppEventTranslator translator, IAppStores stores)
         .On<NoteOnScreenGiven>((@event, context) => translator.Translate(@event, context, appStore))
         .On<NoteOnComponentGiven>((@event, context) => translator.Translate(@event, context, appStore))
         .On<ComponentPropertyChangeSuggested>((@event, context) => translator.Translate(@event, context, appStore))
-        .On<NoteWithdrawn>((@event, context) => translator.Translate(@event, context, appStore));
+        .On<NoteWithdrawn>((@event, context) => translator.Translate(@event, context, appStore))
+        .On<NoteGivenOnStagedApplication>((@event, context) => translator.Translate(@event, context, appStore));
 }

@@ -32,8 +32,7 @@ public static class NotesServiceCollectionExtensions
             .Validate(options => !options.Enabled || options.ApplicationName != ApplicationName.NotSet, "Notes needs an application name: set NotesOptions.ApplicationName in AddNotes.")
             .Validate(options => !options.Enabled || options.PublicationId != PublicationId.NotSet, "Notes needs the publication the application runs as: set NotesOptions.PublicationId in AddNotes.")
             .Validate(options => !options.Enabled || options.Transport != NotesTransport.SameKernel || options.CollectingStores.Any(), "Notes needs at least one collecting store: set NotesOptions.CollectingStores in AddNotes.")
-            .Validate(options => !options.Enabled || options.AccessMode != FeedbackAccessMode.GrantedUsers || options.Transport == NotesTransport.SameKernel, "Notes' granted users access needs the desk's events to reach the application through Chronicle's outbox and inbox: use the SameKernel transport, or set NotesOptions.AccessMode to Everyone.")
-            .Validate(options => !options.Enabled || options.AccessMode != FeedbackAccessMode.GrantedUsers || options.AccessStores.Any(), "Notes needs at least one access store to let only granted users give feedback: set NotesOptions.AccessStores in AddNotes.")
+            .Validate(options => !options.Enabled || options.AccessMode != FeedbackAccessMode.GrantedUsers || options.Transport == NotesTransport.Http || options.AccessStores.Any(), "Notes needs at least one access store to let only granted users give feedback: set NotesOptions.AccessStores in AddNotes.")
             .Validate(options => options.PollingInterval > TimeSpan.Zero, "Notes polls at an interval: set NotesOptions.PollingInterval to more than zero.")
             .Validate(options => !NotesOptionsValidation.HttpProblems(options).Any(), "Notes' HTTP transport is not configured: check NotesOptions.CollectorUrl, CollectorToken or CollectorTokenFile, RelayInterval and RelayBatchSize.")
             .ValidateOnStart();
@@ -46,7 +45,10 @@ public static class NotesServiceCollectionExtensions
         services.TryAddSingleton<ReceiverSubscriptions>();
         services.TryAddSingleton<AccessEventTranslator>();
         services.TryAddSingleton<AccessSubscriptions>();
-        services.TryAddTransient<IFeedbackGivers, FeedbackGivers>();
+        services.TryAddTransient<IFeedbackGivers>(provider => provider.GetRequiredService<IOptions<NotesOptions>>().Value.Transport == NotesTransport.Http
+            ? new HttpFeedbackGivers(provider.GetRequiredService<GrantedGiversCache>())
+            : ActivatorUtilities.CreateInstance<FeedbackGivers>(provider));
+        services.TryAddSingleton<GrantedGiversCache>();
         services.TryAddTransient<IFeedbackAccess, FeedbackAccess>();
         services.AddHostedService<NotesWorker>();
 
@@ -58,6 +60,7 @@ public static class NotesServiceCollectionExtensions
         services.TryAddSingleton<OutboxRelay>();
         services.TryAddSingleton<ResponseApplier>();
         services.AddHostedService<CollectorRelayWorker>();
+        services.AddHostedService<GrantedAccessWorker>();
         return services;
     }
 }

@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Showrunner.Notes.Access;
+
 namespace Cratis.Showrunner.Notes;
 
 /// <summary>
@@ -42,6 +44,19 @@ public static class NotesOptionsValidation
         if (options.RelayBatchSize < 1)
         {
             yield return "Notes' relay sends at least one note per request: set NotesOptions.RelayBatchSize to 1 or more.";
+        }
+
+        if (options.AccessMode == FeedbackAccessMode.GrantedUsers)
+        {
+            if (options.AccessRefreshInterval <= TimeSpan.Zero)
+            {
+                yield return "Notes asks the collector who may give feedback at an interval: set NotesOptions.AccessRefreshInterval to more than zero.";
+            }
+
+            if (options.AccessMaxStaleness < options.AccessRefreshInterval)
+            {
+                yield return "Notes can only keep a list of granted users for as long as it takes to fetch the next one: set NotesOptions.AccessMaxStaleness to at least NotesOptions.AccessRefreshInterval.";
+            }
         }
     }
 }

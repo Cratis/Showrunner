@@ -52,7 +52,7 @@ public class OutboxPublisher(IChronicleClient client, ILogger<OutboxPublisher> l
     /// <param name="delivery">The delivery being handled.</param>
     /// <returns>An awaitable task.</returns>
     public Task GaveNoteOnContext(GiverGaveNoteOnContext @event, EventContext context, ReactorDelivery delivery) =>
-        Publish(PublicEvents.For(@event, TenantOf(context)), context, delivery);
+        PublishOpening(PublicEvents.For(@event, TenantOf(context)), context, delivery);
 
     /// <summary>
     /// Publishes a note about slices as <c>NoteOnSlicesGiven</c>.
@@ -62,7 +62,7 @@ public class OutboxPublisher(IChronicleClient client, ILogger<OutboxPublisher> l
     /// <param name="delivery">The delivery being handled.</param>
     /// <returns>An awaitable task.</returns>
     public Task GaveNoteOnSlices(GiverGaveNoteOnSlices @event, EventContext context, ReactorDelivery delivery) =>
-        Publish(PublicEvents.For(@event, TenantOf(context)), context, delivery);
+        PublishOpening(PublicEvents.For(@event, TenantOf(context)), context, delivery);
 
     /// <summary>
     /// Publishes a note about the screen as <c>NoteOnScreenGiven</c>.
@@ -72,7 +72,7 @@ public class OutboxPublisher(IChronicleClient client, ILogger<OutboxPublisher> l
     /// <param name="delivery">The delivery being handled.</param>
     /// <returns>An awaitable task.</returns>
     public Task GaveNoteOnScreen(GiverGaveNoteOnScreen @event, EventContext context, ReactorDelivery delivery) =>
-        Publish(PublicEvents.For(@event, TenantOf(context)), context, delivery);
+        PublishOpening(PublicEvents.For(@event, TenantOf(context)), context, delivery);
 
     /// <summary>
     /// Publishes a note about a component as <c>NoteOnComponentGiven</c>.
@@ -82,7 +82,7 @@ public class OutboxPublisher(IChronicleClient client, ILogger<OutboxPublisher> l
     /// <param name="delivery">The delivery being handled.</param>
     /// <returns>An awaitable task.</returns>
     public Task GaveNoteOnComponent(GiverGaveNoteOnComponent @event, EventContext context, ReactorDelivery delivery) =>
-        Publish(PublicEvents.For(@event, TenantOf(context)), context, delivery);
+        PublishOpening(PublicEvents.For(@event, TenantOf(context)), context, delivery);
 
     /// <summary>
     /// Publishes a suggested property change as <c>ComponentPropertyChangeSuggested</c>.
@@ -92,7 +92,7 @@ public class OutboxPublisher(IChronicleClient client, ILogger<OutboxPublisher> l
     /// <param name="delivery">The delivery being handled.</param>
     /// <returns>An awaitable task.</returns>
     public Task SuggestedPropertyChange(GiverSuggestedComponentPropertyChange @event, EventContext context, ReactorDelivery delivery) =>
-        Publish(PublicEvents.For(@event, TenantOf(context)), context, delivery);
+        PublishOpening(PublicEvents.For(@event, TenantOf(context)), context, delivery);
 
     /// <summary>
     /// Publishes a withdrawn note as <c>NoteWithdrawn</c>.
@@ -104,10 +104,22 @@ public class OutboxPublisher(IChronicleClient client, ILogger<OutboxPublisher> l
     public Task WithdrewNote(GiverWithdrewNote @event, EventContext context, ReactorDelivery delivery) =>
         Publish(PublicEvents.For(@event, TenantOf(context)), context, delivery);
 
+    async Task PublishOpening(object publicEvent, EventContext context, ReactorDelivery delivery)
+    {
+        await Publish(publicEvent, context, delivery);
+
+        // A staged application says so, once, after each note it publishes. A published one says nothing: the absence of the
+        // fact is how every note before the kind could be named was given.
+        if (options.Value.ApplicationKind == ApplicationKind.Staged)
+        {
+            await Publish(new NoteGivenOnStagedApplication(TenantOf(context)), context, delivery, nameof(NoteGivenOnStagedApplication));
+        }
+    }
+
     TenantId TenantOf(EventContext context) =>
         options.Value is { Transport: NotesTransport.Http, CollectorTenantId.Value.Length: > 0 } http ? http.CollectorTenantId : new(context.Namespace.Value);
 
-    async Task Publish(object publicEvent, EventContext context, ReactorDelivery delivery)
+    async Task Publish(object publicEvent, EventContext context, ReactorDelivery delivery, string key = nameof(Publish))
     {
         var eventStore = await client.GetEventStore(context.EventStore, context.Namespace);
         using var audience = string.IsNullOrWhiteSpace(options.Value.CollectorAudience) ? null : EventTags.Audience(options.Value.CollectorAudience);
@@ -115,7 +127,7 @@ public class OutboxPublisher(IChronicleClient client, ILogger<OutboxPublisher> l
         var result = await eventStore.GetEventSequence(EventSequenceId.Outbox).AppendOnce(
             context.EventSourceId,
             publicEvent,
-            delivery.IdempotencyKeyFor(nameof(Publish)),
+            delivery.IdempotencyKeyFor(key),
             correlationId: context.CorrelationId,
             occurred: context.Occurred,
             subject: context.Subject);

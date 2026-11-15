@@ -58,6 +58,30 @@ public class NotesOptions
     public IEnumerable<EventStoreName> AccessStores { get; set; } = ["Direct"];
 
     /// <summary>
+    /// Gets or sets how often the application asks the collector which users a desk granted the right to give feedback, when
+    /// <see cref="AccessMode"/> is <see cref="FeedbackAccessMode.GrantedUsers"/> and <see cref="Transport"/> is
+    /// <see cref="NotesTransport.Http"/>. A revocation takes effect within one interval. Defaults to 30 seconds. An answer
+    /// that nothing changed in costs the collector one comparison.
+    /// </summary>
+    public TimeSpan AccessRefreshInterval { get; set; } = TimeSpan.FromSeconds(30);
+
+    /// <summary>
+    /// Gets or sets how long the application keeps acting on the last list of granted users it fetched when it cannot refresh
+    /// it, when <see cref="AccessMode"/> is <see cref="FeedbackAccessMode.GrantedUsers"/> and <see cref="Transport"/> is
+    /// <see cref="NotesTransport.Http"/>. Beyond it nobody may give feedback until a refresh succeeds: it fails closed.
+    /// Defaults to five minutes.
+    /// </summary>
+    public TimeSpan AccessMaxStaleness { get; set; } = TimeSpan.FromMinutes(5);
+
+    /// <summary>
+    /// Gets or sets what kind of running application this is. <see cref="ApplicationKind.Published"/>, the default, is the
+    /// application its users use. <see cref="ApplicationKind.Staged"/> is a Play, a Preview or a sandbox: every note given in it
+    /// is published together with <c>NoteGivenOnStagedApplication</c>, so the builder can tell it from one given on the
+    /// published application.
+    /// </summary>
+    public ApplicationKind ApplicationKind { get; set; } = ApplicationKind.Published;
+
+    /// <summary>
     /// Gets or sets the audience that identifies this application to the stores that collect its notes. When set, Notes
     /// subscribes to the outbox of each collecting store for this audience only, so a collector that serves several
     /// applications reaches this one with what it addresses to it. Defaults to <see langword="null" />: the subscription

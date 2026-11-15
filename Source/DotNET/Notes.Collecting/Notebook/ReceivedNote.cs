@@ -24,6 +24,12 @@ namespace Cratis.Showrunner.Notes.Collecting.Notebook;
 public record ReceivedNote(NoteId Id, bool IsWithdrawn, bool IsAcknowledged, AddressedInVersion AddressedInVersion, bool IsDeclined)
 {
     /// <summary>
+    /// Gets a value indicating whether the note was given in a staged session - a Play, a Preview or a sandbox - and not on the
+    /// published application. It is not a constructor parameter so the shape the host's own code already builds stays as it was.
+    /// </summary>
+    public bool IsStaged { get; init; }
+
+    /// <summary>
     /// Receives a note about what was on screen.
     /// </summary>
     /// <param name="event">The event.</param>
@@ -76,6 +82,15 @@ public record ReceivedNote(NoteId Id, bool IsWithdrawn, bool IsAcknowledged, Add
     /// <returns>The next state.</returns>
     public static ReceivedNote? Reduce(NoteWithdrawalReceived @event, ReceivedNote? current) =>
         ReceivedNoteTransitions.Change(current, note => note with { IsWithdrawn = true });
+
+    /// <summary>
+    /// Records that the note was given in a staged session.
+    /// </summary>
+    /// <param name="event">The event.</param>
+    /// <param name="current">The current state.</param>
+    /// <returns>The next state.</returns>
+    public static ReceivedNote? Reduce(NoteOnStagedApplicationReceived @event, ReceivedNote? current) =>
+        ReceivedNoteTransitions.Change(current, note => note with { IsStaged = true });
 
     /// <summary>
     /// Records that the note was acknowledged.

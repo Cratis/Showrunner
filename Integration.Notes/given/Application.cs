@@ -29,9 +29,10 @@ public sealed class Application(IHost host, EventStoreName name) : IAsyncDisposa
     /// <param name="infrastructure">The kernel.</param>
     /// <param name="collectingStore">The collecting store it talks to.</param>
     /// <param name="accessStore">The desk that decides who may give feedback; when given, only users it granted may.</param>
+    /// <param name="kind">Whether the application runs published or staged.</param>
     /// <returns>The running application.</returns>
     /// <exception cref="InvalidOperationException">The application store did not register.</exception>
-    public static async Task<Application> Start(ChronicleInfrastructure infrastructure, EventStoreName collectingStore, EventStoreName? accessStore = null)
+    public static async Task<Application> Start(ChronicleInfrastructure infrastructure, EventStoreName collectingStore, EventStoreName? accessStore = null, ApplicationKind kind = ApplicationKind.Published)
     {
         var name = new EventStoreName($"Ledger-{Guid.NewGuid():N}");
         var builder = Host.CreateApplicationBuilder();
@@ -47,6 +48,7 @@ public sealed class Application(IHost host, EventStoreName name) : IAsyncDisposa
             notes.ApplicationVersion = "1.2.3";
             notes.CollectingStores = [collectingStore];
             notes.PollingInterval = TimeSpan.FromMilliseconds(500);
+            notes.ApplicationKind = kind;
             if (accessStore is { } desk)
             {
                 notes.AccessMode = FeedbackAccessMode.GrantedUsers;
@@ -70,6 +72,63 @@ public sealed class Application(IHost host, EventStoreName name) : IAsyncDisposa
 
         return application;
     }
+
+    /// <summary>
+    /// Starts an application that runs its own kernel, so it relays to a collector over HTTP, and lets only the users a desk
+    /// granted give feedback, as the collector tells it.
+    /// </summary>
+    /// <param name="infrastructure">The kernel.</param>
+    /// <param name="collectorUrl">The address of the collector.</param>
+    /// <param name="secret">The secret the collector knows the publication by.</param>
+    /// <param name="tenant">The tenant the collector knows the publication's notes by.</param>
+    /// <returns>The running application.</returns>
+    /// <exception cref="InvalidOperationException">The application store did not register.</exception>
+    public static async Task<Application> StartOverHttp(ChronicleInfrastructure infrastructure, string collectorUrl, string secret, TenantId tenant)
+    {
+        var name = new EventStoreName($"Ledger-{Guid.NewGuid():N}");
+        var builder = Host.CreateApplicationBuilder();
+        builder.AddCratisChronicle(options =>
+        {
+            options.ConnectionString = new(infrastructure.ChronicleConnectionString);
+            options.EventStore = name;
+        });
+        builder.AddNotes(notes =>
+        {
+            notes.ApplicationName = "Ledger";
+            notes.PublicationId = "pub-7f3a";
+            notes.ApplicationVersion = "1.2.3";
+            notes.PollingInterval = TimeSpan.FromMilliseconds(500);
+            notes.Transport = NotesTransport.Http;
+            notes.CollectorUrl = collectorUrl;
+            notes.CollectorToken = secret;
+            notes.CollectorTenantId = tenant;
+            notes.RelayInterval = TimeSpan.FromMilliseconds(500);
+            notes.AccessMode = FeedbackAccessMode.GrantedUsers;
+            notes.AccessRefreshInterval = TimeSpan.FromMilliseconds(500);
+            notes.AccessMaxStaleness = TimeSpan.FromMinutes(1);
+        });
+
+        if (Environment.GetEnvironmentVariable("USHER_INTEGRATION_LOG") is { Length: > 0 } log)
+        {
+            builder.Logging.AddProvider(new FileLoggerProvider(log));
+        }
+
+        var host = builder.Build();
+        await host.StartAsync();
+        var application = new Application(host, name);
+        var registration = await (await application.In(EventStoreNamespaceName.Default)).WaitForRegistration(TimeSpan.FromSeconds(30));
+        if (!registration.IsSuccess)
+        {
+            throw new InvalidOperationException($"Application store {name} did not register.", registration.Failure);
+        }
+
+        return application;
+    }
+
+    /// <summary>
+    /// Gets the services of the running application.
+    /// </summary>
+    public IServiceProvider Services => host.Services;
 
     /// <summary>
     /// Gets the application store in a namespace, as a request in that tenant would.

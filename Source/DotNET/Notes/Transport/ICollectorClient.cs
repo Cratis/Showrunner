@@ -35,4 +35,13 @@ public interface ICollectorClient
     /// <param name="cancellationToken">Stops the call when the host shuts down.</param>
     /// <returns>The answers in cursor order.</returns>
     Task<IReadOnlyList<NoteResponse>> GetResponses(ulong after, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the users the desk granted the right to give feedback, as the collector holds them for the publication.
+    /// </summary>
+    /// <param name="knownVersion">The version of the list the application already has, <see langword="null"/> when it has none.</param>
+    /// <param name="cancellationToken">Stops the call when the host shuts down.</param>
+    /// <returns>The list, or <see langword="null"/> when the collector says the list the application has is still current.</returns>
+    /// <exception cref="CollectorRequestFailed">The collector refused the request.</exception>
+    Task<FeedbackAccessGrants?> GetAccess(ulong? knownVersion, CancellationToken cancellationToken = default);
 }

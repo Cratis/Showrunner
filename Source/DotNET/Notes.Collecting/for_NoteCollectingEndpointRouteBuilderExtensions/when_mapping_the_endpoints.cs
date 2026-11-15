@@ -31,9 +31,10 @@ public class when_mapping_the_endpoints : Specification
         _withoutAResolver = Record.Exception(bare.MapNoteCollecting);
     }
 
-    [Fact] void should_map_the_three_endpoints() => _endpoints.Select(_ => _.RoutePattern.RawText).ShouldContainOnly(
+    [Fact] void should_map_the_four_endpoints() => _endpoints.Select(_ => _.RoutePattern.RawText).ShouldContainOnly(
         "/.cratis/notes/v1/publications/{publicationId}/notes",
         "/.cratis/notes/v1/publications/{publicationId}/notes/position",
+        "/.cratis/notes/v1/publications/{publicationId}/access",
         "/.cratis/notes/v1/publications/{publicationId}/responses");
     [Fact] void should_not_ask_for_the_hosts_user_authentication() => _endpoints.All(_ => _.Metadata.GetMetadata<IAllowAnonymous>() is not null).ShouldBeTrue();
     [Fact] void should_refuse_a_host_without_a_resolver() => _withoutAResolver.ShouldBeOfExactType<InvalidOperationException>();

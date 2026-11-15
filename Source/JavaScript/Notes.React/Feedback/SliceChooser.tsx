@@ -7,7 +7,7 @@ import { formatLocation, LocationParts } from '../Context/formatLocation.js';
 import { CloseIcon } from '../Icons.js';
 import { format } from '../Labels/index.js';
 import { useNotesLabels } from '../Provider/NotesContext.js';
-import { distinctSlices, isChosen, searchSlices, sliceKey, toggleSlice } from './sliceChoice.js';
+import { distinctSlices, isChosen, searchSlices, sliceKey, toggleSlice, withParentLevels } from './sliceChoice.js';
 
 /**
  * Props for {@link SliceChooser}.
@@ -34,8 +34,8 @@ export const SliceChooser = ({ active, known, chosen, onChange }: SliceChooserPr
     const [query, setQuery] = useState('');
     const activeId = useId();
     const resultsId = useId();
-    const activeSlices = distinctSlices(active);
-    const results = searchSlices(known, query);
+    const activeSlices = withParentLevels(distinctSlices(active));
+    const results = searchSlices(withParentLevels(known), query);
     const name = (location: LocationParts) => formatLocation(location, labels.common.locationSeparator, labels.common.unknownLocation);
 
     const option = (location: LocationParts) => (

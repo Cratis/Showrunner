@@ -39,3 +39,26 @@ describe('when giving feedback on slices', () => {
     it('should send the context', () => (execution.executions[0].context === context).should.be.true);
     it('should send the text', () => execution.executions[0].text!.should.equal('These two should work together'));
 });
+
+describe('when giving feedback on a whole module and a whole feature', () => {
+    const context = aNoteContext();
+    let execution: ReturnType<typeof stubExecute>;
+    let result: RenderResult;
+
+    beforeEach(async () => {
+        execution = stubExecute(GiveNoteOnSlices);
+        result = render(<NotesHarness><SlicesFeedbackDialog context={context} /></NotesHarness>);
+        fireEvent.click(result.getByRole('checkbox', { name: 'Orders' }));
+        fireEvent.click(result.getByRole('checkbox', { name: 'Orders › Editing' }));
+        fireEvent.change(result.getByLabelText('What do you think?'), { target: { value: 'The whole area feels slow' } });
+        await press(result, 'Send feedback');
+        await waitFor(() => execution.stub.called.should.be.true);
+    });
+
+    afterEach(() => { cleanup(); sinon.restore(); });
+
+    it('should offer the module of a slice on the screen', () => result.getByRole('checkbox', { name: 'Orders' }).tagName.should.equal('INPUT'));
+    it('should send the module and the feature with the finer parts empty', () => (execution.executions[0].slices as Array<{ module: string; feature: string; slice: string }>)
+        .map(({ module, feature, slice }) => ({ module, feature, slice }))
+        .should.deep.equal([{ module: 'Orders', feature: '', slice: '' }, { module: 'Orders', feature: 'Editing', slice: '' }]));
+});

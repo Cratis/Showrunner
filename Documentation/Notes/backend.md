@@ -29,7 +29,10 @@ The same is available on the service collection as `services.AddNotes(...)`.
 | `PublicationId` | none, required | The publication the application runs as: how the receiving side finds the organization, application and event model. The builder of the application assigns it when it publishes the application. |
 | `ApplicationVersion` | the entry assembly's informational version, without build metadata | The version published with every note. |
 | `AccessMode` | `Everyone` | Who may give feedback. `Everyone` lets every signed-in user, as before access could be controlled. `GrantedUsers` lets only the users a desk granted the right to. See [Access](./access.md). |
-| `AccessStores` | `["Direct"]` | `GrantedUsers` only. The event stores of the desks that decide who may give feedback; Notes subscribes to their outbox. |
+| `AccessStores` | `["Direct"]` | `GrantedUsers` over `SameKernel` only. The event stores of the desks that decide who may give feedback; Notes subscribes to their outbox. Over `Http` the collector holds the decisions and this is not used. |
+| `AccessRefreshInterval` | 30 seconds | `GrantedUsers` over `Http` only. How often Notes asks the collector which users are granted. A revocation takes effect within one interval. |
+| `AccessMaxStaleness` | five minutes | `GrantedUsers` over `Http` only. How long Notes keeps acting on the last list it fetched when it cannot refresh it. Beyond it nobody may give feedback until a refresh succeeds. |
+| `ApplicationKind` | `Published` | `Published` for the application its users use, `Staged` for a Play, a Preview or a sandbox. A staged application marks every note it publishes; see [Staged sessions](#staged-sessions). |
 | `EventStore` | the application's own event store | The event store Notes records the application's facts in. Notes uses the event store of the application's `AddCratis` or `AddCratisChronicle` setup; set it only to record in another one. |
 | `CollectingStores` | `["Studio"]` | The event stores of the receiving sides the application publishes to and receives answers from. |
 | `Audience`, `CollectorAudience` | unset | The audience that identifies this application to the collecting stores (filters the subscription and is sent on every note, so the collector addresses its answers back), and the audience of the collector (addresses published notes). See [Audience routing](../BoxOffice/audience-routing.md). |
@@ -42,7 +45,7 @@ The same is available on the service collection as `services.AddNotes(...)`.
 | `RelayInterval` | five seconds | `Http` only. How often the relay looks for notes to send and answers to apply. |
 | `RelayBatchSize` | 100 | `Http` only. The most notes sent in one request. |
 
-The host fails to start when `ApplicationName` or `PublicationId` is not set, when `CollectingStores` is empty on the `SameKernel` transport, or when the `Http` transport has no valid `CollectorUrl` or no secret, unless `Enabled` is `false`. It also fails when `AccessMode` is `GrantedUsers` and `AccessStores` is empty or the transport is `Http`: a desk's decisions reach the application through Chronicle's outbox and inbox, and Notes does not guess that nobody may give feedback. Arc discovers Notes' commands and queries, and Chronicle its events, read models and reactors, from the referenced assembly; there is nothing else to register. `AddNotes` also adds a hosted service that opens every tenant namespace, observes the inbox of each collecting store and subscribes the application to it; see [Collecting](./collecting.md#what-the-application-needs).
+The host fails to start when `ApplicationName` or `PublicationId` is not set, when `CollectingStores` is empty on the `SameKernel` transport, or when the `Http` transport has no valid `CollectorUrl` or no secret, unless `Enabled` is `false`. It also fails when `AccessMode` is `GrantedUsers` and the transport is `SameKernel` with an empty `AccessStores`, or when it is `Http` with a non-positive `AccessRefreshInterval` or an `AccessMaxStaleness` shorter than the interval: Notes does not guess that nobody may give feedback. See [Access](./access.md#granted-users-over-http) for how a desk's decisions reach an application on the `Http` transport. Arc discovers Notes' commands and queries, and Chronicle its events, read models and reactors, from the referenced assembly; there is nothing else to register. `AddNotes` also adds a hosted service that opens every tenant namespace, observes the inbox of each collecting store and subscribes the application to it; see [Collecting](./collecting.md#what-the-application-needs).
 
 Every command and query requires a signed-in user. Notes takes who the giver is from the signed-in identity, never from the request: the `sub` claim (or the name identifier) is the user's id and the `name` claim their display name. There is no giver field on any command, and a call that is not signed in is refused.
 
@@ -87,7 +90,7 @@ Everything a user sends is stored, published and shown to the people building th
 | `GiverSuggestedComponentPropertyChange` | The user suggests a new value for a property of a component. |
 | `GiverWithdrewNote` | The user withdraws the note. |
 | `ReceiverAcknowledgedNote`, `ReceiverAddressedNote`, `ReceiverDeclinedNote` | The receiving side's answers, translated from the public events. |
-| `DeskGrantedFeedbackAccess`, `DeskRevokedFeedbackAccess` | `GrantedUsers` only. The desk's decisions about one user, translated from the public events and recorded under the user's own id. |
+| `DeskGrantedFeedbackAccess`, `DeskRevokedFeedbackAccess` | `GrantedUsers` over `SameKernel` only. The desk's decisions about one user, translated from the public events and recorded under the user's own id. Over `Http` the application records no such fact; it reads the list the collector serves. |
 
 The user's facts are appended with the user as compliance subject. The outbox publisher turns each into its public event; see [Contracts](./contracts.md#mapping-to-private-events).
 
@@ -96,6 +99,23 @@ The user's facts are appended with the user as compliance subject. The outbox pu
 The `Publishing/OutboxPublisher` reactor appends each public event to the outbox of the same namespace under the same note id. It names the namespace as the `TenantId` and keeps the private fact's correlation id, compliance subject and the time it happened. Public events go only to the outbox, never to the event log.
 
 Chronicle delivers an event to a reactor at least once. Each publication is appended with an idempotency key derived from the delivery, so a repeated delivery finds its publication already in the outbox and appends nothing. The reactor is excluded from replay, so replaying it does not try to publish history again. A newly deployed publisher does catch up: it publishes everything the namespace recorded before it ran.
+
+### Staged sessions
+
+An application that runs as a Play, a Preview or a sandbox the builder started to try the model is not the application its users use, and a note given in it should say so. Set `ApplicationKind` to `Staged` there, and leave it at `Published`, the default, in the published application:
+
+```csharp
+builder.AddNotes(notes =>
+{
+    notes.ApplicationName = "Ledger";
+    notes.PublicationId = "pub-7f3a";
+    notes.ApplicationKind = ApplicationKind.Staged;
+});
+```
+
+or `Notes__ApplicationKind=Staged` in the environment. The outbox publisher then appends `NoteGivenOnStagedApplication(TenantId)` right after each note it publishes, under the same note id, with the same compliance subject and its own idempotency key, so a repeated delivery appends it once. Withdrawing a note appends none. A published application appends nothing, so a note without the event was given on the published application, which is also how every note given before the kind could be named reads. The kind belongs to the running application, which does not change while it runs, so the publisher reads it from the options when it publishes; the giver's own facts are unchanged.
+
+The marker is a fact of its own beside the note rather than a field on it, because a released event never changes shape. A receiving side that does not know the event never subscribes to it or skips it, and keeps working; the collecting side that does records it as `NoteOnStagedApplicationReceived` and reads it as `ReceivedNote.IsStaged`; see [Collecting](./collecting.md#staged-sessions).
 
 ### Configuring Notes from the environment
 

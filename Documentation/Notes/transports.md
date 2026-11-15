@@ -48,6 +48,8 @@ These are the environment forms of `NotesOptions` bound from a `Notes` configura
 | `CollectorTenantId` | none | The tenant the collector knows the publication by. Every note then names it instead of the application's namespace. |
 | `RelayInterval` | five seconds | How often the relay runs a round. After a failed round it waits twice as long for each failure in a row, up to two minutes. |
 | `RelayBatchSize` | 100 | The most notes in one request. |
+| `AccessRefreshInterval` | 30 seconds | `GrantedUsers` only. How often the application asks the collector which users are granted. |
+| `AccessMaxStaleness` | five minutes | `GrantedUsers` only. How long the last list stands when it cannot be refreshed; beyond it nobody is granted. |
 
 The host fails to start when `Http` is selected without a valid `CollectorUrl`, without a secret, with a `CollectorTokenFile` that does not exist, or with a non-positive `RelayInterval` or `RelayBatchSize`. `PublicationId` identifies the publication in every URL.
 
@@ -63,6 +65,10 @@ A hosted worker, running when `Transport` is `Http`, repeats a round every `Rela
 
 A failed round is logged as a warning without the secret or any note, and retried after a growing delay. The host keeps running.
 
+### Who may give feedback
+
+When `AccessMode` is `GrantedUsers`, a second hosted worker asks the collector every `AccessRefreshInterval` for the users the desk granted, and keeps the answer. It is described in [Access](./access.md#granted-users-over-http). The host also fails to start when `AccessRefreshInterval` is not above zero or `AccessMaxStaleness` is shorter than it, in that mode.
+
 ### Applying the answers
 
 Each answer becomes the private fact the same-kernel transport records (`ReceiverAcknowledgedNote`, `ReceiverAddressedNote` or `ReceiverDeclinedNote`) in the tenant namespace that holds the note, found from the note's own event stream. An answer for a note no namespace holds is logged and skipped.
@@ -77,6 +83,7 @@ The host that collects notes maps them with `app.MapNoteCollecting()`. All paths
 | --- | --- | --- |
 | `POST notes` | `source` (optional): the namespace of the application the notes come from | Body: a JSON array of `{ sequenceNumber, eventType: { id, generation }, occurred, eventSourceId, content, correlationId?, subject? }`. Answer: `{ sequenceNumber }`, the position now stored. |
 | `GET notes/position` | `source` (optional) | `{ sequenceNumber }`, the highest outbox sequence number stored, or `null` when none. |
+| `GET access` | none | `{ version, givers }`: the users the desk lets give feedback in the publication's tenant, each as its `FeedbackGiverId` (a GUID), with `version` the number of the latest decision plus one (zero when the desk decided nothing). The answer carries `ETag: "<version>"` and `Cache-Control: no-cache`. A request with `If-None-Match` naming the current tag is answered `304` with no body. |
 | `GET responses` | `after`: the cursor of the last answer seen (default zero) | A JSON array of up to 100 `{ cursor, noteId, kind, occurred, version?, reason? }`, in cursor order, for the notes of this publication. `kind` is `Acknowledged`, `Addressed` or `Declined`; `version` is set for `Addressed` and `reason` for `Declined`. |
 
 `content` is the contract event as JSON in camelCase, with concepts as their value and enumerations as their names. `correlationId` and `subject` are optional: the collector records the received fact under them when present, so erasing the giver erases what they wrote on the collecting side too. A cursor is the sequence number of the answer plus one, so it is above zero and `after=0` reads everything.
@@ -87,14 +94,16 @@ The host that collects notes maps them with `app.MapNoteCollecting()`. All paths
 | 400 | The body is not a list of notes, or a note could not be read. Nothing was stored. |
 | 401 | No bearer secret, a malformed one, a wrong one or an unknown publication. All answer the same, with `WWW-Authenticate: Bearer`. |
 | 409 | A note names another tenant than the publication does. Nothing of the batch was stored. |
+| 304 | `GET access` only. The list the caller names in `If-None-Match` is still current. |
 | 413 | More than 1000 notes in one request. |
-| 422 | The publication's tenant has no single namespace in the collecting store. |
+| 422 | The publication's tenant has no single namespace in the collecting store. `GET access` answers it too, rather than an empty list that would read as nobody being granted. |
 
 On the collecting side a note is recorded by the same code as the same-kernel transport: the received facts are identical, in the namespace the publication names. Each note is recorded once per publication, source and outbox sequence number, however often it is posted. The position is recorded after the batch as an event of its own, `NoteSequenceCollected`, and never moves back, so a batch sent late does not make the application send history again.
 
 ### Security model
 
 - **The publication decides the tenant.** The `TenantId` inside a posted note is never used to choose a namespace. It must equal the `TenantId` of the `NotesPublication` the host's `IResolveNotesPublications` returned for the bearer secret. A batch with a mismatch is rejected whole with 409 and logged with the publication and the sequence number, never the content.
+- **The granted list is the publication's own.** `GET access` reads only the namespace the publication's tenant names, so a user the desk granted in another tenant is never in it. It names users by `FeedbackGiverId`, a hash of the identity, never by provider or subject.
 - **The secret is the credential of one publication.** The host stores only a hash and compares in constant time inside its resolver. An unknown publication and a wrong secret are indistinguishable to the caller.
 - **The secret is never logged.** Not by the relay, not by the collector, and not in the exception for a refused request, which carries only the status code. Prefer `CollectorTokenFile` to `CollectorToken`, so the secret is not in configuration, in an environment dump or in a process listing.
 - **Use TLS.** The secret travels as a bearer token. Use an `https` `CollectorUrl` unless the route between the two never leaves a network you trust.

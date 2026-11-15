@@ -23,6 +23,7 @@ The same is available on the service collection as `services.AddNoteCollecting(.
 | Option | Default | Meaning |
 | --- | --- | --- |
 | `AppStores` | none | The names of the event stores of the applications whose notes are collected. |
+| `AccessStores` | none | The event stores of the desks that decide who may give feedback, for example `Direct`. See [Who may give feedback](#who-may-give-feedback). |
 | `EventStore` | the host's own event store | The event store collecting reads and records in. Collecting uses the event store of the host's `AddCratis` or `AddCratisChronicle` setup; set it only to use another one. |
 | `PollingInterval` | one minute | How often collecting opens the namespaces it does not serve yet and makes sure it is subscribed to the application stores. |
 
@@ -71,7 +72,7 @@ Collecting adds a hosted service that runs a round of work when the host starts 
 
 1. Opens the collecting store in the default namespace and in every namespace it has. Chronicle runs the host's observers only in namespaces the host has opened.
 2. Observes `inbox-{application store}` of each application store in every one of those namespaces.
-3. Subscribes the collecting store to the outbox of each application store, filtered to the six note events, under the subscription id `notes-{application store}`.
+3. Subscribes the collecting store to the outbox of each application store, filtered to the six note events and the staged marker, under the subscription id `notes-{application store}`.
 
 Everything a round acts on is stored in Chronicle, so a restart loses nothing: the first round after it catches up. A round that fails is logged as a warning and the next round tries again.
 
@@ -88,7 +89,17 @@ A translator per application store observes the inbox and records each public ev
 
 The translator is not replayable: replaying an inbox would only translate events that are already recorded.
 
-The private events are public types of the collecting package: `NoteOnContextReceived`, `NoteOnSlicesReceived`, `NoteOnScreenReceived`, `NoteOnComponentReceived`, `ComponentPropertyChangeReceived` and `NoteWithdrawalReceived`. The host builds the views and reactors it needs on them, for example to find the organization, application and event model a note is about from its `Application.PublicationId`.
+The private events are public types of the collecting package: `NoteOnContextReceived`, `NoteOnSlicesReceived`, `NoteOnScreenReceived`, `NoteOnComponentReceived`, `ComponentPropertyChangeReceived`, `NoteWithdrawalReceived` and `NoteOnStagedApplicationReceived`. The host builds the views and reactors it needs on them, for example to find the organization, application and event model a note is about from its `Application.PublicationId`.
+
+## Staged sessions
+
+An application that runs staged publishes `NoteGivenOnStagedApplication` after each note, see [Backend](./backend.md#staged-sessions). The translator and the HTTP endpoint record it under the same note id as `NoteOnStagedApplicationReceived`, once, after the fact that opened the note. The `ReceivedNote` state reads it as `IsStaged`, so a view can show that a note was given in a staged session; a note without the fact was given on the published application. The collector holds the marker to the same rule as a note: it must name the publication's tenant. An older collector never subscribes to the event, and over HTTP skips it as an event it does not know, so applications that mark their notes can be deployed before the collector.
+
+## Who may give feedback
+
+An application on the [HTTP transport](./transports.md#the-http-transport) that lets only granted users give feedback asks the collector which users the desk granted. The collector holds the desk's decisions the way the application does over the same kernel: set `AccessStores` and it subscribes the collecting store to the outbox of each desk for `FeedbackAccessGranted` and `FeedbackAccessRevoked` (subscription `notes-access-{desk store}`), observes `inbox-{desk store}`, and records each decision in the namespace its `TenantId` names under the user's `FeedbackGiverId` as `FeedbackAccessGrantReceived` or `FeedbackAccessRevocationReceived`, once however often it is delivered. A decision for a tenant without a namespace is logged and skipped. The collector serves the users the latest decisions leave granted, from the events themselves and never from a projection that could be behind, at `GET .../access`; see [Transports](./transports.md#the-collector-endpoints). The latest decision by the time the desk made it stands for each user, and at the same time the revocation wins.
+
+A host in which the desk and the collector are one store records the `…Received` facts itself under the same event source ids; they are public types of the package.
 
 ## Answering a note
 

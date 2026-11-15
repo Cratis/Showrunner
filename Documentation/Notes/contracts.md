@@ -30,10 +30,12 @@ The application publishes these from its outbox.
 | `NoteOnComponentGiven` | `Giving` | `TenantId`, `Application`, `Giver`, `Context`, `Component: PickedComponent`, `Kind`, `Text` |
 | `ComponentPropertyChangeSuggested` | `Components` | `TenantId`, `Application`, `Giver`, `Context`, `Component`, `Property: ComponentProperty`, `CurrentValue: PropertyValue`, `SuggestedValue: PropertyValue` |
 | `NoteWithdrawn` | `Giving` | `TenantId` |
+| `NoteGivenOnStagedApplication` | `Giving` | `TenantId` |
 
 - Each is a distinct fact. `NoteOnContextGiven` is the default action of the feedback button; `NoteOnSlicesGiven` is for slices the user explicitly picked; `NoteOnScreenGiven` is for the screen picked as the subject, as opposed to the context it happens to be in.
 - `NoteOnComponentGiven` and the `ComponentPropertyChangeSuggested` events of the same picking session share the `NoteId`. There is one `ComponentPropertyChangeSuggested` event per property, and a session can suggest changes without writing text.
 - `NoteWithdrawn` ends the note: the receiving side stops acting on it.
+- `NoteGivenOnStagedApplication` follows a note, under the same `NoteId`, and says it was given in a staged session: a Play, a Preview or a sandbox. Only an application whose `ApplicationKind` is `Staged` publishes it; a published application publishes nothing, so a note without it was given on the published application. It is an event of its own so no released event changes shape, and a receiving side that does not know it keeps working.
 
 ## Receiving side to application
 
@@ -60,6 +62,10 @@ A desk publishes these from its outbox to decide who may give feedback. They mat
 - The latest decision for a user, by the time the desk made it, stands; a revocation wins when two decisions have the same time. A grant after a revocation grants again.
 - `FeedbackGrantor` (`[PII]`) names who at the desk decided, in the desk's own words.
 - The desk appends both under the user's `FeedbackGiverId`, so a grant and a later revocation of one user arrive in the order the desk made them, and with the user's `FeedbackGiverId.SubjectOf` as compliance subject. `FeedbackGiverId.For(giver)` and `FeedbackGiverId.SubjectOf(giver)` are in the contracts package, so the desk and the application compute the same ids.
+
+## Collector to application
+
+Over the [HTTP transport](./transports.md#the-http-transport) the application reads one more document from the collector, `FeedbackAccessGrants` in the `Transport` namespace: `Version: ulong` and `Givers: IReadOnlyList<Guid>`, the `FeedbackGiverId` of every user the desk lets give feedback in the publication's tenant. It is a contract of the transport and not an event.
 
 ## Shared types
 
@@ -91,7 +97,7 @@ Nothing in the contracts package routes an observer to the other side. Each side
 1. Subscribe its own store to the other store's outbox. Chronicle forwards the listed event types into `inbox-{other store}` on the subscribing store, in the same namespace. Use a subscription id of the form `notes-{other store}` and filter the event types its consumers need.
 2. Observe `inbox-{other store}` with observers that name that event sequence.
 
-An application gets this from `Cratis.Showrunner.Notes`: it subscribes to each store in `CollectingStores` for the three answers, and, when only granted users may give feedback, to each store in `AccessStores` for the two decisions, with subscription ids `notes-access-{access store}`. The receiving side gets it from `Cratis.Showrunner.Notes.Collecting`: it subscribes to each application store for the six notes. Consumers on both sides must tolerate the same event arriving twice, because the forwarder can deliver it again. See [Collecting](./collecting.md) for what the receiving system has to configure.
+An application gets this from `Cratis.Showrunner.Notes`: it subscribes to each store in `CollectingStores` for the three answers, and, when only granted users may give feedback, to each store in `AccessStores` for the two decisions, with subscription ids `notes-access-{access store}`. The receiving side gets it from `Cratis.Showrunner.Notes.Collecting`: it subscribes to each application store for the six notes and the staged marker. Consumers on both sides must tolerate the same event arriving twice, because the forwarder can deliver it again. See [Collecting](./collecting.md) for what the receiving system has to configure.
 
 ## Mapping to private events
 
@@ -105,6 +111,7 @@ The publisher adds `TenantId` to every public event: the namespace the private f
 | `GiverGaveNoteOnComponent` | `NoteOnComponentGiven` |
 | `GiverSuggestedComponentPropertyChange` | `ComponentPropertyChangeSuggested` |
 | `GiverWithdrewNote` | `NoteWithdrawn` |
+| none: the application's `ApplicationKind` is `Staged` | `NoteGivenOnStagedApplication`, after each note |
 
 The application's translator appends each answer under the same note id, in the namespace that `TenantId` names. It ignores a note it did not record, and a redelivered event changes nothing.
 
@@ -121,6 +128,13 @@ The application records a desk's decisions about access the same way, in the nam
 | `FeedbackAccessGranted` | `DeskGrantedFeedbackAccess` |
 | `FeedbackAccessRevoked` | `DeskRevokedFeedbackAccess` |
 
+The collecting side records a desk's decisions the same way when it is given `AccessStores`, to serve them to the applications on the HTTP transport:
+
+| Public event from the desk | Private event on the collecting side |
+| --- | --- |
+| `FeedbackAccessGranted` | `FeedbackAccessGrantReceived` |
+| `FeedbackAccessRevoked` | `FeedbackAccessRevocationReceived` |
+
 The collecting side records the notes the same way:
 
 | Public event from the application | Private event on the collecting side |
@@ -131,6 +145,7 @@ The collecting side records the notes the same way:
 | `NoteOnComponentGiven` | `NoteOnComponentReceived` |
 | `ComponentPropertyChangeSuggested` | `ComponentPropertyChangeReceived` |
 | `NoteWithdrawn` | `NoteWithdrawalReceived` |
+| `NoteGivenOnStagedApplication` | `NoteOnStagedApplicationReceived` |
 
 and publishes the builder's answers: `OperatorAcknowledgedNote` as `NoteAcknowledged`, `OperatorAddressedNote` as `NoteAddressed` and `OperatorDeclinedNote` as `NoteDeclined`.
 

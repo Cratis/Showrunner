@@ -1,4 +1,94 @@
 {
+  "FeedbackAccessGranted:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "giver": {
+        "type": "object",
+        "properties": {
+          "identityProvider": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string",
+            "compliance": [
+              {
+                "metadataType": "PII",
+                "details": "A pseudonymous identifier of the reporter at their identity provider; the application matches the reporter\u0027s issues to them by it, and the desk learns it only when the reporter shares who they are."
+              }
+            ]
+          }
+        },
+        "required": [
+          "identityProvider",
+          "subject"
+        ],
+        "title": "FeedbackGiverIdentity"
+      },
+      "grantedBy": {
+        "type": "string",
+        "compliance": [
+          {
+            "metadataType": "PII",
+            "details": "Identifies the person at the desk who granted or revoked a user\u0027s right to give feedback, so the application can show who decided and the desk can be held to account."
+          }
+        ]
+      }
+    },
+    "required": [
+      "tenantId",
+      "giver",
+      "grantedBy"
+    ],
+    "title": "FeedbackAccessGranted"
+  },
+  "FeedbackAccessRevoked:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      },
+      "giver": {
+        "type": "object",
+        "properties": {
+          "identityProvider": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string",
+            "compliance": [
+              {
+                "metadataType": "PII",
+                "details": "A pseudonymous identifier of the reporter at their identity provider; the application matches the reporter\u0027s issues to them by it, and the desk learns it only when the reporter shares who they are."
+              }
+            ]
+          }
+        },
+        "required": [
+          "identityProvider",
+          "subject"
+        ],
+        "title": "FeedbackGiverIdentity"
+      },
+      "revokedBy": {
+        "type": "string",
+        "compliance": [
+          {
+            "metadataType": "PII",
+            "details": "Identifies the person at the desk who granted or revoked a user\u0027s right to give feedback, so the application can show who decided and the desk can be held to account."
+          }
+        ]
+      }
+    },
+    "required": [
+      "tenantId",
+      "giver",
+      "revokedBy"
+    ],
+    "title": "FeedbackAccessRevoked"
+  },
   "ComponentPropertyChangeSuggested:1": {
     "type": "object",
     "properties": {

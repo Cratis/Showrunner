@@ -4,6 +4,8 @@
 #if DEBUG
 using System.Security.Claims;
 using Cratis.Arc.Identity;
+using Cratis.Showrunner.Notes.Contracts.Access;
+using Cratis.Showrunner.Usher.Contracts.Identity;
 
 namespace Cratis.Showrunner.Notes.given;
 
@@ -33,6 +35,16 @@ public static class Givers
     public static readonly NoteGiver Giver = new(UserId, DisplayName);
 
     /// <summary>
+    /// The identity provider the specifications sign in with.
+    /// </summary>
+    public static readonly IdentityProviderName IdentityProvider = "github";
+
+    /// <summary>
+    /// Who the giver the specifications act as is at their identity provider.
+    /// </summary>
+    public static readonly FeedbackGiverIdentity Identity = new(IdentityProvider, new IdentityProviderSubject(UserId.Value));
+
+    /// <summary>
     /// Creates a signed-in principal.
     /// </summary>
     /// <param name="userId">The user id to sign in as.</param>
@@ -40,6 +52,7 @@ public static class Givers
     public static ClaimsPrincipal SignedInAs(GiverUserId userId) => new(new ClaimsIdentity(
         [
             new Claim("sub", userId),
+            new Claim(MicrosoftIdentityPlatformClaims.IdentityProvider, IdentityProvider),
             new Claim("name", (string)DisplayName)
         ],
         "Specifications"));

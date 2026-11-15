@@ -2,6 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Security.Claims;
+using Cratis.Arc.Identity;
+using Cratis.Showrunner.Notes.Contracts.Access;
+using Cratis.Showrunner.Usher.Contracts.Identity;
 
 namespace Cratis.Showrunner.Notes.Identity;
 
@@ -25,6 +28,13 @@ public interface ISignedInGiver
     /// Gets the user as a note carries them.
     /// </summary>
     NoteGiver Giver { get; }
+
+    /// <summary>
+    /// Gets who the user is at their identity provider: the provider and the subject, which is how a desk names the user when
+    /// it grants the right to give feedback. A subject is unique only within its provider. It has an empty subject when no
+    /// one is signed in.
+    /// </summary>
+    FeedbackGiverIdentity Identity { get; }
 }
 
 /// <summary>
@@ -41,6 +51,11 @@ public class SignedInGiver(ICurrentPrincipalAccessor principals) : ISignedInGive
 
     /// <inheritdoc/>
     public NoteGiver Giver => new(UserId, FirstOf("name", ClaimTypes.Name));
+
+    /// <inheritdoc/>
+    public FeedbackGiverIdentity Identity => IsSignedIn
+        ? new(FirstOf(MicrosoftIdentityPlatformClaims.IdentityProvider), new IdentityProviderSubject(UserId.Value))
+        : new(IdentityProviderName.NotSet, IdentityProviderSubject.NotSet);
 
     ClaimsPrincipal? Principal => principals.Current;
 

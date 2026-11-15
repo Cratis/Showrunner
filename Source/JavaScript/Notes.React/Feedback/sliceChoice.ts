@@ -31,6 +31,27 @@ export function distinctSlices<TLocation extends LocationParts>(locations: reado
 }
 
 /**
+ * Adds the broader levels of every location: its module, and its feature within the module. A note can be about a whole
+ * module or a whole feature, not only a slice, and such a level is a location whose finer parts are empty, which is how the
+ * contracts carry a location Arc could resolve only that far.
+ * @param locations The locations, typically slices.
+ * @returns The distinct, non-empty locations with the module and feature of each, broader levels before the slices in them.
+ */
+export function withParentLevels(locations: readonly LocationParts[]): LocationParts[] {
+    return distinctSlices(locations.flatMap(location => {
+        const levels: LocationParts[] = [];
+        if (location.module.length > 0) {
+            levels.push({ module: location.module, feature: '', slice: '' });
+            if (location.feature.length > 0) {
+                levels.push({ module: location.module, feature: location.feature, slice: '' });
+            }
+        }
+
+        return [...levels, location];
+    }));
+}
+
+/**
  * Adds a slice to the chosen ones, or removes it when it is chosen already.
  * @param chosen The chosen slices.
  * @param location The slice to toggle.

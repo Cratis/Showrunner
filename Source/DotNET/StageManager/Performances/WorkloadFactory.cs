@@ -32,6 +32,10 @@ public static class WorkloadFactory
             mounts.Add(new() { Name = mount.VolumeName, MountPath = mount.MountPath, ReadOnlyProperty = true });
         }
 
+        var shape = workload.Shape ?? new PodShape();
+        volumes.AddRange(shape.Volumes ?? []);
+        mounts.AddRange(shape.VolumeMounts ?? []);
+
         return new()
         {
             ApiVersion = "apps/v1",
@@ -54,6 +58,9 @@ public static class WorkloadFactory
                         AutomountServiceAccountToken = false,
                         SecurityContext = new() { RunAsNonRoot = true, FsGroup = 10001, SeccompProfile = new() { Type = "RuntimeDefault" } },
                         Volumes = volumes,
+                        NodeSelector = shape.NodeSelector?.Count > 0 ? shape.NodeSelector.ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal) : null,
+                        ImagePullSecrets = shape.ImagePullSecrets?.Count > 0 ? [.. shape.ImagePullSecrets.Select(name => new V1LocalObjectReference { Name = name })] : null,
+                        InitContainers = shape.InitContainers?.Count > 0 ? [.. shape.InitContainers] : null,
                         Containers =
                         [
                             new()
@@ -67,6 +74,8 @@ public static class WorkloadFactory
                                 ReadinessProbe = workload.ReadinessPath is { } path
                                     ? new() { HttpGet = new() { Path = path, Port = "http" }, PeriodSeconds = 5 }
                                     : new() { TcpSocket = new() { Port = "http" }, PeriodSeconds = 5 },
+                                StartupProbe = shape.StartupPath is { } startup ? new() { HttpGet = new() { Path = startup, Port = "http" }, PeriodSeconds = 5, FailureThreshold = 60 } : null,
+                                LivenessProbe = shape.LivenessPath is { } liveness ? new() { HttpGet = new() { Path = liveness, Port = "http" }, PeriodSeconds = 10 } : null,
                                 SecurityContext = new() { AllowPrivilegeEscalation = false, Capabilities = new() { Drop = ["ALL"] } }
                             }
                         ]

@@ -9,7 +9,7 @@ Notes records every fact about a note as a private event in the application, in 
 
 ## Rules every contract follows
 
-- **The note id is the event source id.** Every event, in both directions, is appended under the note's `NoteId`: a GUID in its lowercase, hyphenated `D` form. The id is event context, not a field in the payload. The receiving side answers under the same id it received.
+- **The note id is the event source id.** Every event about a note, in both directions, is appended under the note's `NoteId`: a GUID in its lowercase, hyphenated `D` form. The id is event context, not a field in the payload. The receiving side answers under the same id it received. The two events a desk publishes about access are not about a note: they are appended under the user's `FeedbackGiverId`.
 - **Every payload carries `TenantId`.** It is the name of the tenant's Chronicle namespace in the application. The receiving side serves many applications and tenants, records each note in the namespace that `TenantId` names, and publishes its answer in that namespace so the application routes it back to the tenant.
 - **Nothing is nullable.** An optional collection is empty, and a value that is not known is the concept's `NotSet`, an empty string. No dialog is `NoteDialog.NoDialog`; a screen that could not be resolved is `NoteScreen.NotSet`.
 - **No timestamps that repeat the event's own time.** When something happened is the event's `Occurred` in its context.
@@ -47,10 +47,26 @@ The receiving side publishes these from its outbox, so the giver can see what ha
 
 `NoteAcknowledged` says the receiving side recorded the note, `NoteAddressed` that a version that acts on it was rolled out, and `NoteDeclined` that it decided not to act on it.
 
+## Desk to application
+
+A desk publishes these from its outbox to decide who may give feedback. They matter only to an application that lets [only granted users](./access.md) give feedback.
+
+| Event | Namespace | Payload |
+| --- | --- | --- |
+| `FeedbackAccessGranted` | `Access` | `TenantId`, `Giver: FeedbackGiverIdentity`, `GrantedBy: FeedbackGrantor` |
+| `FeedbackAccessRevoked` | `Access` | `TenantId`, `Giver: FeedbackGiverIdentity`, `RevokedBy: FeedbackGrantor` |
+
+- `FeedbackGiverIdentity` is `IdentityProvider: IdentityProviderName` and `Subject: IdentityProviderSubject`, Usher's own types: a subject is unique only within its provider, so the pair names the user.
+- The latest decision for a user, by the time the desk made it, stands; a revocation wins when two decisions have the same time. A grant after a revocation grants again.
+- `FeedbackGrantor` (`[PII]`) names who at the desk decided, in the desk's own words.
+- The desk appends both under the user's `FeedbackGiverId`, so a grant and a later revocation of one user arrive in the order the desk made them, and with the user's `FeedbackGiverId.SubjectOf` as compliance subject. `FeedbackGiverId.For(giver)` and `FeedbackGiverId.SubjectOf(giver)` are in the contracts package, so the desk and the application compute the same ids.
+
 ## Shared types
 
 | Type | Namespace | Shape |
 | --- | --- | --- |
+| `FeedbackGiverIdentity` | `Access` | `IdentityProvider: IdentityProviderName`, `Subject: IdentityProviderSubject` (`[PII]`) |
+| `FeedbackGrantor` | `Access` | Who at the desk decided (`[PII]`) |
 | `NoteGiver` | `People` | `UserId: GiverUserId` (`[PII]`), `DisplayName: GiverDisplayName` (`[PII]`) |
 | `PublishedApplication` | `Applications` | `ApplicationName`, `ApplicationVersion`, `PublicationId`. The `PublicationId` is how the receiving side finds the organization, application and event model a note is about. |
 | `NoteContext` | `Context` | `Location: SliceLocation`, `ActiveSlices: IEnumerable<SliceLocation>`, `Screen: NoteScreen`, `Route`, `Dialog: NoteDialog`, `ModelReferences: IDictionary<string, string>`, `CorrelationId` |
@@ -75,7 +91,7 @@ Nothing in the contracts package routes an observer to the other side. Each side
 1. Subscribe its own store to the other store's outbox. Chronicle forwards the listed event types into `inbox-{other store}` on the subscribing store, in the same namespace. Use a subscription id of the form `notes-{other store}` and filter the event types its consumers need.
 2. Observe `inbox-{other store}` with observers that name that event sequence.
 
-An application gets this from `Cratis.Showrunner.Notes`: it subscribes to each store in `CollectingStores` for the three answers. The receiving side gets it from `Cratis.Showrunner.Notes.Collecting`: it subscribes to each application store for the six notes. Consumers on both sides must tolerate the same event arriving twice, because the forwarder can deliver it again. See [Collecting](./collecting.md) for what the receiving system has to configure.
+An application gets this from `Cratis.Showrunner.Notes`: it subscribes to each store in `CollectingStores` for the three answers, and, when only granted users may give feedback, to each store in `AccessStores` for the two decisions, with subscription ids `notes-access-{access store}`. The receiving side gets it from `Cratis.Showrunner.Notes.Collecting`: it subscribes to each application store for the six notes. Consumers on both sides must tolerate the same event arriving twice, because the forwarder can deliver it again. See [Collecting](./collecting.md) for what the receiving system has to configure.
 
 ## Mapping to private events
 
@@ -97,6 +113,13 @@ The application's translator appends each answer under the same note id, in the 
 | `NoteAcknowledged` | `ReceiverAcknowledgedNote` |
 | `NoteAddressed` | `ReceiverAddressedNote` |
 | `NoteDeclined` | `ReceiverDeclinedNote` |
+
+The application records a desk's decisions about access the same way, in the namespace its `TenantId` names and under the user's `FeedbackGiverId`:
+
+| Public event from the desk | Private event in the application |
+| --- | --- |
+| `FeedbackAccessGranted` | `DeskGrantedFeedbackAccess` |
+| `FeedbackAccessRevoked` | `DeskRevokedFeedbackAccess` |
 
 The collecting side records the notes the same way:
 

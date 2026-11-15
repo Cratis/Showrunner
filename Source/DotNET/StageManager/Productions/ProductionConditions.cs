@@ -29,6 +29,21 @@ public static class ProductionConditions
     public const string GraphModeUnchanged = "GraphModeUnchanged";
 
     /// <summary>
+    /// The vault mode and tier are the ones the Production runs with.
+    /// </summary>
+    public const string VaultModeUnchanged = "VaultModeUnchanged";
+
+    /// <summary>
+    /// The Vault is ready and Chronicle has the token it authenticates with, or the Production has no Vault.
+    /// </summary>
+    public const string VaultReady = "VaultReady";
+
+    /// <summary>
+    /// What federation needs, such as the enrollment code, is in hand.
+    /// </summary>
+    public const string FederationConfigured = "FederationConfigured";
+
+    /// <summary>
     /// cert-manager is installed.
     /// </summary>
     public const string CertManagerInstalled = "CertManagerInstalled";

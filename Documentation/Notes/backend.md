@@ -28,6 +28,8 @@ The same is available on the service collection as `services.AddNotes(...)`.
 | `ApplicationName` | none, required | The name of the application as the receiving side sees it on every note. |
 | `PublicationId` | none, required | The publication the application runs as: how the receiving side finds the organization, application and event model. The builder of the application assigns it when it publishes the application. |
 | `ApplicationVersion` | the entry assembly's informational version, without build metadata | The version published with every note. |
+| `AccessMode` | `Everyone` | Who may give feedback. `Everyone` lets every signed-in user, as before access could be controlled. `GrantedUsers` lets only the users a desk granted the right to. See [Access](./access.md). |
+| `AccessStores` | `["Direct"]` | `GrantedUsers` only. The event stores of the desks that decide who may give feedback; Notes subscribes to their outbox. |
 | `EventStore` | the application's own event store | The event store Notes records the application's facts in. Notes uses the event store of the application's `AddCratis` or `AddCratisChronicle` setup; set it only to record in another one. |
 | `CollectingStores` | `["Studio"]` | The event stores of the receiving sides the application publishes to and receives answers from. |
 | `Audience`, `CollectorAudience` | unset | The audience that identifies this application to the collecting stores (filters the subscription and is sent on every note, so the collector addresses its answers back), and the audience of the collector (addresses published notes). See [Audience routing](../BoxOffice/audience-routing.md). |
@@ -40,7 +42,7 @@ The same is available on the service collection as `services.AddNotes(...)`.
 | `RelayInterval` | five seconds | `Http` only. How often the relay looks for notes to send and answers to apply. |
 | `RelayBatchSize` | 100 | `Http` only. The most notes sent in one request. |
 
-The host fails to start when `ApplicationName` or `PublicationId` is not set, when `CollectingStores` is empty on the `SameKernel` transport, or when the `Http` transport has no valid `CollectorUrl` or no secret, unless `Enabled` is `false`. Arc discovers Notes' commands and queries, and Chronicle its events, read models and reactors, from the referenced assembly; there is nothing else to register. `AddNotes` also adds a hosted service that opens every tenant namespace, observes the inbox of each collecting store and subscribes the application to it; see [Collecting](./collecting.md#what-the-application-needs).
+The host fails to start when `ApplicationName` or `PublicationId` is not set, when `CollectingStores` is empty on the `SameKernel` transport, or when the `Http` transport has no valid `CollectorUrl` or no secret, unless `Enabled` is `false`. It also fails when `AccessMode` is `GrantedUsers` and `AccessStores` is empty or the transport is `Http`: a desk's decisions reach the application through Chronicle's outbox and inbox, and Notes does not guess that nobody may give feedback. Arc discovers Notes' commands and queries, and Chronicle its events, read models and reactors, from the referenced assembly; there is nothing else to register. `AddNotes` also adds a hosted service that opens every tenant namespace, observes the inbox of each collecting store and subscribes the application to it; see [Collecting](./collecting.md#what-the-application-needs).
 
 Every command and query requires a signed-in user. Notes takes who the giver is from the signed-in identity, never from the request: the `sub` claim (or the name identifier) is the user's id and the `name` claim their display name. There is no giver field on any command, and a call that is not signed in is refused.
 
@@ -63,7 +65,8 @@ The commands refuse, with a validation error:
 - a note whose id is already given, unless it is the user's own note that has only suggested property changes so far and the command is `GiveNoteOnComponent` (or another suggestion);
 - a note that belongs to someone else, which is indistinguishable from one that does not exist;
 - a missing context, an empty text, a text over 4000 characters, no slice for `GiveNoteOnSlices`, a missing component or property, and more than 50 slices, model references or ancestors (`NoteLimits`);
-- a change to a withdrawn note, and withdrawing a note twice.
+- a change to a withdrawn note, and withdrawing a note twice;
+- giving or suggesting, when `AccessMode` is `GrantedUsers` and the desk has not granted the user the right or has revoked it. The refusal is the same message in both cases and reveals nothing about what the desk decided. Withdrawing a note and `MyNotes` stay available to whoever gave a note.
 
 Everything a user sends is stored, published and shown to the people building the application, so every text and list is bounded.
 
@@ -72,7 +75,7 @@ Everything a user sends is stored, published and shown to the people building th
 | Query | On | What it returns |
 | --- | --- | --- |
 | `MyNotes` (observable) | `MyNote` | The signed-in user's notes in the current tenant, most recent activity first, again every time one changes. Each note has its `Status`: `Given`, `Acknowledged`, `Addressed`, `Declined` or `Withdrawn`, and a `StatusDetail` with the version that addresses it or the reason it is declined. |
-| `Availability` | `NotesAvailability` | `IsEnabled`: whether Notes is switched on. It needs no sign-in, so the feedback button can ask before anyone has signed in. |
+| `Availability` | `NotesAvailability` | `IsEnabled`: whether Notes is available to the user asking. It is whether Notes is switched on and, with `GrantedUsers`, whether the desk granted the user the right. It needs no sign-in, so the feedback button can ask before anyone has signed in; anyone not signed in is told no when only granted users may give feedback. |
 
 `MyNotes` returns nothing to a user who is not signed in and never another user's notes. A note only moves forward: a withdrawn note stays withdrawn, and an acknowledgement that arrives after a resolution does not take it back. An answer about a note the application never recorded changes nothing.
 
@@ -84,6 +87,7 @@ Everything a user sends is stored, published and shown to the people building th
 | `GiverSuggestedComponentPropertyChange` | The user suggests a new value for a property of a component. |
 | `GiverWithdrewNote` | The user withdraws the note. |
 | `ReceiverAcknowledgedNote`, `ReceiverAddressedNote`, `ReceiverDeclinedNote` | The receiving side's answers, translated from the public events. |
+| `DeskGrantedFeedbackAccess`, `DeskRevokedFeedbackAccess` | `GrantedUsers` only. The desk's decisions about one user, translated from the public events and recorded under the user's own id. |
 
 The user's facts are appended with the user as compliance subject. The outbox publisher turns each into its public event; see [Contracts](./contracts.md#mapping-to-private-events).
 
@@ -109,6 +113,19 @@ Notes__CollectorUrl=https://studio.internal:8443
 Notes__CollectorTokenFile=/var/run/secrets/notes/token
 Notes__CollectorTenantId=acme-corp
 ```
+
+## Asking whether a user may give feedback
+
+A host that gates something of its own on the same decision, such as a menu entry or a page, injects `IFeedbackAccess`:
+
+```csharp
+public class Menu(IFeedbackAccess feedback)
+{
+    public Task<bool> ShowsFeedback() => feedback.MayGiveFeedback();
+}
+```
+
+`MayGiveFeedback()` answers for the signed-in user and `MayGiveFeedback(FeedbackGiverIdentity)` for a named one. Both are advisory reads of the tenant's current state and are always `true` when everyone may give feedback. The commands do not use them: they decide with a read that guards the append, so a revocation that lands before a note is appended refuses the note. See [Access](./access.md).
 
 ## Receiving the answers
 

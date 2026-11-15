@@ -50,6 +50,11 @@ public readonly record struct PerformanceNames(string Performance)
     public string NetworkPolicy => $"{Performance}-app";
 
     /// <summary>
+    /// Gets the name of the NetworkPolicy that limits what the application connects to.
+    /// </summary>
+    public string EgressPolicy => $"{Performance}-egress";
+
+    /// <summary>
     /// Gets the name of the Ingress.
     /// </summary>
     public string Ingress => Performance;

@@ -111,6 +111,85 @@ TLS between the members is disabled: when cert-manager rotates the certificate a
 
 Stage Manager waits for the Percona operator to report the database `ready`, then composes Chronicle's connection from the database administrator the Percona operator created into `<name>-mongodb-connection`.
 
+`backup.enabled` runs the Percona Backup for MongoDB agent (`backup.image`, pinned by default) next to every member. It only makes the database ready to be backed up; the storage the backups go to is attached by an Understudy.
+
+## Vault
+
+`vault.mode` says where Chronicle keeps the keys of the personal data it encrypts:
+
+| Mode | Meaning |
+| --- | --- |
+| `None` (default) | In Chronicle's database. A backup of the database then brings back keys that were erased, so use a Vault when erasure must survive restores |
+| `Managed` | A HashiCorp Vault that Stage Manager runs, named `<name>-vault` |
+| `External` | A Vault you run: `vault.address` and a token in the Secret `vault.tokenSecretRef`, under the key `token` unless `key` is named |
+
+Chronicle is configured for Vault compliance storage automatically, and always gets its token from a Secret (`VAULT_TOKEN`), never as a value. A Production does not start Chronicle until its Vault is ready (`VaultReady`).
+
+### Managed Vault
+
+`vault.managed.tier` chooses the shape:
+
+| Tier | Nodes | Storage | Token of Chronicle |
+| --- | --- | --- | --- |
+| `Development` (default) | 1 | file | the root token |
+| `Production` | 3 | Raft, so one node can be lost | a periodic token whose policy reaches only Chronicle's key paths (`secret/data/k1/*` and the few paths the Chronicle documentation lists), renewed hourly |
+
+`storageSize` (default `1Gi`), `storageClassName` and `image` (pinned by default) are settings too. KV v2 is mounted at `secret/`.
+
+A helper container next to every node initializes Vault once (the first node), keeps the unseal or recovery key and the root token in the Secret `<name>-vault-keys`, keeps the node unsealed, and writes the token Chronicle uses to `<name>-vault-chronicle` as its last step. The helper runs as a ServiceAccount of its own whose Role only reads and creates Secrets. Protect `<name>-vault-keys` like the Vault itself: whoever can read it can read every key.
+
+`vault.managed.unseal.mode` chooses how Vault is unsealed whenever it starts:
+
+| Mode | Meaning |
+| --- | --- |
+| `KubernetesSecret` (default) | The helper unseals each node with the key in `<name>-vault-keys` |
+| `CloudKeyService` | A cloud key service unseals Vault: `cloud.provider` is `Aws` (`region`, `kmsKeyId`), `Azure` (`vaultName`, `keyName`, optionally `tenantId`) or `Google` (`project`, `region`, `keyRing`, `cryptoKey`), in `cloud.settings`. `cloud.credentialsSecretName` is a Secret whose keys become the provider's environment variables; leave it empty to use workload identity |
+| `TransitVault` | A second Vault outside the cluster unseals it: `transit.address`, `transit.keyName`, `transit.mountPath` (default `transit`) and `transit.tokenSecretRef` |
+
+```yaml
+vault:
+  mode: Managed
+  managed:
+    tier: Production
+    unseal:
+      mode: CloudKeyService
+      cloud:
+        provider: Aws
+        settings:
+          region: eu-west-1
+          kmsKeyId: arn:aws:kms:eu-west-1:111122223333:key/example
+        credentialsSecretName: vault-aws
+```
+
+With a cloud key service or a transit Vault, Vault is initialized with a recovery key, which the helper keeps in `<name>-vault-keys`. Settings that end up in the Vault configuration may only hold letters, digits and `. _ : / @ = , + - ` and spaces.
+
+Only a token is supported for an external Vault, because Chronicle authenticates with `VAULT_TOKEN`.
+
+## Federation
+
+`federation` makes the Chronicle of a Production take part in [federation](https://github.com/Cratis/Chronicle/blob/main/Documentation/hosting/configuration/federation.md). Nothing is on by default.
+
+| Field | Meaning |
+| --- | --- |
+| `enabled`, `port` | Opens the federation listener (`Federation:Enabled`), on port `35100` by default, in the container and in a `federation` port of Chronicle's Service. The listener presents Chronicle's certificate |
+| `hosted.enabled`, `hosted.publicEndpoint`, `hosted.trustDomain` | Makes Chronicle the certificate authority customers enroll with. Needs `enabled`. The host of `publicEndpoint` is added to Chronicle's certificate |
+| `dial.enabled`, `dial.eventStore`, `dial.namespace`, `dial.logicalSource` | Dials the authority this Chronicle enrolled with (`Federation:Dial`). It opens no listener and no port |
+| `dial.serve`, `dial.serveEventTypes` | Also produces this Chronicle's public events to the authority over the same connection: a Production with only `dial` set is the sending side of a one-way link. Empty `serveEventTypes` serves every public event type |
+| `dial.enrollmentCodeSecretRef` | The Secret holding the enrollment code, under the key `code` unless `key` is named. Mounted as a file |
+
+```yaml
+federation:
+  dial:
+    enabled: true
+    eventStore: ledger
+    logicalSource: direct
+    serve: true
+    enrollmentCodeSecretRef:
+      name: direct-enrollment
+```
+
+The authority still needs a policy that lets this Chronicle in; that is configured on the authority, not here.
+
 ## Graph
 
 `graph` gives the Production a Neo4j that graph projections land in.
@@ -195,16 +274,14 @@ The keystore password, the administrator password and the client secret reach Ch
 | `phase` | `Blocked` when nothing is applied, `Progressing` while something is not ready, `Ready` when Chronicle, its database and its graph are |
 | `chronicleAddress` | The `chronicle+srv://` address of Chronicle |
 | `connectionSecretName` | The connection Secret, once the certificate authority is issued |
-| `database`, `graph` | The database kind and mode, and the graph mode and edition, the Production runs with |
-| `conditions` | `SpecValid`, `VaultSupported`, `DatabaseModeUnchanged`, `GraphModeUnchanged`, `CertManagerInstalled`, `SinkConfigured.<name>` per sink, `CertificatesReady`, `DatabaseReady`, `GraphReady`, `ConnectionAvailable` and `ChronicleReady` |
+| `database`, `graph`, `vault` | The database kind and mode, the graph mode and edition, and the vault mode and tier, the Production runs with |
+| `conditions` | `SpecValid`, `VaultSupported`, `DatabaseModeUnchanged`, `GraphModeUnchanged`, `VaultModeUnchanged`, `CertManagerInstalled`, `SinkConfigured.<name>` per sink, `FederationConfigured` when the Production dials out and its enrollment code is missing, `CertificatesReady`, `DatabaseReady`, `GraphReady`, `VaultReady` with a Vault, `ConnectionAvailable` and `ChronicleReady` |
 
 A Production is never half configured. An invalid spec, a missing Secret, a missing operator or a refused change makes it `Blocked`, and nothing is applied until it is resolved.
 
 ## Changes that are refused
 
-Changing `database.kind`, `database.mode`, `graph.mode` or `graph.edition` on a Production that runs would leave its data behind, so it is refused: the Production is `Blocked` with `DatabaseModeUnchanged` or `GraphModeUnchanged` false, naming the field and what it runs with. Set the field back, or create a new Production.
-
-`vault.mode` other than `None` is not supported yet ([#17](https://github.com/Cratis/Showrunner/issues/17)); the Production is `Blocked` with `VaultSupported` false.
+Changing `database.kind`, `database.mode`, `graph.mode`, `graph.edition`, `vault.mode` or `vault.managed.tier` on a Production that runs would leave its data or its keys behind, so it is refused: the Production is `Blocked` with `DatabaseModeUnchanged`, `GraphModeUnchanged` or `VaultModeUnchanged` false, naming the field and what it runs with. Set the field back, or create a new Production.
 
 ## Performances check and read their sinks
 

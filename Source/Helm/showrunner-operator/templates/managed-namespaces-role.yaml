@@ -20,17 +20,26 @@ rules:
   - apiGroups: [""]
     resources: ["secrets"]
     verbs: ["get", "create", "update"]
-  # The environment files, legal terms and packages a Performance names.
+  # The environment files, legal terms and packages a Performance names, and the configuration and bootstrap script of a
+  # managed Vault, which it writes.
   - apiGroups: [""]
     resources: ["configmaps"]
-    verbs: ["get"]
+    verbs: ["get", "create", "update"]
+  # The helper next to every node of a managed Vault runs as a ServiceAccount of its own, with a Role that only reads and
+  # creates Secrets. The operator already holds those two verbs on Secrets here, so granting them is no escalation.
+  - apiGroups: [""]
+    resources: ["serviceaccounts"]
+    verbs: ["get", "create", "update"]
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: ["roles", "rolebindings"]
+    verbs: ["get", "create", "update"]
   - apiGroups: [""]
     resources: ["services"]
     verbs: ["get", "create", "update"]
   - apiGroups: ["apps"]
     resources: ["deployments"]
     verbs: ["get", "create", "update"]
-  # Chronicle and the managed Neo4j of a Production.
+  # Chronicle, the managed Vault and the managed Neo4j of a Production.
   - apiGroups: ["apps"]
     resources: ["statefulsets"]
     verbs: ["get", "create", "update"]
@@ -45,10 +54,11 @@ rules:
   - apiGroups: ["networking.k8s.io"]
     resources: ["ingresses"]
     verbs: ["get", "create", "update", "delete"]
-  # Only the application of a published Stage application may be reached by its AuthProxy.
+  # Only the application of a published Stage application may be reached by its AuthProxy, and the egress rules of an
+  # application become a policy of their own. A policy whose rules were removed is deleted, or it would keep the pods isolated.
   - apiGroups: ["networking.k8s.io"]
     resources: ["networkpolicies"]
-    verbs: ["get", "create", "update"]
+    verbs: ["get", "create", "update", "delete"]
   # The backup schedules of an Understudy, and the jobs they and a Vault snapshot request start. It lists jobs to
   # report how they ended; it never deletes one (owner references and the history limits of the CronJob do).
   - apiGroups: ["batch"]

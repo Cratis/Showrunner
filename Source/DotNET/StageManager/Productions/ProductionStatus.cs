@@ -47,6 +47,12 @@ public class ProductionStatus
     public string Graph { get; set; } = string.Empty;
 
     /// <summary>
+    /// Gets or sets the vault mode and tier the Production was first applied with. A spec that differs is refused.
+    /// </summary>
+    [Description("The vault mode and tier the Production runs with, as mode/tier, such as Managed/Production. A spec asking for another is refused, since the keys stay where they are.")]
+    public string Vault { get; set; } = string.Empty;
+
+    /// <summary>
     /// Gets or sets the conditions that describe the Production.
     /// </summary>
     [Description("The conditions that describe the Production.")]

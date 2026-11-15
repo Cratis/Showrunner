@@ -81,6 +81,41 @@ public readonly record struct ProductionNames(string Production, string Namespac
     public string Neo4jServer => $"bolt://{Neo4j}.{Namespace}.svc.cluster.local:7687";
 
     /// <summary>
+    /// Gets the Service that reaches the managed Vault, and the base of the names of what it runs on.
+    /// </summary>
+    public string Vault => $"{Production}-vault";
+
+    /// <summary>
+    /// Gets the headless Service the nodes of a managed Vault find each other through.
+    /// </summary>
+    public string VaultNodes => $"{Production}-vault-nodes";
+
+    /// <summary>
+    /// Gets the ConfigMap holding the configuration and the bootstrap script of a managed Vault.
+    /// </summary>
+    public string VaultConfig => $"{Production}-vault-config";
+
+    /// <summary>
+    /// Gets the Secret the bootstrap helper keeps the unseal or recovery key and the root token of a managed Vault in.
+    /// </summary>
+    public string VaultKeys => $"{Production}-vault-keys";
+
+    /// <summary>
+    /// Gets the Secret holding the token Chronicle authenticates to a managed Vault with.
+    /// </summary>
+    public string VaultChronicleToken => $"{Production}-vault-chronicle";
+
+    /// <summary>
+    /// Gets the ServiceAccount, Role and RoleBinding of the bootstrap helper of a managed Vault.
+    /// </summary>
+    public string VaultBootstrap => $"{Production}-vault-bootstrap";
+
+    /// <summary>
+    /// Gets the address of a managed Vault inside the cluster.
+    /// </summary>
+    public string VaultAddress => $"http://{Vault}.{Namespace}.svc.cluster.local:8200";
+
+    /// <summary>
     /// Gets the names of a Production.
     /// </summary>
     /// <param name="production">The Production.</param>

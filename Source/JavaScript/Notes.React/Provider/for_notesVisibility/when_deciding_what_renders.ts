@@ -9,3 +9,9 @@ describe('when deciding what renders', () => {
     it('should not render while notes is off', () => isNotesAvailable(true, false).should.be.false);
     it('should not render until it is known whether notes is on', () => isNotesAvailable(true, undefined).should.be.false);
 });
+
+describe('when deciding what renders for a user nobody granted', () => {
+    // The application answers that Notes is not available to them, as it does when Notes is switched off.
+    it('should not render for a signed in user it is not available to', () => isNotesAvailable(true, false).should.be.false);
+    it('should not render for a user who is not signed in, even when it would be available to them', () => isNotesAvailable(false, true).should.be.false);
+});

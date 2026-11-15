@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Showrunner.Notes;
+using Cratis.Showrunner.Notes.Access;
+using Cratis.Showrunner.Notes.Access.Receiving;
 using Cratis.Showrunner.Notes.Identity;
 using Cratis.Showrunner.Notes.Receiving;
 using Cratis.Showrunner.Notes.Tenancy;
@@ -30,6 +32,8 @@ public static class NotesServiceCollectionExtensions
             .Validate(options => !options.Enabled || options.ApplicationName != ApplicationName.NotSet, "Notes needs an application name: set NotesOptions.ApplicationName in AddNotes.")
             .Validate(options => !options.Enabled || options.PublicationId != PublicationId.NotSet, "Notes needs the publication the application runs as: set NotesOptions.PublicationId in AddNotes.")
             .Validate(options => !options.Enabled || options.Transport != NotesTransport.SameKernel || options.CollectingStores.Any(), "Notes needs at least one collecting store: set NotesOptions.CollectingStores in AddNotes.")
+            .Validate(options => !options.Enabled || options.AccessMode != FeedbackAccessMode.GrantedUsers || options.Transport == NotesTransport.SameKernel, "Notes' granted users access needs the desk's events to reach the application through Chronicle's outbox and inbox: use the SameKernel transport, or set NotesOptions.AccessMode to Everyone.")
+            .Validate(options => !options.Enabled || options.AccessMode != FeedbackAccessMode.GrantedUsers || options.AccessStores.Any(), "Notes needs at least one access store to let only granted users give feedback: set NotesOptions.AccessStores in AddNotes.")
             .Validate(options => options.PollingInterval > TimeSpan.Zero, "Notes polls at an interval: set NotesOptions.PollingInterval to more than zero.")
             .Validate(options => !NotesOptionsValidation.HttpProblems(options).Any(), "Notes' HTTP transport is not configured: check NotesOptions.CollectorUrl, CollectorToken or CollectorTokenFile, RelayInterval and RelayBatchSize.")
             .ValidateOnStart();
@@ -40,6 +44,10 @@ public static class NotesServiceCollectionExtensions
         services.TryAddSingleton<TenantEventStores>();
         services.TryAddSingleton<ReceiverEventTranslator>();
         services.TryAddSingleton<ReceiverSubscriptions>();
+        services.TryAddSingleton<AccessEventTranslator>();
+        services.TryAddSingleton<AccessSubscriptions>();
+        services.TryAddTransient<IFeedbackGivers, FeedbackGivers>();
+        services.TryAddTransient<IFeedbackAccess, FeedbackAccess>();
         services.AddHostedService<NotesWorker>();
 
         services.TryAddSingleton<CollectorToken>();

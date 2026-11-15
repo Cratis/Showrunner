@@ -64,14 +64,21 @@ public class ProductionPreparation(IProductionCluster cluster)
 
     static bool CheckVault(ProductionSpec spec, ProductionStatusBuilder status)
     {
-        var supported = string.Equals(spec.Vault.Mode, ProductionModes.None, StringComparison.Ordinal);
+        var supported = new[] { ProductionModes.None, ProductionModes.Managed, ProductionModes.External }.Contains(spec.Vault.Mode, StringComparer.Ordinal);
         status.Set(
             ProductionConditions.VaultSupported,
             supported,
-            supported ? "None" : "VaultNotSupported",
-            supported ? "Chronicle keeps its keys in its database." : $"vault.mode {spec.Vault.Mode} is not supported yet; only None is. See https://github.com/Cratis/Showrunner/issues/17.");
+            supported ? spec.Vault.Mode : "VaultNotSupported",
+            supported ? VaultDescription(spec.Vault) : $"vault.mode {spec.Vault.Mode} is not supported; use None, Managed or External.");
         return supported;
     }
+
+    static string VaultDescription(ProductionVault vault) => vault.Mode switch
+    {
+        ProductionModes.Managed => $"Chronicle keeps its keys in a Vault Stage Manager runs: {vault.Managed.Nodes()} node(s), {vault.Managed.Tier} tier, unsealed by {vault.Managed.Unseal.Mode}.",
+        ProductionModes.External => $"Chronicle keeps its keys in the Vault at {vault.Address}.",
+        _ => "Chronicle keeps its keys in its database."
+    };
 
     static bool CheckModes(Production production, ProductionStatusBuilder status)
     {
@@ -81,7 +88,10 @@ public class ProductionPreparation(IProductionCluster cluster)
 
         var graphHolds = Unchanged(production.Status.Graph, GraphOf(spec), "graph.mode", "graph.edition", out var graphMessage);
         status.Set(ProductionConditions.GraphModeUnchanged, graphHolds, graphHolds ? "Unchanged" : "ModeChangeRefused", graphMessage);
-        return databaseHolds && graphHolds;
+
+        var vaultHolds = Unchanged(production.Status.Vault, ManagedVault.ModeOf(spec), "vault.mode", "vault.managed.tier", out var vaultMessage);
+        status.Set(ProductionConditions.VaultModeUnchanged, vaultHolds, vaultHolds ? "Unchanged" : "ModeChangeRefused", vaultMessage);
+        return databaseHolds && graphHolds && vaultHolds;
     }
 
     static bool Unchanged(string running, string asked, string first, string second, out string message)
@@ -107,7 +117,7 @@ public class ProductionPreparation(IProductionCluster cluster)
             fields.Add($"{first} from {before[0]} to {after[0]}");
         }
 
-        if (!string.Equals(before.ElementAtOrDefault(1), after.ElementAtOrDefault(1), StringComparison.Ordinal))
+        if (before.Length > 1 && after.Length > 1 && !string.Equals(before[1], after[1], StringComparison.Ordinal))
         {
             fields.Add($"{second} from {before.ElementAtOrDefault(1)} to {after.ElementAtOrDefault(1)}");
         }
@@ -144,7 +154,54 @@ public class ProductionPreparation(IProductionCluster cluster)
     {
         var databaseFound = await CheckDatabaseSecretAsync(production, status, cancellationToken);
         var graphFound = await CheckGraphSecretAsync(production, status, cancellationToken);
-        return databaseFound && graphFound;
+        var vaultFound = await CheckVaultSecretsAsync(production, status, cancellationToken);
+        var federationFound = await CheckFederationSecretAsync(production, status, cancellationToken);
+        return databaseFound && graphFound && vaultFound && federationFound;
+    }
+
+    async Task<bool> CheckVaultSecretsAsync(Production production, ProductionStatusBuilder status, CancellationToken cancellationToken)
+    {
+        var vault = production.Spec.Vault;
+        var needed = new List<ProductionSecretReference>();
+        if (vault.Mode == ProductionModes.External && vault.TokenSecretRef is { } token)
+        {
+            needed.Add(token);
+        }
+
+        if (vault.Mode == ProductionModes.Managed && vault.Managed.Unseal.Mode == ProductionVaultUnseal.TransitVault && vault.Managed.Unseal.Transit.TokenSecretRef is { } transit)
+        {
+            needed.Add(transit);
+        }
+
+        foreach (var reference in needed)
+        {
+            var key = ManagedVault.TokenKeyOf(reference);
+            if (await cluster.GetSecretValueAsync(production.Metadata.NamespaceProperty, reference.Name, key, cancellationToken) is null)
+            {
+                status.Set(ProductionConditions.VaultReady, false, "SecretNotFound", $"The Vault token Secret '{reference.Name}' does not exist or has no key '{key}'.");
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    async Task<bool> CheckFederationSecretAsync(Production production, ProductionStatusBuilder status, CancellationToken cancellationToken)
+    {
+        var dial = production.Spec.Federation.Dial;
+        if (!dial.Enabled || dial.EnrollmentCodeSecretRef is not { } reference)
+        {
+            return true;
+        }
+
+        var key = dial.EnrollmentCodeKey();
+        if (await cluster.GetSecretValueAsync(production.Metadata.NamespaceProperty, reference.Name, key, cancellationToken) is not null)
+        {
+            return true;
+        }
+
+        status.Set(ProductionConditions.FederationConfigured, false, "SecretNotFound", $"The enrollment code Secret '{reference.Name}' does not exist or has no key '{key}'.");
+        return false;
     }
 
     async Task<bool> CheckDatabaseSecretAsync(Production production, ProductionStatusBuilder status, CancellationToken cancellationToken)

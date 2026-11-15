@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #if DEBUG
+using Cratis.Showrunner.Notes.Access;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -41,6 +42,29 @@ public class when_validating_the_options : Specification
         Complete(options);
         options.CollectingStores = [];
     }));
+    [Fact] void should_let_everyone_give_feedback_by_default() => Resolve(Complete).AccessMode.ShouldEqual(FeedbackAccessMode.Everyone);
+    [Fact] void should_default_the_access_store_to_direct() => Resolve(Complete).AccessStores.Select(_ => _.Value).ShouldContainOnly("Direct");
+    [Fact] void should_accept_granted_users_in_the_same_kernel() => Resolve(options =>
+    {
+        Complete(options);
+        options.AccessMode = FeedbackAccessMode.GrantedUsers;
+    }).AccessMode.ShouldEqual(FeedbackAccessMode.GrantedUsers);
+    [Fact] void should_refuse_granted_users_without_an_access_store() => Assert.Throws<OptionsValidationException>(() => Resolve(options =>
+    {
+        Complete(options);
+        options.AccessMode = FeedbackAccessMode.GrantedUsers;
+        options.AccessStores = [];
+    }));
+    [Fact] void should_refuse_granted_users_over_http() => Assert.Throws<OptionsValidationException>(() => Resolve(options =>
+    {
+        Http(options, token: "secret");
+        options.AccessMode = FeedbackAccessMode.GrantedUsers;
+    }));
+    [Fact] void should_not_need_an_access_store_when_everyone_may_give_feedback() => Resolve(options =>
+    {
+        Complete(options);
+        options.AccessStores = [];
+    }).AccessMode.ShouldEqual(FeedbackAccessMode.Everyone);
     [Fact] void should_refuse_a_polling_interval_of_zero() => Assert.Throws<OptionsValidationException>(() => Resolve(options =>
     {
         Complete(options);

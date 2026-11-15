@@ -132,6 +132,48 @@ After the workloads are applied, `Progressing` means one or more enabled compone
 
 Conditions and the status never contain a secret value.
 
+## The pod of the application
+
+These `application` settings shape the pod of an application you built. They do not apply to a published application, whose pod Stage Manager shapes itself; naming one there is a `SpecValid` problem.
+
+| Field | Meaning |
+| --- | --- |
+| `strategy` | `RollingUpdate` starts the new pod before it stops the old one. `Recreate` stops the old pod first, so two never share state: use it for an application that hosts a single-replica silo. Empty keeps the cluster's default |
+| `imagePullSecrets` | The names of the Secrets the image is pulled with, for the application and its init containers |
+| `probes` | `readinessPath`, `livenessPath` and `startupPath`, HTTP paths starting with `/`. Without `readinessPath` readiness checks the port; without the others there is no such check. Liveness and readiness wait for startup, for up to five minutes |
+| `resources` | `requests` and `limits` by resource name, such as `cpu: 250m` and `memory: 512Mi`. None are set when it is left out |
+| `nodeSelector` | The node labels the pods must match |
+| `volumes`, `volumeMounts` | A volume is an `EmptyDir`, or an existing `PersistentVolumeClaim` named by `claimName`; Stage Manager never creates or deletes the claim, so its data outlives the Performance. A mount names the `volume`, the absolute `path` and whether it is `readOnly` |
+| `initContainers` | Containers that run to completion, in order, before the application starts. Each has a `name`, an `image` (the application's by default), `command`, `args`, plain `environment` and `volumeMounts`. They get no Secret from the Performance: put no secret in `environment` |
+| `egress` | The destinations the pods may connect to, as rules of `ports` and a `cidr`, a `namespace`, or neither for every public address except the private ranges. Naming any rule isolates the pods for egress: they then reach DNS, their own namespace and these destinations only. It is a NetworkPolicy named `<name>-egress`, deleted when the rules are removed. Egress rules apply to a published application too |
+
+```yaml
+application:
+  image: registry.example.com/crm:1.0
+  strategy: Recreate
+  imagePullSecrets: [registry]
+  probes:
+    startupPath: /health/startup
+    livenessPath: /health/live
+    readinessPath: /health/ready
+  volumes:
+    - name: chronicle-trust
+  volumeMounts:
+    - volume: chronicle-trust
+      path: /trust
+      readOnly: true
+  initContainers:
+    - name: import-trust
+      command: ["/bin/sh", "-c", "cp /etc/ssl/certs/* /trust"]
+      volumeMounts:
+        - volume: chronicle-trust
+          path: /trust
+  egress:
+    - ports: [587]
+```
+
+An application that runs more than one component, such as an ingest or processing worker next to the application, is one Performance per component, all with the same `productionRef`. Each is its own workload with its own image, environment and lifetime. A Performance without `authProxy` or `onboarding` runs the application alone.
+
 ## Application, lifetime and usage
 
 `application.published` runs the application as a published Stage application instead of an image you built; see [Run a published Stage application](./published-stage-applications.md). It is an alternative application path, not a further step in deploying an ordinary image.

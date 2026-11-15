@@ -17,8 +17,11 @@ export interface NotesApplicationProps extends NotesProviderProps {
     children?: ReactNode;
 }
 
-export const stubAvailability = (isEnabled: boolean) =>
-    sinon.stub(Availability, 'use').returns([QueryResultWithState.empty(Object.assign(new NotesAvailability(), { isEnabled })), (() => undefined) as never, (() => undefined) as never]);
+export const stubAvailability = (isEnabled: boolean) => {
+    const perform = sinon.stub();
+    sinon.stub(Availability, 'use').returns([QueryResultWithState.empty(Object.assign(new NotesAvailability(), { isEnabled })), perform as never, (() => undefined) as never]);
+    return perform;
+};
 
 const Screen = () => {
     useContributeApplicationContext({ screen: { id: 'order-details', name: 'Order details', path: '/orders/42' }, values: { modelReferences: { eventModel: 'orders-v3' } } });

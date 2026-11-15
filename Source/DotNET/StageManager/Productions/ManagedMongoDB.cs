@@ -90,7 +90,7 @@ public static class ManagedMongoDB
                 ["secrets"] = new JsonObject { ["users"] = names.MongoDBUsers },
                 ["replsets"] = new JsonArray(replicaSet),
                 ["sharding"] = new JsonObject { ["enabled"] = false },
-                ["backup"] = new JsonObject { ["enabled"] = false }
+                ["backup"] = Backup(database.Backup)
             }
         };
     }
@@ -111,6 +111,10 @@ public static class ManagedMongoDB
     /// <returns>The connection string.</returns>
     public static string ConnectionString(ProductionNames names, string user, string password) =>
         $"mongodb://{Uri.EscapeDataString(user)}:{Uri.EscapeDataString(password)}@{names.MongoDBHost}:27017/?replicaSet={ReplicaSet}&authSource=admin";
+
+    static JsonObject Backup(ProductionDatabaseBackup backup) => backup.Enabled
+        ? new() { ["enabled"] = true, ["image"] = backup.ImageOrDefault() }
+        : new() { ["enabled"] = false };
 
     static JsonObject ToJson(IDictionary<string, string> values)
     {

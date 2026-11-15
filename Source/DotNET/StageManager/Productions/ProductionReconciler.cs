@@ -35,9 +35,21 @@ public class ProductionReconciler(IProductionCluster cluster, ProductionPreparat
         return status.Phase;
     }
 
+    static (string Reason, string Message) VaultState(ProductionNames names, int nodes, int ready, bool nodesReady, bool tokenWritten)
+    {
+        if (!nodesReady)
+        {
+            return ("NotReady", $"{ready} of {nodes} node(s) of the managed Vault '{names.Vault}' are initialized, unsealed and ready.");
+        }
+
+        return tokenWritten
+            ? ("Ready", $"The managed Vault '{names.Vault}' with {nodes} node(s) is unsealed and Chronicle's token is in the Secret '{names.VaultChronicleToken}'.")
+            : ("WaitingForToken", $"The managed Vault '{names.Vault}' is unsealed; waiting for its helper to write Chronicle's token to the Secret '{names.VaultChronicleToken}'.");
+    }
+
     static bool WaitForChronicleDependencies(ProductionStatusBuilder status)
     {
-        status.Set(ProductionConditions.ChronicleReady, false, "WaitingForDependencies", "Chronicle is applied once its certificate is issued and its database is ready.");
+        status.Set(ProductionConditions.ChronicleReady, false, "WaitingForDependencies", "Chronicle is applied once its certificate is issued and its database and its vault are ready.");
         return false;
     }
 
@@ -51,12 +63,14 @@ public class ProductionReconciler(IProductionCluster cluster, ProductionPreparat
         // From here on the Production runs with this database and graph; a spec asking for others is refused.
         production.Status.Database = ProductionPreparation.DatabaseOf(production.Spec);
         production.Status.Graph = ProductionPreparation.GraphOf(production.Spec);
+        production.Status.Vault = ManagedVault.ModeOf(production.Spec);
         production.Status.ChronicleAddress = ChronicleConnectionSecret.AddressOf(names);
 
         var certificateAuthority = await ApplyCertificatesAsync(production, names, status, cancellationToken);
         var credentials = await EnsureCredentialsAsync(production, names, cancellationToken);
         var databaseReady = await ApplyDatabaseAsync(production, names, status, cancellationToken);
         var graphReady = await ApplyGraphAsync(production, names, status, cancellationToken);
+        var vaultReady = await ApplyVaultAsync(production, names, status, cancellationToken);
 
         if (certificateAuthority is not null)
         {
@@ -68,11 +82,11 @@ public class ProductionReconciler(IProductionCluster cluster, ProductionPreparat
         }
 
         // Chronicle cannot start without its certificate and its database connection, so it waits for both.
-        var chronicleReady = certificateAuthority is not null && databaseReady
+        var chronicleReady = certificateAuthority is not null && databaseReady && vaultReady
             ? await ApplyChronicleAsync(production, prepared, status, cancellationToken)
             : WaitForChronicleDependencies(status);
 
-        status.Applied(chronicleReady && databaseReady && graphReady);
+        status.Applied(chronicleReady && databaseReady && graphReady && vaultReady);
     }
 
     async Task WriteConnectionAsync(Production production, V1Secret secret, ProductionStatusBuilder status, CancellationToken cancellationToken)
@@ -169,6 +183,36 @@ public class ProductionReconciler(IProductionCluster cluster, ProductionPreparat
         await cluster.ApplyAsync(ProductionMetadata.Secret(production, names.MongoDBConnection, "mongodb", new Dictionary<string, string> { [ProductionSecretReference.DefaultKey] = connection }), cancellationToken);
         status.Set(ProductionConditions.DatabaseReady, true, "Ready", $"The managed MongoDB '{names.MongoDB}' with {database.Members} member(s) is ready.");
         return true;
+    }
+
+    async Task<bool> ApplyVaultAsync(Production production, ProductionNames names, ProductionStatusBuilder status, CancellationToken cancellationToken)
+    {
+        var vault = production.Spec.Vault;
+        switch (vault.Mode)
+        {
+            case ProductionModes.Managed:
+                await cluster.ApplyAsync(ManagedVault.ConfigMap(production), cancellationToken);
+                await cluster.ApplyAsync(ManagedVault.ServiceAccount(production), cancellationToken);
+                await cluster.ApplyAsync(ManagedVault.Role(production), cancellationToken);
+                await cluster.ApplyAsync(ManagedVault.RoleBinding(production), cancellationToken);
+                await cluster.ApplyAsync(ManagedVault.NodesService(production), cancellationToken);
+                await cluster.ApplyAsync(ManagedVault.Service(production), cancellationToken);
+                await cluster.ApplyAsync(ManagedVault.StatefulSet(production), cancellationToken);
+                var nodes = vault.Managed.Nodes();
+                var readiness = await cluster.GetStatefulSetReadinessAsync(names.Namespace, names.Vault, cancellationToken);
+                var nodesReady = readiness?.IsReady ?? false;
+                var tokenWritten = nodesReady && await cluster.GetSecretValueAsync(names.Namespace, names.VaultChronicleToken, ManagedVault.TokenKey, cancellationToken) is not null;
+                var (reason, message) = VaultState(names, nodes, readiness?.Ready ?? 0, nodesReady, tokenWritten);
+                status.Set(ProductionConditions.VaultReady, tokenWritten, reason, message);
+                return tokenWritten;
+
+            case ProductionModes.External:
+                status.Set(ProductionConditions.VaultReady, true, "External", $"Chronicle keeps its keys in the Vault at {vault.Address} and authenticates with the Secret '{vault.TokenSecretRef?.Name}'.");
+                return true;
+
+            default:
+                return true;
+        }
     }
 
     async Task<bool> ApplyGraphAsync(Production production, ProductionNames names, ProductionStatusBuilder status, CancellationToken cancellationToken)

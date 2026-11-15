@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Showrunner.Notes.Access.Receiving;
 using Cratis.Showrunner.Notes.Receiving;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -11,7 +12,7 @@ namespace Cratis.Showrunner.Notes.Tenancy;
 /// <summary>
 /// Notes' background work, every <see cref="NotesOptions.PollingInterval"/> from the start of the host: opens every
 /// tenant namespace, observes the inbox of each collecting store in each namespace and subscribes the application to
-/// the collecting stores. With the HTTP transport it only opens the namespaces.
+/// the collecting stores, and likewise for the access stores when only granted users may give feedback. With the HTTP transport it only opens the namespaces.
 /// </summary>
 /// <remarks>
 /// Everything it acts on is durable - the namespaces, the subscriptions and the inbox positions live in Chronicle - so a
@@ -19,12 +20,14 @@ namespace Cratis.Showrunner.Notes.Tenancy;
 /// </remarks>
 /// <param name="tenants">Opens the tenant namespaces.</param>
 /// <param name="receivers">Connects the application to the collecting stores.</param>
+/// <param name="access">Connects the application to the access stores, when only granted users may give feedback.</param>
 /// <param name="options">Notes' options.</param>
 /// <param name="time">The clock.</param>
 /// <param name="logger">The logger.</param>
 public class NotesWorker(
     TenantEventStores tenants,
     ReceiverSubscriptions receivers,
+    AccessSubscriptions access,
     IOptions<NotesOptions> options,
     TimeProvider time,
     ILogger<NotesWorker> logger) : BackgroundService
@@ -48,9 +51,11 @@ public class NotesWorker(
         {
             cancellationToken.ThrowIfCancellationRequested();
             await receivers.Observe(store);
+            await access.Observe(store);
         }
 
         await receivers.Subscribe(stores[0]);
+        await access.Subscribe(stores[0]);
     }
 
     /// <inheritdoc/>

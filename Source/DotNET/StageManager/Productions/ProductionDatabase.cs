@@ -74,6 +74,12 @@ public class ProductionDatabase
     public string Image { get; set; } = string.Empty;
 
     /// <summary>
+    /// Gets or sets the backup agent of a managed database.
+    /// </summary>
+    [Description("For a Managed database: the backup agent Percona runs next to every member. This is where an Understudy attaches the storage it backs up to.")]
+    public ProductionDatabaseBackup Backup { get; set; } = new();
+
+    /// <summary>
     /// Gets whether the database is external.
     /// </summary>
     /// <returns>True when the mode is External.</returns>

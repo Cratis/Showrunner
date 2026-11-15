@@ -28,6 +28,7 @@ public static partial class SpecValidator
         ValidatePublished(spec, problems);
         ValidateLifetime(spec, problems);
         ValidateIngress(spec, problems);
+        ApplicationPodValidator.Validate(spec.Application, problems);
 
         return problems;
     }

@@ -9,6 +9,16 @@ namespace Cratis.Showrunner.StageManager.Performances;
 public class ApplicationSpec
 {
     /// <summary>
+    /// The strategy that stops the old pod before it starts the new one.
+    /// </summary>
+    public const string Recreate = "Recreate";
+
+    /// <summary>
+    /// The strategy that starts new pods before it stops the old ones.
+    /// </summary>
+    public const string RollingUpdate = "RollingUpdate";
+
+    /// <summary>
     /// Gets or sets the image of the rendered application.
     /// </summary>
     [Required]
@@ -50,4 +60,58 @@ public class ApplicationSpec
     /// </summary>
     [Description("Runs the application as a published Stage application: image is the Stage runtime image and the package comes from a ConfigMap.")]
     public PublishedSpec? Published { get; set; }
+
+    /// <summary>
+    /// Gets or sets how a new version replaces the running one.
+    /// </summary>
+    [Description("RollingUpdate (starts the new pod before it stops the old) or Recreate (stops the old pod first, so two never share state; use it for an application that hosts a single-replica silo). Empty keeps the cluster's default. Not used by a published application, which always recreates.")]
+    public string Strategy { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the names of the Secrets the image is pulled with.
+    /// </summary>
+    [Description("The names of the image pull Secrets of the application and its init containers.")]
+    public IList<string> ImagePullSecrets { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the HTTP probes.
+    /// </summary>
+    [Description("The HTTP paths Kubernetes checks the application on. Not used by a published application.")]
+    public ApplicationProbes Probes { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets the resources of the application container.
+    /// </summary>
+    [Description("The CPU and memory requests and limits of the application. None are set when it is left out. Not used by a published application; see published.resources.")]
+    public ResourcesSpec? Resources { get; set; }
+
+    /// <summary>
+    /// Gets or sets the node labels the pods must match.
+    /// </summary>
+    [Description("The node labels the pods of the application must match.")]
+    public IDictionary<string, string> NodeSelector { get; set; } = new Dictionary<string, string>(StringComparer.Ordinal);
+
+    /// <summary>
+    /// Gets or sets the volumes of the pod.
+    /// </summary>
+    [Description("The volumes of the application's pod. Not used by a published application.")]
+    public IList<ApplicationVolume> Volumes { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the mounts of the application container.
+    /// </summary>
+    [Description("Where the volumes are mounted in the application container.")]
+    public IList<ApplicationVolumeMount> VolumeMounts { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the init containers.
+    /// </summary>
+    [Description("Containers that run to completion, in order, before the application starts. Not used by a published application.")]
+    public IList<ApplicationInitContainer> InitContainers { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the destinations the application may connect to.
+    /// </summary>
+    [Description("The destinations the application's pods may connect to. Naming any isolates them for egress: they then reach DNS, their own namespace and these destinations only.")]
+    public IList<ApplicationEgressRule> Egress { get; set; } = [];
 }

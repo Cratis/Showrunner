@@ -53,12 +53,7 @@ public static class ProductionCertificates
             {
                 ["secretName"] = names.ChronicleTls,
                 ["commonName"] = names.ChronicleHost,
-                ["dnsNames"] = new JsonArray(
-                    names.Chronicle,
-                    $"{names.Chronicle}.{names.Namespace}",
-                    $"{names.Chronicle}.{names.Namespace}.svc",
-                    names.ChronicleHost,
-                    $"*.{names.ChronicleHost}"),
+                ["dnsNames"] = new JsonArray([.. DnsNames(production, names).Select(name => (JsonNode)JsonValue.Create(name))]),
                 ["duration"] = "8760h",
                 ["renewBefore"] = "720h",
                 ["usages"] = new JsonArray("server auth", "digital signature", "key encipherment"),
@@ -73,6 +68,22 @@ public static class ProductionCertificates
                 ["issuerRef"] = IssuerRef(names.CertificateAuthority)
             })
         ];
+    }
+
+    static IEnumerable<string> DnsNames(Production production, ProductionNames names)
+    {
+        yield return names.Chronicle;
+        yield return $"{names.Chronicle}.{names.Namespace}";
+        yield return $"{names.Chronicle}.{names.Namespace}.svc";
+        yield return names.ChronicleHost;
+        yield return $"*.{names.ChronicleHost}";
+
+        // The listener presents this certificate to customers, who dial the public endpoint.
+        var federation = production.Spec.Federation;
+        if (federation.Enabled && Uri.TryCreate(federation.Hosted.PublicEndpoint, UriKind.Absolute, out var endpoint))
+        {
+            yield return endpoint.Host;
+        }
     }
 
     static JsonObject IssuerRef(string name) => new() { ["name"] = name, ["kind"] = "Issuer", ["group"] = "cert-manager.io" };

@@ -55,7 +55,8 @@ public static class DesiredPerformanceBuilder
             [.. workloads.Select(workload => WorkloadFactory.Deployment(performance, workload))],
             [.. workloads.Select(workload => WorkloadFactory.Service(performance, workload))],
             spec.Ingress.Enabled ? IngressFactory.Create(performance) : null,
-            published is null ? null : PublishedNetworkPolicy.Create(performance));
+            published is null ? null : PublishedNetworkPolicy.Create(performance),
+            ApplicationEgressPolicy.Create(performance));
     }
 
     static SecretSource ConnectionSource(ChronicleConnectionRef connection) =>
@@ -91,7 +92,12 @@ public static class DesiredPerformanceBuilder
             secretMounts,
             [],
             ConfigRevision.Of(revisionKey, files),
-            SecretEnvironment: readSide.SecretEnvironmentVariables);
+            ApplicationPod.Resources(spec.Application),
+            string.IsNullOrWhiteSpace(spec.Application.Probes.ReadinessPath) ? null : spec.Application.Probes.ReadinessPath,
+            string.Equals(spec.Application.Strategy, ApplicationSpec.RollingUpdate, StringComparison.Ordinal),
+            string.Equals(spec.Application.Strategy, ApplicationSpec.Recreate, StringComparison.Ordinal),
+            readSide.SecretEnvironmentVariables,
+            ApplicationPod.Shape(spec.Application));
     }
 
     static WorkloadDefinition PublishedApplication(Performance performance, PerformanceNames names, PublishedInputs published, IReadOnlyDictionary<string, string> files, string revisionKey)

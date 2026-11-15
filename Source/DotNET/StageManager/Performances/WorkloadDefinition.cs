@@ -20,6 +20,7 @@ namespace Cratis.Showrunner.StageManager.Performances;
 /// <param name="KeepServingDuringRollout">Whether the old pod keeps serving until the new one is ready.</param>
 /// <param name="StopBeforeRollout">Whether the old pod is stopped before the new one starts, so two never share state.</param>
 /// <param name="SecretEnvironment">The environment variables Kubernetes fills from a Secret key, or null for none. Never a resolved value.</param>
+/// <param name="Shape">The rest of the shape of the pod: probes, image pull Secrets, volumes, init containers and node placement. Nothing by default.</param>
 public record WorkloadDefinition(
     string Name,
     string Component,
@@ -34,4 +35,5 @@ public record WorkloadDefinition(
     string? ReadinessPath = null,
     bool KeepServingDuringRollout = false,
     bool StopBeforeRollout = false,
-    IReadOnlyDictionary<string, ResolvedSecretRef>? SecretEnvironment = null);
+    IReadOnlyDictionary<string, ResolvedSecretRef>? SecretEnvironment = null,
+    PodShape? Shape = null);

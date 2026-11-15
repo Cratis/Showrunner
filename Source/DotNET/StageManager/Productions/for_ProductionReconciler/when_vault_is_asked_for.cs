@@ -11,7 +11,7 @@ public class when_vault_is_asked_for : a_production_reconciliation
     protected override ProductionSpec CreateSpec()
     {
         var spec = ProductionSamples.External();
-        spec.Vault.Mode = ProductionModes.Managed;
+        spec.Vault.Mode = "Hosted";
         return spec;
     }
 

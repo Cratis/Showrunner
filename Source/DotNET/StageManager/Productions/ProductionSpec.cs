@@ -30,8 +30,14 @@ public class ProductionSpec
     /// <summary>
     /// Gets or sets how Chronicle's keys are stored.
     /// </summary>
-    [Description("How Chronicle's keys are stored. Only None is supported yet.")]
+    [Description("How Chronicle's keys are stored: None (in its database), Managed (a Vault Stage Manager runs) or External.")]
     public ProductionVault Vault { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets how Chronicle takes part in federation.
+    /// </summary>
+    [Description("How Chronicle takes part in federation: a listener, the authority customers enroll with, or dialing out to an authority, which makes this Production the sending side of a one-way link.")]
+    public ProductionFederation Federation { get; set; } = new();
 
     /// <summary>
     /// Gets or sets the Neo4j graph of the Production.

@@ -25,6 +25,6 @@ public class when_the_lifetime_has_not_ended : a_reconciliation
     [Fact] void should_run_as_usual() => _phase.ShouldEqual(PerformancePhase.Ready);
     [Fact] void should_report_when_it_expires() => _performance.Status.ExpiresAt.ShouldEqual(_until);
     [Fact] void should_not_say_when_data_is_kept() => _performance.Status.DataRetainedUntil.ShouldBeNull();
-    [Fact] void should_not_remove_the_route() => _cluster.Deleted.Count.ShouldEqual(0);
+    [Fact] void should_not_remove_the_route() => _cluster.Deleted.Exists(deleted => deleted.StartsWith("V1Ingress/", StringComparison.Ordinal)).ShouldBeFalse();
 }
 #endif

@@ -92,6 +92,16 @@ public class PerformanceReconciler(IClusterResources cluster, PerformancePrepara
             await cluster.ApplyAsync(desired.NetworkPolicy, cancellationToken);
         }
 
+        // A policy that is no longer asked for must go: left behind, it would keep the pods isolated.
+        if (desired.EgressPolicy is not null)
+        {
+            await cluster.ApplyAsync(desired.EgressPolicy, cancellationToken);
+        }
+        else
+        {
+            await cluster.DeleteAsync<V1NetworkPolicy>(performance.Metadata.NamespaceProperty, PerformanceNames.For(performance).EgressPolicy, cancellationToken);
+        }
+
         foreach (var service in desired.Services)
         {
             await cluster.ApplyAsync(service, cancellationToken);

@@ -11,9 +11,11 @@ namespace Cratis.Showrunner.StageManager.Performances;
 /// <param name="Services">The Services.</param>
 /// <param name="Ingress">The Ingress, or null when the Performance has none.</param>
 /// <param name="NetworkPolicy">The NetworkPolicy of a published application, or null.</param>
+/// <param name="EgressPolicy">The NetworkPolicy that limits what the application connects to, or null when the application names no egress rule.</param>
 public record DesiredPerformance(
     IReadOnlyList<V1Secret> Secrets,
     IReadOnlyList<V1Deployment> Deployments,
     IReadOnlyList<V1Service> Services,
     V1Ingress? Ingress,
-    V1NetworkPolicy? NetworkPolicy = null);
+    V1NetworkPolicy? NetworkPolicy = null,
+    V1NetworkPolicy? EgressPolicy = null);

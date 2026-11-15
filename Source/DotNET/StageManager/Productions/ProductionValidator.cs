@@ -35,6 +35,8 @@ public static class ProductionValidator
         ValidateChronicle(spec, problems);
         ValidateDatabase(spec.Database, problems);
         ValidateGraph(spec.Graph, problems);
+        ProductionVaultValidator.Validate(spec.Vault, problems);
+        ProductionFederationValidator.Validate(spec.Federation, problems);
         ProductionSinkValidator.Validate(spec, problems);
         return problems;
     }

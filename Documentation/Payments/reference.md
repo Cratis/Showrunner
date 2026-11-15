@@ -1,6 +1,6 @@
 ---
 title: Payments reference
-description: Look up the Payments contract types, enums, Mollie options, status mapping and webhook routes.
+description: Look up the Payments contract types, enums and exceptions, the Mollie options and status mapping, and the webhook routes and the answers they give.
 ---
 
 ## Packages and namespaces

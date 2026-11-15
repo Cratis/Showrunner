@@ -7,6 +7,18 @@ image:
   tag: ""
   pullPolicy: IfNotPresent
 
+# The image of the jobs an Understudy schedules to back up a Production (mongodump and the Understudy job runner).
+understudy:
+  image:
+    repository: cratis/showrunner-understudy-image
+    # Overrides the tag. Leave empty to use the chart's appVersion.
+    tag: ""
+
+# The Prometheus metrics of the operator (showrunner_understudy_*), served at /metrics on this port. 0 turns them off.
+# The metrics carry the Production, the type of backup and the outcome, and never a tenant or a person.
+metrics:
+  port: 9090
+
 # Secrets that hold registry credentials for the operator image.
 imagePullSecrets: []
 

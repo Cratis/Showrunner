@@ -20,17 +20,26 @@ rules:
   - apiGroups: [""]
     resources: ["secrets"]
     verbs: ["get", "create", "update"]
-  # The environment files, legal terms and packages a Performance names.
+  # The environment files, legal terms and packages a Performance names, and the configuration and bootstrap script of a
+  # managed Vault, which it writes.
   - apiGroups: [""]
     resources: ["configmaps"]
-    verbs: ["get"]
+    verbs: ["get", "create", "update"]
+  # The helper next to every node of a managed Vault runs as a ServiceAccount of its own, with a Role that only reads and
+  # creates Secrets. The operator already holds those two verbs on Secrets here, so granting them is no escalation.
+  - apiGroups: [""]
+    resources: ["serviceaccounts"]
+    verbs: ["get", "create", "update"]
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: ["roles", "rolebindings"]
+    verbs: ["get", "create", "update"]
   - apiGroups: [""]
     resources: ["services"]
     verbs: ["get", "create", "update"]
   - apiGroups: ["apps"]
     resources: ["deployments"]
     verbs: ["get", "create", "update"]
-  # Chronicle and the managed Neo4j of a Production.
+  # Chronicle, the managed Vault and the managed Neo4j of a Production.
   - apiGroups: ["apps"]
     resources: ["statefulsets"]
     verbs: ["get", "create", "update"]

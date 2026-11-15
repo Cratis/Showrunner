@@ -36,7 +36,13 @@ public static class ChronicleWorkload
     /// </summary>
     public const string CertificateDirectory = "/run/secrets/chronicle-tls";
 
+    /// <summary>
+    /// Where the password of the federation listener's certificate is mounted.
+    /// </summary>
+    public const string FederationDirectory = "/run/secrets/chronicle-federation";
+
     const string Component = "chronicle";
+    const string FederationVolume = "chronicle-federation";
     const string Prefix = "Cratis__Chronicle__";
     const string CertificateVolume = "chronicle-tls";
 
@@ -48,6 +54,17 @@ public static class ChronicleWorkload
     public static V1Service Service(Production production)
     {
         var names = ProductionNames.For(production);
+        var ports = new List<V1ServicePort>
+        {
+            new() { Name = "chronicle", Protocol = "TCP", Port = Port, TargetPort = "chronicle" },
+            new() { Name = "silo", Protocol = "TCP", Port = SiloPort, TargetPort = "silo" },
+            new() { Name = "gateway", Protocol = "TCP", Port = GatewayPort, TargetPort = "gateway" }
+        };
+        if (production.Spec.Federation.Enabled)
+        {
+            ports.Add(new() { Name = "federation", Protocol = "TCP", Port = production.Spec.Federation.Port, TargetPort = "federation" });
+        }
+
         return new()
         {
             ApiVersion = "v1",
@@ -57,12 +74,7 @@ public static class ChronicleWorkload
             {
                 ClusterIP = "None",
                 Selector = ProductionMetadata.Labels(production, Component),
-                Ports =
-                [
-                    new() { Name = "chronicle", Protocol = "TCP", Port = Port, TargetPort = "chronicle" },
-                    new() { Name = "silo", Protocol = "TCP", Port = SiloPort, TargetPort = "silo" },
-                    new() { Name = "gateway", Protocol = "TCP", Port = GatewayPort, TargetPort = "gateway" }
-                ]
+                Ports = ports
             }
         };
     }
@@ -104,6 +116,11 @@ public static class ChronicleWorkload
         environment.Add(FromSecret($"{Prefix}Clients__0__ClientId", names.Credentials, ChronicleCredentials.ClientIdKey));
         environment.Add(FromSecret($"{Prefix}Clients__0__ClientSecret", names.Credentials, ChronicleCredentials.ClientSecretKey));
 
+        if (ManagedVault.ChronicleToken(spec, names) is { } token)
+        {
+            environment.Add(FromSecret("VAULT_TOKEN", token.Secret, token.Key));
+        }
+
         if (ClusteringOf(spec) is { } clustering)
         {
             environment.Add(new() { Name = $"{Prefix}Clustering__Type", Value = clustering });
@@ -121,6 +138,23 @@ public static class ChronicleWorkload
             }
         };
         var mounts = new List<V1VolumeMount> { new() { Name = CertificateVolume, MountPath = CertificateDirectory, ReadOnlyProperty = true } };
+
+        var containerPorts = new List<V1ContainerPort>
+        {
+            new() { Name = "chronicle", ContainerPort = Port },
+            new() { Name = "silo", ContainerPort = SiloPort },
+            new() { Name = "gateway", ContainerPort = GatewayPort }
+        };
+        if (spec.Federation.Enabled)
+        {
+            containerPorts.Add(new() { Name = "federation", ContainerPort = spec.Federation.Port });
+            volumes.Add(new()
+            {
+                Name = FederationVolume,
+                Secret = new() { SecretName = names.KeystorePassword, DefaultMode = 0x120, Items = [new() { Key = ProductionCertificates.KeystorePasswordKey, Path = ProductionCertificates.KeystorePasswordKey }] }
+            });
+            mounts.Add(new() { Name = FederationVolume, MountPath = FederationDirectory, ReadOnlyProperty = true });
+        }
 
         if (kernel.Connections.Sources.Count > 0)
         {
@@ -154,12 +188,7 @@ public static class ChronicleWorkload
                             {
                                 Name = Component,
                                 Image = $"{Image}:{spec.Version}",
-                                Ports =
-                                [
-                                    new() { Name = "chronicle", ContainerPort = Port },
-                                    new() { Name = "silo", ContainerPort = SiloPort },
-                                    new() { Name = "gateway", ContainerPort = GatewayPort }
-                                ],
+                                Ports = containerPorts,
                                 Env = environment,
                                 VolumeMounts = mounts,
                                 StartupProbe = new() { TcpSocket = new() { Port = "chronicle" }, PeriodSeconds = 5, FailureThreshold = 60 },

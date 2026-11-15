@@ -25,6 +25,6 @@ public class when_preparing_a_valid_first_run : Specification
     [Fact] void should_prepare_the_production() => _prepared.ShouldNotBeNull();
     [Fact] void should_not_change_the_cluster() => _cluster.Applied.Count.ShouldEqual(0);
     [Fact] void should_treat_the_initial_database_mode_as_unchanged() => _status.Conditions.Single(condition => condition.Type == ProductionConditions.DatabaseModeUnchanged).Reason.ShouldEqual("Unchanged");
-    [Fact] void should_keep_condition_order() => _status.Conditions.Select(condition => condition.Type).ShouldEqual(new[] { ProductionConditions.SpecValid, ProductionConditions.VaultSupported, ProductionConditions.DatabaseModeUnchanged, ProductionConditions.GraphModeUnchanged, ProductionConditions.CertManagerInstalled });
+    [Fact] void should_keep_condition_order() => _status.Conditions.Select(condition => condition.Type).ShouldEqual(new[] { ProductionConditions.SpecValid, ProductionConditions.VaultSupported, ProductionConditions.DatabaseModeUnchanged, ProductionConditions.GraphModeUnchanged, ProductionConditions.VaultModeUnchanged, ProductionConditions.CertManagerInstalled });
 }
 #endif

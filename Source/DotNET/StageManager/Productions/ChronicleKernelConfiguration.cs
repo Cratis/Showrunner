@@ -104,6 +104,14 @@ public record ChronicleKernelConfiguration(IReadOnlyDictionary<string, string> E
             }
         }
 
+        if (VaultOf(spec, names) is { } vaultAddress)
+        {
+            variables[$"{Prefix}Compliance__Encryption__Storage__Type"] = "vault";
+            variables[$"{Prefix}Compliance__Encryption__Storage__ConnectionDetails"] = vaultAddress;
+        }
+
+        SetFederation(spec.Federation, variables, sources);
+
         return new(variables, new(ConnectionsVolume, ConnectionsDirectory, sources));
     }
 
@@ -158,6 +166,48 @@ public record ChronicleKernelConfiguration(IReadOnlyDictionary<string, string> E
         {
             variables[$"{setting}DatabasePrefix"] = prefix;
         }
+    }
+
+    static string? VaultOf(ProductionSpec spec, ProductionNames names) => ManagedVault.AddressOf(spec, names);
+
+    static void SetFederation(ProductionFederation federation, Dictionary<string, string> variables, List<SecretSource> sources)
+    {
+        const string federationPrefix = $"{Prefix}Federation__";
+        if (federation.Enabled)
+        {
+            variables[$"{federationPrefix}Enabled"] = "true";
+            variables[$"{federationPrefix}Port"] = federation.Port.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            variables[$"{federationPrefix}CertificatePath"] = $"{ChronicleWorkload.CertificateDirectory}/{ProductionCertificates.KeystoreKey}";
+            variables[$"{federationPrefix}CertificatePasswordPath"] = $"{ChronicleWorkload.FederationDirectory}/{ProductionCertificates.KeystorePasswordKey}";
+        }
+
+        if (federation.Hosted.Enabled)
+        {
+            variables[$"{federationPrefix}Hosted__Enabled"] = "true";
+            variables[$"{federationPrefix}Hosted__PublicEndpoint"] = federation.Hosted.PublicEndpoint;
+            variables[$"{federationPrefix}Hosted__TrustDomain"] = federation.Hosted.TrustDomain;
+        }
+
+        var dial = federation.Dial;
+        if (!dial.Enabled)
+        {
+            return;
+        }
+
+        variables[$"{federationPrefix}Dial__Enabled"] = "true";
+        variables[$"{federationPrefix}Dial__EventStore"] = dial.EventStore;
+        variables[$"{federationPrefix}Dial__Namespace"] = dial.Namespace;
+        variables[$"{federationPrefix}Dial__LogicalSource"] = dial.LogicalSource;
+        variables[$"{federationPrefix}Dial__Serve"] = dial.Serve ? "true" : "false";
+        for (var index = 0; index < dial.ServeEventTypes.Count; index++)
+        {
+            variables[$"{federationPrefix}Dial__ServeEventTypes__{index}"] = dial.ServeEventTypes[index];
+        }
+
+        // The enrollment code is a secret: it is mounted as a file and the kernel is told its path.
+        const string code = $"{federationPrefix}Enrollment__Code";
+        sources.Add(new(dial.EnrollmentCodeSecretRef!.Name, new Dictionary<string, string> { [dial.EnrollmentCodeKey()] = code }));
+        variables[$"{federationPrefix}Enrollment__CodePath"] = FileOf(code);
     }
 
     /// <summary>

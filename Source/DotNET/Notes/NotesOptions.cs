@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Chronicle;
+using Cratis.Showrunner.Notes.Access;
 
 namespace Cratis.Showrunner.Notes;
 
@@ -41,6 +42,20 @@ public class NotesOptions
     /// Defaults to <c>Studio</c>.
     /// </summary>
     public IEnumerable<EventStoreName> CollectingStores { get; set; } = ["Studio"];
+
+    /// <summary>
+    /// Gets or sets who may give feedback. <see cref="FeedbackAccessMode.Everyone"/>, the default, lets every signed-in user
+    /// give feedback. <see cref="FeedbackAccessMode.GrantedUsers"/> lets only the users a desk granted the right to, through
+    /// <c>FeedbackAccessGranted</c> events from one of the <see cref="AccessStores"/>.
+    /// </summary>
+    public FeedbackAccessMode AccessMode { get; set; } = FeedbackAccessMode.Everyone;
+
+    /// <summary>
+    /// Gets or sets the names of the event stores of the desks that decide who may give feedback. Used only when
+    /// <see cref="AccessMode"/> is <see cref="FeedbackAccessMode.GrantedUsers"/>: Notes then subscribes to the outbox of each
+    /// store for <c>FeedbackAccessGranted</c> and <c>FeedbackAccessRevoked</c>. Defaults to <c>Direct</c>.
+    /// </summary>
+    public IEnumerable<EventStoreName> AccessStores { get; set; } = ["Direct"];
 
     /// <summary>
     /// Gets or sets the audience that identifies this application to the stores that collect its notes. When set, Notes

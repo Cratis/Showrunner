@@ -6,6 +6,8 @@ using System.Security.Claims;
 using Cratis.Arc.Chronicle.Testing.Queries;
 using Cratis.Arc.Queries;
 using Cratis.Arc.Testing.Queries;
+using Cratis.Showrunner.Notes.Access;
+using Cratis.Showrunner.Notes.Access.given;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Cratis.Showrunner.Notes.given;
@@ -18,6 +20,7 @@ public class a_query<TReadModel> : Specification
 {
     protected QueryScenario<TReadModel> _scenario;
     protected QueryResult _result;
+    protected FeedbackGiversStub _givers;
 
     /// <summary>
     /// Gets the principal the query runs as; the giver by default.
@@ -29,13 +32,21 @@ public class a_query<TReadModel> : Specification
     /// </summary>
     protected virtual bool Enabled => true;
 
+    /// <summary>
+    /// Gets who may give feedback in the application; everyone by default.
+    /// </summary>
+    protected virtual FeedbackAccessMode AccessMode => FeedbackAccessMode.Everyone;
+
     void Establish()
     {
+        _givers = new();
         _scenario = new();
+        _scenario.Services.AddSingleton<IFeedbackGivers>(_givers);
         _scenario.Services.AddSingleton<ICurrentPrincipalAccessor>(new FixedPrincipal(Principal));
         _scenario.Services.AddNotes(notes =>
         {
             notes.Enabled = Enabled;
+            notes.AccessMode = AccessMode;
             notes.ApplicationName = "Ledger";
             notes.PublicationId = "pub-7f3a";
         });

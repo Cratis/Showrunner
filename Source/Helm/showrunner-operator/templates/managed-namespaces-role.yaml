@@ -54,10 +54,11 @@ rules:
   - apiGroups: ["networking.k8s.io"]
     resources: ["ingresses"]
     verbs: ["get", "create", "update", "delete"]
-  # Only the application of a published Stage application may be reached by its AuthProxy.
+  # Only the application of a published Stage application may be reached by its AuthProxy, and the egress rules of an
+  # application become a policy of their own. A policy whose rules were removed is deleted, or it would keep the pods isolated.
   - apiGroups: ["networking.k8s.io"]
     resources: ["networkpolicies"]
-    verbs: ["get", "create", "update"]
+    verbs: ["get", "create", "update", "delete"]
   # CPU and memory in use by the pods of a Performance, from the metrics API (metrics-server).
   - apiGroups: ["metrics.k8s.io"]
     resources: ["pods"]

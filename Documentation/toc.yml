@@ -18,3 +18,5 @@
   href: Herald/toc.yml
 - name: Stage Manager
   href: StageManager/toc.yml
+- name: Packages
+  href: packages.md

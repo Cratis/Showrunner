@@ -5,58 +5,30 @@ description: Take payments through a provider-neutral contract for customers, fi
 
 `Cratis.Showrunner.Payments` is the contract an application takes payments through. It names what an application asks of a payment provider and what it hears back, and says nothing about any one provider. `Cratis.Showrunner.Payments.Mollie` implements it against [Mollie](https://www.mollie.com/), including the webhook Mollie calls when a payment changes.
 
-## Add Mollie to an application
+Without it, each product that charges customers writes its own provider client, its own mapping of provider statuses and its own webhook, and ties its billing code to one provider. With it, your code asks `IPaymentProvider` for a payment and handles a `PaymentUpdate`, and the provider behind it is a registration choice.
 
-```csharp
-builder.Services.AddMolliePayments(builder.Configuration);
-builder.Services.AddScoped<IPaymentWebhookHandler, SubscriptionPayments>();
+Payments is a library, not a hosted service. It keeps no state of its own: the provider holds customers, payments and subscriptions, and you keep your own records, found again through the `Metadata` you attach.
 
-app.MapMolliePaymentWebhook();
-```
+## Packages
 
-`AddMolliePayments` reads the `Mollie` configuration section:
-
-| Option | Default | Meaning |
-| --- | --- | --- |
-| `ApiKey` | none | Mollie's API key. Keep it in a secret store, never in source. Without one `IPaymentProvider.IsConfigured` is `false`, every call throws and the webhook answers 404. |
-| `ApiBaseUrl` | `https://api.mollie.com/v2` | Where Mollie's API is. |
-
-## Ask for payments
-
-Inject `IPaymentProvider`. Amounts are a `PaymentAmount` in the currency's major unit, so €20 is `new(20m, "EUR")`.
-
-| To | Call |
+| Package | What it is |
 | --- | --- |
-| Register a customer | `CreateCustomer` |
-| Send a customer to pay for the first time, leaving permission to charge them again | `CreateFirstPayment` - the returned `Payment.CheckoutUrl` is where to send them |
-| Take a single payment that sets nothing up for later | `CreateOneOffPayment` |
-| Charge a customer who already gave permission | `ChargeMandate` |
-| Read a payment | `GetPayment` |
-| Refund a payment, wholly or partly | `Refund` |
-| Run a subscription | `CreateSubscription`, `GetSubscription`, `GetSubscriptions`, `UpdateSubscription`, `CancelSubscription` |
+| `Cratis.Showrunner.Payments` | The contract: `IPaymentProvider`, its requests and results, and `IPaymentWebhookHandler` |
+| `Cratis.Showrunner.Payments.Mollie` | The Mollie implementation of the contract and its webhook endpoint |
 
-Everything you attach as `Metadata` on a payment, subscription or customer comes back on every read. Use it to find your own record again, such as the tenant or the order.
+## How a payment moves
 
-A call throws `PaymentProviderException` when the provider refuses or cannot be reached; it carries the status code and what the provider answered.
+1. Your application registers a customer with `CreateCustomer`.
+2. It sends the customer to pay for the first time with `CreateFirstPayment`. The returned `Payment.CheckoutUrl` is where the customer pays, and paying leaves permission to charge them again.
+3. The provider calls your webhook when the payment changes. The endpoint reads the payment back from the provider and hands your `IPaymentWebhookHandler` a `PaymentUpdate`.
+4. From then on you charge the customer with `ChargeMandate`, or start a `CreateSubscription` that the provider runs on schedule. Each charge reports back through the same webhook.
 
-## Hear that a payment changed
+## Where to go next
 
-`MapMolliePaymentWebhook` maps `POST /webhooks/mollie`. The callback Mollie sends carries only a payment id, so the endpoint reads the payment back from Mollie before anything else: a forged callback can name a payment but never change what it says. It then calls your `IPaymentWebhookHandler` with a `PaymentUpdate`.
-
-```csharp
-public class SubscriptionPayments : IPaymentWebhookHandler
-{
-    public async Task Handle(PaymentUpdate update, CancellationToken cancellationToken)
-    {
-        var payment = update.Payment;
-        if (payment is { Status: PaymentStatus.Paid, Sequence: PaymentSequence.First })
-        {
-            // Activate what the customer bought. Metadata carries your own identifiers.
-        }
-    }
-}
-```
-
-The same update can arrive more than once, so handling must be idempotent. Throw to have Mollie deliver it again. The endpoint answers 400 for a callback without an id, 502 when Mollie cannot be read yet, 500 when your handler throws and 200 otherwise.
-
-Anything after the route is handed on as `update.Scope`: `MapMolliePaymentWebhook()` also accepts `POST /webhooks/mollie/{scope}`, which lets an application keep webhook addresses it already gave Mollie.
+| To | Read |
+| --- | --- |
+| Add Mollie to an application and configure it | [Add Mollie to an application](./add-mollie-to-an-application.md) |
+| Create customers, take payments and refund them | [Take and manage payments](./take-and-manage-payments.md) |
+| Run recurring billing | [Subscriptions](./subscriptions.md) |
+| Hear that a payment changed | [Hear that a payment changed](./webhook.md) |
+| Look up a type, status or option | [Reference](./reference.md) |

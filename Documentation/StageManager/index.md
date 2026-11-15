@@ -9,7 +9,7 @@ Stage Manager is the Kubernetes operator of Showrunner. Unlike the other parts i
 | --- | --- | --- |
 | `Performance` | One application running in one Cratis environment, with its AuthProxy and, when it has onboarding, its own Ante. The application can be a published Stage application, and can have a lifetime | Reconciled |
 | `Production` | [Chronicle for one or more applications](./production.md): TLS, an external or managed database, an optional Neo4j graph, named sinks and a connection Secret | Reconciled |
-| `Understudy` | How a Production is backed up | Schema only |
+| `Understudy` | [How a Production is backed up](./understudy.md): scheduled database and key backups to object storage, with manifests and retention | Reconciled |
 | `Restore` | Brings a backup back | Schema only |
 | `Rehearsal` | Proves that backups restore | Schema only |
 | `BackstagePass` | Who may use the Stage Manager API | Schema only |
@@ -21,4 +21,5 @@ Start by [installing the operator](./install.md), then prepare the [environment 
 
 - [Run an application with a Performance](./performance.md) when you have an application image and a Chronicle connection. This guide also explains the resources, status, AuthProxy and Ante configuration shared by Performances.
 - [Run Chronicle with a Production](./production.md) when your applications need a Chronicle in the cluster. A Performance then connects to it through `productionRef`.
+- [Back up a Production with an Understudy](./understudy.md) when a Production must be recoverable. It schedules backups of its databases and keys to object storage.
 - [Run a published Stage application](./published-stage-applications.md) when you have an exported Stage package to run on the generic Stage runtime. This path covers its storage and sign-in requirements, releases and rollbacks, and the lifetime and usage reference used by both paths.

@@ -368,7 +368,9 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-          sparse-checkout: Docker/StageManager
+          sparse-checkout: |
+            Docker/StageManager
+            Docker/Understudy
           sparse-checkout-cone-mode: true
 
       - name: Download the operator output
@@ -411,7 +413,25 @@ jobs:
               echo "cratis/showrunner-operator-image:latest"
             fi
             echo "EOF"
+            echo "understudy-tags<<EOF"
+            echo "cratis/showrunner-understudy-image:$VERSION"
+            if [ "$PRERELEASE" != "true" ]; then
+              echo "cratis/showrunner-understudy-image:latest"
+            fi
+            echo "EOF"
           } >> "$GITHUB_OUTPUT"
+
+      - name: Build and push the Understudy image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          builder: ${{ steps.buildx.outputs.name }}
+          context: .
+          file: Docker/Understudy/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.docker-tags.outputs.understudy-tags }}
+          build-args: |
+            VERSION=${{ needs.release.outputs.version }}
 
       - name: Build and push the image
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6

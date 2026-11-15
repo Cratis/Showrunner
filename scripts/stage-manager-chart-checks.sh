@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Checks what the Stage Manager chart grants without a cluster: the operator's ClusterRole only watches
-# Performances and Productions, reads three named custom resource definitions and records events, and everything it
+# Performances, Productions and Understudies, reads three named custom resource definitions and records events, and everything it
 # does for a Performance or a Production (Secrets, ConfigMaps, workloads, certificates, databases, routes, metrics) is
 # granted by a Role and RoleBinding rendered in the managed namespaces only (the release namespace by default). Needs helm on the path. CI runs it in the "Stage Manager" job of build.yml.
 set -euo pipefail
@@ -15,8 +15,8 @@ fail() { echo "FAILED: $*" >&2; exit 1; }
 cluster_resources="$(helm template stage-manager "$chart" --namespace stage-manager --show-only templates/clusterrole.yaml \
   | awk '/^[[:space:]]*resources:/ { sub(/^[^[]*\[/, ""); sub(/\].*$/, ""); gsub(/[" ]/, ""); n = split($0, r, ","); for (i = 1; i <= n; i++) print r[i] }' \
   | sort -u | tr '\n' ' ')"
-test "$cluster_resources" = "customresourcedefinitions events performances performances/finalizers performances/status productions productions/finalizers productions/status " \
-  || fail "the ClusterRole grants more than Performances, Productions, definitions and events; grant it in the managed-namespaces Role instead (got: $cluster_resources)"
+test "$cluster_resources" = "customresourcedefinitions events performances performances/finalizers performances/status productions productions/finalizers productions/status understudies understudies/finalizers understudies/status " \
+  || fail "the ClusterRole grants more than Performances, Productions, Understudies, definitions and events; grant it in the managed-namespaces Role instead (got: $cluster_resources)"
 
 # Custom resource definitions may only be read, and only the three that tell whether cert-manager and Percona are installed.
 definitions="$(helm template stage-manager "$chart" --namespace stage-manager --show-only templates/clusterrole.yaml \
@@ -44,6 +44,12 @@ test "$listed_namespaces" = "Role:apps Role:studio-apps RoleBinding:apps RoleBin
 role="$(helm template stage-manager "$chart" --namespace stage-manager --show-only "$role_template")"
 grep -A2 -E '^[[:space:]]*resources: \["secrets"\]$' <<<"$role" | grep -E '^[[:space:]]*verbs: \["get", "create", "update"\]$' >/dev/null \
   || fail "the Role grants other verbs on Secrets than get, create and update"
+
+# The Role may create and update the backup CronJobs of an Understudy and list its jobs, and may never delete them.
+grep -A2 -E '^[[:space:]]*resources: \["cronjobs"\]$' <<<"$role" | grep -E '^[[:space:]]*verbs: \["get", "create", "update"\]$' >/dev/null \
+  || fail "the Role grants other verbs on CronJobs than get, create and update"
+grep -A2 -E '^[[:space:]]*resources: \["jobs"\]$' <<<"$role" | grep -E '^[[:space:]]*verbs: \["get", "list", "create"\]$' >/dev/null \
+  || fail "the Role grants other verbs on Jobs than get, list and create"
 
 # The RoleBinding names the operator's service account in the release namespace.
 binding="$(helm template stage-manager "$chart" --namespace stage-manager --show-only "$role_template" --set 'managedNamespaces={apps}')"

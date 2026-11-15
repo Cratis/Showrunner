@@ -67,9 +67,20 @@ spec:
                   name: {{ $vault.tokenSecretName }}
                   key: token
             {{- end }}
+            # The image of the backup jobs an Understudy schedules, unless the Understudy names its own.
+            - name: Understudy__Image
+              value: "{{ .Values.understudy.image.repository }}:{{ .Values.understudy.image.tag | default .Chart.AppVersion }}"
+            - name: Metrics__Port
+              value: {{ .Values.metrics.port | quote }}
             {{- with .Values.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
+          {{- if gt (int .Values.metrics.port) 0 }}
+          ports:
+            - name: metrics
+              containerPort: {{ .Values.metrics.port }}
+              protocol: TCP
+          {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:

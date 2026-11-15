@@ -1,4 +1,4 @@
-# What the operator may do across the cluster, and nothing more: watch Performances and Productions, and read whether
+# What the operator may do across the cluster, and nothing more: watch Performances, Productions and Understudies, and read whether
 # cert-manager and the Percona operator are installed. What it reads and writes for a Performance or a Production
 # (Secrets, ConfigMaps, workloads, certificates, databases, routes, metrics) is granted by a Role in each managed
 # namespace only (managed-namespaces-role.yaml). It never touches namespaces or nodes.
@@ -28,6 +28,15 @@ rules:
   - apiGroups: ["showrunner.cratis.io"]
     resources: ["productions/finalizers"]
     verbs: ["update"]
+  - apiGroups: ["showrunner.cratis.io"]
+    resources: ["understudies"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups: ["showrunner.cratis.io"]
+    resources: ["understudies/status"]
+    verbs: ["get", "update", "patch"]
+  - apiGroups: ["showrunner.cratis.io"]
+    resources: ["understudies/finalizers"]
+    verbs: ["update"]
   # A Production reports a clear condition when cert-manager or the Percona operator is missing. Only these
   # definitions can be read.
   - apiGroups: ["apiextensions.k8s.io"]
@@ -37,7 +46,7 @@ rules:
       - issuers.cert-manager.io
       - perconaservermongodbs.psmdb.percona.com
     verbs: ["get"]
-  # The events it records about Performances.
+  # The events it records about Performances and the facts of Understudies (BackupTaken, BackupFailed, ...).
   - apiGroups: [""]
     resources: ["events"]
     verbs: ["create", "patch"]

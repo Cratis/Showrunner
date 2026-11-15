@@ -1,0 +1,205 @@
+{
+  "BackupDownloaded:1": {
+    "type": "object",
+    "properties": {
+      "production": {
+        "type": "string"
+      },
+      "backupId": {
+        "type": "string"
+      },
+      "file": {
+        "type": "string"
+      },
+      "downloadedAt": {
+        "type": "string",
+        "format": "date-time-offset"
+      }
+    },
+    "required": [
+      "production",
+      "backupId",
+      "file",
+      "downloadedAt"
+    ],
+    "title": "BackupDownloaded"
+  },
+  "BackupFailed:1": {
+    "type": "object",
+    "properties": {
+      "production": {
+        "type": "string"
+      },
+      "operationId": {
+        "type": "string"
+      },
+      "failedAt": {
+        "type": "string",
+        "format": "date-time-offset"
+      },
+      "kind": {
+        "type": "string"
+      },
+      "reason": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "production",
+      "operationId",
+      "failedAt",
+      "kind",
+      "reason"
+    ],
+    "title": "BackupFailed"
+  },
+  "BackupTaken:1": {
+    "type": "object",
+    "properties": {
+      "production": {
+        "type": "string"
+      },
+      "backupId": {
+        "type": "string"
+      },
+      "eventStore": {
+        "type": "string"
+      },
+      "namespace": {
+        "type": "string"
+      },
+      "takenAt": {
+        "type": "string",
+        "format": "date-time-offset"
+      },
+      "types": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "sizeBytes": {
+        "type": "integer",
+        "format": "int64"
+      }
+    },
+    "required": [
+      "production",
+      "backupId",
+      "eventStore",
+      "namespace",
+      "takenAt",
+      "types",
+      "sizeBytes"
+    ],
+    "title": "BackupTaken"
+  },
+  "RehearsalFailed:1": {
+    "type": "object",
+    "properties": {
+      "production": {
+        "type": "string"
+      },
+      "operationId": {
+        "type": "string"
+      },
+      "backupId": {
+        "type": "string"
+      },
+      "failedAt": {
+        "type": "string",
+        "format": "date-time-offset"
+      },
+      "reason": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "production",
+      "operationId",
+      "backupId",
+      "failedAt",
+      "reason"
+    ],
+    "title": "RehearsalFailed"
+  },
+  "RehearsalPassed:1": {
+    "type": "object",
+    "properties": {
+      "production": {
+        "type": "string"
+      },
+      "operationId": {
+        "type": "string"
+      },
+      "backupId": {
+        "type": "string"
+      },
+      "passedAt": {
+        "type": "string",
+        "format": "date-time-offset"
+      }
+    },
+    "required": [
+      "production",
+      "operationId",
+      "backupId",
+      "passedAt"
+    ],
+    "title": "RehearsalPassed"
+  },
+  "RestoreCompleted:1": {
+    "type": "object",
+    "properties": {
+      "production": {
+        "type": "string"
+      },
+      "operationId": {
+        "type": "string"
+      },
+      "backupId": {
+        "type": "string"
+      },
+      "completedAt": {
+        "type": "string",
+        "format": "date-time-offset"
+      }
+    },
+    "required": [
+      "production",
+      "operationId",
+      "backupId",
+      "completedAt"
+    ],
+    "title": "RestoreCompleted"
+  },
+  "RestoreFailed:1": {
+    "type": "object",
+    "properties": {
+      "production": {
+        "type": "string"
+      },
+      "operationId": {
+        "type": "string"
+      },
+      "backupId": {
+        "type": "string"
+      },
+      "failedAt": {
+        "type": "string",
+        "format": "date-time-offset"
+      },
+      "reason": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "production",
+      "operationId",
+      "backupId",
+      "failedAt",
+      "reason"
+    ],
+    "title": "RestoreFailed"
+  }
+}

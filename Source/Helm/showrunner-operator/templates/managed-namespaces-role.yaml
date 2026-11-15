@@ -59,6 +59,14 @@ rules:
   - apiGroups: ["networking.k8s.io"]
     resources: ["networkpolicies"]
     verbs: ["get", "create", "update", "delete"]
+  # The backup schedules of an Understudy, and the jobs they and a Vault snapshot request start. It lists jobs to
+  # report how they ended; it never deletes one (owner references and the history limits of the CronJob do).
+  - apiGroups: ["batch"]
+    resources: ["cronjobs"]
+    verbs: ["get", "create", "update"]
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["get", "list", "create"]
   # CPU and memory in use by the pods of a Performance, from the metrics API (metrics-server).
   - apiGroups: ["metrics.k8s.io"]
     resources: ["pods"]

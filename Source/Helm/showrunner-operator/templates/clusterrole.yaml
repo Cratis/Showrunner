@@ -46,7 +46,7 @@ rules:
       - issuers.cert-manager.io
       - perconaservermongodbs.psmdb.percona.com
     verbs: ["get"]
-  # The events it records about Performances and the facts of Understudies (BackupTaken, BackupFailed, ...).
+  # The events it records about Performances and the facts of Understudies (UnderstudyBackupTaken, BackupFailed, ...).
   - apiGroups: [""]
     resources: ["events"]
     verbs: ["create", "patch"]

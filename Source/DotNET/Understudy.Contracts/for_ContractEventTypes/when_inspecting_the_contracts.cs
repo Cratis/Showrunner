@@ -15,15 +15,15 @@ public class when_inspecting_the_contracts : Specification
 
     void Because() => _eventTypes =
     [
-        .. typeof(BackupTaken).Assembly.GetTypes().Where(type => Attribute.IsDefined(type, typeof(EventTypeAttribute))),
+        .. typeof(UnderstudyBackupTaken).Assembly.GetTypes().Where(type => Attribute.IsDefined(type, typeof(EventTypeAttribute))),
     ];
 
     [Fact] void should_find_the_seven_facts() => Assert.Equal(7, _eventTypes.Length);
     [Fact] void should_name_the_facts() => Assert.Equal(
-        ["BackupDownloaded", "BackupFailed", "BackupTaken", "RehearsalFailed", "RehearsalPassed", "RestoreCompleted", "RestoreFailed"],
+        ["BackupDownloaded", "BackupFailed", "RehearsalFailed", "RehearsalPassed", "RestoreCompleted", "RestoreFailed", "UnderstudyBackupTaken"],
         _eventTypes.Select(type => type.Name).Order(StringComparer.Ordinal));
     [Fact] void should_publish_every_contract() => Assert.All(_eventTypes, type => Assert.True(Attribute.IsDefined(type, typeof(PublicAttribute), false), type.Name));
-    [Fact] void should_not_declare_an_origin_store_on_the_assembly() => Assert.False(Attribute.IsDefined(typeof(BackupTaken).Assembly, typeof(EventStoreAttribute)));
+    [Fact] void should_not_declare_an_origin_store_on_the_assembly() => Assert.False(Attribute.IsDefined(typeof(UnderstudyBackupTaken).Assembly, typeof(EventStoreAttribute)));
     [Fact] void should_not_declare_an_origin_store_on_any_contract() => Assert.DoesNotContain(_eventTypes, type => type.GetEventStoreName() is not null);
 }
 #endif

@@ -24,7 +24,7 @@ public class when_publishing_a_fact : Specification
         _cluster = new();
         _understudy = UnderstudySamples.Understudy(UnderstudySamples.Spec());
         _failure = new("BackupFailed:job-1", "BackupFailed", new BackupFailed("ledger", "job-1", _now, "backup", "The backup job failed (BackoffLimitExceeded)."), true);
-        _success = new("BackupTaken:ledger/Studio/acme/20260315T120000Z", "BackupTaken", new BackupTaken("ledger", "ledger/Studio/acme/20260315T120000Z", "Studio", "acme", _now, ["Events"], 10), false);
+        _success = new("UnderstudyBackupTaken:ledger/Studio/acme/20260315T120000Z", "UnderstudyBackupTaken", new UnderstudyBackupTaken("ledger", "ledger/Studio/acme/20260315T120000Z", "Studio", "acme", _now, ["Events"], 10), false);
     }
 
     async Task Because()

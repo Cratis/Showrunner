@@ -30,14 +30,14 @@ public class when_a_backup_job_succeeds : an_understudy_reconciliation
         await Reconcile();
     }
 
-    [Fact] void should_publish_a_fact_for_each_run_of_the_job() => _sink.Payloads<BackupTaken>().Count().ShouldEqual(2);
-    [Fact] void should_not_publish_a_run_of_another_job() => _sink.Payloads<BackupTaken>().Any(taken => taken.TakenAt == _now.AddHours(-3)).ShouldBeFalse();
-    [Fact] void should_publish_it_exactly_once_however_often_it_reconciles() => _sink.Facts.Count(fact => fact.Type == "BackupTaken").ShouldEqual(2);
-    [Fact] void should_identify_the_backup_by_its_place_in_the_catalog() => _sink.Payloads<BackupTaken>().Select(taken => taken.BackupId.Value).ShouldContainOnly(
+    [Fact] void should_publish_a_fact_for_each_run_of_the_job() => _sink.Payloads<UnderstudyBackupTaken>().Count().ShouldEqual(2);
+    [Fact] void should_not_publish_a_run_of_another_job() => _sink.Payloads<UnderstudyBackupTaken>().Any(taken => taken.TakenAt == _now.AddHours(-3)).ShouldBeFalse();
+    [Fact] void should_publish_it_exactly_once_however_often_it_reconciles() => _sink.Facts.Count(fact => fact.Type == "UnderstudyBackupTaken").ShouldEqual(2);
+    [Fact] void should_identify_the_backup_by_its_place_in_the_catalog() => _sink.Payloads<UnderstudyBackupTaken>().Select(taken => taken.BackupId.Value).ShouldContainOnly(
         [$"ledger/Studio/acme/{BackupLayout.FormatTakenAt(_started.AddSeconds(5))}", $"ledger/_/_/{BackupLayout.FormatTakenAt(_started.AddSeconds(6))}"]);
-    [Fact] void should_say_what_the_run_holds() => _sink.Payloads<BackupTaken>().Single(taken => taken.Namespace == "acme").Types.ShouldContainOnly(["Events", "ReadModels"]);
-    [Fact] void should_leave_the_scope_empty_when_it_does_not_apply() => _sink.Payloads<BackupTaken>().Single(taken => taken.EventStore.Length == 0).Namespace.Length.ShouldEqual(0);
-    [Fact] void should_give_each_fact_a_stable_id() => _sink.Facts.Select(fact => fact.Id).ShouldContainOnly([$"BackupTaken:ledger/Studio/acme/{BackupLayout.FormatTakenAt(_started.AddSeconds(5))}", $"BackupTaken:ledger/_/_/{BackupLayout.FormatTakenAt(_started.AddSeconds(6))}"]);
+    [Fact] void should_say_what_the_run_holds() => _sink.Payloads<UnderstudyBackupTaken>().Single(taken => taken.Namespace == "acme").Types.ShouldContainOnly(["Events", "ReadModels"]);
+    [Fact] void should_leave_the_scope_empty_when_it_does_not_apply() => _sink.Payloads<UnderstudyBackupTaken>().Single(taken => taken.EventStore.Length == 0).Namespace.Length.ShouldEqual(0);
+    [Fact] void should_give_each_fact_a_stable_id() => _sink.Facts.Select(fact => fact.Id).ShouldContainOnly([$"UnderstudyBackupTaken:ledger/Studio/acme/{BackupLayout.FormatTakenAt(_started.AddSeconds(5))}", $"UnderstudyBackupTaken:ledger/_/_/{BackupLayout.FormatTakenAt(_started.AddSeconds(6))}"]);
     [Fact] void should_remember_that_it_reported_the_job() => _understudy.Status.ReportedJobs.ShouldContainOnly(["ledger-backups-backup-1"]);
 }
 #endif

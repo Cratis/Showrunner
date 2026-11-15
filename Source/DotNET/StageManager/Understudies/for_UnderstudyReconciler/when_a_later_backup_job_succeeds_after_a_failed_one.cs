@@ -21,7 +21,7 @@ public class when_a_later_backup_job_succeeds_after_a_failed_one : an_understudy
 
     async Task Because() => await Reconcile();
 
-    [Fact] void should_have_reported_both() => _sink.Facts.Select(fact => fact.Type).ShouldContainOnly(["BackupFailed", "BackupTaken"]);
+    [Fact] void should_have_reported_both() => _sink.Facts.Select(fact => fact.Type).ShouldContainOnly(["BackupFailed", "UnderstudyBackupTaken"]);
     [Fact] void should_be_healthy_again() => _phase.ShouldEqual(UnderstudyPhase.Healthy);
 }
 #endif

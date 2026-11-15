@@ -74,7 +74,7 @@ When `keys` is set, a second CronJob reads the Production's encryption keys from
 | `BackupsHealthy` | The latest runs succeeded and are recent enough |
 | `KeyBackupsReady` | Key backups are configured safely, when `keys` is set |
 
-The operator records Kubernetes events for the facts of a run (`BackupTaken`, `BackupFailed` and so on) and serves Prometheus metrics at `/metrics` on the port of `metrics.port` in the chart (`showrunner_understudy_*`). The metrics are labelled with the Production, the type of backup and the outcome, never with a tenant or a person.
+The operator records Kubernetes events for the facts of a run (`UnderstudyBackupTaken`, `BackupFailed` and so on) and serves Prometheus metrics at `/metrics` on the port of `metrics.port` in the chart (`showrunner_understudy_*`). The metrics are labelled with the Production, the type of backup and the outcome, never with a tenant or a person.
 
 ## Events and contracts
 

@@ -15,4 +15,4 @@ namespace Cratis.Showrunner.Understudy.Contracts.Backups;
 /// <param name="SizeBytes">The size of the files of the run.</param>
 [EventType]
 [Public]
-public record BackupTaken(ProductionName Production, BackupId BackupId, string EventStore, string Namespace, DateTimeOffset TakenAt, IEnumerable<string> Types, long SizeBytes);
+public record UnderstudyBackupTaken(ProductionName Production, BackupId BackupId, string EventStore, string Namespace, DateTimeOffset TakenAt, IEnumerable<string> Types, long SizeBytes);

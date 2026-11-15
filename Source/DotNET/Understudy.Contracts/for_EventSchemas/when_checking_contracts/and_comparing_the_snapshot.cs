@@ -46,7 +46,7 @@ public class and_comparing_the_snapshot : Specification
             new CamelCaseNamingPolicy(),
             Substitute.For<IDerivedTypes>());
 
-        var schemas = typeof(BackupTaken).Assembly.GetTypes()
+        var schemas = typeof(UnderstudyBackupTaken).Assembly.GetTypes()
             .Where(type => Attribute.IsDefined(type, typeof(EventTypeAttribute)) ||
                            type.GetCustomAttributes(false).Any(attribute =>
                                attribute.GetType().IsGenericType &&

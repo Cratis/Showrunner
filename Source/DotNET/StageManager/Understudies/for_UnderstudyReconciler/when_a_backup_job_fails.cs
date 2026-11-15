@@ -27,7 +27,7 @@ public class when_a_backup_job_fails : an_understudy_reconciliation
     [Fact] void should_say_what_kind_of_job() => _sink.Payloads<BackupFailed>().Single().Kind.ShouldEqual("backup");
     [Fact] void should_say_why_without_a_secret() => _sink.Payloads<BackupFailed>().Single().Reason.ShouldContain("BackoffLimitExceeded");
     [Fact] void should_publish_it_as_a_warning() => _sink.Facts.Single().Warning.ShouldBeTrue();
-    [Fact] void should_not_publish_a_backup_as_taken() => _sink.Payloads<BackupTaken>().ShouldBeEmpty();
+    [Fact] void should_not_publish_a_backup_as_taken() => _sink.Payloads<UnderstudyBackupTaken>().ShouldBeEmpty();
     [Fact] void should_be_degraded() => _phase.ShouldEqual(UnderstudyPhase.Degraded);
     [Fact] void should_say_the_backups_are_not_healthy() => Condition(UnderstudyConditions.BackupsHealthy).Reason.ShouldEqual("LatestRunFailed");
 }

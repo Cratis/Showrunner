@@ -53,7 +53,7 @@
     ],
     "title": "BackupFailed"
   },
-  "BackupTaken:1": {
+  "UnderstudyBackupTaken:1": {
     "type": "object",
     "properties": {
       "production": {
@@ -92,7 +92,7 @@
       "types",
       "sizeBytes"
     ],
-    "title": "BackupTaken"
+    "title": "UnderstudyBackupTaken"
   },
   "RehearsalFailed:1": {
     "type": "object",

@@ -33,7 +33,7 @@ public class UnderstudyReporter(IEnumerable<IUnderstudyEventSink> sinks, Underst
     {
         var manifest = entry.Manifest;
         var id = BackupIdOf(entry);
-        var payload = new BackupTaken(
+        var payload = new UnderstudyBackupTaken(
             manifest.Production,
             id,
             manifest.EventStore ?? string.Empty,
@@ -42,7 +42,7 @@ public class UnderstudyReporter(IEnumerable<IUnderstudyEventSink> sinks, Underst
             manifest.Entries.Select(item => item.Type.ToString()).Distinct(StringComparer.Ordinal).ToList(),
             manifest.Entries.Sum(item => item.SizeBytes));
 
-        await PublishAsync(understudy, new($"BackupTaken:{id}", nameof(BackupTaken), payload, false), cancellationToken);
+        await PublishAsync(understudy, new($"UnderstudyBackupTaken:{id}", nameof(UnderstudyBackupTaken), payload, false), cancellationToken);
         metrics.CountRun(manifest.Production, kind, "taken");
     }
 

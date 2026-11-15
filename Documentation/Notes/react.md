@@ -65,7 +65,7 @@ The application also needs an identity: the `<Arc>` identity provider tells Note
 `NotesButton` renders nothing, and so does the header button, unless **both** hold:
 
 - the user is signed in, as Arc's identity says;
-- Notes is switched on, as the `Availability` query's `NotesAvailability.isEnabled` says. Until it answers, nothing renders.
+- Notes is available to the user, as the `Availability` query's `NotesAvailability.isEnabled` says: switched on and, when the application lets only [granted users give feedback](./access.md), granted to them. Until it answers, nothing renders. The provider asks again when the user signs in, because the first answer can be given before anyone has.
 
 ## NotesProvider
 
@@ -84,7 +84,7 @@ A split button. Props: `size` (`'large'` shows icon and text, `'small'` the icon
 | Control | What it does | Command |
 | --- | --- | --- |
 | Main click, **Give feedback** | Opens the dialog for the context. It shows what was captured in plain language, such as *Orders › Editing › Change order, on screen Order details*, a kind (problem, suggestion, question, praise) and a text. | `GiveNoteOnContext` |
-| **About specific slices…** | The slices active on the screen, and a search over `knownSlices`. | `GiveNoteOnSlices` |
+| **About specific slices…** | The slices active on the screen, and a search over `knownSlices`. Each slice is offered with its module and its feature, so a note can be about a whole module or feature; see [targeting levels](./access.md#what-a-note-can-be-about). | `GiveNoteOnSlices` |
 | **About this screen…** | The screen as the subject. | `GiveNoteOnScreen` |
 | **Point at something…** | Starts the Components picker. The picked component stays highlighted. The dialog then offers **Describe it** and **Change it**. | `GiveNoteOnComponent`, `SuggestComponentPropertyChange` |
 | **My feedback** | The user's notes with their status, from the `MyNotes` observable query, each of which can be withdrawn. | `WithdrawNote` |

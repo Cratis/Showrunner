@@ -13,8 +13,11 @@ Notes is a set of libraries, not a service. Each runs in the Arc and Chronicle p
 - [Backend](./backend.md): `Cratis.Showrunner.Notes`, which the application hosts: the commands to give, suggest and withdraw a note, the live list of a user's notes with their status, the switch that turns Notes off and the outbox that publishes the notes.
 - [Collecting](./collecting.md): `Cratis.Showrunner.Notes.Collecting`, which the builder of the application hosts: it reads the application's outbox, records each note in the namespace its tenant names and answers with acknowledgements and resolutions.
 - [Transports](./transports.md): the two ways notes and answers travel between the application and the receiving side: Chronicle's own outbox and inbox in a shared kernel, or HTTP when the application runs its own kernel.
+- [Access](./access.md): who may give feedback, how a desk grants and revokes the right, and what a note can be about, from a whole module to one component.
 - [Frontend proxies](./frontend-proxies.md): the generated TypeScript proxies.
 - [React components](./react.md): `@cratis/showrunner.notes.react`, the feedback button, the dialogs, the component picker and the user's own feedback.
+
+Notes is the one way for the users of any Cratis application to give feedback, whether the application was rendered from a model or built by hand. By default every signed-in user can give a note. An application can instead let only the users a desk granted the right to, as described in [Access](./access.md).
 
 ## How it differs from Usher
 

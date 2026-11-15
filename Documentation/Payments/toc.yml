@@ -1,2 +1,12 @@
 - name: Overview
   href: index.md
+- name: Add Mollie to an application
+  href: add-mollie-to-an-application.md
+- name: Take and manage payments
+  href: take-and-manage-payments.md
+- name: Subscriptions
+  href: subscriptions.md
+- name: Hear that a payment changed
+  href: webhook.md
+- name: Reference
+  href: reference.md

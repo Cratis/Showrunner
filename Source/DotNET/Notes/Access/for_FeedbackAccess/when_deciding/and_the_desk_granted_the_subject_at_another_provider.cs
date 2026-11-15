@@ -1,0 +1,31 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+#if DEBUG
+using Cratis.Arc.Validation;
+using Cratis.Monads;
+using Cratis.Showrunner.Notes.Access.for_FeedbackAccess.given;
+using Cratis.Showrunner.Notes.given;
+
+namespace Cratis.Showrunner.Notes.Access.for_FeedbackAccess.when_deciding;
+
+/// <summary>
+/// A subject is unique only within its provider: a grant for the same subject at another identity provider is not the user's.
+/// </summary>
+public class and_the_desk_granted_the_subject_at_another_provider : a_feedback_access
+{
+    Result<FeedbackPermit, ValidationResult> _permit;
+    bool _may;
+
+    async Task Because()
+    {
+        _givers.Grant(new Cratis.Showrunner.Notes.Contracts.Access.FeedbackGiverIdentity("aad", new Cratis.Showrunner.Usher.Contracts.Identity.IdentityProviderSubject(Givers.UserId.Value)));
+        _permit = await _access.Permit();
+        _may = await _access.MayGiveFeedback();
+    }
+
+    [Fact] void should_refuse_the_command() => _permit.IsSuccess.ShouldBeFalse();
+    [Fact] void should_tell_the_user_it_is_not_available() => ((ValidationResult)_permit).Message.ShouldEqual(FeedbackAccess.Refusal);
+    [Fact] void should_not_be_advised_to_show_it() => _may.ShouldBeFalse();
+}
+#endif

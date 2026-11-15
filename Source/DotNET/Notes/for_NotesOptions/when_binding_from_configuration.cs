@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #if DEBUG
+using Cratis.Showrunner.Notes.Access;
 using Microsoft.Extensions.Configuration;
 
 namespace Cratis.Showrunner.Notes.for_NotesOptions;
@@ -20,7 +21,9 @@ public class when_binding_from_configuration : Specification
             ["Notes:CollectorTenantId"] = "acme",
             ["Notes:CollectorUrl"] = "https://collector.example.invalid",
             ["Notes:CollectingStores:0"] = "Collector",
-            ["Notes:RelayBatchSize"] = "25"
+            ["Notes:RelayBatchSize"] = "25",
+            ["Notes:AccessMode"] = "GrantedUsers",
+            ["Notes:AccessStores:0"] = "Desk"
         })
         .Build()
         .GetSection("Notes"));
@@ -32,6 +35,8 @@ public class when_binding_from_configuration : Specification
     [Fact] void should_bind_the_collecting_stores() => _options.CollectingStores.Select(_ => _.Value).ShouldContainOnly("Collector");
     [Fact] void should_bind_the_transport() => _options.Transport.ShouldEqual(NotesTransport.Http);
     [Fact] void should_bind_the_collector_url() => _options.CollectorUrl.ShouldEqual("https://collector.example.invalid");
+    [Fact] void should_bind_the_access_mode() => _options.AccessMode.ShouldEqual(FeedbackAccessMode.GrantedUsers);
+    [Fact] void should_bind_the_access_stores() => _options.AccessStores.Select(_ => _.Value).ShouldContainOnly("Desk");
     [Fact] void should_bind_plain_values() => _options.RelayBatchSize.ShouldEqual(25);
 }
 #endif

@@ -9,7 +9,7 @@ import { DialogHeaderContext } from '@cratis/components/Dialogs';
 import { toast } from '@cratis/components/Notifications';
 import { Guid } from '@cratis/fundamentals';
 import { Availability } from '@cratis/showrunner.notes';
-import { ReactNode, useCallback, useMemo, useRef } from 'react';
+import { ReactNode, useCallback, useEffect, useMemo, useRef } from 'react';
 import { buildNoteContext, DialogReference, resolveComponentContext } from '../Context/index.js';
 import { LocationParts } from '../Context/formatLocation.js';
 import { ComponentFeedbackDialog } from '../Feedback/ComponentFeedbackDialog.js';
@@ -44,14 +44,27 @@ const dialogReferenceOf = (dialog?: DialogHeaderContext): DialogReference | unde
 
 /**
  * Slots Notes into an application: renders the feedback dialogs and the component picker once, asks whether Notes is
- * switched on, and gives the Notes buttons and `useNotes` what they need. Render it inside `<Arc>`, the `DialogComponents`
+ * available to the user - switched on and, when only granted users may give feedback, granted to them - and gives the Notes
+ * buttons and `useNotes` what they need. Render it inside `<Arc>`, the `DialogComponents`
  * registration, an `IdentityProvider` and a `CratisComponentsProvider` with a toaster. Turn on `<Arc sliceMarkers>` for
  * Notes to know the slice of a component the user points at.
  */
 export const NotesProvider = ({ enabled = false, labels, knownSlices = [], children }: NotesProviderProps) => {
     const store = useApplicationContextStore();
     const identity = useIdentity();
-    const [availability] = Availability.use();
+    const [availability, performAvailability] = Availability.use();
+    const wasSignedIn = useRef(identity.isSet);
+
+    // Whether the user may give feedback depends on who they are, and the first answer can be given before anyone signed in.
+    // Asking again once they have keeps the button hidden for a user nobody granted the right and shows it to one who was.
+    useEffect(() => {
+        if (identity.isSet && !wasSignedIn.current) {
+            void performAvailability();
+        }
+
+        wasSignedIn.current = identity.isSet;
+    }, [identity.isSet, performAvailability]);
+
     const isAvailable = isNotesAvailable(identity.isSet, availability.data?.isEnabled);
     const resolvedLabels = useMemo(() => resolveLabels(labels), [labels]);
     const busy = useRef(false);

@@ -1,7 +1,10 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Arc.Validation;
 using Cratis.Chronicle.EventSequences;
+using Cratis.Monads;
+using Cratis.Showrunner.Notes.Access;
 using Cratis.Showrunner.Notes.Identity;
 using Cratis.Showrunner.Notes.Notebook;
 using Microsoft.Extensions.Options;
@@ -30,16 +33,25 @@ public record SuggestComponentPropertyChange(
     PropertyValue SuggestedValue)
 {
     /// <summary>
+    /// Decides whether the signed-in user may give feedback: always in an application that lets everyone, and otherwise only
+    /// when the desk granted them the right and has not revoked it. The refusal is the same for a user who was never granted
+    /// and one who was revoked.
+    /// </summary>
+    /// <param name="access">Answers whether the user may give feedback.</param>
+    /// <returns>The <see cref="FeedbackPermit"/>, or the refusal.</returns>
+    public Task<Result<FeedbackPermit, ValidationResult>> Provide(IFeedbackAccess access) => access.Permit();
+
+    /// <summary>
     /// Handles the command.
     /// </summary>
-    /// <param name="giver">The signed-in user.</param>
+    /// <param name="permit">The permit to give feedback; its giver is the signed-in user.</param>
     /// <param name="options">The <see cref="NotesOptions"/> naming the application.</param>
     /// <returns>The <see cref="GiverSuggestedComponentPropertyChange"/> event, with the user as its compliance subject.</returns>
-    public EventForEventSourceId Handle(ISignedInGiver giver, IOptions<NotesOptions> options) =>
+    public EventForEventSourceId Handle(FeedbackPermit permit, IOptions<NotesOptions> options) =>
         NoteGivers.Fact(
             NoteId,
-            giver.UserId,
-            new GiverSuggestedComponentPropertyChange(PublishedApplications.Of(options.Value), giver.Giver, Context, Component, Property, CurrentValue, SuggestedValue));
+            permit.Giver.UserId,
+            new GiverSuggestedComponentPropertyChange(PublishedApplications.Of(options.Value), permit.Giver, Context, Component, Property, CurrentValue, SuggestedValue));
 }
 
 /// <summary>

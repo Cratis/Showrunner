@@ -11,7 +11,7 @@ namespace Cratis.Showrunner.Notes;
 /// </summary>
 /// <remarks>
 /// The configuration binder cannot build concept types, so a plain <c>Bind</c> leaves the application name, the
-/// publication, the version, the collecting stores and the collector tenant unset. This reads those from their text.
+/// publication, the version, the collecting stores, the access stores and the collector tenant unset. This reads those from their text.
 /// </remarks>
 public static class NotesConfiguration
 {
@@ -52,6 +52,16 @@ public static class NotesConfiguration
         if (stores.Length > 0)
         {
             options.CollectingStores = stores;
+        }
+
+        var accessStores = section.GetSection(nameof(NotesOptions.AccessStores)).GetChildren()
+            .Select(store => store.Value)
+            .Where(store => !string.IsNullOrWhiteSpace(store))
+            .Select(store => new EventStoreName(store!))
+            .ToArray();
+        if (accessStores.Length > 0)
+        {
+            options.AccessStores = accessStores;
         }
 
         return options;

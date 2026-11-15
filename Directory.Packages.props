@@ -47,6 +47,10 @@
          chart installs, from the C# types at build time. -->
     <PackageVersion Include="KubeOps.Operator" Version="13.3.5" />
     <PackageVersion Include="KubeOps.Generator" Version="13.3.5" />
+    <!-- Stage Manager Understudy: object storage for backups (S3-compatible and Azure Blob). -->
+    <PackageVersion Include="AWSSDK.S3" Version="4.0.104.11" />
+    <PackageVersion Include="Azure.Storage.Blobs" Version="12.26.0" />
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="11.0.0" />
     <!-- Cratis.Environments is not on NuGet yet. CratisEnvironmentsVersion is the one place to set the version;
          0.0.0-local is a build packed from Cratis/cli (branch env-onboarding/environments-secrets) into a local
          feed. Set it to the released version before this merges. -->

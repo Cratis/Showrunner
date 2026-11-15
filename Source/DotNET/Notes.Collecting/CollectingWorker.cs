@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Showrunner.Notes.Collecting.Access;
 using Cratis.Showrunner.Notes.Collecting.Receiving;
 using Cratis.Showrunner.Notes.Collecting.Tenancy;
 using Microsoft.Extensions.Hosting;
@@ -12,7 +13,7 @@ namespace Cratis.Showrunner.Notes.Collecting;
 /// <summary>
 /// The collecting side's background work, every <see cref="NoteCollectingOptions.PollingInterval"/> from the start of the
 /// host: opens every namespace of the collecting store, observes the inbox of each application store in each namespace
-/// and subscribes the collecting store to the application stores.
+/// and subscribes the collecting store to the application stores, and likewise for the access stores.
 /// </summary>
 /// <remarks>
 /// Everything it acts on is durable - the namespaces, the subscriptions and the inbox positions live in Chronicle - so a
@@ -20,12 +21,14 @@ namespace Cratis.Showrunner.Notes.Collecting;
 /// </remarks>
 /// <param name="namespaces">Opens the namespaces of the collecting store.</param>
 /// <param name="subscriptions">Connects the collecting store to the application stores.</param>
+/// <param name="access">Connects the collecting store to the access stores, the desks that decide who may give feedback.</param>
 /// <param name="options">The collecting options.</param>
 /// <param name="time">The clock.</param>
 /// <param name="logger">The logger.</param>
 public class CollectingWorker(
     TenantEventStores namespaces,
     AppSubscriptions subscriptions,
+    AccessSubscriptions access,
     IOptions<NoteCollectingOptions> options,
     TimeProvider time,
     ILogger<CollectingWorker> logger) : BackgroundService
@@ -42,9 +45,11 @@ public class CollectingWorker(
         {
             cancellationToken.ThrowIfCancellationRequested();
             await subscriptions.Observe(store, cancellationToken);
+            await access.Observe(store);
         }
 
         await subscriptions.Subscribe(stores[0], cancellationToken);
+        await access.Subscribe(stores[0]);
     }
 
     /// <inheritdoc/>

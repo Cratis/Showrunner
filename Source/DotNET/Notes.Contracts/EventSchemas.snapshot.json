@@ -337,6 +337,18 @@
     ],
     "title": "ComponentPropertyChangeSuggested"
   },
+  "NoteGivenOnStagedApplication:1": {
+    "type": "object",
+    "properties": {
+      "tenantId": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "tenantId"
+    ],
+    "title": "NoteGivenOnStagedApplication"
+  },
   "NoteOnComponentGiven:1": {
     "type": "object",
     "properties": {

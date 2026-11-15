@@ -30,6 +30,12 @@ public static class NotesTransportPaths
     public const string Responses = "responses";
 
     /// <summary>
+    /// The route, relative to the group, the users a desk granted the right to give feedback are read from. The answer
+    /// carries an <c>ETag</c>, and a request with <c>If-None-Match</c> naming it is answered <c>304</c>.
+    /// </summary>
+    public const string Access = "access";
+
+    /// <summary>
     /// The name of the query parameter that names the event log of the application a note was relayed from, when the
     /// application has more than one tenant namespace. Absent, it is the empty source.
     /// </summary>

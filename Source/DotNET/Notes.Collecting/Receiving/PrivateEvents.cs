@@ -19,7 +19,8 @@ public static class PrivateEvents
         typeof(NoteOnScreenGiven),
         typeof(NoteOnComponentGiven),
         typeof(ComponentPropertyChangeSuggested),
-        typeof(NoteWithdrawn)
+        typeof(NoteWithdrawn),
+        typeof(NoteGivenOnStagedApplication)
     ];
 
     /// <summary>
@@ -36,6 +37,7 @@ public static class PrivateEvents
         NoteOnComponentGiven given => (given.TenantId, new NoteOnComponentReceived(appStore, given.Application, given.Giver, given.Context, given.Component, given.Kind, given.Text)),
         ComponentPropertyChangeSuggested suggested => (suggested.TenantId, new ComponentPropertyChangeReceived(appStore, suggested.Application, suggested.Giver, suggested.Context, suggested.Component, suggested.Property, suggested.CurrentValue, suggested.SuggestedValue)),
         NoteWithdrawn withdrawn => (withdrawn.TenantId, new NoteWithdrawalReceived()),
+        NoteGivenOnStagedApplication staged => (staged.TenantId, new NoteOnStagedApplicationReceived()),
         _ => null
     };
 }

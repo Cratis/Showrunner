@@ -55,11 +55,38 @@ public class when_validating_the_options : Specification
         options.AccessMode = FeedbackAccessMode.GrantedUsers;
         options.AccessStores = [];
     }));
-    [Fact] void should_refuse_granted_users_over_http() => Assert.Throws<OptionsValidationException>(() => Resolve(options =>
+    [Fact] void should_accept_granted_users_over_http() => Resolve(options =>
     {
         Http(options, token: "secret");
         options.AccessMode = FeedbackAccessMode.GrantedUsers;
+    }).AccessMode.ShouldEqual(FeedbackAccessMode.GrantedUsers);
+    [Fact] void should_not_need_an_access_store_for_granted_users_over_http() => Resolve(options =>
+    {
+        Http(options, token: "secret");
+        options.AccessMode = FeedbackAccessMode.GrantedUsers;
+        options.AccessStores = [];
+    }).AccessMode.ShouldEqual(FeedbackAccessMode.GrantedUsers);
+    [Fact] void should_refresh_the_granted_users_every_thirty_seconds_by_default() => Resolve(Complete).AccessRefreshInterval.ShouldEqual(TimeSpan.FromSeconds(30));
+    [Fact] void should_keep_the_granted_users_for_five_minutes_by_default() => Resolve(Complete).AccessMaxStaleness.ShouldEqual(TimeSpan.FromMinutes(5));
+    [Fact] void should_refuse_an_access_refresh_interval_of_zero_over_http() => Assert.Throws<OptionsValidationException>(() => Resolve(options =>
+    {
+        Http(options, token: "secret");
+        options.AccessMode = FeedbackAccessMode.GrantedUsers;
+        options.AccessRefreshInterval = TimeSpan.Zero;
     }));
+    [Fact] void should_refuse_keeping_the_granted_users_for_less_than_a_refresh_over_http() => Assert.Throws<OptionsValidationException>(() => Resolve(options =>
+    {
+        Http(options, token: "secret");
+        options.AccessMode = FeedbackAccessMode.GrantedUsers;
+        options.AccessRefreshInterval = TimeSpan.FromMinutes(1);
+        options.AccessMaxStaleness = TimeSpan.FromSeconds(10);
+    }));
+    [Fact] void should_not_check_the_access_refresh_when_everyone_may_give_feedback() => Resolve(options =>
+    {
+        Http(options, token: "secret");
+        options.AccessRefreshInterval = TimeSpan.Zero;
+    }).AccessMode.ShouldEqual(FeedbackAccessMode.Everyone);
+    [Fact] void should_publish_as_a_published_application_by_default() => Resolve(Complete).ApplicationKind.ShouldEqual(ApplicationKind.Published);
     [Fact] void should_not_need_an_access_store_when_everyone_may_give_feedback() => Resolve(options =>
     {
         Complete(options);

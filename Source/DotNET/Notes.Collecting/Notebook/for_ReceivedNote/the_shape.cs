@@ -20,6 +20,8 @@ public class the_shape : Specification
     [Fact] void should_have_the_five_constructor_parameters_in_order() =>
         string.Join(',', _parameters.Select(_ => $"{_.ParameterType.Name} {_.Name}")).ShouldEqual("NoteId Id,Boolean IsWithdrawn,Boolean IsAcknowledged,AddressedInVersion AddressedInVersion,Boolean IsDeclined");
 
-    [Fact] void should_have_nine_reducers() => _reducers.ShouldEqual(9);
+    [Fact] void should_not_take_the_staged_marker_in_the_constructor() => typeof(ReceivedNote).GetProperty(nameof(ReceivedNote.IsStaged))!.GetSetMethod()!.ReturnParameter.GetRequiredCustomModifiers().ShouldContain(typeof(System.Runtime.CompilerServices.IsExternalInit));
+
+    [Fact] void should_have_ten_reducers() => _reducers.ShouldEqual(10);
 }
 #endif

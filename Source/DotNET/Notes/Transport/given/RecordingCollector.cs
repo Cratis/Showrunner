@@ -29,6 +29,16 @@ public class RecordingCollector : ICollectorClient
     public List<NoteResponse> Answers { get; } = [];
 
     /// <summary>
+    /// Gets or sets the list of granted users the collector serves; <see langword="null"/> until a specification sets one.
+    /// </summary>
+    public FeedbackAccessGrants? Grants { get; set; }
+
+    /// <summary>
+    /// Gets the versions the application named, in order, when it asked for the granted users; <see langword="null"/> for none.
+    /// </summary>
+    public List<ulong?> AccessAskedWith { get; } = [];
+
+    /// <summary>
     /// Gets how many times the position was asked.
     /// </summary>
     public int PositionAsked { get; private set; }
@@ -60,6 +70,18 @@ public class RecordingCollector : ICollectorClient
 
         _sent.Add((source, events));
         return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public Task<FeedbackAccessGrants?> GetAccess(ulong? knownVersion, CancellationToken cancellationToken = default)
+    {
+        AccessAskedWith.Add(knownVersion);
+        if (FailWith is { } failure)
+        {
+            return Task.FromException<FeedbackAccessGrants?>(failure);
+        }
+
+        return Task.FromResult(knownVersion == Grants?.Version ? null : Grants);
     }
 
     /// <inheritdoc/>

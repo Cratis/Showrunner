@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Net;
 using System.Net.Http.Headers;
 #if !NET11_0_OR_GREATER
 using System.Net.Http.Json;
@@ -39,18 +40,32 @@ public class HttpCollectorClient(HttpClient http, CollectorToken token, IOptions
         return await response.Content.ReadFromJsonAsync<NoteResponse[]>(NotesTransportJson.Options, cancellationToken) ?? [];
     }
 
+    /// <inheritdoc/>
+    public async Task<FeedbackAccessGrants?> GetAccess(ulong? knownVersion, CancellationToken cancellationToken = default)
+    {
+        using var response = await Call(HttpMethod.Get, NotesTransportPaths.Access, null, cancellationToken, knownVersion is { } version ? $"\"{version}\"" : null);
+        return response.StatusCode == HttpStatusCode.NotModified
+            ? null
+            : await response.Content.ReadFromJsonAsync<FeedbackAccessGrants>(NotesTransportJson.Options, cancellationToken);
+    }
+
     static string Query(string source) =>
         source.Length == 0 ? string.Empty : $"?{NotesTransportPaths.SourceParameter}={Uri.EscapeDataString(source)}";
 
-    async Task<HttpResponseMessage> Call(HttpMethod method, string relative, HttpContent? content, CancellationToken cancellationToken)
+    async Task<HttpResponseMessage> Call(HttpMethod method, string relative, HttpContent? content, CancellationToken cancellationToken, string? ifNoneMatch = null)
     {
         var configured = options.Value;
         var baseUrl = configured.CollectorUrl.TrimEnd('/');
         var publication = Uri.EscapeDataString(configured.PublicationId.Value);
         using var request = new HttpRequestMessage(method, $"{baseUrl}/.cratis/notes/v1/publications/{publication}/{relative}") { Content = content };
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await token.Read(cancellationToken));
+        if (ifNoneMatch is not null)
+        {
+            request.Headers.IfNoneMatch.Add(new EntityTagHeaderValue(ifNoneMatch));
+        }
+
         var response = await http.SendAsync(request, cancellationToken);
-        if (!response.IsSuccessStatusCode)
+        if (!response.IsSuccessStatusCode && response.StatusCode != HttpStatusCode.NotModified)
         {
             var status = response.StatusCode;
             response.Dispose();

@@ -22,4 +22,7 @@ internal static partial class TransportLogging
 
     [LoggerMessage(LogLevel.Warning, "Relaying notes to the collector failed; trying again in {RetryInSeconds} seconds")]
     internal static partial void RelayFailed(this ILogger<CollectorRelayWorker> logger, Exception exception, int retryInSeconds);
+
+    [LoggerMessage(LogLevel.Warning, "Asking the collector who may give feedback failed; keeping the last list for as long as it may be kept and trying again in {RetryInSeconds} seconds")]
+    internal static partial void AccessRefreshFailed(this ILogger<GrantedAccessWorker> logger, Exception exception, int retryInSeconds);
 }

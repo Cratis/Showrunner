@@ -106,6 +106,56 @@ public class NoteCollectingCalls(IResolveNotesPublications publications, NoteCol
         return outcome == CollectOutcome.Stored ? Results.Json(responses, NotesTransportJson.Options) : Rejected(outcome);
     }
 
+    /// <summary>
+    /// Answers the users the desk lets give feedback in the publication's tenant, with an entity tag. A request whose
+    /// <c>If-None-Match</c> names the current one is answered <c>304</c> with no body.
+    /// </summary>
+    /// <param name="publicationId">The publication in the route.</param>
+    /// <param name="http">The request.</param>
+    /// <returns>The result.</returns>
+    public async Task<IResult> Access(string publicationId, HttpContext http)
+    {
+        if (await Authenticate(publicationId, http) is not var (id, publication))
+        {
+            return Unauthorized(http);
+        }
+
+        var (outcome, grants) = await collector.Access(id, publication, KnownVersion(http));
+        if (outcome != CollectOutcome.Stored)
+        {
+            return Rejected(outcome);
+        }
+
+        http.Response.Headers[HeaderNames.CacheControl] = "no-cache";
+        if (grants is null)
+        {
+            http.Response.Headers[HeaderNames.ETag] = http.Request.Headers.IfNoneMatch.ToString();
+            return Results.StatusCode(StatusCodes.Status304NotModified);
+        }
+
+        http.Response.Headers[HeaderNames.ETag] = $"\"{grants.Version}\"";
+        return Results.Json(grants, NotesTransportJson.Options);
+    }
+
+    static ulong? KnownVersion(HttpContext http)
+    {
+        foreach (var candidate in http.Request.Headers.IfNoneMatch.ToString().Split(','))
+        {
+            var tag = candidate.Trim();
+            if (tag.StartsWith("W/", StringComparison.Ordinal))
+            {
+                tag = tag[2..];
+            }
+
+            if (tag.Length > 2 && tag[0] == '"' && tag[^1] == '"' && ulong.TryParse(tag[1..^1], out var version))
+            {
+                return version;
+            }
+        }
+
+        return null;
+    }
+
     static string Source(HttpContext http) => http.Request.Query[NotesTransportPaths.SourceParameter].ToString();
 
     static IResult Rejected(CollectOutcome outcome) => outcome switch

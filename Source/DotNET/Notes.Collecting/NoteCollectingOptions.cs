@@ -19,6 +19,15 @@ public class NoteCollectingOptions
     public IEnumerable<EventStoreName> AppStores { get; set; } = [];
 
     /// <summary>
+    /// Gets or sets the names of the event stores of the desks that decide who may give feedback, for example <c>Direct</c>.
+    /// The collecting side subscribes to the outbox of each for <c>FeedbackAccessGranted</c> and <c>FeedbackAccessRevoked</c>
+    /// and records each decision in the namespace of the tenant it names. The collector serves what they leave granted to
+    /// the applications that use the HTTP transport with only granted users allowed to give feedback. Defaults to none: a
+    /// host whose applications share its kernel needs no desk here.
+    /// </summary>
+    public IEnumerable<EventStoreName> AccessStores { get; set; } = [];
+
+    /// <summary>
     /// Gets or sets how often the collecting side opens the namespaces it does not serve yet and makes sure it is
     /// subscribed to the applications' stores. Everything it acts on is durable, so a round that fails is retried at the
     /// next one. Defaults to one minute.

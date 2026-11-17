@@ -4,33 +4,125 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex" />
-    <title>Connect to Chronicle</title>
+    <title>Connect to Chronicle – Cratis</title>
     <style>
-        body { font-family: system-ui, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #f5f5f5; }
-        .card { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.12); padding: 2.5rem 3rem; max-width: 520px; width: 100%; }
-        h1 { font-size: 1.5rem; font-weight: 700; margin: 0 0 .75rem; color: #333; text-align: center; }
-        p { color: #666; margin: 0 0 1.5rem; }
-        label { display: block; font-weight: 600; color: #333; margin: 0 0 .35rem; }
-        textarea, input[type=text] { display: block; width: 100%; box-sizing: border-box; padding: .6rem .75rem; margin: 0 0 1.25rem; border: 1px solid #c8c8c8; border-radius: 6px; font: .9rem ui-monospace, monospace; }
+        /* The look of the sign-in pages Cratis Studio and Cratis Direct give AuthProxy. */
+        :root {
+            --background-start: #0f172a;
+            --background-end: #1e293b;
+            --surface-card: #1e293b;
+            --surface-border: #334155;
+            --surface-ground: #0f172a;
+            --text-color: rgba(255, 255, 255, 0.87);
+            --text-color-secondary: rgba(255, 255, 255, 0.6);
+            --primary-color: #3b82f6;
+            --primary-color-hover: #2563eb;
+            --success-color: #4ade80;
+            --error-color: #f87171;
+            --border-radius: 12px;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-color);
+            background: linear-gradient(135deg, var(--background-start) 0%, var(--background-end) 100%);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .page-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+
+        .card {
+            background: var(--surface-card);
+            border-radius: var(--border-radius);
+            padding: 3rem;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--surface-border);
+        }
+
+        .card-header { text-align: center; margin-bottom: 2rem; }
+        .logo { width: 4rem; height: 4rem; margin: 0 auto 1rem; display: block; }
+        .card-title { font-size: 1.25rem; font-weight: 600; color: var(--text-color); margin: 0 0 0.5rem; }
+        .card-subtitle { font-size: 0.9rem; color: var(--text-color-secondary); margin: 0; }
+
+        label { display: block; font-weight: 600; font-size: 0.875rem; color: var(--text-color); margin: 0 0 0.35rem; }
+
+        textarea, input[type=text] {
+            display: block;
+            width: 100%;
+            padding: 0.6rem 0.75rem;
+            margin: 0 0 1.25rem;
+            border: 1px solid var(--surface-border);
+            border-radius: 8px;
+            background: var(--surface-ground);
+            color: var(--text-color);
+            font: 0.85rem ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
+
         textarea { min-height: 7rem; resize: vertical; }
-        button { display: block; width: 100%; box-sizing: border-box; padding: .75rem 1.5rem; border: none; border-radius: 6px; background: #0078d4; color: #fff; font-size: 1rem; font-weight: 600; cursor: pointer; }
-        button:hover { background: #005a9e; }
-        .notice { border-radius: 6px; padding: .75rem 1rem; margin: 0 0 1.5rem; }
-        .notice.error { background: #fde7e9; color: #a4262c; }
-        .notice.success { background: #dff6dd; color: #107c10; }
-        .notice.info { background: #eff6fc; color: #004578; }
+        textarea:focus, input[type=text]:focus { outline: 2px solid var(--primary-color); outline-offset: 1px; border-color: transparent; }
+
+        button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 0.75rem 1.25rem;
+            border: none;
+            border-radius: 8px;
+            background: var(--primary-color);
+            color: #ffffff;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s ease, transform 0.1s ease;
+        }
+
+        button:hover { background: var(--primary-color-hover); transform: translateY(-1px); }
+        button:active { transform: translateY(0); }
+        button:disabled { background: var(--surface-border); color: var(--text-color-secondary); cursor: progress; transform: none; }
+
+        .notice { border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.875rem; margin: 0 0 1.5rem; text-align: center; }
+        .notice.error { background: rgba(248, 113, 113, 0.1); border: 1px solid rgba(248, 113, 113, 0.3); color: var(--error-color); }
+        .notice.success { background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.3); color: var(--success-color); }
+        .notice.info { background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); color: var(--text-color); }
+        .info-text { font-size: 0.9rem; color: var(--text-color-secondary); margin: 0 0 1.5rem; text-align: center; }
+
+        @media (max-width: 600px) { .card { padding: 2rem 1.5rem; } }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>Connect to Chronicle</h1>
-        __CRATIS_DIRECT_NOTICE__
-        <form method="post" action="__CRATIS_DIRECT_ACTION__" autocomplete="off" __CRATIS_DIRECT_FORM_ATTRIBUTES__>
-            <input type="hidden" name="token" value="__CRATIS_DIRECT_TOKEN__" />
-            __CRATIS_DIRECT_CODE_FIELD__
-            __CRATIS_DIRECT_ENDPOINT_FIELD__
-            <button type="submit">__CRATIS_DIRECT_SUBMIT__</button>
-        </form>
+    <div class="page-container">
+        <div class="card">
+            <div class="card-header">
+                <svg class="logo" role="img" aria-label="Cratis" viewBox="0 0 328 328">
+                    <g transform="translate(0,328) scale(0.1,-0.1)" fill="#ffffff" stroke="none">
+                        <path d="M1444 2779 c-319 -182 -592 -343 -607 -358 -16 -14 -34 -35 -40 -46 -8 -14 -10 -229 -9 -735 l3 -715 23 -35 c18 -26 74 -64 222 -151 110 -64 374 -219 589 -344 214 -126 400 -231 413 -233 13 -3 31 3 42 13 19 17 20 33 20 307 0 233 -3 294 -15 317 -10 21 -93 74 -327 211 -172 101 -324 194 -338 207 l-25 23 0 401 0 401 27 23 c14 12 161 100 327 194 177 101 310 184 325 202 l26 31 0 293 c0 318 -1 325 -55 325 -12 0 -283 -149 -601 -331z"/>
+                        <path d="M1965 2009 c-178 -98 -219 -126 -237 -157 -15 -26 -18 -57 -18 -215 0 -175 1 -186 23 -218 30 -45 326 -219 372 -219 34 0 319 157 361 199 24 23 24 26 24 230 l0 207 -27 31 c-39 44 -319 203 -358 203 -19 0 -73 -24 -140 -61z"/>
+                    </g>
+                </svg>
+                <h1 class="card-title">Connect to Chronicle</h1>
+                <p class="card-subtitle">Link this product to the Chronicle that Cratis operates it through.</p>
+            </div>
+            __CRATIS_DIRECT_NOTICE__
+            <p id="working" class="notice info" hidden>Connecting to Chronicle. This takes a few seconds; keep this page open.</p>
+            <form method="post" action="__CRATIS_DIRECT_ACTION__" autocomplete="off" __CRATIS_DIRECT_FORM_ATTRIBUTES__>
+                <input type="hidden" name="token" value="__CRATIS_DIRECT_TOKEN__" />
+                __CRATIS_DIRECT_CODE_FIELD__
+                __CRATIS_DIRECT_ENDPOINT_FIELD__
+                <button type="submit">__CRATIS_DIRECT_SUBMIT__</button>
+            </form>
+        </div>
     </div>
+    <script>__CRATIS_DIRECT_SCRIPT__</script>
 </body>
 </html>

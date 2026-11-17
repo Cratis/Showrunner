@@ -14,10 +14,11 @@ public class a_person_who_is_not_an_administrator : a_direct_page
     async Task Because()
     {
         _get = await Open("2002");
-        _post = await Send(Form("2002", "nonce", _forgery.TokenFor("nonce", "2002"), Code));
+        _post = await Send(Form("2002", _forgery.TokenFor("2002"), Code));
     }
 
     [Fact] void should_refuse_the_page() => _get.Status.ShouldEqual(StatusCodes.Status403Forbidden);
+    [Fact] void should_say_why() => _get.Html.ShouldContain("not one of the people");
     [Fact] void should_refuse_the_post_even_with_a_valid_token() => _post.Status.ShouldEqual(StatusCodes.Status403Forbidden);
     [Fact] void should_not_redeem_a_code() => _enrollment.DidNotReceive().Redeem(Arg.Any<DirectEnrollmentRequest>(), Arg.Any<CancellationToken>());
 }

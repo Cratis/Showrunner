@@ -16,13 +16,15 @@ public class a_closed_link : a_direct_page
         Redeems();
         Connects(DirectLinkHealth.Healthy);
         var page = await Open();
-        await Send(Form(Administrator, page.Nonce, page.Token, Code));
+        await Send(Form(Administrator, page.Token, Code));
         _get = await Open();
-        _post = await Send(Form(Administrator, page.Nonce, page.Token, Code));
+        _post = await Send(Form(Administrator, page.Token, Code));
     }
 
     [Fact] void should_answer_not_found_to_a_get() => _get.Status.ShouldEqual(StatusCodes.Status404NotFound);
     [Fact] void should_answer_not_found_to_a_post() => _post.Status.ShouldEqual(StatusCodes.Status404NotFound);
+    [Fact] void should_answer_with_a_page() => _get.Headers.ContentType.ToString().StartsWith("text/html", StringComparison.Ordinal).ShouldBeTrue();
+    [Fact] void should_not_carry_a_form_token() => _get.Token.ShouldBeEmpty();
     [Fact] void should_have_redeemed_only_once() => _enrollment.Received(1).Redeem(Arg.Any<DirectEnrollmentRequest>(), Arg.Any<CancellationToken>());
 }
 #endif

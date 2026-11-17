@@ -31,6 +31,12 @@ internal static partial class DirectConnectionLogging
     [LoggerMessage(LogLevel.Error, "Redeeming the enrollment code from configuration failed: {ExceptionType}")]
     internal static partial void ConfiguredAttemptFailed(this ILogger<DirectEnrollmentWorker> logger, string exceptionType);
 
+    [LoggerMessage(LogLevel.Warning, "A post to the setup page was refused because {Reason}; nothing was redeemed")]
+    internal static partial void PostRefused(this ILogger<DirectConnectionCalls> logger, string reason);
+
+    [LoggerMessage(LogLevel.Warning, "Someone who is not a configured administrator asked for the setup page")]
+    internal static partial void NotAnAdministrator(this ILogger<DirectConnectionCalls> logger);
+
     [LoggerMessage(LogLevel.Warning, "The link to Chronicle can never work again, so the setup page opened again")]
     internal static partial void Reopened(this ILogger<DirectConnection> logger);
 }

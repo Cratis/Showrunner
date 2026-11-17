@@ -15,10 +15,11 @@ public class a_cross_site_post : a_direct_page
         Redeems();
         Connects(DirectLinkHealth.Healthy);
         var page = await Open();
-        _answer = await Send(Form(Administrator, page.Nonce, page.Token, Code, site: "cross-site"));
+        _answer = await Send(Form(Administrator, page.Token, Code, site: "cross-site"));
     }
 
     [Fact] void should_refuse_it() => _answer.Status.ShouldEqual(StatusCodes.Status400BadRequest);
+    [Fact] void should_say_why() => _answer.Html.ShouldContain("sent from another site");
     [Fact] void should_not_redeem_a_code() => _enrollment.DidNotReceive().Redeem(Arg.Any<DirectEnrollmentRequest>(), Arg.Any<CancellationToken>());
 }
 #endif

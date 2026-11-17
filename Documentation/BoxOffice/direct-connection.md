@@ -34,7 +34,9 @@ Redeeming needs Chronicle prerequisites; see [What Chronicle needs](#what-chroni
 2. The principal is in `Administrators`. Otherwise it answers `403`.
 3. The enrollment code, which carries the endpoint, the fingerprint of the certificate authority and a secret.
 
-The form post is protected against cross-site forgery with a cookie nonce and a token bound to the person, and a post marked cross-site by the browser is refused. Messages are constant: they never repeat the code, the endpoint or what a server answered, and neither is logged. There is no way to point the product at an arbitrary endpoint.
+The form post is protected against cross-site forgery with a token bound to the person and the time the page was shown, valid for one hour, and a post marked cross-site by the browser is refused. The token needs no cookie, so a browser that withholds cookies after the sign-in redirect can still post the form. A post whose form has expired gets the form again with a message, and nothing is redeemed.
+
+Every answer is a page that says what happened, including a refusal. While the code is being redeemed the page disables *Connect* and says it is connecting; its one script is allowed by hash in the page's content security policy. A refused post is logged with its reason. Messages are constant: they never repeat the code, the endpoint or what a server answered, and neither is logged. There is no way to point the product at an arbitrary endpoint.
 
 ## What happens to the link
 

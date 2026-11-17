@@ -3,6 +3,7 @@
 
 using Cratis.Showrunner.BoxOffice.Product.SignIns;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Cratis.Showrunner.BoxOffice.Product.Direct;
@@ -13,12 +14,18 @@ namespace Cratis.Showrunner.BoxOffice.Product.Direct;
 /// <remarks>
 /// A person gets in only when the request comes through AuthProxy with an authenticated principal and that principal is
 /// one of the configured administrators; the enrollment code is the third factor. A closed link answers as if the page
-/// never existed.
+/// never existed. Every answer is a page that says what happened: a browser shows an answer without a body as nothing, or
+/// downloads it as an empty file, and the person cannot tell whether anything was done.
 /// </remarks>
 /// <param name="connection">The <see cref="DirectConnection"/>.</param>
 /// <param name="forgery">The <see cref="DirectForgery"/>.</param>
 /// <param name="options">The <see cref="BoxOfficeProductOptions"/>.</param>
-public class DirectConnectionCalls(DirectConnection connection, DirectForgery forgery, IOptions<BoxOfficeProductOptions> options)
+/// <param name="logger">The <see cref="ILogger{T}"/>.</param>
+public class DirectConnectionCalls(
+    DirectConnection connection,
+    DirectForgery forgery,
+    IOptions<BoxOfficeProductOptions> options,
+    ILogger<DirectConnectionCalls> logger)
 {
     /// <summary>
     /// The longest form that is read.
@@ -34,7 +41,7 @@ public class DirectConnectionCalls(DirectConnection connection, DirectForgery fo
     {
         var headers = http.Response.Headers;
         headers.CacheControl = "no-store";
-        headers.ContentSecurityPolicy = "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'";
+        headers.ContentSecurityPolicy = DirectPage.ContentSecurityPolicy;
         headers.XFrameOptions = "DENY";
         headers.XContentTypeOptions = "nosniff";
         headers["Referrer-Policy"] = "no-referrer";
@@ -42,23 +49,24 @@ public class DirectConnectionCalls(DirectConnection connection, DirectForgery fo
         var person = http.Request.Headers[SignInHeaders.PrincipalId].ToString();
         if (string.IsNullOrWhiteSpace(person))
         {
-            return Results.Unauthorized();
+            return Refusal(StatusCodes.Status401Unauthorized, "Sign in to use this page.");
         }
 
         if (!options.Value.Direct.Administrators.Contains(person, StringComparer.Ordinal))
         {
-            return Results.StatusCode(StatusCodes.Status403Forbidden);
+            logger.NotAnAdministrator();
+            return Refusal(StatusCodes.Status403Forbidden, "You are not one of the people who may connect this product.");
         }
 
         var state = await connection.Current(http.RequestAborted);
         if (state.Stage == DirectLinkStage.Closed)
         {
-            return Results.NotFound();
+            return NotFound();
         }
 
         return HttpMethods.IsPost(http.Request.Method)
-            ? await Post(http, person)
-            : Page(http, person, state.Stage, null);
+            ? await Post(http, person, state.Stage)
+            : Page(person, state.Stage, null);
     }
 
     static string Field(IFormCollection form, string name) => form.TryGetValue(name, out var value) ? value.ToString() : string.Empty;
@@ -69,42 +77,47 @@ public class DirectConnectionCalls(DirectConnection connection, DirectForgery fo
         return site.Length > 0 && site is not ("same-origin" or "none");
     }
 
-    async Task<IResult> Post(HttpContext http, string person)
+    static IResult Refusal(int status, string message) =>
+        Results.Content(DirectPage.RenderRefusal(message), "text/html; charset=utf-8", statusCode: status);
+
+    static IResult NotFound() => Refusal(StatusCodes.Status404NotFound, "There is nothing here.");
+
+    async Task<IResult> Post(HttpContext http, string person, DirectLinkStage stage)
     {
-        if (IsCrossSite(http.Request) ||
-            !http.Request.HasFormContentType ||
-            http.Request.ContentLength is null or > MaximumBodyLength)
+        if (IsCrossSite(http.Request))
         {
-            return Results.BadRequest();
+            logger.PostRefused("it came from another site");
+            return Refusal(StatusCodes.Status400BadRequest, "The form was sent from another site, so nothing was done.");
+        }
+
+        if (!http.Request.HasFormContentType || http.Request.ContentLength is null or > MaximumBodyLength)
+        {
+            logger.PostRefused("it was not a form of an acceptable length");
+            return Refusal(StatusCodes.Status400BadRequest, "The form could not be read, so nothing was done. Open the page again and paste the code.");
         }
 
         var form = await http.Request.ReadFormAsync(http.RequestAborted);
-        var nonce = http.Request.Cookies[DirectForgery.CookieName] ?? string.Empty;
-        if (!forgery.IsValid(nonce, Field(form, "token"), person))
+        if (!forgery.IsValid(Field(form, "token"), person))
         {
-            return Results.BadRequest();
+            logger.PostRefused("its form token was missing, expired or made for someone else");
+            var settings = options.Value.Direct;
+            return Results.Content(
+                DirectPage.RenderExpired(settings.Path, forgery.TokenFor(person), stage, settings.ExpectedEndpointHost.Length > 0),
+                "text/html; charset=utf-8",
+                statusCode: StatusCodes.Status400BadRequest);
         }
 
         var result = await connection.Attempt(Field(form, "code"), Field(form, "endpoint"), http.RequestAborted);
-        var stage = (await connection.Current(http.RequestAborted)).Stage;
+        var current = (await connection.Current(http.RequestAborted)).Stage;
         return result == DirectAttemptResult.Closed
-            ? Results.NotFound()
-            : Page(http, person, stage, result);
+            ? NotFound()
+            : Page(person, current, result);
     }
 
-    IResult Page(HttpContext http, string person, DirectLinkStage stage, DirectAttemptResult? attempt)
+    IResult Page(string person, DirectLinkStage stage, DirectAttemptResult? attempt)
     {
-        var nonce = DirectForgery.NewNonce();
-        http.Response.Cookies.Append(DirectForgery.CookieName, nonce, new CookieOptions
-        {
-            HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.Strict,
-            Path = "/"
-        });
-
         var settings = options.Value.Direct;
-        var html = DirectPage.Render(settings.Path, forgery.TokenFor(nonce, person), stage, attempt, settings.ExpectedEndpointHost.Length > 0);
+        var html = DirectPage.Render(settings.Path, forgery.TokenFor(person), stage, attempt, settings.ExpectedEndpointHost.Length > 0);
         return Results.Content(html, "text/html; charset=utf-8", statusCode: attempt == DirectAttemptResult.TooManyAttempts ? StatusCodes.Status429TooManyRequests : null);
     }
 }

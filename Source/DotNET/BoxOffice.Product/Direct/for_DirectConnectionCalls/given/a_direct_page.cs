@@ -16,16 +16,16 @@ public class a_direct_page : a_direct_connection
 
     protected DirectConnectionCalls _calls;
     protected DirectForgery _forgery;
+    protected a_settable_clock _clock;
 
     /// <summary>
     /// What the page answered.
     /// </summary>
     /// <param name="Status">The status code.</param>
     /// <param name="Html">The body.</param>
-    /// <param name="Nonce">The nonce the cookie carries, empty when none was set.</param>
     /// <param name="Token">The forgery token the form carries, empty when there is no form.</param>
     /// <param name="Headers">The response headers.</param>
-    protected record Answer(int Status, string Html, string Nonce, string Token, IHeaderDictionary Headers);
+    protected record Answer(int Status, string Html, string Token, IHeaderDictionary Headers);
 
     static string TokenIn(string html)
     {
@@ -48,7 +48,7 @@ public class a_direct_page : a_direct_connection
         return http;
     }
 
-    protected static DefaultHttpContext Form(string? principal, string? nonce, string? token, string code = "", string? endpoint = null, string? site = null)
+    protected static DefaultHttpContext Form(string? principal, string? token, string code = "", string? endpoint = null, string? site = null)
     {
         var http = Request(HttpMethods.Post, principal);
         var fields = new List<string> { $"token={Uri.EscapeDataString(token ?? string.Empty)}", $"code={Uri.EscapeDataString(code)}" };
@@ -61,11 +61,6 @@ public class a_direct_page : a_direct_connection
         http.Request.ContentType = "application/x-www-form-urlencoded";
         http.Request.ContentLength = body.Length;
         http.Request.Body = new MemoryStream(body);
-        if (nonce is not null)
-        {
-            http.Request.Headers.Cookie = $"{DirectForgery.CookieName}={nonce}";
-        }
-
         if (site is not null)
         {
             http.Request.Headers["Sec-Fetch-Site"] = site;
@@ -80,9 +75,7 @@ public class a_direct_page : a_direct_connection
         await result.ExecuteAsync(http);
         http.Response.Body.Position = 0;
         var html = await new StreamReader(http.Response.Body).ReadToEndAsync();
-        var cookie = http.Response.Headers.SetCookie.ToString();
-        var nonce = cookie.StartsWith(DirectForgery.CookieName + "=", StringComparison.Ordinal) ? cookie[(DirectForgery.CookieName.Length + 1)..].Split(';')[0] : string.Empty;
-        return new(http.Response.StatusCode, html, nonce, TokenIn(html), http.Response.Headers);
+        return new(http.Response.StatusCode, html, TokenIn(html), http.Response.Headers);
     }
 
     protected Task<Answer> Open(string principal = Administrator) => Send(Request(HttpMethods.Get, principal));
@@ -90,14 +83,15 @@ public class a_direct_page : a_direct_connection
     protected async Task<Answer> Submit(string code, string? endpoint = null, string principal = Administrator)
     {
         var page = await Open(principal);
-        return await Send(Form(principal, page.Nonce, page.Token, code, endpoint));
+        return await Send(Form(principal, page.Token, code, endpoint));
     }
 
     void Establish()
     {
         _options.Direct.Administrators = [Administrator];
-        _forgery = new();
-        _calls = new(_connection, _forgery, Options.Create(_options));
+        _clock = new();
+        _forgery = new(_clock);
+        _calls = new(_connection, _forgery, Options.Create(_options), Microsoft.Extensions.Logging.Abstractions.NullLogger<DirectConnectionCalls>.Instance);
     }
 }
 #endif

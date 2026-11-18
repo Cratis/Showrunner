@@ -29,6 +29,15 @@ public class OperatorSubscriptions(OperatorEventTranslator translator, IOptions<
     public static ReactorId TranslatorFor(EventStoreName operatorStore) => new($"Cratis.Showrunner.BoxOffice.Receiving.OperatorEventTranslator.{operatorStore.Value}");
 
     /// <summary>
+    /// Gets the identity of the subscription to an operator store. It carries a prefix of its own: a subscription is
+    /// identified by its id alone, so one named for the store would be replaced by - and replace - any other subscription
+    /// the application keeps to the same store, such as the Usher desk subscription.
+    /// </summary>
+    /// <param name="operatorStore">The operator store.</param>
+    /// <returns>The subscription id.</returns>
+    public static EventStoreSubscriptionId SubscriptionFor(EventStoreName operatorStore) => new($"boxoffice-{operatorStore.Value}");
+
+    /// <summary>
     /// Gets the inbox the events of an operator store arrive in.
     /// </summary>
     /// <param name="operatorStore">The operator store.</param>
@@ -98,7 +107,7 @@ public class OperatorSubscriptions(OperatorEventTranslator translator, IOptions<
             }
 
             await eventStore.Subscriptions.Subscribe(
-                new EventStoreSubscriptionId(operatorStore.Value),
+                SubscriptionFor(operatorStore),
                 operatorStore.Value,
                 subscription =>
                 {

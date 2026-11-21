@@ -42,14 +42,34 @@ public sealed class PerformanceArgs
     public SecretReferenceArgs? ChronicleConnectionSecret { get; init; }
 
     /// <summary>
-    /// Gets the application to run.
+    /// Gets the application to run. Required, except for a gateway: an <see cref="AuthProxy"/> that names an <see cref="AuthProxyArgs.Upstream"/> runs no application.
     /// </summary>
-    public required ApplicationArgs Application { get; init; }
+    public ApplicationArgs? Application { get; init; }
 
     /// <summary>
-    /// Gets the Cratis environment the application runs.
+    /// Gets the Cratis environment the application runs. Required, except for a gateway whose providers all get their credentials as <see cref="AuthProxyProviderArgs.ClientId"/> and <see cref="AuthProxyProviderArgs.ClientSecret"/>.
     /// </summary>
-    public required PerformanceEnvironmentArgs Environment { get; init; }
+    public PerformanceEnvironmentArgs? Environment { get; init; }
+
+    /// <summary>
+    /// Gets the AuthProxy that fronts the application, or null to run none.
+    /// </summary>
+    public AuthProxyArgs? AuthProxy { get; init; }
+
+    /// <summary>
+    /// Gets the onboarding service, one Ante, or null to run none.
+    /// </summary>
+    public OnboardingArgs? Onboarding { get; init; }
+
+    /// <summary>
+    /// Gets how the application is reached from outside the cluster, or null to create no Ingress.
+    /// </summary>
+    public IngressArgs? Ingress { get; init; }
+
+    /// <summary>
+    /// Gets how the generated signing keys are rotated, or null for the operator's default.
+    /// </summary>
+    public SigningKeysArgs? SigningKeys { get; init; }
 
     /// <summary>
     /// Gets how long the Performance runs, or null to run permanently.

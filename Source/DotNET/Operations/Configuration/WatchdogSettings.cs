@@ -3,6 +3,7 @@
 
 using Cratis.Showrunner.Operations.Channels;
 using Cratis.Showrunner.Operations.Checks;
+using Cratis.Showrunner.Operations.Link;
 using Cratis.Showrunner.Operations.Pipeline;
 
 namespace Cratis.Showrunner.Operations.Configuration;
@@ -36,6 +37,12 @@ public sealed record WatchdogSettings
     /// Gets the Cratis Direct settings, or <see langword="null"/> when Direct is not a channel.
     /// </summary>
     public DirectAlertsOptions? Direct { get; init; }
+
+    /// <summary>
+    /// Gets the optional link to Cratis Direct's watchdog protocol - enrollment, signed configuration, outbox and governed remedies -
+    /// or <see langword="null"/> when the watchdog only alerts through its channels.
+    /// </summary>
+    public DirectLinkOptions? Link { get; init; }
 
     /// <summary>
     /// Gets the Healthchecks URL, or <see langword="null"/> when there is no heartbeat.

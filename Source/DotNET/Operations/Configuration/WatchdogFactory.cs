@@ -5,6 +5,7 @@ using Cratis.Showrunner.Operations.Alerts;
 using Cratis.Showrunner.Operations.Channels;
 using Cratis.Showrunner.Operations.Checks;
 using Cratis.Showrunner.Operations.Cluster;
+using Cratis.Showrunner.Operations.Link;
 using Cratis.Showrunner.Operations.Pipeline;
 using Cratis.Showrunner.Operations.Probe;
 using Cratis.Showrunner.Operations.State;
@@ -28,6 +29,9 @@ namespace Cratis.Showrunner.Operations.Configuration;
 /// <param name="volumeHandles">The PersistentVolume volume handles, used by the volume sweep.</param>
 /// <param name="gitHubHttp">The HTTP client that reads GitHub. It must not follow redirects, so the token never reaches another host; <paramref name="http"/> is used when it is not given.</param>
 /// <param name="probeHttp">The HTTP client the probe calls the public endpoints with. It must not follow redirects, because a redirect is an answer and not a pass; <paramref name="http"/> is used when it is not given.</param>
+/// <param name="secrets">The Secret store the Direct link keeps its credential in, or <see langword="null"/> when there is none.</param>
+/// <param name="deployments">The Kubernetes access the Direct link's Deployment-restart remedies use, or <see langword="null"/> when there is none.</param>
+/// <param name="linkHttp">The HTTP client the Direct link calls Direct and runs Direct's checks with. It must not follow redirects, so a bearer token never follows one to another host; <paramref name="http"/> is used when it is not given.</param>
 public sealed class WatchdogFactory(
     WatchdogSettings settings,
     IClusterReader reader,
@@ -41,7 +45,10 @@ public sealed class WatchdogFactory(
     IAgentHarnessCluster? agentCluster = null,
     IVolumeHandles? volumeHandles = null,
     HttpClient? gitHubHttp = null,
-    HttpClient? probeHttp = null)
+    HttpClient? probeHttp = null,
+    ISecretStore? secrets = null,
+    IDeployments? deployments = null,
+    HttpClient? linkHttp = null)
 {
     /// <summary>
     /// The checks that are jobs of their own: each runs in its own CronJob with its own alert state, so one job never resolves the
@@ -89,15 +96,53 @@ public sealed class WatchdogFactory(
     /// Creates the cluster watchdog run.
     /// </summary>
     /// <returns>The run.</returns>
-    public WatchdogRun CreateClusterRun() => new(
-        new FindingCollector(CreateChecks(), settings.Options, timeProvider),
-        new WatchdogRunMonitor(reader, settings.Options),
-        new ConfigMapAlertState(configMaps, settings.StateConfigMap),
-        new AlertDelivery(CreateChannels(), loggers.CreateLogger<AlertDelivery>()),
-        settings.Heartbeat is null ? null : new HealthchecksHeartbeat(http, settings.Heartbeat),
-        settings.Options,
-        timeProvider,
-        loggers.CreateLogger<WatchdogRun>());
+    public WatchdogRun CreateClusterRun()
+    {
+        var link = CreateLink();
+        var checks = CreateChecks().ToList();
+        if (link is not null)
+        {
+            // Direct's endpoint checks run on top of the local ones, from the configuration the link holds.
+            checks.Add(new DirectEndpointCheck(link, linkHttp ?? http));
+        }
+
+        return new WatchdogRun(
+            new FindingCollector(checks, settings.Options, timeProvider),
+            new WatchdogRunMonitor(reader, settings.Options),
+            new ConfigMapAlertState(configMaps, settings.StateConfigMap),
+            new AlertDelivery(CreateChannels(), loggers.CreateLogger<AlertDelivery>()),
+            settings.Heartbeat is null ? null : new HealthchecksHeartbeat(http, settings.Heartbeat),
+            settings.Options,
+            timeProvider,
+            loggers.CreateLogger<WatchdogRun>(),
+            link);
+    }
+
+    /// <summary>
+    /// Creates the link to Cratis Direct when one is configured. Only the cluster run uses it: it owns the instance's state, so
+    /// there is one outbox and one claim however many job kinds run.
+    /// </summary>
+    /// <returns>The link, or <see langword="null"/> when none is configured or the Kubernetes Secret access is missing.</returns>
+    public DirectLink? CreateLink()
+    {
+        if (settings.Link is not { } options || secrets is null)
+        {
+            return null;
+        }
+
+        var remedies = deployments is null
+            ? []
+            : options.Remedies.Select(binding => (IRemedy)new DeploymentRestartRemedy(binding, deployments)).ToList();
+        Func<string, IRemedy>? fallback = options.AllowHttpRemedies ? name => new HttpRemedy(linkHttp ?? http, name) : null;
+        return new DirectLink(
+            options,
+            new HttpDirectClient(linkHttp ?? http, options.BaseUrl, options.InstanceName),
+            new ConfigMapLinkStore(configMaps, secrets, options.StateName),
+            remedies,
+            fallback,
+            timeProvider,
+            loggers.CreateLogger<DirectLink>());
+    }
 
     /// <summary>
     /// Creates the run of the delivery test: the same channels as a real run and nothing else.

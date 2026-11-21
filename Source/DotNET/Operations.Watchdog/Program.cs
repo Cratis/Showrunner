@@ -60,6 +60,10 @@ using var gitHub = new HttpClient(gitHubHandler) { Timeout = TimeSpan.FromSecond
 using var probeHandler = new SocketsHttpHandler { AllowAutoRedirect = false };
 using var probeClient = new HttpClient(probeHandler) { Timeout = TimeSpan.FromSeconds(10) };
 
+// The Direct link sends a bearer token: it must never follow a redirect to another host.
+using var linkHandler = new SocketsHttpHandler { AllowAutoRedirect = false };
+using var linkClient = new HttpClient(linkHandler) { Timeout = TimeSpan.FromSeconds(10) };
+
 // The external probe runs from CI with no cluster: the client is only created, never called, so it needs no kubeconfig.
 using var kubernetes = new Kubernetes(KubernetesConfiguration(command));
 var factory = new WatchdogFactory(
@@ -75,7 +79,10 @@ var factory = new WatchdogFactory(
     new KubernetesAgentHarnessCluster(kubernetes),
     new KubernetesVolumeHandles(kubernetes),
     gitHub,
-    probeClient);
+    probeClient,
+    new KubernetesSecretStore(kubernetes, settings.Options.Namespace),
+    new KubernetesDeployments(kubernetes, TimeProvider.System),
+    linkClient);
 
 return await WatchdogCommands.Run(command, factory, cancellation.Token, stepSummaryPath: Environment.GetEnvironmentVariable("GITHUB_STEP_SUMMARY"));
 

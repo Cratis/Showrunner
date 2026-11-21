@@ -4,6 +4,7 @@
 using System.Globalization;
 using Cratis.Showrunner.Operations.Channels;
 using Cratis.Showrunner.Operations.Checks;
+using Cratis.Showrunner.Operations.Link;
 using Cratis.Showrunner.Operations.Pipeline;
 using Cratis.Showrunner.Operations.Probe;
 
@@ -86,6 +87,7 @@ public static class WatchdogSettingsReader
             DiscordWebhook = GetUrl("DISCORD_WEBHOOK_URL"),
             Smtp = Smtp(Get, problems),
             Direct = Direct(Get, GetUrl("DIRECT_ALERTS_URL"), problems),
+            Link = Link(Get, GetUrl("DIRECT_LINK_URL"), problems),
             Heartbeat = GetUrl("WATCHDOG_HEARTBEAT_URL"),
             Volumes = new VolumesCheckOptions
             {
@@ -427,6 +429,66 @@ public static class WatchdogSettingsReader
         }
 
         return new DirectAlertsOptions(url, token, get("DIRECT_ALERTS_SOURCE"));
+    }
+
+    static DirectLinkOptions? Link(Func<string, string?> get, Uri? url, List<string> problems)
+    {
+        var instance = get("DIRECT_LINK_INSTANCE");
+        if (url is null && instance is null && get("DIRECT_LINK_ENROLLMENT_TOKEN") is null)
+        {
+            return null;
+        }
+
+        if (url is null || instance is null)
+        {
+            problems.Add("The Direct link needs both DIRECT_LINK_URL and DIRECT_LINK_INSTANCE");
+            return null;
+        }
+
+        var resource = Guid.Empty;
+        if (get("DIRECT_LINK_RESOURCE") is { } text && !Guid.TryParse(text, out resource))
+        {
+            problems.Add("DIRECT_LINK_RESOURCE is not a GUID");
+        }
+
+        var limit = int.TryParse(get("DIRECT_LINK_OUTBOX_LIMIT"), CultureInfo.InvariantCulture, out var parsed) && parsed > 0 ? parsed : new DirectLinkOptions { BaseUrl = url, InstanceName = instance }.OutboxLimit;
+        return new DirectLinkOptions
+        {
+            BaseUrl = url,
+            InstanceName = instance,
+            EnrollmentToken = get("DIRECT_LINK_ENROLLMENT_TOKEN"),
+            Resource = resource,
+            StateName = get("DIRECT_LINK_STATE_NAME") ?? new DirectLinkOptions { BaseUrl = url, InstanceName = instance }.StateName,
+            Remedies = RemedyBindings(get("DIRECT_LINK_REMEDIES"), problems),
+            AllowHttpRemedies = string.Equals(get("DIRECT_LINK_HTTP_REMEDIES"), "true", StringComparison.OrdinalIgnoreCase),
+            OutboxLimit = limit,
+            RuntimeVersion = typeof(DirectLink).Assembly.GetName().Version?.ToString() ?? "0.0.0"
+        };
+    }
+
+    /// <summary>
+    /// Reads the remedy bindings; each is <c>remedy=namespace/deployment</c>: what Direct's remedy of that name does here.
+    /// </summary>
+    /// <param name="text">The setting.</param>
+    /// <param name="problems">Collects what is wrong.</param>
+    /// <returns>The bindings.</returns>
+    static List<RemedyBinding> RemedyBindings(string? text, List<string> problems)
+    {
+        var bindings = new List<RemedyBinding>();
+        foreach (var entry in (text ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var parts = entry.Split(['=', '/'], StringSplitOptions.TrimEntries);
+            if (parts.Length == 3 && parts.All(part => part.Length > 0))
+            {
+                bindings.Add(new RemedyBinding(parts[0], parts[1], parts[2]));
+            }
+            else
+            {
+                problems.Add("DIRECT_LINK_REMEDIES entries must look like remedy=namespace/deployment");
+            }
+        }
+
+        return bindings;
     }
 
     static Uri? Url(string? text, string variable, List<string> problems)

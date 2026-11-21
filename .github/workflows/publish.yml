@@ -326,6 +326,16 @@ jobs:
           "-p:Version=$VERSION"
           -o Source/DotNET/StageManager/out
 
+      - name: Publish the watchdog
+        env:
+          VERSION: ${{ needs.release.outputs.version }}
+        run: >
+          dotnet publish Source/DotNET/Operations.Watchdog/Operations.Watchdog.csproj
+          --configuration Release
+          -p:CratisProxiesSkip=true
+          "-p:Version=$VERSION"
+          -o Source/DotNET/Operations.Watchdog/out
+
       # The custom resource definitions are generated from the C# types into the chart; they are not committed.
       - name: Generate the custom resource definitions
         run: ./scripts/stage-manager-crds.sh
@@ -340,6 +350,15 @@ jobs:
         with:
           name: operator-out
           path: Source/DotNET/StageManager/out
+          if-no-files-found: error
+          retention-days: 1
+          include-hidden-files: true
+
+      - name: Upload the watchdog output
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: watchdog-out
+          path: Source/DotNET/Operations.Watchdog/out
           if-no-files-found: error
           retention-days: 1
           include-hidden-files: true
@@ -371,6 +390,7 @@ jobs:
           sparse-checkout: |
             Docker/StageManager
             Docker/Understudy
+            Docker/Watchdog
           sparse-checkout-cone-mode: true
 
       - name: Download the operator output
@@ -378,6 +398,12 @@ jobs:
         with:
           name: operator-out
           path: Source/DotNET/StageManager/out
+
+      - name: Download the watchdog output
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: watchdog-out
+          path: Source/DotNET/Operations.Watchdog/out
 
       - name: Download the chart
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
@@ -419,6 +445,12 @@ jobs:
               echo "cratis/showrunner-understudy-image:latest"
             fi
             echo "EOF"
+            echo "watchdog-tags<<EOF"
+            echo "cratis/showrunner-watchdog-image:$VERSION"
+            if [ "$PRERELEASE" != "true" ]; then
+              echo "cratis/showrunner-watchdog-image:latest"
+            fi
+            echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
       - name: Build and push the Understudy image
@@ -430,6 +462,18 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.docker-tags.outputs.understudy-tags }}
+          build-args: |
+            VERSION=${{ needs.release.outputs.version }}
+
+      - name: Build and push the Watchdog image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          builder: ${{ steps.buildx.outputs.name }}
+          context: .
+          file: Docker/Watchdog/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.docker-tags.outputs.watchdog-tags }}
           build-args: |
             VERSION=${{ needs.release.outputs.version }}
 

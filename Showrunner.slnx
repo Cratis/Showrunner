@@ -16,6 +16,7 @@
     <Project Path="Source/DotNET/Payments.Mollie/Payments.Mollie.csproj" />
     <Project Path="Source/DotNET/Payments/Payments.csproj" />
     <Project Path="Source/DotNET/Operations/Operations.csproj" />
+    <Project Path="Source/DotNET/Operations.Watchdog/Operations.Watchdog.csproj" />
     <Project Path="Source/DotNET/StageManager/StageManager.csproj" />
     <Project Path="Source/DotNET/StageManager.Pulumi/StageManager.Pulumi.csproj" />
     <Project Path="Source/DotNET/Marquee.Authoring/Marquee.Authoring.csproj" />

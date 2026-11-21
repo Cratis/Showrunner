@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFrameworks></TargetFrameworks>
+        <TargetFramework>net11.0</TargetFramework>
+        <OutputType>Exe</OutputType>
+        <AssemblyName>Cratis.Showrunner.Operations.Watchdog</AssemblyName>
+        <RootNamespace>Cratis.Showrunner.Operations.Watchdog</RootNamespace>
+        <Description>The Showrunner watchdog job runner: one collection pass and alert delivery per invocation, run by a Kubernetes CronJob.</Description>
+
+        <!-- The watchdog ships as a container image run by a CronJob, not as a NuGet package. -->
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <!-- The executable is .NET 11 only, and the Arc testing package it builds against in Debug resolves the .NET 11 logging
+             packages; the central version is the .NET 10 one the library builds against. -->
+        <PackageReference Include="Microsoft.Extensions.Logging.Console" VersionOverride="11.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Operations\Operations.csproj" />
+    </ItemGroup>
+</Project>

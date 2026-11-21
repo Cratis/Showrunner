@@ -3,6 +3,7 @@
 
 using System.Collections;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography.X509Certificates;
 using Cratis.Showrunner.Operations.Channels;
 using Cratis.Showrunner.Operations.Configuration;
 using Cratis.Showrunner.Operations.Kubernetes;
@@ -58,9 +59,24 @@ var factory = new WatchdogFactory(
     http,
     settings.Smtp is { } smtp ? new MailKitEmailSender(smtp) : null,
     TimeProvider.System,
-    loggers);
+    loggers,
+    ChronicleClient);
 
 return await WatchdogCommands.Run(command, factory, cancellation.Token);
+
+static HttpClient ChronicleClient(ChronicleSettings chronicle)
+{
+    var handler = new SocketsHttpHandler();
+    if (chronicle.CertificateAuthority is { } pem)
+    {
+        // Chronicle's certificate chains to an internal authority: trust exactly that one for this client.
+        var policy = new X509ChainPolicy { TrustMode = X509ChainTrustMode.CustomRootTrust, RevocationMode = X509RevocationMode.NoCheck };
+        policy.CustomTrustStore.Add(X509Certificate2.CreateFromPem(pem));
+        handler.SslOptions.CertificateChainPolicy = policy;
+    }
+
+    return new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(10) };
+}
 
 static string CurrentNamespace()
 {

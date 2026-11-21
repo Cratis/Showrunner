@@ -88,6 +88,16 @@ public sealed record WatchdogSettings
     public OperationalMetricsOptions Metrics { get; init; } = new();
 
     /// <summary>
+    /// Gets how Chronicle is read, or <see langword="null"/> when its observers are not watched.
+    /// </summary>
+    public ChronicleSettings? Chronicle { get; init; }
+
+    /// <summary>
+    /// Gets the options of the Chronicle observers check.
+    /// </summary>
+    public ChronicleObserversOptions ChronicleObservers { get; init; } = new();
+
+    /// <summary>
     /// Gets the options of the telemetry budget check, which is enabled by naming it in <c>WATCHDOG_CHECKS</c>.
     /// </summary>
     public TelemetryBudgetOptions TelemetryBudget { get; init; } = new();

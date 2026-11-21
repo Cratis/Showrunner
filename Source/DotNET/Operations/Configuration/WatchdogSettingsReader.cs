@@ -30,7 +30,8 @@ public static class WatchdogSettingsReader
         ReadinessCheck.CheckName,
         PublicUrlsCheck.CheckName,
         OperationalMetricsCheck.CheckName,
-        TelemetryBudgetCheck.CheckName
+        TelemetryBudgetCheck.CheckName,
+        ChronicleObserversCheck.CheckName
     ];
 
     /// <summary>
@@ -96,6 +97,7 @@ public static class WatchdogSettingsReader
                 PlatformNamespace = Get("PLATFORM_NAMESPACE") ?? new OperationalMetricsOptions().PlatformNamespace,
                 Advice = Get("VOLUME_ADVICE") ?? new OperationalMetricsOptions().Advice
             },
+            Chronicle = Chronicle(Get, GetUrl("CHRONICLE_URL"), problems),
             TelemetryBudget = new TelemetryBudgetOptions
             {
                 PlatformNamespace = Get("PLATFORM_NAMESPACE") ?? new TelemetryBudgetOptions().PlatformNamespace,
@@ -154,6 +156,11 @@ public static class WatchdogSettingsReader
             enabled.Add(OperationalMetricsCheck.CheckName);
         }
 
+        if (settings.Chronicle is not null)
+        {
+            enabled.Add(ChronicleObserversCheck.CheckName);
+        }
+
         return enabled;
     }
 
@@ -174,6 +181,7 @@ public static class WatchdogSettingsReader
         Require(PublicUrlsCheck.CheckName, settings.PublicUrls.Count > 0, "PUBLIC_URLS");
         Require(OperationalMetricsCheck.CheckName, settings.Prometheus is not null, "PROMETHEUS_URL");
         Require(TelemetryBudgetCheck.CheckName, settings.Prometheus is not null, "PROMETHEUS_URL");
+        Require(ChronicleObserversCheck.CheckName, settings.Chronicle is not null, "CHRONICLE_URL");
     }
 
     static TimeSpan? ScheduleInterval(string? schedule)
@@ -251,6 +259,24 @@ public static class WatchdogSettingsReader
         }
 
         return new SmtpOptions(server, port, get("SMTP_USERNAME")!, get("SMTP_PASSWORD")!, get("ALERT_FROM_NAME")!, get("ALERT_FROM")!, get("ALERT_TO")!);
+    }
+
+    static ChronicleSettings? Chronicle(Func<string, string?> get, Uri? url, List<string> problems)
+    {
+        if (url is null)
+        {
+            return null;
+        }
+
+        var clientId = get("CHRONICLE_CLIENT_ID");
+        var clientSecret = get("CHRONICLE_CLIENT_SECRET");
+        if (clientId is null || clientSecret is null)
+        {
+            problems.Add("Chronicle needs CHRONICLE_CLIENT_ID and CHRONICLE_CLIENT_SECRET together with CHRONICLE_URL");
+            return null;
+        }
+
+        return new ChronicleSettings(url, clientId, clientSecret, get("CHRONICLE_CA_CERTIFICATE"));
     }
 
     static DirectAlertsOptions? Direct(Func<string, string?> get, Uri? url, List<string> problems)

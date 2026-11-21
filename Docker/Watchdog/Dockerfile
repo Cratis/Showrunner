@@ -2,7 +2,8 @@
 
 ####################################
 # Showrunner Watchdog (alerting job)
-# The job image runs the watchdog assembly; the job's args are `cluster` or `test-alert`.
+# The job image runs the watchdog assembly; the job's args are `cluster`, `test-alert`, `runners`, `agent-harness`,
+# `volumes`, `probe` or `probe-external` (the last one needs no cluster, so CI can run it from this same image).
 # The watchdog is published on the GitHub runner first, as the Stage Manager and Understudy images are.
 #   dotnet publish Source/DotNET/Operations.Watchdog/Operations.Watchdog.csproj -c Release -p:CratisProxiesSkip=true -o Source/DotNET/Operations.Watchdog/out
 ####################################

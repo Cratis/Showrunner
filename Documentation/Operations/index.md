@@ -19,7 +19,7 @@ One pass does this:
 | --- | --- |
 | `Cratis.Showrunner.Operations` | The library: the alert pipeline, the channels, the checks, the Kubernetes reader and the environment configuration |
 | `Cratis.Showrunner.StageManager.Pulumi` | The `Watchdog` Pulumi component that deploys the job |
-| `cratis/showrunner-watchdog-image` | The container image the CronJob runs (`watchdog cluster`, `watchdog test-alert`) |
+| `cratis/showrunner-watchdog-image` | The container image the CronJobs run (`watchdog cluster`, `test-alert`, `runners`, `agent-harness`, `volumes`, `probe`, `probe-external`) |
 
 ## Deploy it with Pulumi
 
@@ -144,6 +144,91 @@ _ = new Watchdog("cluster-health-watchdog", new WatchdogArgs
 
 Replace the hosts, namespaces and ages with your own. A deployment that is smaller, such as Kelda Kraft, runs only what makes sense for it: `Checks = ["pods", "nodes"]` and a Direct channel is a complete watchdog.
 
-## Not yet in the C# watchdog
+## More checks of the cluster pass
 
-The Python watchdog still owns these until they are ported: Prometheus operational metrics (node filesystem usage, platform targets), Chronicle observers and failed partitions, the telemetry budget, the GitHub Actions schedule audit, and the runner, agent harness and volume sweeper watchdogs.
+These run in the same pass as the checks above, are named in `WATCHDOG_CHECKS` and are turned on by what you give the component.
+
+| Check | What it reports | Turned on by |
+| --- | --- | --- |
+| `volumes` | A volume above the threshold, a kubelet summary that cannot be read, a claim with no usage. A node that is leaving or has just joined (10 minutes, 30 for a batch node labeled `workload=batch`) is not read, and an unreadable summary of a batch node alerts only after three consecutive runs | `VolumeThresholdPercent`, `VolumeAdvice` |
+| `metrics` | A node whose root filesystem is over 85%, a node, kube-state-metrics or collector scrape target that is down, and any of those that is missing from Prometheus. A source that cannot be read is a finding, never a pass | `Prometheus` |
+| `telemetry-budget` | Telemetry refused, dropped or failed in the last 15 minutes (collector, delta accumulation, Loki, Tempo), oversized scrapes with the targets that rejected them, head series over the budget, any container above 90% of its memory limit, telemetry Services that are not scraped | `Prometheus` (and `SeriesThreshold`) |
+| `chronicle-observers` | Partitions that ran out of retries, partitions still failing after 15 minutes, quarantined observers, in every namespace of every event store (Chronicle's System store is left out) | `Chronicle` |
+| `actions-audit` | A GitHub Actions workflow that is disabled, or whose scheduled runs stopped for more than twice their inferred interval (at least an hour). GitHub is asked once a day and in between the findings are repeated; a rate limit backs off at least a day | `GitHubAudit` |
+
+The Prometheus and Chronicle readers fail closed: an error status, a warning, a result that is not a vector or a sample that cannot be read is an exception, and the check turns that into a finding. Secrets (the Chronicle client secret, the GitHub token) are written to the channels Secret as Pulumi secrets and are never part of a finding, a log line or an error.
+
+## Jobs of their own
+
+Some watchdogs act, and some must not share the alert state of the cluster pass. Each runs as a CronJob of its own, from the same image, with a ServiceAccount, rights and Secret of its own, so that what one job may do is never what another may do. They deliver through the same channels, including Cratis Direct, with the same cooldown and escalation, and keep their state in `NAME-state-CHECK`.
+
+| Command | What it does | Component input | Rights |
+| --- | --- | --- | --- |
+| `runners` | Stops a job that has held an ephemeral runner for the limit (90 minutes; 0 only reports) by deleting its runner, and replaces a runner with no job that is stuck pending (30 minutes). The time is measured from when the job was first seen, never from the pod's age. At most 3 runners per pass; more than that stops nothing and is a critical finding | `Runners` | `ephemeralrunners` list and delete in the runner namespace, and its own state ConfigMaps |
+| `agent-harness` | Finds worker Jobs that can never start because a Secret their Pod mounts does not exist and, when `CleanupEnabled`, deletes them. Every Job and Pod must look untouched, the missing Secret must be confirmed by recent repeated `FailedMount` events, and the Job and its Pods are read again twice before a foreground delete with the Job's UID and resource version as preconditions. Missing evidence is never permission; at most 3 per pass | `AgentHarness` | jobs get, list and delete, pods, events and secrets read in the agent namespace. Only whether a Secret exists is asked, with a metadata request, and its data is never read |
+| `volumes` | Detaches and deletes CSI volumes in the UpCloud account that no PersistentVolume refers to. Only volumes of this cluster (exactly one cluster id label among the volumes that back PersistentVolumes) older than 2 hours are candidates, more than 10 trips a fuse, PersistentVolumes are read again before acting, and an empty or ambiguous view is a critical finding instead of a pass | `VolumeSweeper` | `persistentvolumes` list. The cloud credentials are in a Secret of the job |
+| `probe` | Calls the public endpoints the way an anonymous visitor does. A request that fails is asked again once after a pause, and only one that fails both rounds is a finding | `Probe` | none beyond its own state |
+| `probe-external` | The same probe run from outside the cluster, which can see an ingress or load balancer that is down. It needs no cluster access, keeps no state, writes a Markdown summary (to `GITHUB_STEP_SUMMARY` when set), pings Healthchecks (`PROBE_PING_URL`, `/fail` with the failing endpoints when down), keeps one `probe-down` GitHub issue per outage (`PROBE_ISSUES_REPOSITORY` and `PROBE_ISSUES_TOKEN`) and alerts the shared channels. It is not declared by Pulumi: run the image from CI with `args: [probe-external]` and the environment variables below | CI | none |
+
+A job that acts does so once per run: the confirmation look at the end of the pass replays what the job already did.
+
+```csharp
+_ = new Watchdog("watchdog", new WatchdogArgs
+{
+    Namespace = "operations",
+    Direct = new WatchdogDirectArgs { Url = "https://direct.example.com", Token = config.RequireSecret("directAlertsToken") },
+    Prometheus = new WatchdogPrometheusArgs { Url = "http://prometheus-server.infrastructure:80" },
+    Chronicle = new WatchdogChronicleArgs { Url = "https://chronicle:8080", ClientId = "watchdog", ClientSecret = config.RequireSecret("chronicleSecret") },
+    GitHubAudit = new WatchdogGitHubAuditArgs { Token = config.RequireSecret("githubAuditToken") },
+    Runners = new WatchdogRunnersArgs { Namespace = "arc-runners", ScaleSets = ["big", "small"] },
+    AgentHarness = new WatchdogAgentHarnessArgs { Namespace = "direct" },
+    VolumeSweeper = new WatchdogVolumeSweeperArgs { Username = config.RequireSecret("upcloudUser"), Password = config.RequireSecret("upcloudPassword") },
+    Probe = new WatchdogProbeArgs { Targets = [new WatchdogProbeTargetArgs { Name = "app", BaseUrl = "https://app.example.com", Checks = [new WatchdogProbeCheckArgs { Id = "health", Path = "/health", ExpectStatus = 200 }] }] },
+});
+```
+
+### Environment variables of the executable
+
+| Variable | Used by |
+| --- | --- |
+| `PROMETHEUS_URL`, `PLATFORM_NAMESPACE`, `PROMETHEUS_SERIES_THRESHOLD` | `metrics`, `telemetry-budget` |
+| `CHRONICLE_URL`, `CHRONICLE_CLIENT_ID`, `CHRONICLE_CLIENT_SECRET`, `CHRONICLE_CA_CERTIFICATE` | `chronicle-observers` |
+| `GITHUB_AUDIT_TOKEN`, `GITHUB_AUDIT_ORG` | `actions-audit` |
+| `RUNNER_NAMESPACE`, `RUNNER_SCALE_SETS`, `MAX_JOB_MINUTES`, `PENDING_MINUTES`, `RUNNER_STATE_CONFIGMAP` | `runners` |
+| `AGENT_NAMESPACE`, `CLEANUP_ENABLED` | `agent-harness` |
+| `UPCLOUD_USERNAME`, `UPCLOUD_PASSWORD`, `MIN_AGE_SECONDS`, `MAX_PER_RUN`, `DRY_RUN` | `volumes` |
+| `PROBE_TARGETS` (JSON: `name`, `baseUrl`, `checks[]` with `id`, `method`, `path`, `accept`, `body`, `expectStatus`, `timeoutMs`), `PROBE_BASE_URLS` (JSON overrides by target name), `PROBE_ROUND_GAP_SECONDS` (at most 30), `PROBE_PING_URL`, `PROBE_ISSUES_REPOSITORY`, `PROBE_ISSUES_TOKEN` | `probe`, `probe-external` |
+
+## Migrating Cratis Infrastructure
+
+Cratis Infrastructure maps its current Pulumi settings onto the component like this:
+
+| Infrastructure setting | Watchdog input |
+| --- | --- |
+| `DiscordWebhookUrl` | `Discord.WebhookUrl` |
+| `Mail` (server, credentials, from, to) | `Smtp` |
+| the Cratis Direct alert source and token | `Direct.Url`, `Direct.Token`, `Direct.Source` |
+| the Healthchecks check URL | `HeartbeatUrl` |
+| the watchdog schedule, deadline, re-alert and escalation | `Schedule`, `DeadlineSeconds`, `RealertInterval`, `EscalateAfter` |
+| the backup, off-site and runner-watchdog CronJobs | `CronJobs` |
+| Percona backups, the restore drill, the core readiness probe, the public URLs | `Pbm`, `RestoreDrill`, `Readiness`, `PublicUrls` |
+| the Prometheus URL, the telemetry budget series threshold | `Prometheus` |
+| the Chronicle client | `Chronicle` |
+| `GITHUB_AUDIT_TOKEN` | `GitHubAudit` |
+| the runner watchdog arguments (namespace, scale sets, limits) | `Runners` |
+| the agent harness watchdog arguments | `AgentHarness` (set `CleanupEnabled` last, once the report matches what you expect) |
+| the UpCloud credentials of the volume sweeper | `VolumeSweeper` |
+| `scripts/probe/targets.json` | `Probe.Targets` for the in-cluster probe, and `PROBE_TARGETS` for the CI job |
+
+The state ConfigMap keeps its format, so cooldowns survive the move. Move one watchdog at a time: deploy the C# one with its channels, confirm a test alert, then remove the old one.
+
+Once everything is moved, these Infrastructure files can be deleted: `Core/Services/ClusterHealthWatchdog.cs`, `RunnerWatchdog.cs`, `RunnerWatchdogScript.cs`, `AgentHarnessWatchdog.cs`, `AgentHarnessWatchdogArgs.cs`, `AgentHarnessWatchdogScript.cs`, `VolumeSweeper.cs`, `volume-sweeper.py`, the Python specs under `Core/Services/specs/` that test them (`test_cluster_health_watchdog.py`, `test_watchdog_robustness.py`, `test_runner_watchdog*.py`, `test_agent_harness_watchdog*.py`, `test_restore_drill_watchdog.py`, `test_actions_schedule_audit.py`, `test_prometheus_headroom.py` (its watchdog part), `test_chronicle_*` watchdog parts, `test_telemetry_budget.py` (its watchdog part)), and `scripts/probe/` with its CI workflow step, replaced by a step that runs `probe-external`.
+
+## What stays outside the watchdog
+
+These are Pulumi-side policy and declarations, not watchdog behavior, so they are not ported and stay in Infrastructure:
+
+- `TelemetryBudget.cs` and `InvalidTelemetryBudget.cs` decide the budget the collector and Prometheus are *configured* with. The watchdog only reads whether that budget is being exceeded.
+- The Prometheus relabel and drop rules, which `test_prometheus_headroom.py` checks (a Prometheus configuration, not a check).
+- The restore drill itself (`Core/MongoDB/RestoreDrill*.cs`, `restore-drill.sh`) is a database job; the watchdog only checks that it keeps succeeding (`restore-drill`).
+- `test_backup_volume_resize.py` asserts how backup volumes are sized, which is Pulumi-side declaration.

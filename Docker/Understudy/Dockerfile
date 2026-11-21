@@ -14,14 +14,15 @@ LABEL org.opencontainers.image.title="Showrunner Understudy" \
       org.opencontainers.image.source="https://github.com/Cratis/Showrunner" \
       org.opencontainers.image.version="${VERSION}"
 
-# mongodump comes from the MongoDB database tools, which Debian does not package.
+# mongodump comes from the MongoDB database tools, which Debian does not package. MongoDB publishes no Debian 12 build for arm64 (the download is
+# refused), so the Ubuntu 22.04 arm64 build is used, which runs on Debian too. mongodump is linked against Kerberos, which the runtime image lacks.
 USER root
 ARG TARGETARCH
 ARG MONGO_TOOLS_VERSION=100.10.0
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates curl \
-    && case "${TARGETARCH:-amd64}" in arm64) arch=arm64 ;; *) arch=x86_64 ;; esac \
-    && curl -fsSL "https://fastdl.mongodb.org/tools/db/mongodb-database-tools-debian12-${arch}-${MONGO_TOOLS_VERSION}.tgz" -o /tmp/tools.tgz \
+    && apt-get install -y --no-install-recommends ca-certificates curl libgssapi-krb5-2 \
+    && case "${TARGETARCH:-amd64}" in arm64) platform=ubuntu2204-arm64 ;; *) platform=debian12-x86_64 ;; esac \
+    && curl -fsSL "https://fastdl.mongodb.org/tools/db/mongodb-database-tools-${platform}-${MONGO_TOOLS_VERSION}.tgz" -o /tmp/tools.tgz \
     && tar -xzf /tmp/tools.tgz -C /tmp \
     && cp /tmp/mongodb-database-tools-*/bin/mongodump /usr/local/bin/mongodump \
     && rm -rf /tmp/tools.tgz /tmp/mongodb-database-tools-* /var/lib/apt/lists/* \

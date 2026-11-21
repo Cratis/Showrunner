@@ -3,6 +3,8 @@ title: Install the operator
 description: Install the Stage Manager Helm chart and its prerequisites, configure secret-provider identities and review the operator's Kubernetes permissions.
 ---
 
+**If a Pulumi program deploys your cluster, install the operator with the [`StageManagerOperator` component](./pulumi.md#install-the-operator), not with a `Helm.V3.Release` of your own.** The component wraps this chart, so one version drives the chart and the operator, Understudy and watchdog image tags, and the managed namespaces, the optional Percona operator and image mirrors are typed arguments. The rest of this page is the non-Pulumi path: raw Helm, which is also the reference for every chart value the component passes through.
+
 The operator is published as a container image, `cratis/showrunner-operator-image`, and as a Helm chart, `cratis/showrunner-operator`, of the same version, so a chart always installs the operator it was released with. They live in separate repositories because a registry keeps one artifact per tag: a chart pushed under the image's tag would replace the image.
 
 Before installing, have Helm available and access to the target Kubernetes cluster with permission to install cluster-scoped CRDs and RBAC, as well as the operator's namespaced resources. If your environment uses Azure Key Vault or HashiCorp Vault, prepare the operator's identity and provider access using the chart values below.

@@ -25,6 +25,7 @@ All packages are released under one semantic version. Stage Manager's image and 
 | `Cratis.Showrunner.Herald.Contracts` | NuGet | Herald's event contracts: the facts recorded when an email was sent, failed or bounced | [Herald](./Herald/index.md) |
 | `Cratis.Showrunner.Herald` | NuGet | Herald's backend — templates, strict rendering, images, SMTP and folder transports, queued delivery with retries, recorded in the application's Chronicle event store | [Herald](./Herald/index.md) |
 | `cratis/showrunner-operator-image`, `cratis/showrunner-operator` | Docker Hub, Helm (OCI) | Stage Manager, the Kubernetes operator: the container image and, in a separate repository, the Helm chart released with the same version | [Stage Manager](./StageManager/index.md) |
+| `Cratis.Showrunner.StageManager.Pulumi` | NuGet | Typed Pulumi components that declare a Stage Manager `Production`, `Performance` and `Understudy`, with the Kubernetes Secrets they name, from a C# Pulumi program | [Declare Stage Manager resources with Pulumi](./StageManager/pulumi.md) |
 | `Cratis.Showrunner.Usher.Contracts` | NuGet | Usher's event contracts, for hosts that react to what Usher records | [Usher](./Usher/index.md) |
 | `Cratis.Showrunner.Cue` | NuGet | Cue's backend — records which guided tours each person has started, built on Arc and Chronicle | [Cue](./Cue/index.md) |
 | `Cratis.Showrunner.Marquee.Contracts` | NuGet | Marquee's event contracts: the public events a product receives announcements through | [Marquee](./Marquee/index.md) |

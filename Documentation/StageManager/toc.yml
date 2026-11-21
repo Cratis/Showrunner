@@ -12,3 +12,5 @@
   href: production.md
 - name: Back up a Production with an Understudy
   href: understudy.md
+- name: Declare resources with Pulumi
+  href: pulumi.md

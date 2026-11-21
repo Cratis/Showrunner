@@ -55,7 +55,13 @@ using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
 // The GitHub token is a capability: it must never follow a redirect to another host.
 using var gitHubHandler = new SocketsHttpHandler { AllowAutoRedirect = false };
 using var gitHub = new HttpClient(gitHubHandler) { Timeout = TimeSpan.FromSeconds(10) };
-using var kubernetes = new Kubernetes(KubernetesClientConfiguration.IsInCluster() ? KubernetesClientConfiguration.InClusterConfig() : KubernetesClientConfiguration.BuildDefaultConfig());
+
+// The probe must see a redirect as an answer, not follow it.
+using var probeHandler = new SocketsHttpHandler { AllowAutoRedirect = false };
+using var probeClient = new HttpClient(probeHandler) { Timeout = TimeSpan.FromSeconds(10) };
+
+// The external probe runs from CI with no cluster: the client is only created, never called, so it needs no kubeconfig.
+using var kubernetes = new Kubernetes(KubernetesConfiguration(command));
 var factory = new WatchdogFactory(
     settings,
     new KubernetesClusterReader(kubernetes),
@@ -68,9 +74,20 @@ var factory = new WatchdogFactory(
     new KubernetesRunnerCluster(kubernetes),
     new KubernetesAgentHarnessCluster(kubernetes),
     new KubernetesVolumeHandles(kubernetes),
-    gitHub);
+    gitHub,
+    probeClient);
 
-return await WatchdogCommands.Run(command, factory, cancellation.Token);
+return await WatchdogCommands.Run(command, factory, cancellation.Token, stepSummaryPath: Environment.GetEnvironmentVariable("GITHUB_STEP_SUMMARY"));
+
+static KubernetesClientConfiguration KubernetesConfiguration(WatchdogCommand command)
+{
+    if (command == WatchdogCommand.ProbeExternal)
+    {
+        return new KubernetesClientConfiguration { Host = "http://127.0.0.1:1" };
+    }
+
+    return KubernetesClientConfiguration.IsInCluster() ? KubernetesClientConfiguration.InClusterConfig() : KubernetesClientConfiguration.BuildDefaultConfig();
+}
 
 static HttpClient ChronicleClient(ChronicleSettings chronicle)
 {

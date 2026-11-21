@@ -29,11 +29,22 @@ public sealed class RunnerPoolCheck(IRunnerCluster runners, IConfigMapStore stat
 
     const string BusyKey = "busy";
 
+    IReadOnlyCollection<Finding>? _acted;
+
     /// <inheritdoc/>
     public string Name => CheckName;
 
     /// <inheritdoc/>
     public async Task<IReadOnlyCollection<Finding>> Collect(CheckContext context, CancellationToken cancellationToken)
+    {
+        // The pipeline asks again to confirm a finding. A stop is an action, so it is done once per run and the confirmation sees the same result.
+        return _acted ??= await Act(context, cancellationToken);
+    }
+
+    static string Describe(RunnerInfo runner, int minutes) =>
+        $"{runner.Name} ({runner.Repository ?? "unknown repository"}, {runner.JobName ?? "unknown job"}; job assigned for {minutes} min)";
+
+    async Task<IReadOnlyCollection<Finding>> Act(CheckContext context, CancellationToken cancellationToken)
     {
         var now = context.Now.ToUnixTimeMilliseconds() / 1000.0;
         var pool = (await runners.ListRunners(options.Namespace, cancellationToken)).Where(runner => options.ScaleSets.Contains(runner.ScaleSet)).ToList();
@@ -83,9 +94,6 @@ public sealed class RunnerPoolCheck(IRunnerCluster runners, IConfigMapStore stat
 
         return findings;
     }
-
-    static string Describe(RunnerInfo runner, int minutes) =>
-        $"{runner.Name} ({runner.Repository ?? "unknown repository"}, {runner.JobName ?? "unknown job"}; job assigned for {minutes} min)";
 
     async Task ReplacePending(List<(string Name, string Line)> pending, List<Finding> findings, CancellationToken cancellationToken)
     {

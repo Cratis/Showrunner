@@ -25,51 +25,16 @@ public sealed class AgentHarnessCheck(IAgentHarnessCluster cluster, AgentHarness
     /// </summary>
     public const string CheckName = "agent-harness";
 
+    IReadOnlyCollection<Finding>? _acted;
+
     /// <inheritdoc/>
     public string Name => CheckName;
 
     /// <inheritdoc/>
     public async Task<IReadOnlyCollection<Finding>> Collect(CheckContext context, CancellationToken cancellationToken)
     {
-        var deadline = context.TimeProvider.GetUtcNow() + options.Budget;
-        if (deadline > context.CollectionDeadline)
-        {
-            deadline = context.CollectionDeadline;
-        }
-
-        var counts = await Scan(context.TimeProvider, deadline, cancellationToken);
-        var findings = new List<Finding>();
-        if (counts.Unknown > 0)
-        {
-            findings.Add(new Finding(
-                "agent-harness:unknown",
-                $"agent harness watchdog could not verify {counts.Unknown} item(s) in {options.Namespace}; nothing is deleted without evidence. {Summary(counts)}",
-                AlertSeverity.Critical));
-        }
-
-        if (counts.Failed > 0)
-        {
-            findings.Add(new Finding(
-                "agent-harness:refused",
-                $"agent harness cleanup refused: more than {options.Cap} Jobs were candidates, or a Job changed while it was being verified. Nothing was deleted for them. {Summary(counts)}"));
-        }
-
-        if (counts.Candidates > 0 && !options.CleanupEnabled)
-        {
-            findings.Add(new Finding(
-                "agent-harness:candidates",
-                $"{counts.Candidates} agent worker Job(s) in {options.Namespace} can never start because a required Secret is missing; cleanup is disabled. {Summary(counts)}"));
-        }
-
-        if (counts.Deleted > 0)
-        {
-            findings.Add(new Finding(
-                "agent-harness:deleted",
-                $"deleted {counts.Deleted} agent worker Job(s) in {options.Namespace} that could never start because a required Secret is missing. {Summary(counts)}",
-                AlertSeverity.Information));
-        }
-
-        return findings;
+        // The pipeline asks again to confirm a finding. A delete is an action, so it is done once per run and the confirmation sees the same result.
+        return _acted ??= await Act(context, cancellationToken);
     }
 
     /// <summary>
@@ -151,6 +116,49 @@ public sealed class AgentHarnessCheck(IAgentHarnessCluster cluster, AgentHarness
 
     static Regex MissingSecretMessage(string secret) =>
         new($"secret [\"']{Regex.Escape(secret)}[\"'] not found", RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(1));
+
+    async Task<IReadOnlyCollection<Finding>> Act(CheckContext context, CancellationToken cancellationToken)
+    {
+        var deadline = context.TimeProvider.GetUtcNow() + options.Budget;
+        if (deadline > context.CollectionDeadline)
+        {
+            deadline = context.CollectionDeadline;
+        }
+
+        var counts = await Scan(context.TimeProvider, deadline, cancellationToken);
+        var findings = new List<Finding>();
+        if (counts.Unknown > 0)
+        {
+            findings.Add(new Finding(
+                "agent-harness:unknown",
+                $"agent harness watchdog could not verify {counts.Unknown} item(s) in {options.Namespace}; nothing is deleted without evidence. {Summary(counts)}",
+                AlertSeverity.Critical));
+        }
+
+        if (counts.Failed > 0)
+        {
+            findings.Add(new Finding(
+                "agent-harness:refused",
+                $"agent harness cleanup refused: more than {options.Cap} Jobs were candidates, or a Job changed while it was being verified. Nothing was deleted for them. {Summary(counts)}"));
+        }
+
+        if (counts.Candidates > 0 && !options.CleanupEnabled)
+        {
+            findings.Add(new Finding(
+                "agent-harness:candidates",
+                $"{counts.Candidates} agent worker Job(s) in {options.Namespace} can never start because a required Secret is missing; cleanup is disabled. {Summary(counts)}"));
+        }
+
+        if (counts.Deleted > 0)
+        {
+            findings.Add(new Finding(
+                "agent-harness:deleted",
+                $"deleted {counts.Deleted} agent worker Job(s) in {options.Namespace} that could never start because a required Secret is missing. {Summary(counts)}",
+                AlertSeverity.Information));
+        }
+
+        return findings;
+    }
 
     async Task Clean(List<(AgentJob Job, IReadOnlyList<AgentPod> Pods)> candidates, Tally tally, TimeProvider time, DateTimeOffset deadline, CancellationToken cancellationToken)
     {

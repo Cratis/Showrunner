@@ -20,7 +20,7 @@ public class when_prometheus_is_configured : Specification
         _error = (WatchdogConfigurationException)Catch.Exception(Read);
     }
 
-    [Fact] void should_not_enable_the_telemetry_budget_unless_named() => _settings.EnabledChecks.ShouldNotContain("telemetry-budget");
+    [Fact] void should_enable_the_telemetry_budget_with_it() => _settings.EnabledChecks.ShouldContain("telemetry-budget");
     [Fact] void should_read_the_series_threshold() => _settings.TelemetryBudget.SeriesThreshold.ShouldEqual(400000);
     [Fact] void should_enable_the_metrics_check() => _settings.EnabledChecks.ShouldContain("metrics");
     [Fact] void should_read_the_platform_namespace() => _settings.Metrics.PlatformNamespace.ShouldEqual("platform");

@@ -5,6 +5,7 @@ using System.Globalization;
 using Cratis.Showrunner.Operations.Channels;
 using Cratis.Showrunner.Operations.Checks;
 using Cratis.Showrunner.Operations.Pipeline;
+using Cratis.Showrunner.Operations.Probe;
 
 namespace Cratis.Showrunner.Operations.Configuration;
 
@@ -35,7 +36,8 @@ public static class WatchdogSettingsReader
         ActionsScheduleAuditCheck.CheckName,
         RunnerPoolCheck.CheckName,
         AgentHarnessCheck.CheckName,
-        VolumeSweepCheck.CheckName
+        VolumeSweepCheck.CheckName,
+        ProbeCheck.CheckName
     ];
 
     /// <summary>
@@ -104,6 +106,7 @@ public static class WatchdogSettingsReader
             Chronicle = Chronicle(Get, GetUrl("CHRONICLE_URL"), problems),
             Runners = Runners(Get, problems),
             VolumeSweeper = VolumeSweeper(Get, problems),
+            Probe = Probe(Get, GetUrl("PROBE_PING_URL"), problems),
             AgentHarness = Get("AGENT_NAMESPACE") is { } agentNamespace
                 ? new AgentHarnessOptions
                 {
@@ -196,6 +199,16 @@ public static class WatchdogSettingsReader
             enabled.Add(VolumeSweepCheck.CheckName);
         }
 
+        if (settings.Probe is not null)
+        {
+            enabled.Add(ProbeCheck.CheckName);
+        }
+
+        if (settings.Prometheus is not null)
+        {
+            enabled.Add(TelemetryBudgetCheck.CheckName);
+        }
+
         return enabled;
     }
 
@@ -221,6 +234,7 @@ public static class WatchdogSettingsReader
         Require(RunnerPoolCheck.CheckName, settings.Runners is not null, "RUNNER_NAMESPACE");
         Require(AgentHarnessCheck.CheckName, settings.AgentHarness is not null, "AGENT_NAMESPACE");
         Require(VolumeSweepCheck.CheckName, settings.VolumeSweeper is not null, "UPCLOUD_USERNAME");
+        Require(ProbeCheck.CheckName, settings.Probe is not null, "PROBE_TARGETS");
     }
 
     static TimeSpan? ScheduleInterval(string? schedule)
@@ -298,6 +312,35 @@ public static class WatchdogSettingsReader
         }
 
         return new SmtpOptions(server, port, get("SMTP_USERNAME")!, get("SMTP_PASSWORD")!, get("ALERT_FROM_NAME")!, get("ALERT_FROM")!, get("ALERT_TO")!);
+    }
+
+    static ProbeSettings? Probe(Func<string, string?> get, Uri? pingUrl, List<string> problems)
+    {
+        if (get("PROBE_TARGETS") is not { } json)
+        {
+            return null;
+        }
+
+        try
+        {
+            var targets = ProbeEvaluator.Override(ProbeTargets.Parse(json), ProbeTargets.ParseOverrides(get("PROBE_BASE_URLS")));
+            var gap = int.TryParse(get("PROBE_ROUND_GAP_SECONDS"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var seconds) && seconds >= 0
+                ? TimeSpan.FromSeconds(seconds)
+                : ProbeEvaluator.MaximumRoundGap;
+            if (gap > ProbeEvaluator.MaximumRoundGap)
+            {
+                problems.Add($"PROBE_ROUND_GAP_SECONDS may be at most {(int)ProbeEvaluator.MaximumRoundGap.TotalSeconds}");
+                return null;
+            }
+
+            return new ProbeSettings(targets, gap, pingUrl, get("PROBE_ISSUES_REPOSITORY"), get("PROBE_ISSUES_TOKEN"));
+        }
+        catch (InvalidOperationException error)
+        {
+            // The message names what is wrong with the document, never a value from it.
+            problems.Add(error.Message);
+            return null;
+        }
     }
 
     static VolumeSweeperSettings? VolumeSweeper(Func<string, string?> get, List<string> problems)

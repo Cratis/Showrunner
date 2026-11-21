@@ -118,12 +118,17 @@ public sealed record WatchdogSettings
     public VolumeSweeperSettings? VolumeSweeper { get; init; }
 
     /// <summary>
+    /// Gets the synthetic probe, or <see langword="null"/> when there is none.
+    /// </summary>
+    public ProbeSettings? Probe { get; init; }
+
+    /// <summary>
     /// Gets the options of the GitHub Actions schedule audit.
     /// </summary>
     public ActionsAuditOptions ActionsAudit { get; init; } = new();
 
     /// <summary>
-    /// Gets the options of the telemetry budget check, which is enabled by naming it in <c>WATCHDOG_CHECKS</c>.
+    /// Gets the options of the telemetry budget check, which runs whenever Prometheus is configured.
     /// </summary>
     public TelemetryBudgetOptions TelemetryBudget { get; init; } = new();
 }

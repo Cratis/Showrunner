@@ -27,11 +27,23 @@ public sealed class VolumeSweepCheck(IVolumeCloud cloud, IVolumeHandles handles,
 
     const string TitlePrefix = "pvc-";
 
+    IReadOnlyCollection<Finding>? _acted;
+
     /// <inheritdoc/>
     public string Name => CheckName;
 
     /// <inheritdoc/>
     public async Task<IReadOnlyCollection<Finding>> Collect(CheckContext context, CancellationToken cancellationToken)
+    {
+        // The pipeline asks again to confirm a finding. A delete is an action, so it is done once per run and the confirmation sees the same result.
+        return _acted ??= await Act(context, cancellationToken);
+    }
+
+    static string Volume(CloudVolume volume) => $"{volume.Id} ({volume.SizeGigabytes} GB)";
+
+    static string Number(int count, string noun) => $"{count} {noun}";
+
+    async Task<IReadOnlyCollection<Finding>> Act(CheckContext context, CancellationToken cancellationToken)
     {
         try
         {
@@ -46,10 +58,6 @@ public sealed class VolumeSweepCheck(IVolumeCloud cloud, IVolumeHandles handles,
             return [new Finding("volume-sweeper:cannot-run", $"volume sweeper cannot run: {Redaction.Summarize(error.Message)}", AlertSeverity.Critical)];
         }
     }
-
-    static string Volume(CloudVolume volume) => $"{volume.Id} ({volume.SizeGigabytes} GB)";
-
-    static string Number(int count, string noun) => $"{count} {noun}";
 
     async Task<IReadOnlyCollection<Finding>> Sweep(CheckContext context, CancellationToken cancellationToken)
     {

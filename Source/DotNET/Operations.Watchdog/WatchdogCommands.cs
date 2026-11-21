@@ -18,7 +18,7 @@ public static class WatchdogCommands
     /// <summary>
     /// Gets the usage text.
     /// </summary>
-    public static string Usage => "usage: watchdog <cluster|test-alert>";
+    public static string Usage => "usage: watchdog <cluster|test-alert|runners|agent-harness|volumes|probe|probe-external>";
 
     /// <summary>
     /// Reads the command from the arguments.
@@ -30,6 +30,11 @@ public static class WatchdogCommands
         {
             "cluster" => WatchdogCommand.Cluster,
             "test-alert" => WatchdogCommand.TestAlert,
+            "runners" => WatchdogCommand.Runners,
+            "agent-harness" => WatchdogCommand.AgentHarness,
+            "volumes" => WatchdogCommand.Volumes,
+            "probe" => WatchdogCommand.Probe,
+            "probe-external" => WatchdogCommand.ProbeExternal,
             _ => WatchdogCommand.Unknown
         }
         : WatchdogCommand.Unknown;
@@ -40,14 +45,32 @@ public static class WatchdogCommands
     /// <param name="command">The command.</param>
     /// <param name="factory">Puts the run together.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
+    /// <param name="log">Where the external probe writes its summary and one-line results; the default is the console.</param>
+    /// <param name="stepSummaryPath">The file the external probe appends its Markdown summary to, for the job summary of a CI run.</param>
     /// <returns>The process exit code: 0 when the command succeeded, 1 when it failed.</returns>
     /// <exception cref="ArgumentOutOfRangeException">The command is <see cref="WatchdogCommand.Unknown"/>.</exception>
-    public static async Task<int> Run(WatchdogCommand command, WatchdogFactory factory, CancellationToken cancellationToken)
+    public static async Task<int> Run(WatchdogCommand command, WatchdogFactory factory, CancellationToken cancellationToken, Action<string>? log = null, string? stepSummaryPath = null)
     {
+        if (command == WatchdogCommand.ProbeExternal)
+        {
+            var (runner, targets, roundGap) = factory.CreateProbeRunner(log ?? Console.WriteLine);
+            var (exitCode, summary) = await runner.Run(targets, roundGap, cancellationToken);
+            if (!string.IsNullOrEmpty(stepSummaryPath))
+            {
+                await File.AppendAllTextAsync(stepSummaryPath, summary, cancellationToken);
+            }
+
+            return exitCode;
+        }
+
         var outcome = command switch
         {
             WatchdogCommand.Cluster => await factory.CreateClusterRun().Run(cancellationToken),
             WatchdogCommand.TestAlert => await factory.CreateTestAlertRun().RunTestAlert(cancellationToken),
+            WatchdogCommand.Runners => await factory.CreateJobRun(Checks.RunnerPoolCheck.CheckName).Run(cancellationToken),
+            WatchdogCommand.AgentHarness => await factory.CreateJobRun(Checks.AgentHarnessCheck.CheckName).Run(cancellationToken),
+            WatchdogCommand.Volumes => await factory.CreateJobRun(Checks.VolumeSweepCheck.CheckName).Run(cancellationToken),
+            WatchdogCommand.Probe => await factory.CreateJobRun(Probe.ProbeCheck.CheckName).Run(cancellationToken),
             _ => throw new ArgumentOutOfRangeException(nameof(command), command, "Not a runnable command.")
         };
         return outcome.ExitCode;

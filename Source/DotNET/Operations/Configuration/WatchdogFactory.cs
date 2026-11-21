@@ -6,6 +6,7 @@ using Cratis.Showrunner.Operations.Channels;
 using Cratis.Showrunner.Operations.Checks;
 using Cratis.Showrunner.Operations.Cluster;
 using Cratis.Showrunner.Operations.Pipeline;
+using Cratis.Showrunner.Operations.Probe;
 using Cratis.Showrunner.Operations.State;
 
 namespace Cratis.Showrunner.Operations.Configuration;
@@ -26,6 +27,7 @@ namespace Cratis.Showrunner.Operations.Configuration;
 /// <param name="agentCluster">The agent worker Job operations, used by the agent-harness job.</param>
 /// <param name="volumeHandles">The PersistentVolume volume handles, used by the volume sweep.</param>
 /// <param name="gitHubHttp">The HTTP client that reads GitHub. It must not follow redirects, so the token never reaches another host; <paramref name="http"/> is used when it is not given.</param>
+/// <param name="probeHttp">The HTTP client the probe calls the public endpoints with. It must not follow redirects, because a redirect is an answer and not a pass; <paramref name="http"/> is used when it is not given.</param>
 public sealed class WatchdogFactory(
     WatchdogSettings settings,
     IClusterReader reader,
@@ -38,8 +40,51 @@ public sealed class WatchdogFactory(
     IRunnerCluster? runnerCluster = null,
     IAgentHarnessCluster? agentCluster = null,
     IVolumeHandles? volumeHandles = null,
-    HttpClient? gitHubHttp = null)
+    HttpClient? gitHubHttp = null,
+    HttpClient? probeHttp = null)
 {
+    /// <summary>
+    /// The checks that are jobs of their own: each runs in its own CronJob with its own alert state, so one job never resolves the
+    /// findings of another, and the <c>cluster</c> run leaves them out.
+    /// </summary>
+    public static readonly IReadOnlyList<string> JobChecks = [RunnerPoolCheck.CheckName, AgentHarnessCheck.CheckName, VolumeSweepCheck.CheckName, ProbeCheck.CheckName];
+
+    /// <summary>
+    /// Creates the run of a job that has a check of its own: <c>runners</c>, <c>agent-harness</c>, <c>volume-sweeper</c> or <c>probe</c>.
+    /// Its findings go through the same alert pipeline and channels as the cluster run, with state kept in a ConfigMap of its own.
+    /// </summary>
+    /// <param name="job">The name of the job, which is the name of its check.</param>
+    /// <returns>The run.</returns>
+    /// <exception cref="WatchdogConfigurationException">The job is not configured.</exception>
+    public WatchdogRun CreateJobRun(string job) => new(
+        new FindingCollector(Create(job) is { } check ? [check] : throw new WatchdogConfigurationException([$"the '{job}' job is not configured"]), settings.Options, timeProvider),
+        new WatchdogRunMonitor(reader, settings.Options),
+        new ConfigMapAlertState(configMaps, $"{settings.StateConfigMap}-{job}"),
+        new AlertDelivery(CreateChannels(), loggers.CreateLogger<AlertDelivery>()),
+        settings.Heartbeat is null ? null : new HealthchecksHeartbeat(http, settings.Heartbeat),
+        settings.Options,
+        timeProvider,
+        loggers.CreateLogger<WatchdogRun>());
+
+    /// <summary>
+    /// Creates the external probe: the same probe, with the same channels, as one run from CI instead of from the cluster.
+    /// </summary>
+    /// <param name="log">Where the one-line results go.</param>
+    /// <returns>The probe, the targets and the pause between the rounds.</returns>
+    /// <exception cref="WatchdogConfigurationException">No probe targets are configured.</exception>
+    public (ProbeRunner Runner, IReadOnlyList<ProbeTarget> Targets, TimeSpan RoundGap) CreateProbeRunner(Action<string> log)
+    {
+        var probe = settings.Probe ?? throw new WatchdogConfigurationException(["the probe needs PROBE_TARGETS"]);
+        var runner = new ProbeRunner(
+            new ProbeEvaluator(probeHttp ?? http, timeProvider),
+            new AlertDelivery(CreateChannels(), loggers.CreateLogger<AlertDelivery>()),
+            probe.PingUrl is null ? null : new HealthchecksProbeSink(http, probe.PingUrl),
+            probe.IssueRepository is not null && probe.IssueToken is not null ? new GitHubIssueProbeSink(gitHubHttp ?? http, probe.IssueRepository, probe.IssueToken) : null,
+            settings.Options.Deployment ?? "cratis",
+            log);
+        return (runner, probe.Targets, probe.RoundGap);
+    }
+
     /// <summary>
     /// Creates the cluster watchdog run.
     /// </summary>
@@ -100,7 +145,7 @@ public sealed class WatchdogFactory(
     public IReadOnlyList<IWatchdogCheck> CreateChecks()
     {
         var checks = new List<IWatchdogCheck>();
-        foreach (var name in settings.EnabledChecks)
+        foreach (var name in settings.EnabledChecks.Where(name => !JobChecks.Contains(name)))
         {
             if (Create(name) is { } check)
             {
@@ -132,6 +177,7 @@ public sealed class WatchdogFactory(
             sweeper.Options),
         AgentHarnessCheck.CheckName when settings.AgentHarness is { } harness && agentCluster is not null => new AgentHarnessCheck(agentCluster, harness),
         RunnerPoolCheck.CheckName when settings.Runners is { } pool && runnerCluster is not null => new RunnerPoolCheck(runnerCluster, configMaps, pool),
+        ProbeCheck.CheckName when settings.Probe is { } probe => new ProbeCheck(new ProbeEvaluator(probeHttp ?? http, timeProvider), probe.Targets, probe.RoundGap),
         ActionsScheduleAuditCheck.CheckName when settings.GitHubAuditToken is { } token => new ActionsScheduleAuditCheck(
             new HttpGitHubReader(gitHubHttp ?? http, token),
             settings.ActionsAudit),

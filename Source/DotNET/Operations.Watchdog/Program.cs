@@ -65,6 +65,7 @@ var factory = new WatchdogFactory(
     TimeProvider.System,
     loggers,
     ChronicleClient,
+    new KubernetesRunnerCluster(kubernetes),
     gitHub);
 
 return await WatchdogCommands.Run(command, factory, cancellation.Token);

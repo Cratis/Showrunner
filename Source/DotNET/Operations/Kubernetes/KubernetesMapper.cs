@@ -128,6 +128,25 @@ internal static class KubernetesMapper
     })];
 
     /// <summary>
+    /// Reads the ephemeral runners of a runner scale set.
+    /// </summary>
+    /// <param name="list">The JSON of the list.</param>
+    /// <returns>The runners.</returns>
+    internal static IReadOnlyList<RunnerInfo> Runners(JsonElement list) => [.. Items(list).Select(item =>
+    {
+        var metadata = Property(item, "metadata");
+        var status = Property(item, "status");
+        return new RunnerInfo(
+            Text(metadata, "name") ?? string.Empty,
+            Text(Property(metadata, "labels"), "app.kubernetes.io/instance") ?? string.Empty,
+            Time(Text(metadata, "creationTimestamp")) ?? DateTimeOffset.UnixEpoch,
+            Text(status, "phase"),
+            Present(status, "jobRepositoryName") || Present(status, "workflowRunId") || Present(status, "jobId"),
+            Text(status, "jobRepositoryName"),
+            Text(status, "jobDisplayName"));
+    })];
+
+    /// <summary>
     /// Reads the volume usage out of a kubelet stats summary. It throws when the summary has no readable pod usage.
     /// </summary>
     /// <param name="summary">The JSON of the summary.</param>
@@ -174,6 +193,13 @@ internal static class KubernetesMapper
 
     static string? Text(JsonElement element, string name) =>
         Property(element, name) is { ValueKind: JsonValueKind.String } value ? value.GetString() : null;
+
+    static bool Present(JsonElement element, string name) => Property(element, name) switch
+    {
+        { ValueKind: JsonValueKind.String } value => !string.IsNullOrEmpty(value.GetString()),
+        { ValueKind: JsonValueKind.Number } value => value.GetDouble() != 0,
+        _ => false
+    };
 
     static long? Number(JsonElement element, string name) =>
         Property(element, name) is { ValueKind: JsonValueKind.Number } value && value.TryGetInt64(out var number) ? number : null;

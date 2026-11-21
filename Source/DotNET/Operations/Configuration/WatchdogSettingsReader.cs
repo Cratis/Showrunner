@@ -32,7 +32,8 @@ public static class WatchdogSettingsReader
         OperationalMetricsCheck.CheckName,
         TelemetryBudgetCheck.CheckName,
         ChronicleObserversCheck.CheckName,
-        ActionsScheduleAuditCheck.CheckName
+        ActionsScheduleAuditCheck.CheckName,
+        RunnerPoolCheck.CheckName
     ];
 
     /// <summary>
@@ -99,6 +100,7 @@ public static class WatchdogSettingsReader
                 Advice = Get("VOLUME_ADVICE") ?? new OperationalMetricsOptions().Advice
             },
             Chronicle = Chronicle(Get, GetUrl("CHRONICLE_URL"), problems),
+            Runners = Runners(Get, problems),
             GitHubAuditToken = Get("GITHUB_AUDIT_TOKEN"),
             ActionsAudit = new ActionsAuditOptions { Organization = Get("GITHUB_AUDIT_ORG") ?? new ActionsAuditOptions().Organization },
             TelemetryBudget = new TelemetryBudgetOptions
@@ -169,6 +171,11 @@ public static class WatchdogSettingsReader
             enabled.Add(ActionsScheduleAuditCheck.CheckName);
         }
 
+        if (settings.Runners is not null)
+        {
+            enabled.Add(RunnerPoolCheck.CheckName);
+        }
+
         return enabled;
     }
 
@@ -191,6 +198,7 @@ public static class WatchdogSettingsReader
         Require(TelemetryBudgetCheck.CheckName, settings.Prometheus is not null, "PROMETHEUS_URL");
         Require(ChronicleObserversCheck.CheckName, settings.Chronicle is not null, "CHRONICLE_URL");
         Require(ActionsScheduleAuditCheck.CheckName, settings.GitHubAuditToken is not null, "GITHUB_AUDIT_TOKEN");
+        Require(RunnerPoolCheck.CheckName, settings.Runners is not null, "RUNNER_NAMESPACE");
     }
 
     static TimeSpan? ScheduleInterval(string? schedule)
@@ -269,6 +277,32 @@ public static class WatchdogSettingsReader
 
         return new SmtpOptions(server, port, get("SMTP_USERNAME")!, get("SMTP_PASSWORD")!, get("ALERT_FROM_NAME")!, get("ALERT_FROM")!, get("ALERT_TO")!);
     }
+
+    static RunnerPoolOptions? Runners(Func<string, string?> get, List<string> problems)
+    {
+        if (get("RUNNER_NAMESPACE") is not { } runnerNamespace)
+        {
+            return null;
+        }
+
+        var scaleSets = (get("RUNNER_SCALE_SETS") ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (scaleSets.Length == 0)
+        {
+            problems.Add("RUNNER_NAMESPACE needs RUNNER_SCALE_SETS, the comma separated scale sets to watch");
+            return null;
+        }
+
+        var defaults = new RunnerPoolOptions { Namespace = runnerNamespace, ScaleSets = scaleSets };
+        return defaults with
+        {
+            MaximumJobTime = Minutes(get("MAX_JOB_MINUTES"), defaults.MaximumJobTime),
+            PendingTime = Minutes(get("PENDING_MINUTES"), defaults.PendingTime),
+            StateConfigMap = get("RUNNER_STATE_CONFIGMAP") ?? defaults.StateConfigMap
+        };
+    }
+
+    static TimeSpan Minutes(string? text, TimeSpan fallback) =>
+        int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var minutes) && minutes >= 0 ? TimeSpan.FromMinutes(minutes) : fallback;
 
     static ChronicleSettings? Chronicle(Func<string, string?> get, Uri? url, List<string> problems)
     {

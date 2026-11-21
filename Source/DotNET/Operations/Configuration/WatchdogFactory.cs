@@ -22,6 +22,7 @@ namespace Cratis.Showrunner.Operations.Configuration;
 /// <param name="timeProvider">The clock.</param>
 /// <param name="loggers">The logger factory.</param>
 /// <param name="chronicleHttp">Creates the HTTP client that reads Chronicle, which may have to trust its certificate authority; <paramref name="http"/> is used when it is not given.</param>
+/// <param name="runnerCluster">The runner scale set resources, used by the runners job.</param>
 /// <param name="gitHubHttp">The HTTP client that reads GitHub. It must not follow redirects, so the token never reaches another host; <paramref name="http"/> is used when it is not given.</param>
 public sealed class WatchdogFactory(
     WatchdogSettings settings,
@@ -32,6 +33,7 @@ public sealed class WatchdogFactory(
     TimeProvider timeProvider,
     ILoggerFactory loggers,
     Func<ChronicleSettings, HttpClient>? chronicleHttp = null,
+    IRunnerCluster? runnerCluster = null,
     HttpClient? gitHubHttp = null)
 {
     /// <summary>
@@ -120,6 +122,7 @@ public sealed class WatchdogFactory(
         ChronicleObserversCheck.CheckName when settings.Chronicle is { } chronicle => new ChronicleObserversCheck(
             new HttpChronicleReader(chronicleHttp?.Invoke(chronicle) ?? http, chronicle.Url, chronicle.ClientId, chronicle.ClientSecret),
             settings.ChronicleObservers),
+        RunnerPoolCheck.CheckName when settings.Runners is { } pool && runnerCluster is not null => new RunnerPoolCheck(runnerCluster, configMaps, pool),
         ActionsScheduleAuditCheck.CheckName when settings.GitHubAuditToken is { } token => new ActionsScheduleAuditCheck(
             new HttpGitHubReader(gitHubHttp ?? http, token),
             settings.ActionsAudit),

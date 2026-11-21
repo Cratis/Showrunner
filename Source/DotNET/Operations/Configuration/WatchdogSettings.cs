@@ -103,6 +103,11 @@ public sealed record WatchdogSettings
     public string? GitHubAuditToken { get; init; }
 
     /// <summary>
+    /// Gets how the runner pool is watched, or <see langword="null"/> when it is not.
+    /// </summary>
+    public RunnerPoolOptions? Runners { get; init; }
+
+    /// <summary>
     /// Gets the options of the GitHub Actions schedule audit.
     /// </summary>
     public ActionsAuditOptions ActionsAudit { get; init; } = new();

@@ -167,7 +167,7 @@ jobs:
         run: docker build -f Docker/StageManager/Dockerfile -t cratis/showrunner-operator-image:ci .
 
       - name: Publish the watchdog
-        run: dotnet publish Source/DotNET/Operations.Watchdog/Operations.Watchdog.csproj -c Release --no-build -p:CratisProxiesSkip=true -o Source/DotNET/Operations.Watchdog/out
+        run: dotnet publish Source/DotNET/Operations.Watchdog/Operations.Watchdog.csproj -c Release -p:CratisProxiesSkip=true -o Source/DotNET/Operations.Watchdog/out
 
       - name: Build the watchdog image
         run: docker build -f Docker/Watchdog/Dockerfile -t cratis/showrunner-watchdog-image:ci .

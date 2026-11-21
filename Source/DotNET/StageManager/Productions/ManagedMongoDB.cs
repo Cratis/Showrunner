@@ -112,9 +112,58 @@ public static class ManagedMongoDB
     public static string ConnectionString(ProductionNames names, string user, string password) =>
         $"mongodb://{Uri.EscapeDataString(user)}:{Uri.EscapeDataString(password)}@{names.MongoDBHost}:27017/?replicaSet={ReplicaSet}&authSource=admin";
 
-    static JsonObject Backup(ProductionDatabaseBackup backup) => backup.Enabled
-        ? new() { ["enabled"] = true, ["image"] = backup.ImageOrDefault() }
-        : new() { ["enabled"] = false };
+    static JsonObject Backup(ProductionDatabaseBackup backup)
+    {
+        if (!backup.Enabled)
+        {
+            return new() { ["enabled"] = false };
+        }
+
+        var section = new JsonObject { ["enabled"] = true, ["image"] = backup.ImageOrDefault() };
+        if (backup.Storage.IsConfigured())
+        {
+            AttachStorage(section, backup.Storage);
+        }
+
+        return section;
+    }
+
+    static void AttachStorage(JsonObject section, ProductionDatabaseBackupStorage storage)
+    {
+        var (host, secure) = storage.SplitEndpoint();
+        var minio = new JsonObject
+        {
+            ["bucket"] = storage.Bucket,
+            ["endpointUrl"] = host,
+            ["secure"] = secure,
+            ["forcePathStyle"] = true,
+            ["prefix"] = storage.PrefixOrDefault(),
+            ["credentialsSecret"] = storage.CredentialsSecretName
+        };
+        if (!string.IsNullOrWhiteSpace(storage.Region))
+        {
+            minio["region"] = storage.Region;
+        }
+
+        section["storages"] = new JsonObject
+        {
+            [ProductionDatabaseBackupStorage.StorageName] = new JsonObject { ["type"] = "minio", ["minio"] = minio }
+        };
+        var tasks = new JsonArray();
+        foreach (var task in storage.TasksOrDefault())
+        {
+            tasks.Add(new JsonObject
+            {
+                ["name"] = task.Name,
+                ["enabled"] = true,
+                ["schedule"] = task.Schedule,
+                ["keep"] = task.Keep,
+                ["storageName"] = ProductionDatabaseBackupStorage.StorageName
+            });
+        }
+
+        section["tasks"] = tasks;
+    }
 
     static JsonObject ToJson(IDictionary<string, string> values)
     {

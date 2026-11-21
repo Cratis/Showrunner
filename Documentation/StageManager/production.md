@@ -111,7 +111,20 @@ TLS between the members is disabled: when cert-manager rotates the certificate a
 
 Stage Manager waits for the Percona operator to report the database `ready`, then composes Chronicle's connection from the database administrator the Percona operator created into `<name>-mongodb-connection`.
 
-`backup.enabled` runs the Percona Backup for MongoDB agent (`backup.image`, pinned by default) next to every member. It only makes the database ready to be backed up; the storage the backups go to is attached by an Understudy.
+`backup.enabled` runs the Percona Backup for MongoDB agent (`backup.image`, pinned by default) next to every member. Without a storage it only makes the database ready to be backed up.
+
+`backup.storage` attaches the object storage the agent writes physical backups to. It uses the PBM `minio` storage type, which works against any S3 compatible storage; PBM's own `s3` type fails against some providers (UpCloud Object Storage answers its uploads with `XAmzContentSHA256Mismatch`). The bucket is addressed by path, so `endpoint` needs no wildcard DNS.
+
+| Setting | Meaning |
+| --- | --- |
+| `bucket` | The bucket. Empty attaches no storage |
+| `endpoint` | The storage endpoint, with or without `http://` or `https://`; without a scheme it is reached over TLS |
+| `region` | The region of the bucket; empty leaves it to the storage |
+| `prefix` | Where the backups are kept in the bucket; `pbm` by default |
+| `credentialsSecretName` | A Secret in the Production's namespace with the keys `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` |
+| `tasks` | `name`, `schedule` (cron) and `keep` for each schedule; empty uses hourly (24 kept), daily (7), weekly (4) and monthly (12) |
+
+A storage needs a Managed database with `backup.enabled`. The Production stays `Blocked` until the credentials Secret has both keys.
 
 ## Vault
 

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>Cratis.Showrunner.Operations</AssemblyName>
+        <RootNamespace>Cratis.Showrunner.Operations</RootNamespace>
+        <PackageId>Cratis.Showrunner.Operations</PackageId>
+        <Description>Operations for Showrunner — a reusable watchdog that checks a Kubernetes deployment, confirms what it finds, and delivers alerts to Discord, email, Healthchecks and Cratis Direct.</Description>
+        <PackageTags>cratis;showrunner;operations;watchdog;alerting;kubernetes;direct</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="KubernetesClient" />
+        <PackageReference Include="MailKit" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    </ItemGroup>
+</Project>

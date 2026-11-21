@@ -1,0 +1,12 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+global using System.Collections.Immutable;
+global using Microsoft.Extensions.Logging;
+
+// The spec usings below are compiled into Debug builds only.
+#if DEBUG
+global using Cratis.Specifications;
+global using NSubstitute;
+global using Xunit;
+#endif

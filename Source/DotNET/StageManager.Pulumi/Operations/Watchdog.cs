@@ -153,6 +153,7 @@ public sealed class Watchdog : ComponentResource
         WatchdogEnvironment.DiscordKey => args.Discord is not null,
         WatchdogEnvironment.SmtpUsernameKey or WatchdogEnvironment.SmtpPasswordKey => args.Smtp is not null,
         WatchdogEnvironment.DirectTokenKey => args.Direct is not null,
+        WatchdogEnvironment.DirectLinkTokenKey => args.DirectLink?.EnrollmentToken is not null,
         WatchdogEnvironment.HeartbeatKey => args.HeartbeatUrl is not null,
         WatchdogEnvironment.ChronicleSecretKey => args.Chronicle is not null,
         WatchdogEnvironment.ChronicleAuthorityKey => args.Chronicle?.CertificateAuthority is not null,
@@ -183,7 +184,7 @@ public sealed class Watchdog : ComponentResource
                 new CustomResourceOptions { Parent = this, Provider = args.Provider, DependsOn = [role, .. args.DependsOn] });
         }
 
-        var own = new Role($"{name}-role", new RoleArgs { Metadata = metadata(KubernetesName, true), Rules = [.. WatchdogAccess.OwnNamespaceRules(KubernetesName)] }, resourceOptions);
+        var own = new Role($"{name}-role", new RoleArgs { Metadata = metadata(KubernetesName, true), Rules = [.. WatchdogAccess.OwnNamespaceRules(KubernetesName, args.DirectLink is not null)] }, resourceOptions);
         _ = new RoleBinding(
             $"{name}-role-binding",
             new RoleBindingArgs
@@ -318,6 +319,7 @@ public sealed class Watchdog : ComponentResource
         Protect(WatchdogEnvironment.SmtpUsernameKey, args.Smtp?.Username);
         Protect(WatchdogEnvironment.SmtpPasswordKey, args.Smtp?.Password);
         Protect(WatchdogEnvironment.DirectTokenKey, args.Direct?.Token);
+        Protect(WatchdogEnvironment.DirectLinkTokenKey, args.DirectLink?.EnrollmentToken);
         Protect(WatchdogEnvironment.HeartbeatKey, args.HeartbeatUrl);
         Protect(WatchdogEnvironment.ChronicleSecretKey, args.Chronicle?.ClientSecret);
         Protect(WatchdogEnvironment.ChronicleAuthorityKey, args.Chronicle?.CertificateAuthority);
@@ -362,7 +364,7 @@ public sealed class Watchdog : ComponentResource
         if (secretName is not null)
         {
             string[] keys = job is null
-                ? [WatchdogEnvironment.DiscordKey, WatchdogEnvironment.SmtpUsernameKey, WatchdogEnvironment.SmtpPasswordKey, WatchdogEnvironment.DirectTokenKey, WatchdogEnvironment.HeartbeatKey, WatchdogEnvironment.ChronicleSecretKey, WatchdogEnvironment.ChronicleAuthorityKey, WatchdogEnvironment.GitHubAuditKey]
+                ? [WatchdogEnvironment.DiscordKey, WatchdogEnvironment.SmtpUsernameKey, WatchdogEnvironment.SmtpPasswordKey, WatchdogEnvironment.DirectTokenKey, WatchdogEnvironment.DirectLinkTokenKey, WatchdogEnvironment.HeartbeatKey, WatchdogEnvironment.ChronicleSecretKey, WatchdogEnvironment.ChronicleAuthorityKey, WatchdogEnvironment.GitHubAuditKey]
                 : [WatchdogEnvironment.DiscordKey, WatchdogEnvironment.SmtpUsernameKey, WatchdogEnvironment.SmtpPasswordKey, WatchdogEnvironment.DirectTokenKey, WatchdogEnvironment.HeartbeatKey];
             environment.AddRange(keys.Where(key => SecretHolds(args, key)).Select(key => new EnvVarArgs
             {

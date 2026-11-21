@@ -3,6 +3,7 @@
 
 using Cratis.Showrunner.Operations.Alerts;
 using Cratis.Showrunner.Operations.Checks;
+using Cratis.Showrunner.Operations.Link;
 using Cratis.Showrunner.Operations.State;
 
 namespace Cratis.Showrunner.Operations.Pipeline;
@@ -19,6 +20,7 @@ namespace Cratis.Showrunner.Operations.Pipeline;
 /// <param name="options">The timing options.</param>
 /// <param name="timeProvider">The clock.</param>
 /// <param name="logger">The logger.</param>
+/// <param name="link">The optional link to Cratis Direct, or <see langword="null"/> when the watchdog only alerts through its channels.</param>
 public sealed class WatchdogRun(
     FindingCollector collector,
     WatchdogRunMonitor monitor,
@@ -27,7 +29,8 @@ public sealed class WatchdogRun(
     IHeartbeat? heartbeat,
     WatchdogOptions options,
     TimeProvider timeProvider,
-    ILogger<WatchdogRun> logger)
+    ILogger<WatchdogRun> logger,
+    IWatchdogLink? link = null)
 {
     const int RememberedFailedJobs = 10;
 
@@ -45,6 +48,11 @@ public sealed class WatchdogRun(
         var started = timeProvider.GetUtcNow();
         try
         {
+            if (link is not null)
+            {
+                await link.Begin(cancellationToken);
+            }
+
             await Execute(started, cancellationToken);
             return new WatchdogOutcome();
         }
@@ -54,6 +62,15 @@ public sealed class WatchdogRun(
             await Swallow(() => ReportRunFailure(error, cancellationToken));
             await Swallow(() => Ping(true, cancellationToken));
             return new WatchdogOutcome(error);
+        }
+        finally
+        {
+            if (link is not null)
+            {
+                // The state must be saved even when the pass was cancelled, within a budget of its own.
+                using var ending = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+                await Swallow(() => link.End(ending.Token));
+            }
         }
     }
 
@@ -162,6 +179,11 @@ public sealed class WatchdogRun(
         fixedFindings = Merge(fixedFindings, runFindings.ToDictionary(finding => finding.Key, StringComparer.Ordinal));
 
         var findings = await Confirm(fixedFindings, started, windowStarted, cancellationToken);
+        if (link is not null)
+        {
+            await link.Observe(findings, cancellationToken);
+        }
+
         var summaryStreaks = ApplySummaryStreaks(findings, snapshot.SummaryStreaks);
         var now = timeProvider.GetUtcNow();
         var firstSeen = findings.Keys.ToImmutableDictionary(

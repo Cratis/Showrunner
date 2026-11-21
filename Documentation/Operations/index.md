@@ -117,6 +117,87 @@ Register an alert source in Direct, give it a token, and pass the token as `Dire
 
 The finding's key is the fingerprint, so a repeat is the same alert in Direct. A finding that has been open past the escalation threshold is pushed as `critical`, which Direct records as a change of severity. Direct's webhook only raises alerts. It has no way to close one, so a resolved finding is not pushed: the alert stays open in Direct until someone resolves it there, and a recurrence raises it again. A test alert uses the fingerprint `watchdog:test-alert` and severity `information`.
 
+## Linking the watchdog to Cratis Direct
+
+The alert webhook above is the light way to tell Direct about a problem. The **Direct link** makes the watchdog a real instance of Direct's watchdog protocol (`/webhooks/watchdogs/{name}/...`): Direct can enroll it, give it signed configuration, receive its facts reliably and govern the fixes it may run.
+
+| | Alert webhook (`Direct`) | Direct link (`DirectLink`) |
+| --- | --- | --- |
+| What it is | One bearer token, `POST /webhooks/alerts` per alert | Enrollment, claim, signed configuration, outbox, remedies |
+| State | None | Credential, held configuration, durable outbox, in the cluster |
+| Direct can add checks | No | Yes: the endpoint checks defined for the instance run on top of the local ones |
+| A resolved problem | Not reported (Direct's webhook cannot close an alert) | `check-recovered` closes it |
+| Delivery while Direct is down | The alert is lost for that channel | Facts are queued durably and delivered in order afterwards |
+| Fixes | No | Governed remedies (below) |
+| Use it when | You want alerts in Direct and nothing else | You want Direct to own the watchdog's configuration, see its health and govern fixes |
+
+They are independent and can be used together: an alert is then pushed by the webhook and reported as a fact by the link.
+
+### Enroll in Direct, step by step
+
+1. In Direct, enroll a watchdog instance (the operations area, *Watchdogs*) and choose its name, for example `showrunner-prod`. Direct shows the one-time enrollment token once.
+2. Define the instance's checks and remedies in Direct if you want any, and set the offline policy (observe and queue is the default).
+3. Add `DirectLink` to the `Watchdog` component, with the token as a Pulumi secret:
+
+```csharp
+var stageManager = new StageManagerOperator("stage-manager", new StageManagerOperatorArgs { Version = "2.17.1", ManagedNamespaces = ["shop"] });
+
+_ = new Watchdog("watchdog", new WatchdogArgs
+{
+    Namespace = "operations",
+    Image = stageManager.WatchdogImage,
+    DirectLink = new WatchdogDirectLinkArgs
+    {
+        Url = "https://direct.example.com",
+        InstanceName = "showrunner-prod",
+        EnrollmentToken = config.RequireSecret("directEnrollmentToken"),
+        Remedies = [new WatchdogRemedyArgs { Remedy = "restart-web", Namespace = "shop", Deployment = "web" }],
+    },
+});
+```
+
+4. `pulumi up`. The next pass claims the instance with the token, stores the instance credential and the signing key in the Secret `<name>-direct-link`, applies and acknowledges the configuration, and reports. The job log ends with one status line:
+
+```text
+direct link: connected; epoch 1; revision 3; outbox 0 pending, watermark 42, 5 delivered, 0 evicted; 0 remedy action(s)
+```
+
+5. The token is no longer used. Remove `EnrollmentToken` from the stack when you like; the credential is in the cluster. To enroll again (a rotated token or key, a new cluster), delete the `<name>-direct-link` Secret and ConfigMap and supply a new token.
+
+### What it does in a pass
+
+- **Claim.** The first claim sends the token and receives the credential once; later claims send the credential and the same session, so every pass is one process to Direct. The fencing epoch comes back with each claim. If Direct answers `409`, another session holds the instance: the watchdog stops delivering and running remedies through the link, reports `Fenced`, and keeps alerting locally.
+- **Configuration.** Direct's snapshot is signed with HMAC-SHA256 over a canonical form. The watchdog verifies it under the key it pinned at the first claim and applies it only when it is for this instance, newer (or a renewal of the revision held), unexpired and its digest matches. It asks for a fresh lease once past half of it, and acknowledges each applied revision (retried until Direct has it). Local environment configuration always applies; Direct's endpoint checks come on top of it. When Direct is unreachable the held configuration keeps working until its lease lapses, then only local configuration applies, and the status says so.
+- **Facts.** Cluster findings and Direct's checks become `check-failed` (the first, second and then every twelfth consecutive failure; Direct raises an alert from the second) and `check-recovered`, plus remedy events and a heartbeat. They go into an outbox kept in the ConfigMap `<name>-direct-link`: ordered by a sequence that is never reused, flushed at the start and the end of every pass, removed only up to the watermark Direct reports, so a lost response only means a batch is sent again and Direct deduplicates. The outbox holds at most `OutboxLimit` entries (800); beyond that heartbeats and then the oldest are evicted, counted in the status, and Direct records the gap.
+- **Remedies.** Direct decides *whether* a remedy runs; the watchdog re-checks and carries it out. While connected it requests a remedy once per failure episode (idempotent), and executes only an authorization Direct returns, after re-checking revision, epoch, expiry, that the check is still failing, and the attempt budget and cooldown. While Direct is unreachable the offline policy applies exactly as Direct defines it: nothing runs unless the signed, unexpired configuration grants `Automatic` offline mode, the outbox is durable, the claim was confirmed within its lease, the verification check exists and is failing on fresh evidence, and budget and cooldown allow it. `Review` mode never runs offline. A remedy without a local executor is denied, never guessed at.
+- **Executors.** `IRemedy` is the extension point. The one that ships restarts a single named Deployment (a rolling restart through the pod template, as `kubectl rollout restart` does), bound by `Remedies` to the name of the remedy in Direct, with RBAC `get` and `patch` on exactly that Deployment. Nothing destructive ships. `AllowHttpRemedies` additionally lets a remedy with no binding execute the HTTP request its signed configuration pins; it is off by default because it makes the watchdog call whatever URL Direct's configuration names.
+- **Status.** The status line above is logged by every pass and the same data is written to the `status` key of the link ConfigMap. It never contains a credential, key or secret.
+
+### Security model
+
+- The enrollment token and the instance credential are bearer secrets: the token is a Pulumi secret in the channels Secret; the credential, the pinned signing key, the held configuration (it carries the secrets of Direct's checks and remedies) and the session live in the Secret `<name>-direct-link`. The outbox, memory and status hold none of them (a spec checks it).
+- The link's HTTP client does not follow redirects, so a bearer token is never sent to another host.
+- The signing key is pinned. A different key later is refused, not trusted; recover by deleting the link Secret on purpose.
+- If the saved state cannot be read, the link refuses to claim, because a first claim would discard the credential.
+- RBAC is added only when `DirectLink` is set: get, patch and create on the link ConfigMap and Secret by name, and `get`/`patch` on the bound Deployments.
+- Direct's `Operations.Contracts` is not published as a package, so the wire types are re-declared in `Cratis.Showrunner.Operations.Link.Protocol` with the same JSON shape and options. Conformance specs verify a configuration signed by Direct's own code, byte for byte, and the request and event shapes; their fixtures name the Direct commit they come from, and fail when the types drift.
+
+### What it learned from Direct's own watchdog
+
+Direct's watchdog is a long-running daemon. This one is a CronJob pass with no disk, so state a daemon keeps in memory or SQLite is loaded and saved around each pass. Adopted as they are: enrollment by one-time token, the signed configuration with leases and acknowledgement, the idempotent outbox with watermark receipts, governed remedies with the offline policy, status reporting. Adapted: the session id is persisted (so a new pod is not a clone), the journal is a bounded ConfigMap rather than SQLite, check intervals are bounded below by the CronJob cadence. Not taken: the local Chronicle kernel and replication of the full image, and the bridge.
+
+### Environment variables
+
+| Variable | Meaning |
+| --- | --- |
+| `DIRECT_LINK_URL`, `DIRECT_LINK_INSTANCE` | Base URL and instance name. Both or neither |
+| `DIRECT_LINK_ENROLLMENT_TOKEN` | The one-time token (a Secret reference when deployed by the component) |
+| `DIRECT_LINK_RESOURCE` | The Direct resource id observations are reported against; derived from the instance name when empty |
+| `DIRECT_LINK_STATE_NAME` | Name of the ConfigMap and Secret the link keeps its state in |
+| `DIRECT_LINK_REMEDIES` | `remedy=namespace/deployment` entries, comma separated |
+| `DIRECT_LINK_HTTP_REMEDIES` | `true` to allow HTTP remedies |
+| `DIRECT_LINK_OUTBOX_LIMIT` | Most outbox entries kept |
+
 ## Reference configuration: Cratis Infrastructure
 
 ```csharp

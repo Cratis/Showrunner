@@ -80,6 +80,12 @@ public sealed class WatchdogArgs
     public WatchdogDirectArgs? Direct { get; init; }
 
     /// <summary>
+    /// Gets the link to Cratis Direct's watchdog protocol - enrollment, signed configuration, durable outbox and governed remedies - or
+    /// null for none. Use <see cref="Direct"/> for the lighter alert webhook alone.
+    /// </summary>
+    public WatchdogDirectLinkArgs? DirectLink { get; init; }
+
+    /// <summary>
     /// Gets the Healthchecks URL pinged after every run (and on <c>/fail</c> when a run fails), or null for no heartbeat. It is
     /// a capability and is written to a Secret as a Pulumi secret.
     /// </summary>

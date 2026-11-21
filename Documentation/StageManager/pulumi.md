@@ -5,7 +5,55 @@ description: Declare a Stage Manager Production, Performance and Understudy from
 
 The `Cratis.Showrunner.StageManager.Pulumi` package is for a cluster that a C# [Pulumi](https://www.pulumi.com/) program already deploys. It has one component for each resource you would otherwise write as YAML: `Production`, `Performance` and `Understudy`. You pass typed arguments, including the outputs of other resources, and the component creates the custom resource and the Kubernetes Secrets it names. There are no templates and no tokens to fill.
 
-The package does not install the operator or its custom resource definitions. [Install the operator](./install.md) first; its Helm chart installs the definitions, and the namespace of every resource below must be one of the chart's `managedNamespaces`.
+The package also installs the operator: declare a [`StageManagerOperator`](#install-the-operator) first and make the resources below depend on it. The namespace of every resource must be one of the operator's `ManagedNamespaces`. Raw Helm is the path for a cluster no Pulumi program deploys; see [Install the operator](./install.md).
+
+## Install the operator
+
+A Pulumi program never writes a `Helm.V3.Release` for the operator. `StageManagerOperator` wraps the chart, so one version drives the chart and the operator and Understudy image tags, and the watchdog image tag is available for a [`Watchdog`](../Operations/index.md):
+
+```csharp
+using Cratis.Showrunner.StageManager.Pulumi.Operators;   // StageManagerOperator
+
+var apps = new Namespace("apps", new NamespaceArgs { Metadata = new ObjectMetaArgs { Name = "apps" } });
+
+var stageManager = new StageManagerOperator("stage-manager", new StageManagerOperatorArgs
+{
+    Version = "2.17.1",                         // chart + operator + understudy + watchdog image tags
+    ManagedNamespaces = ["apps"],               // the namespaces it may read and write Secrets and workloads in
+    DependsOn = [apps],                          // they must exist before the operator is installed
+    Percona = new StageManagerPerconaArgs(),     // optional: the Percona Operator for MongoDB, for Productions with a managed database
+});
+
+var performance = new Performance("crm", new PerformanceArgs
+{
+    Namespace = "apps",
+    // ...
+    DependsOn = [stageManager],
+});
+
+var watchdog = new Watchdog("watchdog", new WatchdogArgs
+{
+    Namespace = "operations",
+    Image = stageManager.WatchdogImage,
+});
+```
+
+| Argument | Default | Meaning |
+| --- | --- | --- |
+| `Version` (required) | | Version without a leading `v`; chart version and the tag of every Showrunner image |
+| `ReleaseName` / `Namespace` | `stage-manager` | Helm release name (the prefix of the operator's resources) and the operator's namespace |
+| `CreateNamespace` | `true` | Create the operator's namespace |
+| `ManagedNamespaces` | the operator's namespace | Where Performances and Productions live. Every one must exist before the install |
+| `Percona` | none | `Version`, `Namespace` (`percona-operator`), `Repository`, `Values` of the `psmdb-operator` chart, watching every namespace |
+| `OperatorImageRepository`, `UnderstudyImageRepository`, `WatchdogImageRepository` | the published `cratis/showrunner-*-image` | Pull from a mirror; the tag is still `Version` |
+| `Chart` | `oci://registry-1.docker.io/cratis/showrunner-operator` | An OCI reference, or a path to a chart in a checkout (installed without a version) |
+| `WaitForOperator` | `true` | Wait for the operator Deployment, so dependants never race it |
+| `Values` | none | The rare chart value the typed arguments do not cover. Merged *over* the component's values; nested maps merge key by key |
+| `DependsOn`, `Provider` | | As for every component |
+
+The outputs are `Namespace`, `OperatorImage`, `UnderstudyImage` and `WatchdogImage`, and the `Release` and `PerconaRelease` resources. The component renders its values with `StageManagerOperatorValues.Render`; a spec runs them through `helm template` of the chart in this repository (when `helm` is on the PATH), so a value that drifts from the chart's `values.yaml` fails the build.
+
+Helm installs a chart's CRDs once and never upgrades them. When a release changes a custom resource definition, apply the chart's `crds` folder before updating the stack (`kubectl apply -f Source/Helm/showrunner-operator/crds` from a checkout, or `helm pull oci://registry-1.docker.io/cratis/showrunner-operator --version <version> --untar` and apply its `crds`).
 
 ## Install the package
 

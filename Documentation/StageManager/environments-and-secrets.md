@@ -18,6 +18,7 @@ The Vault settings belong to the operator, not to a Performance: the library rea
 A resolved value reaches a container in exactly one way: as a file in a mounted Secret volume.
 
 - AuthProxy gets one file per environment key it needs, the key as the file name, in `/run/secrets/cratis`, and its `SecretsDirectory` points there.
+- A provider that names `credentialsSecretRef` gets its client id and client secret from that Kubernetes Secret instead of the environment. The operator reads them and mounts them in the same files, under the same keys, so the environment does not need `authentication.providers.<identity>.clientId` and `clientSecret`. The `ProviderCredentialsResolved` condition reports a Secret that is missing, by name and never by value. A [gateway](./performance.md#run-only-authproxy-in-front-of-a-service) whose providers all do this needs no environment at all.
 - Ante gets one file per setting, named like the setting with `__` for `:`, in `/run/secrets/ante`, and `Ante:Onboarding:Secrets:Path` points there.
 - The application gets the keys that belong to neither of them, in `/run/secrets/cratis`.
 - The Chronicle connection Secret is projected into the volume as a file. It is not copied.

@@ -98,16 +98,175 @@ For a Performance named `crm`:
 
 | Resource | Name | Notes |
 | --- | --- | --- |
-| Deployment and Service | `crm-app` | The application. ClusterIP |
+| Deployment and Service | `crm-app` | The application. ClusterIP. Not created for a [gateway](#run-only-authproxy-in-front-of-a-service) |
 | Deployment and Service | `crm-authproxy` | When `authProxy.enabled`. ClusterIP |
 | Deployment and Service | `crm-ante` | When `onboarding.enabled`. One replica, ClusterIP |
 | NetworkPolicy | `crm-app` | For a published Stage application: only AuthProxy of the Performance may connect to the application |
-| Ingress | `crm` | When `ingress.enabled`. Every host routes to AuthProxy and nothing else, with a certificate from cert-manager |
+| Ingress | `crm` | When `ingress.enabled`. Every host routes to AuthProxy and nothing else, with a certificate from cert-manager. `ingress.annotations` are added to it |
 | Secrets | `crm-app-environment`, `crm-authproxy-environment`, `crm-ante-secrets`, `crm-signing-keys` | What is mounted into each workload, and the generated keys |
 
 AuthProxy is the only public entry point. The application and Ante are ClusterIP Services behind it.
 
 Ante gets its own event store, `ante-<name>` by default, so two Performances on one Production never share one. Its MongoDB server comes from the environment key `ante.mongodb.server`.
+
+## AuthProxy and Ante are optional
+
+A Performance is only the application until you ask for more. Each part exists because its block is in the spec, and nothing else turns it on:
+
+| Omit | What happens |
+| --- | --- |
+| `authProxy` (or `enabled: false`) | No AuthProxy runs. The application is reachable only inside the cluster, so `ingress` and `onboarding` are refused with a clear message: AuthProxy is the only public entry point and the place invitations are exchanged. |
+| `onboarding` | No Ante runs. AuthProxy gets no invitation settings and routes nothing to `/_invite` or `/.well-known/ante`. The environment needs no `ante.mongodb.server`. |
+| `ingress` | No Ingress and no certificate. The workloads still run and can be reached by other workloads in the cluster. |
+
+Every setting below is optional too. Leave one out and the operator writes nothing for it, so AuthProxy or Ante keeps its own default.
+
+## Configure AuthProxy
+
+The provider list says which providers exist; where their values come from is your choice. By default the client id and secret live in the [Cratis environment](./environments-and-secrets.md). Name a Kubernetes Secret with `credentialsSecretRef` and the operator reads the client id and the client secret from it instead, hands them to AuthProxy as mounted files and never puts them in a Deployment, the status or the log.
+
+| Field | What it does |
+| --- | --- |
+| `authProxy.image`, `port`, `replicas`, `resources` | The container. `resources` takes `requests` and `limits` |
+| `providers[].credentialsSecretRef` | `name`, and `clientIdKey` and `clientSecretKey` when the keys are not `clientId` and `clientSecret`. The environment then needs neither key |
+| `providers[].scopes` | The scopes the provider is asked for, for example `read:user`, `user:email` and `read:org` for GitHub. They win over a `scopes` key in the environment |
+| `tenancy.tenantId` | A fixed tenant for every request: a service that is not multi-tenant |
+| `tenancy.tenantsEndpoint` | A URL that lists the tenants of the signed-in person. One tenant goes straight in, several are offered, none is refused. Give `tenantId` or `tenantsEndpoint`, not both |
+| `requiredClaims[]` | A `claim` and the values of which the caller needs one (`anyOf`). Every entry must be satisfied. With GitHub and the `read:org` scope, `urn:github:organization` and `urn:github:team` (`org/team`) restrict a service to a team |
+| `pages.configMapRef` | A ConfigMap of pages and assets, one file per key: `403.html`, `404.html`, `select-tenant.html`, `styles.css` and so on. It is mounted at `/mnt/pages` and AuthProxy's `PagesPath` points there. A page that is present replaces the built-in one |
+| `dataProtection.claimName` | An existing PersistentVolumeClaim for AuthProxy's key ring, so a restart does not sign everyone out. It is `ReadWriteOnce`, so AuthProxy runs one replica and stops the old pod before it starts the new one |
+
+With `onboarding`, AuthProxy also routes the invitation paths on the public host to Ante's Service, and the operator writes that address itself; set `onboarding.lobbyBackendBaseUrl` in the environment only to point it somewhere else.
+
+## Configure Ante
+
+Beyond the [contract the operator derives](#onboarding-values-the-operator-derives), `onboarding` takes how Ante looks and a few rules:
+
+| Field | What it does |
+| --- | --- |
+| `signUp`, `registrationEnabled`, `registrationReview` | `JoinTenant` closes self-service registration, so people get in by invitation only. `registrationReview` holds a completed sign-up for the application's review |
+| `allowedLocales`, `defaultLocale` | The locales Ante offers |
+| `reservedOrganizationNames` | Organization names nobody can claim, compared ignoring case |
+| `branding.logoUrl`, `customCssUrl` | A path on Ante's host, such as `/brand/logo.svg`, or an https URL |
+| `branding.pageTitle`, `splashMessage` | The tab title, and the text announced while Ante loads |
+| `branding.assets` | `configMapRef` and `files`: the keys of a ConfigMap Ante serves itself under `/brand/<key>`. Each key is its own mount, because a mounted folder exposes symbolic links that the file server reports with the wrong length |
+
+The host store, the host application URL and the public address of the invitation links come from `application.eventStores[0]` and the first ingress host. Nothing to set.
+
+## An application with AuthProxy and Ante
+
+This Performance runs the application, signs people in with GitHub, restricts the application to a GitHub team, lets people in by invitation only, brands Ante and publishes everything on one host. Every key below is a field of the spec.
+
+```yaml
+apiVersion: showrunner.cratis.io/v1alpha1
+kind: Performance
+metadata:
+  name: keldakraft
+  namespace: keldakraft
+spec:
+  productionRef:
+    name: keldakraft
+  application:
+    image: ghcr.io/kelda/keldakraft:1.2.3
+    eventStores: [KeldaKraft]
+  environment:
+    name: production
+    configMapRef:
+      name: keldakraft-environment   # holds ante.mongodb.server and the application's own keys
+  authProxy:
+    enabled: true
+    providers:
+      - kind: GitHub
+        identity: GitHub
+        credentialsSecretRef:
+          name: keldakraft-github    # keys clientId and clientSecret
+        scopes: [read:user, user:email, read:org]
+    tenancy:
+      # The application's Service is keldakraft-app.
+      tenantsEndpoint: http://keldakraft-app:8080/api/internal/tenants/selectable
+    requiredClaims:
+      - claim: urn:github:organization
+        anyOf: [kelda]
+      - claim: urn:github:team
+        anyOf: [kelda/staff]
+    pages:
+      configMapRef:
+        name: keldakraft-authproxy-pages
+    dataProtection:
+      claimName: keldakraft-authproxy-keys
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+  onboarding:
+    enabled: true
+    signUp: JoinTenant
+    personas: [Administrator, Member]
+    allowedLocales: [en]
+    reservedOrganizationNames: [admin, api, app]
+    branding:
+      logoUrl: /brand/logo.svg
+      customCssUrl: /brand/lobby.css
+      pageTitle: Kelda Kraft
+      splashMessage: Loading Kelda Kraft
+      assets:
+        configMapRef:
+          name: keldakraft-brand
+        files: [logo.svg, lobby.css]
+  ingress:
+    enabled: true
+    className: nginx
+    hosts: [app.keldakraft.example.com]
+    tlsIssuer:
+      name: letsencrypt-prod
+    annotations:
+      # Observable queries are long-lived WebSockets that sit quiet for long stretches.
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+```
+
+Register the callback `https://app.keldakraft.example.com/signin-github` with the GitHub OAuth app whose client id and secret are in `keldakraft-github`; a GitHub app has one callback, so each public host has its own. The organization must have approved the OAuth app, or its teams are never visible and `urn:github:team` never matches.
+
+## Run only AuthProxy in front of a Service
+
+Name an `authProxy.upstream` and the Performance is a gateway: it runs AuthProxy, the Ingress and nothing else. There is no application, no Ante and no Chronicle, so `application`, `onboarding`, `productionRef` and `chronicle` are refused next to it. This is how an operator console such as the Kubernetes dashboard, Grafana or the Chronicle Workbench gets the same sign-in and the same team restriction as the application.
+
+```yaml
+apiVersion: showrunner.cratis.io/v1alpha1
+kind: Performance
+metadata:
+  name: keldakraft-operations
+  namespace: keldakraft
+spec:
+  authProxy:
+    enabled: true
+    upstream:
+      url: http://grafana.infrastructure.svc.cluster.local:3000/
+      thirdParty: true               # the default: Grafana has no /.cratis/me to ask who is calling
+    providers:
+      - kind: GitHub
+        identity: GitHub
+        credentialsSecretRef:
+          name: operations-github
+        scopes: [read:user, user:email, read:org]
+    tenancy:
+      tenantId: Default
+    requiredClaims:
+      - claim: urn:github:organization
+        anyOf: [kelda]
+      - claim: urn:github:team
+        anyOf: [kelda/staff]
+  ingress:
+    enabled: true
+    className: nginx
+    hosts: [operations.keldakraft.example.com]
+    tlsIssuer:
+      name: letsencrypt-prod
+```
+
+With `thirdParty: true` AuthProxy only decides who may get in and forwards to the upstream as a plain frontend. Set it to `false` for an upstream that is a Cratis service: AuthProxy then forwards to it as the backend too and asks it who is calling.
+
+The Cratis environment is optional in a gateway. It is read only when `environment` is given or a provider has no `credentialsSecretRef`. Declare one gateway per console and host; the Performances share nothing but the namespace.
 
 ## Never half-configured
 
@@ -122,7 +281,7 @@ Use the condition to identify the missing input, supply the referenced resource 
 | `phase` | `Pending`, `Blocked`, `Progressing`, `Ready` or `Expired` |
 | `publicUrl` | `https://` and the first ingress host |
 | `missingEnvironmentKeys` | The keys the environment lacks, while the phase is `Blocked` |
-| `conditions` | `SpecValid`, `ChronicleConnection`, `SinksMapped`, `SinksReadable` and `SinksBound` (with `productionRef`), `GraphBound` (when the application reads the graph), `EnvironmentResolved`, `EnvironmentComplete`, and `ApplicationReady`, `AuthProxyReady`, `AnteReady` per component |
+| `conditions` | `SpecValid`, `ChronicleConnection`, `SinksMapped`, `SinksReadable` and `SinksBound` (with `productionRef`), `GraphBound` (when the application reads the graph), `EnvironmentResolved`, `ProviderCredentialsResolved` (when a provider names `credentialsSecretRef`), `EnvironmentComplete`, and `ApplicationReady`, `AuthProxyReady`, `AnteReady` per component |
 | `signingKeys` | The key ids in use, the rotation counter applied and how many previous public keys are pinned |
 | `runningVersion`, `versions`, `rollout` | The version of a [published Stage application](./published-stage-applications.md) that runs, its history and the rollout under way |
 | `expiresAt`, `dataRetainedUntil` | When a [lifetime](./published-stage-applications.md#lifetime) ends, and until when the publisher should keep the data |
@@ -190,4 +349,4 @@ The Performance spec carries the providers and the onboarding behavior; the valu
 
 AuthProxy forwards every request it lets through to the application's Service, `<name>-app`: the operator sets `Cratis__AuthProxy__Services__application__Backend__BaseUrl` and `…Frontend__BaseUrl` to it, on `application.port` (9090 for a published application).
 
-AuthProxy's onboarding URLs are on the public host, as its contract requires HTTPS outside development. Routing the `/_invite` and `/.well-known/ante` paths from AuthProxy to Ante is configured on AuthProxy's side; set `onboarding.lobbyBackendBaseUrl` in the environment when your AuthProxy needs it.
+AuthProxy's onboarding URLs are on the public host, as its contract requires HTTPS outside development. The operator also routes the `/_invite` and `/.well-known/ante` paths from AuthProxy to Ante's in-cluster Service, by setting `Cratis__AuthProxy__Invite__Lobby__Backend__BaseUrl` on AuthProxy: the contract key `onboarding.lobbyBackendBaseUrl` only accepts HTTPS, so it is not used. Set that key in the environment only to send the paths to another address; it wins.

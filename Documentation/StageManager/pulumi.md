@@ -30,6 +30,7 @@ using Cratis.Showrunner.StageManager.Pulumi.Understudies;  // Understudy
 - Pass the Kubernetes provider in the args (`Provider`). When it is null, the default provider is used.
 - The Kubernetes name of the resource is `Name`, or the Pulumi name when `Name` is null. It is exposed as `KubernetesName`.
 - Optional settings are nullable. A setting you leave out is not written, so the operator's own default applies. Required settings are `required` properties.
+- Settings that refer to a ConfigMap work three ways: name one that exists, give the files as text, or give a directory of files.
 - Secrets work two ways. Name a Secret that already exists, or give the credential as a value (a string or an `Output<string>`) and the component creates the Secret next to the resource. Created Secrets hold Pulumi secrets, so the value is encrypted in the stack state and masked in the output.
 - The custom resource depends on the Secrets the component creates and on everything in `DependsOn`, so the operator never reconciles a half-made set.
 - `Labels` go on the custom resource and on every Secret or ConfigMap the component creates.
@@ -191,7 +192,130 @@ Name the Chronicle with `ProductionName` (and `ProductionNamespace` when the Pro
 
 `ApplicationArgs` covers the application part of the operator's `PerformanceSpec`: `Image`, `EventStores`, `Port`, `Replicas`, `Sinks`, `Graph`, `Strategy`, `ImagePullSecrets`, `Probes`, `Resources`, `NodeSelector`, `Volumes`, `VolumeMounts`, `InitContainers` and `Egress`. `PerformanceArgs` adds `Lifetime` for a Performance that expires. Naming any `Egress` rule isolates the pods for egress, as described in [Run an application with a Performance](./performance.md).
 
-The component does not cover an AuthProxy, an onboarding service, signing key rotation or a published Stage application. Declare those in the YAML of the [Performance](./performance.md) until the package supports them.
+The component does not cover a published Stage application. Declare that in the YAML of the [Performance](./performance.md) until the package supports it.
+
+### AuthProxy, Ante, the Ingress and the signing keys
+
+AuthProxy, Ante and the Ingress are optional, in Pulumi as in YAML: declare `AuthProxy`, `Onboarding` and `Ingress` to run them, leave one out and nothing is written for it. [Run an application with a Performance](./performance.md#authproxy-and-ante-are-optional) says what each omission means. Every field of those blocks is nullable; null is not written, so the operator's default applies.
+
+```csharp
+var keldakraft = new Performance(
+    "keldakraft",
+    new PerformanceArgs
+    {
+        Provider = provider,
+        Namespace = "keldakraft",
+        ProductionName = production.KubernetesName,
+        Application = new ApplicationArgs { Image = serviceImage, EventStores = ["KeldaKraft"] },
+        Environment = new PerformanceEnvironmentArgs
+        {
+            Name = "production",
+            ConfigMapName = "keldakraft-environment",
+            Content = environmentFile,           // holds ante.mongodb.server
+        },
+        AuthProxy = new AuthProxyArgs
+        {
+            Providers =
+            [
+                new AuthProxyProviderArgs
+                {
+                    Kind = AuthProxyProviderKind.GitHub,
+                    Identity = "GitHub",
+                    ClientId = config.RequireSecret("gitHubClientId"),
+                    ClientSecret = config.RequireSecret("gitHubClientSecret"),
+                    Scopes = ["read:user", "user:email", "read:org"],
+                },
+            ],
+            Tenancy = new AuthProxyTenancyArgs { TenantsEndpoint = "http://keldakraft-app:8080/api/internal/tenants/selectable" },
+            RequiredClaims =
+            [
+                new RequiredClaimArgs { Claim = "urn:github:organization", AnyOf = ["kelda"] },
+                new RequiredClaimArgs { Claim = "urn:github:team", AnyOf = ["kelda/staff"] },
+            ],
+            Pages = new AuthProxyPagesArgs { Directory = "AuthProxyPages" },
+            DataProtection = new AuthProxyDataProtectionArgs { Size = "1Gi" },
+            Resources = new ApplicationResourcesArgs { Requests = { ["cpu"] = "100m", ["memory"] = "128Mi" } },
+        },
+        Onboarding = new OnboardingArgs
+        {
+            SignUp = SignUpMode.JoinTenant,
+            Personas = ["Administrator", "Member"],
+            AllowedLocales = ["en"],
+            ReservedOrganizationNames = ["admin", "api", "app"],
+            Branding = new AnteBrandingArgs
+            {
+                LogoUrl = "/brand/logo.svg",
+                CustomCssUrl = "/brand/lobby.css",
+                PageTitle = "Kelda Kraft",
+                SplashMessage = "Loading Kelda Kraft",
+                Assets = new AnteBrandingAssetsArgs { Directory = "Lobby/Branding" },
+            },
+        },
+        Ingress = new IngressArgs
+        {
+            ClassName = "nginx",
+            Hosts = ["app.keldakraft.example.com"],
+            TlsIssuerName = "letsencrypt-prod",
+            Annotations =
+            {
+                ["nginx.ingress.kubernetes.io/proxy-read-timeout"] = "3600",
+                ["nginx.ingress.kubernetes.io/proxy-send-timeout"] = "3600",
+            },
+        },
+    });
+```
+
+The component writes what the settings refer to when you give values instead of names:
+
+| You give | The component writes |
+| --- | --- |
+| `ClientId` and `ClientSecret` of a provider | The Secret `<name>-<identity>-credentials` with the keys `clientId` and `clientSecret`, as Pulumi secrets. The provider's `credentialsSecretRef` names it. Or give `CredentialsSecretName` (and `ClientIdKey`, `ClientSecretKey`) for a Secret that exists, or neither to take them from the Cratis environment |
+| `Pages` as `Files` or a `Directory` | The ConfigMap `<name>-authproxy-pages`. Or give `ConfigMapName` for one that exists. Give exactly one of the three |
+| `DataProtection` without `ClaimName` | A `ReadWriteOnce` PersistentVolumeClaim `<name>-authproxy-keys` of `Size` (default `1Gi`) and the optional `StorageClassName`. Or give `ClaimName` for one that exists |
+| `Legal` as `TermsAndConditions` and `PrivacyPolicy` | The ConfigMap `<name>-legal` with `terms.md` and `privacy.md`. Or give `ConfigMapName` |
+| `Branding.Assets` as `Files` or a `Directory` | The ConfigMap `<name>-brand`, and the file names to serve. Or give `ConfigMapName` and `FileNames` for one that exists |
+
+A directory is read when the program runs, from the files directly in it, so run the program from the folder a relative path is relative to or give an absolute one. The files are text: a ConfigMap holds no binary content, so a logo is an SVG or lives on another host.
+
+The Performance depends on everything the component writes, so the operator never reads a Secret that is not there yet. `SigningKeysArgs` (`Rotation`, `RetainPrevious`) sets the [signing keys](./performance.md#signing-keys).
+
+#### A gateway in front of an existing Service
+
+Give the `AuthProxy` an `Upstream` and the Performance is a [gateway](./performance.md#run-only-authproxy-in-front-of-a-service): `Application`, `Environment`, `ProductionName` and `ChronicleConnectionSecret` are all left out. The component throws an `ArgumentException` when a gateway without an environment has a provider that gets neither `ClientId` and `ClientSecret` nor a `CredentialsSecretName`.
+
+```csharp
+var operations = new Performance(
+    "keldakraft-operations",
+    new PerformanceArgs
+    {
+        Provider = provider,
+        Namespace = "keldakraft",
+        AuthProxy = new AuthProxyArgs
+        {
+            Upstream = new AuthProxyUpstreamArgs { Url = "http://grafana.infrastructure.svc.cluster.local:3000/" },
+            Providers =
+            [
+                new AuthProxyProviderArgs
+                {
+                    Kind = AuthProxyProviderKind.GitHub,
+                    Identity = "GitHub",
+                    ClientId = config.RequireSecret("operationsGitHubClientId"),
+                    ClientSecret = config.RequireSecret("operationsGitHubClientSecret"),
+                    Scopes = ["read:user", "user:email", "read:org"],
+                },
+            ],
+            Tenancy = new AuthProxyTenancyArgs { TenantId = "Default" },
+            RequiredClaims =
+            [
+                new RequiredClaimArgs { Claim = "urn:github:organization", AnyOf = ["kelda"] },
+                new RequiredClaimArgs { Claim = "urn:github:team", AnyOf = ["kelda/staff"] },
+            ],
+        },
+        Ingress = new IngressArgs { ClassName = "nginx", Hosts = ["operations.keldakraft.example.com"], TlsIssuerName = "letsencrypt-prod" },
+    });
+```
+
+Declare one gateway for each console, each with its own host and its own GitHub OAuth app.
 
 ## Declare an Understudy
 

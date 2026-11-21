@@ -10,6 +10,7 @@ public class ProductionDatabaseBackupTask
     /// <summary>
     /// Gets the schedules used when none are given.
     /// </summary>
+    [Ignore]
     public static IReadOnlyList<ProductionDatabaseBackupTask> Defaults { get; } =
     [
         new() { Name = "hourly", Schedule = "0 * * * *", Keep = 24 },

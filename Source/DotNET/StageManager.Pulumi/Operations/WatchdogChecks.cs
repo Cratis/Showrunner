@@ -36,6 +36,18 @@ internal static class WatchdogChecks
     /// <summary>The public URLs check.</summary>
     internal const string PublicUrls = "public-urls";
 
+    /// <summary>The operational metrics check.</summary>
+    internal const string Metrics = "metrics";
+
+    /// <summary>The telemetry budget check.</summary>
+    internal const string TelemetryBudget = "telemetry-budget";
+
+    /// <summary>The Chronicle observers check.</summary>
+    internal const string ChronicleObservers = "chronicle-observers";
+
+    /// <summary>The GitHub Actions schedule audit.</summary>
+    internal const string ActionsAudit = "actions-audit";
+
     /// <summary>
     /// Works out the checks to run.
     /// </summary>
@@ -63,6 +75,10 @@ internal static class WatchdogChecks
         AddWhen(args.RestoreDrill is not null, RestoreDrill);
         AddWhen(args.Readiness is not null, Readiness);
         AddWhen(args.PublicUrls.Count > 0, PublicUrls);
+        AddWhen(args.Prometheus is not null, Metrics);
+        AddWhen(args.Prometheus is not null, TelemetryBudget);
+        AddWhen(args.Chronicle is not null, ChronicleObservers);
+        AddWhen(args.GitHubAudit is not null, ActionsAudit);
         return checks;
     }
 }

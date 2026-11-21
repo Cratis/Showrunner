@@ -126,6 +126,41 @@ public sealed class WatchdogArgs
     public string? VolumeAdvice { get; init; }
 
     /// <summary>
+    /// Gets the Prometheus to read, or null for none. It turns on the <c>metrics</c> and <c>telemetry-budget</c> checks.
+    /// </summary>
+    public WatchdogPrometheusArgs? Prometheus { get; init; }
+
+    /// <summary>
+    /// Gets the Chronicle whose observers are watched, or null for none. It turns on the <c>chronicle-observers</c> check.
+    /// </summary>
+    public WatchdogChronicleArgs? Chronicle { get; init; }
+
+    /// <summary>
+    /// Gets the GitHub organization whose Actions schedules are audited, or null for none. It turns on the <c>actions-audit</c> check.
+    /// </summary>
+    public WatchdogGitHubAuditArgs? GitHubAudit { get; init; }
+
+    /// <summary>
+    /// Gets the runner pool to keep from filling up with hung work, or null for none. It is a CronJob of its own.
+    /// </summary>
+    public WatchdogRunnersArgs? Runners { get; init; }
+
+    /// <summary>
+    /// Gets the agent harness whose stuck worker Jobs are cleaned up, or null for none. It is a CronJob of its own.
+    /// </summary>
+    public WatchdogAgentHarnessArgs? AgentHarness { get; init; }
+
+    /// <summary>
+    /// Gets the cloud account swept for orphaned volumes, or null for none. It is a CronJob of its own.
+    /// </summary>
+    public WatchdogVolumeSweeperArgs? VolumeSweeper { get; init; }
+
+    /// <summary>
+    /// Gets the synthetic probe of the public endpoints, or null for none. It is a CronJob of its own.
+    /// </summary>
+    public WatchdogProbeArgs? Probe { get; init; }
+
+    /// <summary>
     /// Gets a value indicating whether a suspended CronJob is declared next to the watchdog, so a delivery test is
     /// <c>kubectl create job --from=cronjob/NAME-test-alert test-alert</c>. It defaults to <see langword="true"/>.
     /// </summary>

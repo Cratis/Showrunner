@@ -90,7 +90,7 @@ public sealed class Watchdog : ComponentResource
 
         DeclareAccess(name, args, checks, Metadata, subjects, resourceOptions);
         var secretName = DeclareSecret(name, args, Metadata, resourceOptions);
-        var template = BuildPodTemplate(args, checks, secretName, labels);
+        var template = BuildPodTemplate(args, checks, secretName, labels, null, null);
 
         _ = new CronJob(
             $"{name}-cronjob",
@@ -111,6 +111,11 @@ public sealed class Watchdog : ComponentResource
                     Spec = CronJobSpec("0 0 1 1 *", true, args.DeadlineSeconds ?? DefaultDeadlineSeconds, template(["test-alert"])),
                 },
                 new CustomResourceOptions { Parent = this, Provider = args.Provider, DependsOn = [serviceAccount, .. args.DependsOn] });
+        }
+
+        foreach (var job in WatchdogJobs.Plan(KubernetesName, args))
+        {
+            DeclareJob(name, args, job, secretName, labels, Metadata, resourceOptions);
         }
 
         RegisterOutputs();
@@ -149,6 +154,9 @@ public sealed class Watchdog : ComponentResource
         WatchdogEnvironment.SmtpUsernameKey or WatchdogEnvironment.SmtpPasswordKey => args.Smtp is not null,
         WatchdogEnvironment.DirectTokenKey => args.Direct is not null,
         WatchdogEnvironment.HeartbeatKey => args.HeartbeatUrl is not null,
+        WatchdogEnvironment.ChronicleSecretKey => args.Chronicle is not null,
+        WatchdogEnvironment.ChronicleAuthorityKey => args.Chronicle?.CertificateAuthority is not null,
+        WatchdogEnvironment.GitHubAuditKey => args.GitHubAudit is not null,
         _ => false
     };
 
@@ -203,6 +211,96 @@ public sealed class Watchdog : ComponentResource
         }
     }
 
+    void DeclareJob(
+        string name,
+        WatchdogArgs args,
+        WatchdogJob job,
+        string? channelsSecret,
+        IReadOnlyDictionary<string, string> labels,
+        Func<string, bool, ObjectMetaArgs> metadata,
+        CustomResourceOptions resourceOptions)
+    {
+        var jobName = $"{KubernetesName}-{job.Kind}";
+        var suffix = $"{name}-{job.Kind}";
+        var serviceAccount = new ServiceAccount(
+            $"{suffix}-sa",
+            new ServiceAccountArgs { Metadata = metadata(jobName, true), AutomountServiceAccountToken = true },
+            resourceOptions);
+        var subjects = new[] { new SubjectArgs { Kind = "ServiceAccount", Name = jobName, Namespace = args.Namespace } };
+        var dependsOn = new CustomResourceOptions { Parent = this, Provider = args.Provider, DependsOn = [serviceAccount, .. args.DependsOn] };
+
+        // What the job is allowed to do in its own namespace: keep its own alert state and its own runner state, see its own Jobs.
+        string[] stateMaps = [$"{KubernetesName}-state-{job.CheckName}", .. job.StateConfigMaps];
+        var ownRules = new List<PolicyRuleArgs>
+        {
+            new() { ApiGroups = [string.Empty], Resources = ["configmaps"], ResourceNames = [.. stateMaps], Verbs = ["get", "patch"] },
+            new() { ApiGroups = [string.Empty], Resources = ["configmaps"], Verbs = ["create"] },
+            new() { ApiGroups = ["batch"], Resources = ["jobs"], Verbs = ["list"] },
+            new() { ApiGroups = ["batch"], Resources = ["cronjobs"], ResourceNames = [jobName], Verbs = ["get"] }
+        };
+        Bind(suffix, args, metadata(jobName, true), "Role", [.. ownRules], subjects, resourceOptions, serviceAccount);
+        foreach (var (@namespace, rules) in job.NamespacedRules)
+        {
+            Bind($"{suffix}-{@namespace}", args, new ObjectMetaArgs { Name = $"{jobName}-reader", Namespace = @namespace }, "Role", [.. rules], subjects, resourceOptions, serviceAccount);
+        }
+
+        if (job.ClusterRules.Count > 0)
+        {
+            Bind($"{suffix}-cluster", args, new ObjectMetaArgs { Name = jobName }, "ClusterRole", [.. job.ClusterRules], subjects, resourceOptions, serviceAccount);
+        }
+
+        string? jobSecret = null;
+        if (job.Secrets.Count > 0)
+        {
+            var data = new InputMap<string>();
+            foreach (var (key, value) in job.Secrets)
+            {
+                data[key] = StageManagerSecrets.Protect(value);
+            }
+
+            jobSecret = $"{jobName}-credentials";
+            _ = new Secret($"{suffix}-credentials", new SecretArgs { Metadata = metadata(jobSecret, true), StringData = data }, resourceOptions);
+        }
+
+        var template = BuildPodTemplate(args, [job.CheckName], channelsSecret, labels, job, jobSecret);
+        _ = new CronJob(
+            $"{suffix}-cronjob",
+            new CronJobArgs
+            {
+                Metadata = metadata(jobName, true),
+                Spec = CronJobSpec(job.Schedule, false, args.DeadlineSeconds ?? DefaultDeadlineSeconds, template([job.Kind]))
+            },
+            dependsOn);
+    }
+
+    void Bind(
+        string name,
+        WatchdogArgs args,
+        ObjectMetaArgs metadata,
+        string kind,
+        PolicyRuleArgs[] rules,
+        SubjectArgs[] subjects,
+        CustomResourceOptions resourceOptions,
+        ServiceAccount serviceAccount)
+    {
+        var bindingMetadata = new ObjectMetaArgs { Name = metadata.Name, Namespace = metadata.Namespace };
+        if (kind == "ClusterRole")
+        {
+            var role = new ClusterRole($"{name}-role", new ClusterRoleArgs { Metadata = metadata, Rules = rules }, resourceOptions);
+            _ = new ClusterRoleBinding(
+                $"{name}-role-binding",
+                new ClusterRoleBindingArgs { Metadata = bindingMetadata, RoleRef = new RoleRefArgs { ApiGroup = "rbac.authorization.k8s.io", Kind = kind, Name = metadata.Name! }, Subjects = subjects },
+                new CustomResourceOptions { Parent = this, Provider = args.Provider, DependsOn = [role, serviceAccount, .. args.DependsOn] });
+            return;
+        }
+
+        var namespaced = new Role($"{name}-role", new RoleArgs { Metadata = metadata, Rules = rules }, resourceOptions);
+        _ = new RoleBinding(
+            $"{name}-role-binding",
+            new RoleBindingArgs { Metadata = bindingMetadata, RoleRef = new RoleRefArgs { ApiGroup = "rbac.authorization.k8s.io", Kind = kind, Name = metadata.Name! }, Subjects = subjects },
+            new CustomResourceOptions { Parent = this, Provider = args.Provider, DependsOn = [namespaced, serviceAccount, .. args.DependsOn] });
+    }
+
     string? DeclareSecret(string name, WatchdogArgs args, Func<string, bool, ObjectMetaArgs> metadata, CustomResourceOptions resourceOptions)
     {
         var data = new InputMap<string>();
@@ -221,6 +319,9 @@ public sealed class Watchdog : ComponentResource
         Protect(WatchdogEnvironment.SmtpPasswordKey, args.Smtp?.Password);
         Protect(WatchdogEnvironment.DirectTokenKey, args.Direct?.Token);
         Protect(WatchdogEnvironment.HeartbeatKey, args.HeartbeatUrl);
+        Protect(WatchdogEnvironment.ChronicleSecretKey, args.Chronicle?.ClientSecret);
+        Protect(WatchdogEnvironment.ChronicleAuthorityKey, args.Chronicle?.CertificateAuthority);
+        Protect(WatchdogEnvironment.GitHubAuditKey, args.GitHubAudit?.Token);
         if (!any)
         {
             return null;
@@ -231,10 +332,27 @@ public sealed class Watchdog : ComponentResource
         return secretName;
     }
 
-    Func<IEnumerable<string>, PodTemplateSpecArgs> BuildPodTemplate(WatchdogArgs args, IReadOnlyList<string> checks, string? secretName, IReadOnlyDictionary<string, string> labels)
+    Func<IEnumerable<string>, PodTemplateSpecArgs> BuildPodTemplate(WatchdogArgs args, IReadOnlyList<string> checks, string? secretName, IReadOnlyDictionary<string, string> labels, WatchdogJob? job, string? jobSecretName)
     {
+        var serviceAccount = job is null ? KubernetesName : $"{KubernetesName}-{job.Kind}";
         var environment = new List<EnvVarArgs>();
-        environment.AddRange(WatchdogEnvironment.Plain(KubernetesName, args, checks).Select(pair => new EnvVarArgs { Name = pair.Key, Value = pair.Value }));
+        var plain = WatchdogEnvironment.Plain(KubernetesName, args, checks);
+        if (job is null)
+        {
+            environment.AddRange(plain.Select(pair => new EnvVarArgs { Name = pair.Key, Value = pair.Value }));
+        }
+        else
+        {
+            // A job kind delivers through the same channels with the same timing, and nothing else of the cluster run's settings.
+            var shared = plain.Where(pair => WatchdogEnvironment.Shared.Contains(pair.Key) || pair.Key == "WATCHDOG_STATE_CONFIGMAP");
+            environment.AddRange(shared.Concat(job.Environment).Append(new("WATCHDOG_CRONJOB", serviceAccount)).Append(new("WATCHDOG_SCHEDULE", job.Schedule)).Select(pair => new EnvVarArgs { Name = pair.Key, Value = pair.Value }));
+            environment.AddRange(job.Secrets.Keys.Select(key => new EnvVarArgs
+            {
+                Name = key,
+                ValueFrom = new EnvVarSourceArgs { SecretKeyRef = new SecretKeySelectorArgs { Name = jobSecretName!, Key = key } }
+            }));
+        }
+
         environment.Add(new EnvVarArgs { Name = "WATCHDOG_NAMESPACE", Value = args.Namespace });
         environment.Add(new EnvVarArgs { Name = "POD_NAMESPACE", ValueFrom = new EnvVarSourceArgs { FieldRef = new ObjectFieldSelectorArgs { FieldPath = "metadata.namespace" } } });
 
@@ -243,7 +361,9 @@ public sealed class Watchdog : ComponentResource
 
         if (secretName is not null)
         {
-            string[] keys = [WatchdogEnvironment.DiscordKey, WatchdogEnvironment.SmtpUsernameKey, WatchdogEnvironment.SmtpPasswordKey, WatchdogEnvironment.DirectTokenKey, WatchdogEnvironment.HeartbeatKey];
+            string[] keys = job is null
+                ? [WatchdogEnvironment.DiscordKey, WatchdogEnvironment.SmtpUsernameKey, WatchdogEnvironment.SmtpPasswordKey, WatchdogEnvironment.DirectTokenKey, WatchdogEnvironment.HeartbeatKey, WatchdogEnvironment.ChronicleSecretKey, WatchdogEnvironment.ChronicleAuthorityKey, WatchdogEnvironment.GitHubAuditKey]
+                : [WatchdogEnvironment.DiscordKey, WatchdogEnvironment.SmtpUsernameKey, WatchdogEnvironment.SmtpPasswordKey, WatchdogEnvironment.DirectTokenKey, WatchdogEnvironment.HeartbeatKey];
             environment.AddRange(keys.Where(key => SecretHolds(args, key)).Select(key => new EnvVarArgs
             {
                 Name = key,
@@ -256,7 +376,7 @@ public sealed class Watchdog : ComponentResource
             Metadata = new ObjectMetaArgs { Labels = labels.ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal) },
             Spec = new PodSpecArgs
             {
-                ServiceAccountName = KubernetesName,
+                ServiceAccountName = serviceAccount,
                 RestartPolicy = "Never",
                 SecurityContext = new PodSecurityContextArgs { RunAsNonRoot = true, SeccompProfile = new SeccompProfileArgs { Type = "RuntimeDefault" } },
                 Containers =

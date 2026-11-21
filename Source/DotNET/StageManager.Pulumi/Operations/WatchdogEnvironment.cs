@@ -26,6 +26,25 @@ internal static class WatchdogEnvironment
     /// <summary>The heartbeat URL, a secret.</summary>
     internal const string HeartbeatKey = "WATCHDOG_HEARTBEAT_URL";
 
+    /// <summary>The Secret key and variable of the Chronicle client secret.</summary>
+    internal const string ChronicleSecretKey = "CHRONICLE_CLIENT_SECRET";
+
+    /// <summary>The Secret key and variable of the Chronicle certificate authority.</summary>
+    internal const string ChronicleAuthorityKey = "CHRONICLE_CA_CERTIFICATE";
+
+    /// <summary>The Secret key and variable of the GitHub audit token.</summary>
+    internal const string GitHubAuditKey = "GITHUB_AUDIT_TOKEN";
+
+    /// <summary>
+    /// The variables every job kind needs to deliver an alert the way the cluster run does: its channels and its timing.
+    /// </summary>
+    internal static readonly IReadOnlyList<string> Shared =
+    [
+        "WATCHDOG_DEPLOYMENT", "REALERT_SECONDS", "ESCALATE_AFTER_SECONDS", "DEADLINE_SECONDS",
+        "SMTP_SERVER", "SMTP_PORT", "ALERT_FROM_NAME", "ALERT_FROM", "ALERT_TO",
+        "DIRECT_ALERTS_URL", "DIRECT_ALERTS_SOURCE"
+    ];
+
     /// <summary>
     /// Builds the variables that are not secret.
     /// </summary>
@@ -69,6 +88,20 @@ internal static class WatchdogEnvironment
             Add("ALERT_TO", smtp.To);
         }
 
+        if (args.Prometheus is { } prometheus)
+        {
+            Add("PROMETHEUS_URL", prometheus.Url);
+            Add("PLATFORM_NAMESPACE", prometheus.PlatformNamespace);
+            Add("PROMETHEUS_SERIES_THRESHOLD", prometheus.SeriesThreshold?.ToString(CultureInfo.InvariantCulture));
+        }
+
+        if (args.Chronicle is { } chronicle)
+        {
+            Add("CHRONICLE_URL", chronicle.Url);
+            Add("CHRONICLE_CLIENT_ID", chronicle.ClientId);
+        }
+
+        Add("GITHUB_AUDIT_ORG", args.GitHubAudit?.Organization);
         Add("DIRECT_ALERTS_URL", args.Direct?.Url);
         Add("DIRECT_ALERTS_SOURCE", args.Direct?.Source);
 

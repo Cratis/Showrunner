@@ -29,7 +29,7 @@ internal static class WatchdogAccess
             Add(string.Empty, "pods", "list");
         }
 
-        if (Runs(WatchdogChecks.Nodes, WatchdogChecks.Volumes))
+        if (Runs(WatchdogChecks.Nodes, WatchdogChecks.Volumes, WatchdogChecks.Metrics))
         {
             Add(string.Empty, "nodes", "list");
         }

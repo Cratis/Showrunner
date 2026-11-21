@@ -13,7 +13,18 @@ public static class AuthProxyContract
     /// </summary>
     public const string SecretsDirectory = "/run/secrets/cratis";
 
+    /// <summary>
+    /// Where the custom pages are mounted.
+    /// </summary>
+    public const string PagesDirectory = "/mnt/pages";
+
+    /// <summary>
+    /// Where the data protection key ring is mounted.
+    /// </summary>
+    public const string KeysDirectory = "/keys";
+
     const string Prefix = "Cratis__AuthProxy__Application__";
+    const string Root = "Cratis__AuthProxy__";
     const string ServicesPrefix = "Cratis__AuthProxy__Services__application__";
 
     /// <summary>
@@ -26,7 +37,6 @@ public static class AuthProxyContract
         var spec = performance.Spec;
         var variables = new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            [$"{Prefix}EnvironmentName"] = spec.Environment.Name,
             [$"{Prefix}Onboarding"] = spec.Onboarding.Enabled ? "true" : "false",
 
             // Development allows HTTP; nothing in a cluster is allowed to.
@@ -39,6 +49,30 @@ public static class AuthProxyContract
             var provider = spec.AuthProxy.Providers[index];
             variables[$"{Prefix}Providers__{index}__Kind"] = provider.Kind.ToString();
             variables[$"{Prefix}Providers__{index}__Identity"] = provider.Identity;
+        }
+
+        if (!string.IsNullOrWhiteSpace(spec.Environment.Name))
+        {
+            variables[$"{Prefix}EnvironmentName"] = spec.Environment.Name;
+        }
+
+        AddTenancy(variables, spec.AuthProxy.Tenancy);
+        AddRequiredClaims(variables, spec.AuthProxy.RequiredClaims);
+        if (spec.AuthProxy.Pages is not null)
+        {
+            variables[$"{Root}PagesPath"] = PagesDirectory;
+        }
+
+        if (spec.AuthProxy.DataProtection is not null)
+        {
+            variables[$"{Root}DataProtectionKeysPath"] = KeysDirectory;
+        }
+
+        if (spec.Onboarding.Enabled)
+        {
+            // The contract only takes HTTPS for its lobby addresses, and Ante is in the cluster: its own Service is
+            // where the invitation paths on the public host are routed to. The environment's key still wins.
+            variables[$"{Root}Invite__Lobby__Backend__BaseUrl"] = $"http://{PerformanceNames.For(performance).Ante}:{spec.Onboarding.Port}/";
         }
 
         AddApplicationService(variables, performance);
@@ -58,6 +92,12 @@ public static class AuthProxyContract
         var files = environment.Values
             .Where(pair => EnvironmentKeys.IsForAuthProxy(pair.Key, spec))
             .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
+
+        // What the spec names wins over the environment: the operator reads it, so it is the one that is current.
+        foreach (var provider in spec.AuthProxy.Providers.Where(provider => provider.Scopes.Count > 0))
+        {
+            files[$"{EnvironmentKeys.ProvidersPrefix}{provider.Identity}.scopes"] = string.Join(',', provider.Scopes);
+        }
 
         if (!spec.Onboarding.Enabled)
         {
@@ -87,9 +127,56 @@ public static class AuthProxyContract
     /// <param name="performance">The Performance.</param>
     static void AddApplicationService(Dictionary<string, string> variables, Performance performance)
     {
+        if (performance.Spec.AuthProxy.Upstream is { } upstream)
+        {
+            AddUpstream(variables, upstream);
+            return;
+        }
+
         var port = PublishedStageContract.IsPublished(performance.Spec) ? PublishedStageContract.Port : performance.Spec.Application.Port;
         var address = $"http://{PerformanceNames.For(performance).Application}:{port}/";
         variables[$"{ServicesPrefix}Backend__BaseUrl"] = address;
         variables[$"{ServicesPrefix}Frontend__BaseUrl"] = address;
+    }
+
+    static void AddUpstream(Dictionary<string, string> variables, AuthProxyUpstreamSpec upstream)
+    {
+        variables[$"{ServicesPrefix}Frontend__BaseUrl"] = upstream.Url;
+        if (upstream.ThirdParty)
+        {
+            // It has no /.cratis/me to ask who is calling: AuthProxy only decides who may get in.
+            variables[$"{ServicesPrefix}ResolveIdentityDetails"] = "false";
+            return;
+        }
+
+        variables[$"{ServicesPrefix}Backend__BaseUrl"] = upstream.Url;
+    }
+
+    static void AddTenancy(Dictionary<string, string> variables, AuthProxyTenancySpec? tenancy)
+    {
+        const string resolution = $"{Root}TenantResolutions__0__";
+        if (!string.IsNullOrWhiteSpace(tenancy?.TenantsEndpoint))
+        {
+            variables[$"{resolution}Strategy"] = "Selection";
+            variables[$"{resolution}Options__TenantsEndpoint"] = tenancy.TenantsEndpoint;
+        }
+        else if (!string.IsNullOrWhiteSpace(tenancy?.TenantId))
+        {
+            variables[$"{resolution}Strategy"] = "Default";
+            variables[$"{resolution}Options__TenantId"] = tenancy.TenantId;
+        }
+    }
+
+    static void AddRequiredClaims(Dictionary<string, string> variables, IList<AuthProxyRequiredClaim> claims)
+    {
+        for (var index = 0; index < claims.Count; index++)
+        {
+            var prefix = $"{Root}Authorization__RequiredClaims__{index}__";
+            variables[$"{prefix}Claim"] = claims[index].Claim;
+            for (var value = 0; value < claims[index].AnyOf.Count; value++)
+            {
+                variables[$"{prefix}AnyOf__{value}"] = claims[index].AnyOf[value];
+            }
+        }
     }
 }

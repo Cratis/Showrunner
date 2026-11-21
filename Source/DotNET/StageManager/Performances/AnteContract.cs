@@ -53,6 +53,13 @@ public static class AnteContract
         AddList(variables, "Ante__Onboarding__InvitationTypes", onboarding.InvitationTypes);
         AddList(variables, "Ante__Onboarding__Personas", onboarding.Personas);
         AddList(variables, "Ante__Onboarding__AllowedLocales", onboarding.AllowedLocales);
+        AddList(variables, "Ante__Organization__ReservedNames", onboarding.ReservedOrganizationNames);
+        if (onboarding.RegistrationReview)
+        {
+            variables["Ante__Onboarding__RegistrationReview"] = "true";
+        }
+
+        AddBranding(variables, onboarding.Branding);
         if (onboarding.Legal is not null)
         {
             variables["Ante__Onboarding__Legal__Folder"] = LegalDirectory;
@@ -98,6 +105,27 @@ public static class AnteContract
         }
 
         return files;
+    }
+
+    static void AddBranding(Dictionary<string, string> variables, AnteBrandingSpec? branding)
+    {
+        if (branding is null)
+        {
+            return;
+        }
+
+        AddWhenGiven(variables, "Ante__LogoUrl", branding.LogoUrl);
+        AddWhenGiven(variables, "Ante__CustomCssUrl", branding.CustomCssUrl);
+        AddWhenGiven(variables, "Ante__PageTitle", branding.PageTitle);
+        AddWhenGiven(variables, "Ante__SplashMessage", branding.SplashMessage);
+    }
+
+    static void AddWhenGiven(Dictionary<string, string> variables, string name, string? value)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            variables[name] = value;
+        }
     }
 
     static void AddAttestation(Dictionary<string, string> variables, Performance performance, OnboardingIdentity identity)

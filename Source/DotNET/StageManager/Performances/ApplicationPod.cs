@@ -32,7 +32,14 @@ public static class ApplicationPod
     /// </summary>
     /// <param name="application">The application.</param>
     /// <returns>The requirements, or null when none are set.</returns>
-    public static V1ResourceRequirements? Resources(ApplicationSpec application) => application.Resources is { } resources && (resources.Requests.Count > 0 || resources.Limits.Count > 0)
+    public static V1ResourceRequirements? Resources(ApplicationSpec application) => ResourcesOf(application.Resources);
+
+    /// <summary>
+    /// Creates the resource requirements of a container.
+    /// </summary>
+    /// <param name="resources">The resources spec, or null.</param>
+    /// <returns>The requirements, or null when none are set.</returns>
+    public static V1ResourceRequirements? ResourcesOf(ResourcesSpec? resources) => resources is not null && (resources.Requests.Count > 0 || resources.Limits.Count > 0)
         ? new()
         {
             Requests = Quantities(resources.Requests),

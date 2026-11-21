@@ -31,16 +31,21 @@ public class PerformancePreparation(IClusterResources cluster, IEnvironmentResol
             return null;
         }
 
-        var source = PublishedStageContract.IsPublished(performance.Spec)
-            ? await PreparePublishedAsync(performance, status, cancellationToken)
-            : await PrepareChronicleAsync(performance, status, cancellationToken);
+        var source = await PrepareSourceAsync(performance, status, cancellationToken);
         if (source is null)
         {
             status.Block();
             return null;
         }
 
-        var environment = await ResolveEnvironmentAsync(performance, status, cancellationToken);
+        var environment = GatewayMode.NeedsEnvironment(performance.Spec)
+            ? await ResolveEnvironmentAsync(performance, status, cancellationToken)
+            : NoEnvironment(status);
+        if (environment is not null)
+        {
+            environment = await AddProviderCredentialsAsync(cluster, performance, environment, status, cancellationToken);
+        }
+
         if (environment is null)
         {
             status.Block();
@@ -58,6 +63,55 @@ public class PerformancePreparation(IClusterResources cluster, IEnvironmentResol
         return new(source.Connection, environment, source.Published?.Storage, source.Published?.NotesToken, source.ReadSide);
     }
 
+    static ResolvedEnvironment NoEnvironment(PerformanceStatusBuilder status)
+    {
+        status.Set("EnvironmentResolved", true, "NotNeeded", "The gateway takes nothing from a Cratis environment.");
+        return new(string.Empty, new Dictionary<string, string>(StringComparer.Ordinal));
+    }
+
+    /// <summary>
+    /// Reads the client id and the client secret of every provider that names a credentials Secret and adds them to the environment, under the keys the environment would have held them.
+    /// </summary>
+    /// <param name="cluster">The cluster to read the Secrets from.</param>
+    /// <param name="performance">The Performance.</param>
+    /// <param name="environment">The resolved environment.</param>
+    /// <param name="status">The status to record the outcome in.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The environment with the credentials, or null when a Secret is missing, which is then recorded in <paramref name="status"/>.</returns>
+    static async Task<ResolvedEnvironment?> AddProviderCredentialsAsync(IClusterResources cluster, Performance performance, ResolvedEnvironment environment, PerformanceStatusBuilder status, CancellationToken cancellationToken)
+    {
+        var spec = performance.Spec.AuthProxy;
+        var providers = spec.Enabled ? spec.Providers.Where(provider => provider.CredentialsSecretRef is not null).ToList() : [];
+        if (providers.Count == 0)
+        {
+            return environment;
+        }
+
+        var @namespace = performance.Metadata.NamespaceProperty;
+        var values = new Dictionary<string, string>(environment.Values, StringComparer.Ordinal);
+        foreach (var provider in providers)
+        {
+            var reference = provider.CredentialsSecretRef!;
+            var clientId = await cluster.GetSecretValueAsync(@namespace, reference.Name, reference.ClientIdKey, cancellationToken);
+            var clientSecret = await cluster.GetSecretValueAsync(@namespace, reference.Name, reference.ClientSecretKey, cancellationToken);
+            if (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(clientSecret))
+            {
+                status.Set(
+                    "ProviderCredentialsResolved",
+                    false,
+                    "ProviderCredentialsNotFound",
+                    $"The Secret '{reference.Name}' of the provider '{provider.Identity}' does not exist or lacks the key '{reference.ClientIdKey}' or '{reference.ClientSecretKey}'.");
+                return null;
+            }
+
+            values[$"{EnvironmentKeys.ProvidersPrefix}{provider.Identity}.clientId"] = clientId;
+            values[$"{EnvironmentKeys.ProvidersPrefix}{provider.Identity}.clientSecret"] = clientSecret;
+        }
+
+        status.Set("ProviderCredentialsResolved", true, "Resolved", "The credentials Secret of every provider that names one exists.");
+        return environment with { Values = values };
+    }
+
     static void RecordEnvironmentComplete(PerformanceStatusBuilder status, ResolvedEnvironment environment, IReadOnlyList<string> missing) =>
         status.Set(
             "EnvironmentComplete",
@@ -72,6 +126,19 @@ public class PerformancePreparation(IClusterResources cluster, IEnvironmentResol
             (_, 0) => ("Mapped", $"The Production '{production}' configures every sink the application uses: {string.Join(", ", used)}."),
             _ => ("MissingSinks", $"The Production '{production}' does not configure {missing.Count} sink(s) the application uses: {string.Join(", ", missing)}.")
         };
+
+    async Task<PreparationSource?> PrepareSourceAsync(Performance performance, PerformanceStatusBuilder status, CancellationToken cancellationToken)
+    {
+        // A gateway runs AuthProxy only: it has no Chronicle to connect to.
+        if (GatewayMode.IsGateway(performance.Spec))
+        {
+            return new PreparationSource(null, null, null);
+        }
+
+        return PublishedStageContract.IsPublished(performance.Spec)
+            ? await PreparePublishedAsync(performance, status, cancellationToken)
+            : await PrepareChronicleAsync(performance, status, cancellationToken);
+    }
 
     async Task<PreparationSource?> PreparePublishedAsync(Performance performance, PerformanceStatusBuilder status, CancellationToken cancellationToken)
     {

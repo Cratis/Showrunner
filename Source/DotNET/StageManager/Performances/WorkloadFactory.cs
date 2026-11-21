@@ -29,7 +29,21 @@ public static class WorkloadFactory
         foreach (var mount in workload.ConfigMapMounts)
         {
             volumes.Add(new() { Name = mount.VolumeName, ConfigMap = new() { Name = mount.ConfigMapName } });
-            mounts.Add(new() { Name = mount.VolumeName, MountPath = mount.MountPath, ReadOnlyProperty = true });
+            if (mount.Files is null)
+            {
+                mounts.Add(new() { Name = mount.VolumeName, MountPath = mount.MountPath, ReadOnlyProperty = true });
+                continue;
+            }
+
+            // A folder mount exposes each key as a symbolic link, which a static file server reports with the length
+            // of the link. One mount per file, by sub path, serves the real file.
+            mounts.AddRange(mount.Files.Select(file => new V1VolumeMount
+            {
+                Name = mount.VolumeName,
+                MountPath = $"{mount.MountPath}/{file}",
+                SubPath = file,
+                ReadOnlyProperty = true
+            }));
         }
 
         var shape = workload.Shape ?? new PodShape();

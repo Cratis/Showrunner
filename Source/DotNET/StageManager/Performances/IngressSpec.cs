@@ -31,4 +31,10 @@ public class IngressSpec
     /// </summary>
     [Description("The cert-manager issuer that issues the certificate.")]
     public TlsIssuerReference? TlsIssuer { get; set; }
+
+    /// <summary>
+    /// Gets or sets annotations added to the Ingress, for example proxy timeouts of the ingress controller.
+    /// </summary>
+    [Description("Annotations added to the Ingress, for example nginx.ingress.kubernetes.io/proxy-read-timeout. They win over the annotation of the TLS issuer.")]
+    public IDictionary<string, string> Annotations { get; set; } = new Dictionary<string, string>(StringComparer.Ordinal);
 }

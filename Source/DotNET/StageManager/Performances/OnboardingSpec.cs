@@ -85,4 +85,22 @@ public class OnboardingSpec
     /// </summary>
     [Description("The providers attested invitation exchange accepts. When empty, Ante keeps the legacy exchange.")]
     public IList<AttestedProvider> AttestedProviders { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets whether a completed sign-up is held for review.
+    /// </summary>
+    [Description("Whether a completed sign-up is held for the application's review instead of completing at once.")]
+    public bool RegistrationReview { get; set; }
+
+    /// <summary>
+    /// Gets or sets the organization names nobody can claim.
+    /// </summary>
+    [Description("The organization names nobody can claim, compared ignoring case, for example admin and api.")]
+    public IList<string> ReservedOrganizationNames { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets how Ante looks. Omit to keep Ante's own look.
+    /// </summary>
+    [Description("How Ante looks: logo, stylesheet, tab title and loading screen. Omit to keep Ante's own.")]
+    public AnteBrandingSpec? Branding { get; set; }
 }

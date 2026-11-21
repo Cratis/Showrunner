@@ -48,7 +48,9 @@ public static class EnvironmentKeys
         {
             foreach (var provider in spec.AuthProxy.Providers)
             {
-                keys.AddRange(RequiredFor(provider).Select(key => $"{ProvidersPrefix}{provider.Identity}.{key}"));
+                keys.AddRange(RequiredFor(provider)
+                    .Where(key => !IsSuppliedByCredentials(provider, key))
+                    .Select(key => $"{ProvidersPrefix}{provider.Identity}.{key}"));
             }
         }
 
@@ -71,6 +73,15 @@ public static class EnvironmentKeys
         AuthProxyProviderKind.OpenId => ["authority", "clientId", "clientSecret"],
         _ => ["clientId", "clientSecret"]
     };
+
+    /// <summary>
+    /// Determines whether the credentials Secret of a provider supplies a key, so the environment does not have to.
+    /// </summary>
+    /// <param name="provider">The provider.</param>
+    /// <param name="key">The key, without prefix.</param>
+    /// <returns>True for the client id and the client secret of a provider that names a credentials Secret.</returns>
+    public static bool IsSuppliedByCredentials(AuthProxyProvider provider, string key) =>
+        provider.CredentialsSecretRef is not null && (key == "clientId" || key == "clientSecret");
 
     /// <summary>
     /// Determines whether a key is for one of the declared providers.

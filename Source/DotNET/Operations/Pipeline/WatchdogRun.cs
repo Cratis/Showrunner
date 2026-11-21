@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Showrunner.Operations.Alerts;
+using Cratis.Showrunner.Operations.Checks;
 using Cratis.Showrunner.Operations.State;
 
 namespace Cratis.Showrunner.Operations.Pipeline;
@@ -141,6 +142,7 @@ public sealed class WatchdogRun(
         fixedFindings = Merge(fixedFindings, runFindings.ToDictionary(finding => finding.Key, StringComparer.Ordinal));
 
         var findings = await Confirm(fixedFindings, started, windowStarted, cancellationToken);
+        var summaryStreaks = ApplySummaryStreaks(findings, snapshot.SummaryStreaks);
         var now = timeProvider.GetUtcNow();
         var firstSeen = findings.Keys.ToImmutableDictionary(
             key => key,
@@ -216,11 +218,29 @@ public sealed class WatchdogRun(
             {
                 LastAlerted = lastAlerted,
                 FirstSeen = firstSeen,
+                SummaryStreaks = summaryStreaks,
                 LastCheck = started,
                 ReportedFailedJobs = [.. reported.Order(StringComparer.Ordinal)]
             },
             cancellationToken);
         await Ping(false, cancellationToken);
+    }
+
+    /// <summary>
+    /// A batch node's unreadable summary is held back until it has failed several consecutive runs.
+    /// </summary>
+    static ImmutableDictionary<string, int> ApplySummaryStreaks(Dictionary<string, Finding> findings, ImmutableDictionary<string, int> previous)
+    {
+        var streaks = findings.Keys
+            .Where(key => key.StartsWith(VolumesCheck.BatchSummaryPrefix, StringComparison.Ordinal))
+            .ToImmutableDictionary(key => key, key => (previous.TryGetValue(key, out var count) ? count : 0) + 1, StringComparer.Ordinal);
+        foreach (var (key, streak) in streaks.Where(entry => entry.Value < VolumesCheck.BatchSummaryFailureRuns))
+        {
+            _ = streak;
+            findings.Remove(key);
+        }
+
+        return streaks;
     }
 
     async Task<Dictionary<string, Finding>> Confirm(IReadOnlyDictionary<string, Finding> fixedFindings, DateTimeOffset started, DateTimeOffset windowStarted, CancellationToken cancellationToken)

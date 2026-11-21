@@ -57,7 +57,13 @@ internal static class KubernetesMapper
     /// <returns>The node.</returns>
     internal static NodeInfo Node(V1Node node) => new(
         node.Metadata.Name,
-        [.. (node.Status?.Conditions ?? []).Select(condition => new NodeCondition(condition.Type, condition.Status, condition.Reason))]);
+        [.. (node.Status?.Conditions ?? []).Select(condition => new NodeCondition(condition.Type, condition.Status, condition.Reason))])
+    {
+        Labels = new Dictionary<string, string>(node.Metadata.Labels ?? new Dictionary<string, string>()),
+        Created = At(node.Metadata.CreationTimestamp),
+        Deleting = node.Metadata.DeletionTimestamp is not null,
+        TaintKeys = [.. (node.Spec?.Taints ?? []).Select(taint => taint.Key)]
+    };
 
     /// <summary>
     /// Maps a CronJob.

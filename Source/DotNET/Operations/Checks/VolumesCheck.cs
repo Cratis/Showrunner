@@ -21,6 +21,17 @@ public sealed class VolumesCheck(IClusterReader reader, VolumesCheckOptions opti
     public const string CheckName = "volumes";
 
     /// <summary>
+    /// The key prefix of an unreadable kubelet summary on a batch node. Such a finding is held back until it has failed
+    /// <see cref="BatchSummaryFailureRuns"/> consecutive runs.
+    /// </summary>
+    public const string BatchSummaryPrefix = "batch-node:";
+
+    /// <summary>
+    /// A batch node's kubelet stalls now and then under build load; one that still cannot be read after this many consecutive runs is an incident.
+    /// </summary>
+    public const int BatchSummaryFailureRuns = 3;
+
+    /// <summary>
     /// The kubelet reports volume usage a few minutes after a container starts.
     /// </summary>
     static readonly TimeSpan _statsGrace = TimeSpan.FromMinutes(10);
@@ -44,11 +55,18 @@ public sealed class VolumesCheck(IClusterReader reader, VolumesCheckOptions opti
         var summarized = new HashSet<string>(StringComparer.Ordinal);
         foreach (var node in nodes)
         {
+            // A node on its way out, or one that has only just joined, is expected to have no summary; NodesCheck still
+            // reports it NotReady and the node is read normally once it has settled.
+            if (node.IsChanging(context.Now))
+            {
+                continue;
+            }
+
             var read = await ReadSummary(node.Name, cancellationToken);
             if (read.Usage is null)
             {
                 findings.Add(new Finding(
-                    $"node:{node.Name}:summary",
+                    $"{(node.IsBatch ? BatchSummaryPrefix : "node:")}{node.Name}:summary",
                     $"could not read kubelet summary for node {node.Name}: {Redaction.Summarize(read.Error)}; inspect kubelet health and watchdog access",
                     AlertSeverity.Warning));
                 continue;

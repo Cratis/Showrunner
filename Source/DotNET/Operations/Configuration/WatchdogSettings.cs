@@ -113,6 +113,11 @@ public sealed record WatchdogSettings
     public AgentHarnessOptions? AgentHarness { get; init; }
 
     /// <summary>
+    /// Gets how the orphaned volume sweep reaches the cloud, or <see langword="null"/> when it does not run.
+    /// </summary>
+    public VolumeSweeperSettings? VolumeSweeper { get; init; }
+
+    /// <summary>
     /// Gets the options of the GitHub Actions schedule audit.
     /// </summary>
     public ActionsAuditOptions ActionsAudit { get; init; } = new();

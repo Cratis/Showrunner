@@ -34,7 +34,8 @@ public static class WatchdogSettingsReader
         ChronicleObserversCheck.CheckName,
         ActionsScheduleAuditCheck.CheckName,
         RunnerPoolCheck.CheckName,
-        AgentHarnessCheck.CheckName
+        AgentHarnessCheck.CheckName,
+        VolumeSweepCheck.CheckName
     ];
 
     /// <summary>
@@ -102,6 +103,7 @@ public static class WatchdogSettingsReader
             },
             Chronicle = Chronicle(Get, GetUrl("CHRONICLE_URL"), problems),
             Runners = Runners(Get, problems),
+            VolumeSweeper = VolumeSweeper(Get, problems),
             AgentHarness = Get("AGENT_NAMESPACE") is { } agentNamespace
                 ? new AgentHarnessOptions
                 {
@@ -189,6 +191,11 @@ public static class WatchdogSettingsReader
             enabled.Add(AgentHarnessCheck.CheckName);
         }
 
+        if (settings.VolumeSweeper is not null)
+        {
+            enabled.Add(VolumeSweepCheck.CheckName);
+        }
+
         return enabled;
     }
 
@@ -213,6 +220,7 @@ public static class WatchdogSettingsReader
         Require(ActionsScheduleAuditCheck.CheckName, settings.GitHubAuditToken is not null, "GITHUB_AUDIT_TOKEN");
         Require(RunnerPoolCheck.CheckName, settings.Runners is not null, "RUNNER_NAMESPACE");
         Require(AgentHarnessCheck.CheckName, settings.AgentHarness is not null, "AGENT_NAMESPACE");
+        Require(VolumeSweepCheck.CheckName, settings.VolumeSweeper is not null, "UPCLOUD_USERNAME");
     }
 
     static TimeSpan? ScheduleInterval(string? schedule)
@@ -290,6 +298,31 @@ public static class WatchdogSettingsReader
         }
 
         return new SmtpOptions(server, port, get("SMTP_USERNAME")!, get("SMTP_PASSWORD")!, get("ALERT_FROM_NAME")!, get("ALERT_FROM")!, get("ALERT_TO")!);
+    }
+
+    static VolumeSweeperSettings? VolumeSweeper(Func<string, string?> get, List<string> problems)
+    {
+        var username = get("UPCLOUD_USERNAME");
+        var password = get("UPCLOUD_PASSWORD");
+        if (username is null && password is null)
+        {
+            return null;
+        }
+
+        if (username is null || password is null)
+        {
+            problems.Add("the volume sweeper needs both UPCLOUD_USERNAME and UPCLOUD_PASSWORD");
+            return null;
+        }
+
+        var defaults = new VolumeSweepOptions();
+        var options = defaults with
+        {
+            MinimumAge = int.TryParse(get("MIN_AGE_SECONDS"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var age) && age >= 0 ? TimeSpan.FromSeconds(age) : defaults.MinimumAge,
+            MaximumPerRun = int.TryParse(get("MAX_PER_RUN"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var most) && most >= 0 ? most : defaults.MaximumPerRun,
+            DryRun = string.Equals(get("DRY_RUN"), "true", StringComparison.OrdinalIgnoreCase)
+        };
+        return new VolumeSweeperSettings(username, password, options);
     }
 
     static RunnerPoolOptions? Runners(Func<string, string?> get, List<string> problems)

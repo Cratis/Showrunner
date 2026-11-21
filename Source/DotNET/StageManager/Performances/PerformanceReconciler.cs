@@ -155,7 +155,11 @@ public class PerformanceReconciler(IClusterResources cluster, PerformancePrepara
             await cluster.DeleteAsync<V1Ingress>(@namespace, names.Ingress, cancellationToken);
         }
 
-        await cluster.ScaleDeploymentAsync(@namespace, names.Application, 0, cancellationToken);
+        if (!GatewayMode.IsGateway(spec))
+        {
+            await cluster.ScaleDeploymentAsync(@namespace, names.Application, 0, cancellationToken);
+        }
+
         if (spec.AuthProxy.Enabled)
         {
             await cluster.ScaleDeploymentAsync(@namespace, names.AuthProxy, 0, cancellationToken);

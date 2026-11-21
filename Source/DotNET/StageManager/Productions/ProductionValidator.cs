@@ -100,6 +100,43 @@ public static class ProductionValidator
         {
             problems.Add(new($"database.members must be 1, 3 or 5 for a Managed database, not {database.Members}."));
         }
+
+        ValidateBackupStorage(database, problems);
+    }
+
+    static void ValidateBackupStorage(ProductionDatabase database, List<ProductionProblem> problems)
+    {
+        var storage = database.Backup.Storage;
+        if (!storage.IsConfigured())
+        {
+            return;
+        }
+
+        if (database.IsExternal())
+        {
+            problems.Add(new("database.backup.storage needs database.mode Managed: Stage Manager only configures the backup agent of a database it runs."));
+            return;
+        }
+
+        if (!database.Backup.Enabled)
+        {
+            problems.Add(new("database.backup.storage needs database.backup.enabled: the agent is what writes to it."));
+        }
+
+        if (string.IsNullOrWhiteSpace(storage.Endpoint))
+        {
+            problems.Add(new("database.backup.storage.endpoint is required when a bucket is named."));
+        }
+
+        if (string.IsNullOrWhiteSpace(storage.CredentialsSecretName))
+        {
+            problems.Add(new("database.backup.storage.credentialsSecretName is required when a bucket is named."));
+        }
+
+        foreach (var task in storage.Tasks.Where(task => string.IsNullOrWhiteSpace(task.Name) || string.IsNullOrWhiteSpace(task.Schedule) || task.Keep < 1))
+        {
+            problems.Add(new($"database.backup.storage.tasks '{task.Name}' needs a name, a cron schedule and a keep of at least 1."));
+        }
     }
 
     static void ValidateGraph(ProductionGraph graph, List<ProductionProblem> problems)

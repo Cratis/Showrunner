@@ -25,6 +25,19 @@ public static class IngressFactory
             metadata.Annotations = new Dictionary<string, string> { [annotation] = issuer.Name };
         }
 
+        if (spec.Ingress.Annotations.Count > 0)
+        {
+            var annotations = metadata.Annotations is null
+                ? new Dictionary<string, string>(StringComparer.Ordinal)
+                : new Dictionary<string, string>(metadata.Annotations, StringComparer.Ordinal);
+            foreach (var (name, value) in spec.Ingress.Annotations)
+            {
+                annotations[name] = value;
+            }
+
+            metadata.Annotations = annotations;
+        }
+
         var backend = new V1IngressBackend { Service = new() { Name = names.AuthProxy, Port = new() { Name = "http" } } };
         return new()
         {

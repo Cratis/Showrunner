@@ -23,15 +23,13 @@ public class PerformanceSpec
     /// <summary>
     /// Gets or sets the application to run.
     /// </summary>
-    [Required]
-    [Description("The application to run.")]
+    [Description("The application to run. Not used by a gateway, a Performance whose authProxy names an upstream.")]
     public ApplicationSpec Application { get; set; } = new();
 
     /// <summary>
     /// Gets or sets the Cratis environment the application runs.
     /// </summary>
-    [Required]
-    [Description("The Cratis environment the application runs.")]
+    [Description("The Cratis environment the application runs. A gateway needs it only when a provider takes values from it.")]
     public EnvironmentSpec Environment { get; set; } = new();
 
     /// <summary>

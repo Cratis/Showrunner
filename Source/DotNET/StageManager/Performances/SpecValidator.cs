@@ -28,16 +28,26 @@ public static partial class SpecValidator
         ValidatePublished(spec, problems);
         ValidateLifetime(spec, problems);
         ValidateIngress(spec, problems);
-        ApplicationPodValidator.Validate(spec.Application, problems);
+        AuthProxyValidator.Validate(spec, problems);
+        AnteBrandingValidator.Validate(spec.Onboarding, problems);
+        if (!GatewayMode.IsGateway(spec))
+        {
+            ApplicationPodValidator.Validate(spec.Application, problems);
+        }
 
         return problems;
     }
 
     static void ValidateRequiredFields(PerformanceSpec spec, List<string> problems)
     {
-        if (string.IsNullOrWhiteSpace(spec.Application.Image))
+        if (!GatewayMode.IsGateway(spec) && string.IsNullOrWhiteSpace(spec.Application.Image))
         {
             problems.Add("application.image is required.");
+        }
+
+        if (!GatewayMode.NeedsEnvironment(spec))
+        {
+            return;
         }
 
         if (string.IsNullOrWhiteSpace(spec.Environment.Name))
@@ -92,13 +102,18 @@ public static partial class SpecValidator
     }
 
     static bool NeedsChronicleReference(PerformanceSpec spec) =>
-        spec.ProductionRef is null && spec.Chronicle is null && spec.Application.Published is null;
+        spec.ProductionRef is null && spec.Chronicle is null && spec.Application.Published is null && !GatewayMode.IsGateway(spec);
 
     static void ValidateIngress(PerformanceSpec spec, List<string> problems)
     {
         if (spec.Ingress.Enabled && spec.Ingress.Hosts.Count == 0)
         {
             problems.Add("ingress.hosts needs at least one host when the ingress is enabled.");
+        }
+
+        if (spec.Ingress.Annotations.Keys.Any(string.IsNullOrWhiteSpace))
+        {
+            problems.Add("ingress.annotations may not hold an empty name.");
         }
 
         if (spec.Ingress.Enabled && !spec.AuthProxy.Enabled)

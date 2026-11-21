@@ -220,7 +220,33 @@ public class ProductionPreparation(IProductionCluster cluster)
             return exists;
         }
 
-        return true;
+        return await CheckBackupStorageSecretAsync(production, status, cancellationToken);
+    }
+
+    async Task<bool> CheckBackupStorageSecretAsync(Production production, ProductionStatusBuilder status, CancellationToken cancellationToken)
+    {
+        var backup = production.Spec.Database.Backup;
+        if (!backup.Enabled || !backup.Storage.IsConfigured())
+        {
+            return true;
+        }
+
+        var name = backup.Storage.CredentialsSecretName;
+        var missing = new List<string>();
+        foreach (var key in new[] { ProductionDatabaseBackupStorage.AccessKeyIdKey, ProductionDatabaseBackupStorage.SecretAccessKeyKey })
+        {
+            if (await cluster.GetSecretValueAsync(production.Metadata.NamespaceProperty, name, key, cancellationToken) is null)
+            {
+                missing.Add(key);
+            }
+        }
+
+        if (missing.Count > 0)
+        {
+            status.Set(ProductionConditions.DatabaseReady, false, "SecretNotFound", $"The backup storage Secret '{name}' does not exist or has no key {string.Join(", ", missing.Select(key => $"'{key}'"))}.");
+        }
+
+        return missing.Count == 0;
     }
 
     async Task<bool> CheckGraphSecretAsync(Production production, ProductionStatusBuilder status, CancellationToken cancellationToken)

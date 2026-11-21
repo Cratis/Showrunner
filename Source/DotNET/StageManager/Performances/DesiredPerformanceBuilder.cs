@@ -31,10 +31,15 @@ public static class DesiredPerformanceBuilder
         var applicationFiles = environment.Values
             .Where(pair => EnvironmentKeys.IsForApplication(pair.Key))
             .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
-        secrets.Add(SecretFactory.Create(performance, names.ApplicationSecret, "application", applicationFiles));
-        workloads.Add(published is null
-            ? Application(performance, names, connection!, readSide ?? ApplicationReadSide.None, applicationFiles, revisionKey)
-            : PublishedApplication(performance, names, published, applicationFiles, revisionKey));
+
+        // A gateway fronts a Service that already exists: there is no application to run or to hand values to.
+        if (!GatewayMode.IsGateway(spec))
+        {
+            secrets.Add(SecretFactory.Create(performance, names.ApplicationSecret, "application", applicationFiles));
+            workloads.Add(published is null
+                ? Application(performance, names, connection!, readSide ?? ApplicationReadSide.None, applicationFiles, revisionKey)
+                : PublishedApplication(performance, names, published, applicationFiles, revisionKey));
+        }
 
         if (spec.AuthProxy.Enabled)
         {
@@ -56,7 +61,7 @@ public static class DesiredPerformanceBuilder
             [.. workloads.Select(workload => WorkloadFactory.Service(performance, workload))],
             spec.Ingress.Enabled ? IngressFactory.Create(performance) : null,
             published is null ? null : PublishedNetworkPolicy.Create(performance),
-            ApplicationEgressPolicy.Create(performance));
+            GatewayMode.IsGateway(spec) ? null : ApplicationEgressPolicy.Create(performance));
     }
 
     static SecretSource ConnectionSource(ChronicleConnectionRef connection) =>
@@ -134,6 +139,19 @@ public static class DesiredPerformanceBuilder
     static WorkloadDefinition AuthProxy(Performance performance, PerformanceNames names, IReadOnlyDictionary<string, string> files, string revisionKey)
     {
         var proxy = performance.Spec.AuthProxy;
+        List<ConfigMapMount> configMaps = [];
+        if (proxy.Pages is { } pages)
+        {
+            configMaps.Add(new("pages", AuthProxyContract.PagesDirectory, pages.ConfigMapRef.Name));
+        }
+
+        // The key ring is one ReadWriteOnce claim: the old pod lets go of it before the new one starts.
+        PodShape? shape = proxy.DataProtection is { } protection
+            ? new(
+                Volumes: [new() { Name = "keys", PersistentVolumeClaim = new() { ClaimName = protection.ClaimName } }],
+                VolumeMounts: [new() { Name = "keys", MountPath = AuthProxyContract.KeysDirectory }])
+            : null;
+
         return new(
             names.AuthProxy,
             "authproxy",
@@ -142,8 +160,11 @@ public static class DesiredPerformanceBuilder
             proxy.Replicas,
             AuthProxyContract.EnvironmentVariables(performance),
             [new("environment", AuthProxyContract.SecretsDirectory, [new(names.AuthProxySecret)])],
-            [],
-            ConfigRevision.Of(revisionKey, files));
+            configMaps,
+            ConfigRevision.Of(revisionKey, files),
+            ApplicationPod.ResourcesOf(proxy.Resources),
+            StopBeforeRollout: shape is not null,
+            Shape: shape);
     }
 
     static WorkloadDefinition Ante(Performance performance, PerformanceNames names, ChronicleConnectionRef connection, IReadOnlyDictionary<string, string> files, string revisionKey)
@@ -153,6 +174,11 @@ public static class DesiredPerformanceBuilder
         if (onboarding.Legal is { } legal)
         {
             configMaps.Add(new("legal", AnteContract.LegalDirectory, legal.ConfigMapRef.Name));
+        }
+
+        if (onboarding.Branding?.Assets is { } assets)
+        {
+            configMaps.Add(new("brand", AnteBrandingAssets.MountDirectory, assets.ConfigMapRef.Name, [.. assets.Files]));
         }
 
         // Exactly one Ante per Performance, so one replica: it owns its own event store and its own state.

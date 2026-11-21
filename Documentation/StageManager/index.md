@@ -23,3 +23,5 @@ Start by [installing the operator](./install.md), then prepare the [environment 
 - [Run Chronicle with a Production](./production.md) when your applications need a Chronicle in the cluster. A Performance then connects to it through `productionRef`.
 - [Back up a Production with an Understudy](./understudy.md) when a Production must be recoverable. It schedules backups of its databases and keys to object storage.
 - [Run a published Stage application](./published-stage-applications.md) when you have an exported Stage package to run on the generic Stage runtime. This path covers its storage and sign-in requirements, releases and rollbacks, and the lifetime and usage reference used by both paths.
+
+If a C# Pulumi program deploys your cluster, [declare these resources with Pulumi](./pulumi.md) instead of writing YAML: the `Cratis.Showrunner.StageManager.Pulumi` package has a typed component for each of `Production`, `Performance` and `Understudy`, and writes the Secrets they name.

@@ -55,6 +55,20 @@
          0.0.0-local is a build packed from Cratis/cli (branch env-onboarding/environments-secrets) into a local
          feed. Set it to the released version before this merges. -->
     <PackageVersion Include="Cratis.Environments" Version="$(CratisEnvironmentsVersion)" />
+    <!-- Stage Manager Pulumi extension: typed components that declare the Stage Manager resources from a Pulumi program.
+         Keep the versions on the ones the first consumer (Kelda Kraft) runs. -->
+    <PackageVersion Include="Pulumi" Version="3.118.0" />
+    <PackageVersion Include="Pulumi.Kubernetes" Version="4.34.3" />
+    <!-- Pulumi pulls OpenTelemetry and its OTLP exporter transitively, both carrying moderate-severity advisories
+         (GHSA-g94r-2vxg-569j, GHSA-4625-4j76-fww9), NU1902 on every restore. Central Package Management only lifts a
+         transitive version when the package is referenced directly, so StageManager.Pulumi references these three.
+         Drop them once Pulumi references a fixed version itself. -->
+    <PackageVersion Include="OpenTelemetry" Version="1.21.0" />
+    <PackageVersion Include="OpenTelemetry.Api" Version="1.21.0" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.21.0" />
+    <!-- Operations (watchdog): reads the cluster with the Kubernetes client. KubeOps resolves the same version for Stage Manager. -->
+    <PackageVersion Include="KubernetesClient" Version="21.0.8" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.14" />
     <!-- Analysis -->
     <PackageVersion Include="StyleCop.Analyzers" Version="1.2.0-beta.556" NoWarn="NU5104" />
     <PackageVersion Include="Roslynator.Analyzers" Version="5.0.0" />

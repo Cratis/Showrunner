@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>Cratis.Showrunner.StageManager.Pulumi</AssemblyName>
+        <RootNamespace>Cratis.Showrunner.StageManager.Pulumi</RootNamespace>
+        <PackageId>Cratis.Showrunner.StageManager.Pulumi</PackageId>
+        <Description>Stage Manager for Pulumi — typed Pulumi components that declare the Stage Manager Production, Performance and Understudy custom resources, with the Kubernetes Secrets they name, instead of YAML templates and token filling.</Description>
+        <PackageTags>cratis;showrunner;stage-manager;pulumi;kubernetes;operator;chronicle</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Pulumi" />
+        <PackageReference Include="Pulumi.Kubernetes" />
+        <!-- Lifts the vulnerable OpenTelemetry versions Pulumi pulls in (see Directory.Packages.props). Private, so the
+             pins are not forced on the consumers of this package, who lift them in their own project. -->
+        <PackageReference Include="OpenTelemetry" PrivateAssets="all" />
+        <PackageReference Include="OpenTelemetry.Api" PrivateAssets="all" />
+        <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" PrivateAssets="all" />
+    </ItemGroup>
+
+    <!-- The specifications deserialize what the components emit into the operator's own spec types, so a field the
+         operator does not know, or a combination it rejects, fails here. Debug only: the shipped package never
+         references the operator. The operator targets .NET 11 only. -->
+    <ItemGroup Condition="'$(Configuration)' == 'Debug' And '$(TargetFramework)' == 'net11.0'">
+        <ProjectReference Include="..\StageManager\StageManager.csproj" />
+    </ItemGroup>
+</Project>

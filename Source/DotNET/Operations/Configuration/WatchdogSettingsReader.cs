@@ -33,7 +33,8 @@ public static class WatchdogSettingsReader
         TelemetryBudgetCheck.CheckName,
         ChronicleObserversCheck.CheckName,
         ActionsScheduleAuditCheck.CheckName,
-        RunnerPoolCheck.CheckName
+        RunnerPoolCheck.CheckName,
+        AgentHarnessCheck.CheckName
     ];
 
     /// <summary>
@@ -101,6 +102,13 @@ public static class WatchdogSettingsReader
             },
             Chronicle = Chronicle(Get, GetUrl("CHRONICLE_URL"), problems),
             Runners = Runners(Get, problems),
+            AgentHarness = Get("AGENT_NAMESPACE") is { } agentNamespace
+                ? new AgentHarnessOptions
+                {
+                    Namespace = agentNamespace,
+                    CleanupEnabled = string.Equals(Get("CLEANUP_ENABLED"), "true", StringComparison.Ordinal)
+                }
+                : null,
             GitHubAuditToken = Get("GITHUB_AUDIT_TOKEN"),
             ActionsAudit = new ActionsAuditOptions { Organization = Get("GITHUB_AUDIT_ORG") ?? new ActionsAuditOptions().Organization },
             TelemetryBudget = new TelemetryBudgetOptions
@@ -176,6 +184,11 @@ public static class WatchdogSettingsReader
             enabled.Add(RunnerPoolCheck.CheckName);
         }
 
+        if (settings.AgentHarness is not null)
+        {
+            enabled.Add(AgentHarnessCheck.CheckName);
+        }
+
         return enabled;
     }
 
@@ -199,6 +212,7 @@ public static class WatchdogSettingsReader
         Require(ChronicleObserversCheck.CheckName, settings.Chronicle is not null, "CHRONICLE_URL");
         Require(ActionsScheduleAuditCheck.CheckName, settings.GitHubAuditToken is not null, "GITHUB_AUDIT_TOKEN");
         Require(RunnerPoolCheck.CheckName, settings.Runners is not null, "RUNNER_NAMESPACE");
+        Require(AgentHarnessCheck.CheckName, settings.AgentHarness is not null, "AGENT_NAMESPACE");
     }
 
     static TimeSpan? ScheduleInterval(string? schedule)

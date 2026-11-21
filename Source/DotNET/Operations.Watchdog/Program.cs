@@ -66,6 +66,7 @@ var factory = new WatchdogFactory(
     loggers,
     ChronicleClient,
     new KubernetesRunnerCluster(kubernetes),
+    new KubernetesAgentHarnessCluster(kubernetes),
     gitHub);
 
 return await WatchdogCommands.Run(command, factory, cancellation.Token);

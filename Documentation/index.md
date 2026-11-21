@@ -38,6 +38,7 @@ Where a part exchanges public events with another application, its contracts pag
 | [Notes](./Notes/index.md) | Feedback: product feedback from an application's users, tied to the slice, screen or component they were looking at, delivered as events to the people building the application |
 | [Payments](./Payments/index.md) | Payments: a provider-neutral contract for customers, first and recurring payments, subscriptions and refunds, with Mollie first and one webhook |
 | [Herald](./Herald/index.md) | Email: templated, email-safe messages with images, sent over SMTP, retried when the server fails and recorded as facts |
+| [Operations](./Operations/index.md) | The watchdog: checks a Kubernetes deployment, confirms what it finds and delivers alerts to Discord, email, Healthchecks and Cratis Direct |
 | [Stage Manager](./StageManager/index.md) | The Kubernetes operator: runs an application, or a published Stage application, with its AuthProxy and its own Ante from a Cratis environment, behind one public entry point |
 
 ## When Showrunner is the wrong fit

@@ -16,6 +16,8 @@
   href: Payments/toc.yml
 - name: Herald
   href: Herald/toc.yml
+- name: Operations
+  href: Operations/toc.yml
 - name: Stage Manager
   href: StageManager/toc.yml
 - name: Packages

@@ -92,7 +92,7 @@ public sealed class StageManagerOperator : ComponentResource
                 {
                     Name = "psmdb-operator",
                     Chart = "psmdb-operator",
-                    Version = percona.Version,
+                    Version = percona.Version is { } perconaVersion ? perconaVersion : (Input<string>?)null,
                     Namespace = percona.Namespace,
                     CreateNamespace = true,
                     RepositoryOpts = new RepositoryOptsArgs { Repo = percona.Repository },
@@ -110,7 +110,7 @@ public sealed class StageManagerOperator : ComponentResource
             {
                 Name = args.ReleaseName,
                 Chart = args.Chart ?? DefaultChart,
-                Version = chartIsPath ? null : args.Version,
+                Version = chartIsPath ? (Input<string>?)null : args.Version,
                 Namespace = args.Namespace,
                 CreateNamespace = args.CreateNamespace,
                 SkipAwait = !args.WaitForOperator,

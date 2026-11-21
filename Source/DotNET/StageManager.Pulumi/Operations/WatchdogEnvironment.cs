@@ -22,6 +22,7 @@ internal static class WatchdogEnvironment
 
     /// <summary>The bearer token of the Direct alert source, a secret.</summary>
     internal const string DirectTokenKey = "DIRECT_ALERTS_TOKEN";
+
     /// <summary>The Secret key and variable of the Direct link's one-time enrollment token.</summary>
     internal const string DirectLinkTokenKey = "DIRECT_LINK_ENROLLMENT_TOKEN";
 

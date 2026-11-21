@@ -53,6 +53,7 @@ internal static class WatchdogAccess
     /// Gets the rules in the namespace the watchdog runs in: its state ConfigMap and its own Jobs.
     /// </summary>
     /// <param name="kubernetesName">The Kubernetes name of the watchdog.</param>
+    /// <param name="directLink">Whether the watchdog is linked to Direct, which gives it a state ConfigMap and Secret of the link.</param>
     /// <returns>The rules.</returns>
     internal static IReadOnlyList<PolicyRuleArgs> OwnNamespaceRules(string kubernetesName, bool directLink = false)
     {

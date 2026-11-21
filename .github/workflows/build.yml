@@ -166,6 +166,12 @@ jobs:
       - name: Build the operator image
         run: docker build -f Docker/StageManager/Dockerfile -t cratis/showrunner-operator-image:ci .
 
+      - name: Publish the watchdog
+        run: dotnet publish Source/DotNET/Operations.Watchdog/Operations.Watchdog.csproj -c Release --no-build -p:CratisProxiesSkip=true -o Source/DotNET/Operations.Watchdog/out
+
+      - name: Build the watchdog image
+        run: docker build -f Docker/Watchdog/Dockerfile -t cratis/showrunner-watchdog-image:ci .
+
   # Installs the chart on a kind cluster and applies a Performance: a missing environment key blocks the rollout,
   # a complete environment rolls it out, only AuthProxy is public and no secret value reaches a Deployment, the
   # status or the log.

@@ -30,6 +30,18 @@ public sealed class DeclaredResources(IReadOnlyList<RecordedResource> resources)
     public IReadOnlyList<RecordedResource> ConfigMaps => [.. resources.Where(resource => resource.Type == ConfigMapType)];
 
     /// <summary>
+    /// Gets every resource the program declared.
+    /// </summary>
+    public IReadOnlyList<RecordedResource> All => resources;
+
+    /// <summary>
+    /// Gets the resources of a type.
+    /// </summary>
+    /// <param name="type">The type token, for example <c>kubernetes:batch/v1:CronJob</c>.</param>
+    /// <returns>The resources of that type.</returns>
+    public IReadOnlyList<RecordedResource> OfType(string type) => [.. resources.Where(resource => resource.Type == type)];
+
+    /// <summary>
     /// Runs a Pulumi program against mocks, with no engine and no cluster.
     /// </summary>
     /// <param name="program">The program, which declares components.</param>

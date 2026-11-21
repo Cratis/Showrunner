@@ -113,6 +113,7 @@ public sealed class WatchdogFactory(
         ReadinessCheck.CheckName when settings.Readiness is { } readiness => new ReadinessCheck(reader, http, readiness, timeProvider),
         PublicUrlsCheck.CheckName => new PublicUrlsCheck(http, settings.PublicUrls, timeProvider),
         OperationalMetricsCheck.CheckName when settings.Prometheus is { } prometheus => new OperationalMetricsCheck(reader, new HttpPrometheusReader(http, prometheus), settings.Metrics),
+        TelemetryBudgetCheck.CheckName when settings.Prometheus is { } budgetPrometheus => new TelemetryBudgetCheck(new HttpPrometheusReader(http, budgetPrometheus), settings.TelemetryBudget),
         _ => null
     };
 }

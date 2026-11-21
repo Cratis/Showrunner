@@ -29,7 +29,8 @@ public static class WatchdogSettingsReader
         RestoreDrillCheck.CheckName,
         ReadinessCheck.CheckName,
         PublicUrlsCheck.CheckName,
-        OperationalMetricsCheck.CheckName
+        OperationalMetricsCheck.CheckName,
+        TelemetryBudgetCheck.CheckName
     ];
 
     /// <summary>
@@ -94,6 +95,11 @@ public static class WatchdogSettingsReader
             {
                 PlatformNamespace = Get("PLATFORM_NAMESPACE") ?? new OperationalMetricsOptions().PlatformNamespace,
                 Advice = Get("VOLUME_ADVICE") ?? new OperationalMetricsOptions().Advice
+            },
+            TelemetryBudget = new TelemetryBudgetOptions
+            {
+                PlatformNamespace = Get("PLATFORM_NAMESPACE") ?? new TelemetryBudgetOptions().PlatformNamespace,
+                SeriesThreshold = int.TryParse(Get("PROMETHEUS_SERIES_THRESHOLD"), CultureInfo.InvariantCulture, out var series) ? series : new TelemetryBudgetOptions().SeriesThreshold
             }
         };
 
@@ -167,6 +173,7 @@ public static class WatchdogSettingsReader
         Require(ReadinessCheck.CheckName, settings.Readiness is not null, "READINESS_NAMESPACE");
         Require(PublicUrlsCheck.CheckName, settings.PublicUrls.Count > 0, "PUBLIC_URLS");
         Require(OperationalMetricsCheck.CheckName, settings.Prometheus is not null, "PROMETHEUS_URL");
+        Require(TelemetryBudgetCheck.CheckName, settings.Prometheus is not null, "PROMETHEUS_URL");
     }
 
     static TimeSpan? ScheduleInterval(string? schedule)

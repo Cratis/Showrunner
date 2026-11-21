@@ -86,4 +86,9 @@ public sealed record WatchdogSettings
     /// Gets the options of the operational metrics check.
     /// </summary>
     public OperationalMetricsOptions Metrics { get; init; } = new();
+
+    /// <summary>
+    /// Gets the options of the telemetry budget check, which is enabled by naming it in <c>WATCHDOG_CHECKS</c>.
+    /// </summary>
+    public TelemetryBudgetOptions TelemetryBudget { get; init; } = new();
 }

@@ -51,6 +51,10 @@ catch (WatchdogConfigurationException error)
 }
 
 using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+
+// The GitHub token is a capability: it must never follow a redirect to another host.
+using var gitHubHandler = new SocketsHttpHandler { AllowAutoRedirect = false };
+using var gitHub = new HttpClient(gitHubHandler) { Timeout = TimeSpan.FromSeconds(10) };
 using var kubernetes = new Kubernetes(KubernetesClientConfiguration.IsInCluster() ? KubernetesClientConfiguration.InClusterConfig() : KubernetesClientConfiguration.BuildDefaultConfig());
 var factory = new WatchdogFactory(
     settings,
@@ -60,7 +64,8 @@ var factory = new WatchdogFactory(
     settings.Smtp is { } smtp ? new MailKitEmailSender(smtp) : null,
     TimeProvider.System,
     loggers,
-    ChronicleClient);
+    ChronicleClient,
+    gitHub);
 
 return await WatchdogCommands.Run(command, factory, cancellation.Token);
 

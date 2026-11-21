@@ -17,6 +17,26 @@ public sealed class FindingCollector(IEnumerable<IWatchdogCheck> checks, Watchdo
     readonly IReadOnlyList<IWatchdogCheck> _checks = [.. checks];
 
     /// <summary>
+    /// Hands the saved state to the check that keeps state of its own.
+    /// </summary>
+    /// <param name="json">The saved state, or <see langword="null"/>.</param>
+    public void Restore(string? json)
+    {
+        foreach (var check in _checks.OfType<IPersistentCheck>())
+        {
+            check.Restore(json);
+        }
+    }
+
+    /// <summary>
+    /// Gets the state the persistent check wants saved.
+    /// </summary>
+    /// <param name="previous">The state that was loaded, kept when no check has state of its own.</param>
+    /// <returns>The state to save.</returns>
+    public string? Persist(string? previous) =>
+        _checks.OfType<IPersistentCheck>().Select(check => check.Persist()).FirstOrDefault(state => state is not null) ?? previous;
+
+    /// <summary>
     /// Runs all checks once.
     /// </summary>
     /// <param name="windowStarted">When the previous run started.</param>

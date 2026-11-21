@@ -98,6 +98,16 @@ public sealed record WatchdogSettings
     public ChronicleObserversOptions ChronicleObservers { get; init; } = new();
 
     /// <summary>
+    /// Gets the read-only GitHub token of the Actions audit, or <see langword="null"/> when the audit is not run. It is never logged.
+    /// </summary>
+    public string? GitHubAuditToken { get; init; }
+
+    /// <summary>
+    /// Gets the options of the GitHub Actions schedule audit.
+    /// </summary>
+    public ActionsAuditOptions ActionsAudit { get; init; } = new();
+
+    /// <summary>
     /// Gets the options of the telemetry budget check, which is enabled by naming it in <c>WATCHDOG_CHECKS</c>.
     /// </summary>
     public TelemetryBudgetOptions TelemetryBudget { get; init; } = new();

@@ -156,6 +156,7 @@ public sealed class WatchdogRun(
             fixedFindings["state:api"] = new Finding("state:api", $"could not load watchdog cooldown state: {Redaction.Summarize(error.Message)}; inspect watchdog API access", AlertSeverity.Warning);
         }
 
+        collector.Restore(snapshot.ActionsAudit);
         var windowStarted = snapshot.LastCheck ?? (started - (options.ScheduleInterval ?? TimeSpan.FromMinutes(5)));
         var (runFindings, reported) = await monitor.Check(started, windowStarted, snapshot.ReportedFailedJobs, cancellationToken);
         fixedFindings = Merge(fixedFindings, runFindings.ToDictionary(finding => finding.Key, StringComparer.Ordinal));
@@ -238,6 +239,7 @@ public sealed class WatchdogRun(
                 LastAlerted = lastAlerted,
                 FirstSeen = firstSeen,
                 SummaryStreaks = summaryStreaks,
+                ActionsAudit = collector.Persist(snapshot.ActionsAudit),
                 LastCheck = started,
                 ReportedFailedJobs = [.. reported.Order(StringComparer.Ordinal)]
             },

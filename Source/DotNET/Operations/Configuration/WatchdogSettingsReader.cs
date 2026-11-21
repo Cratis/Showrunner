@@ -31,7 +31,8 @@ public static class WatchdogSettingsReader
         PublicUrlsCheck.CheckName,
         OperationalMetricsCheck.CheckName,
         TelemetryBudgetCheck.CheckName,
-        ChronicleObserversCheck.CheckName
+        ChronicleObserversCheck.CheckName,
+        ActionsScheduleAuditCheck.CheckName
     ];
 
     /// <summary>
@@ -98,6 +99,8 @@ public static class WatchdogSettingsReader
                 Advice = Get("VOLUME_ADVICE") ?? new OperationalMetricsOptions().Advice
             },
             Chronicle = Chronicle(Get, GetUrl("CHRONICLE_URL"), problems),
+            GitHubAuditToken = Get("GITHUB_AUDIT_TOKEN"),
+            ActionsAudit = new ActionsAuditOptions { Organization = Get("GITHUB_AUDIT_ORG") ?? new ActionsAuditOptions().Organization },
             TelemetryBudget = new TelemetryBudgetOptions
             {
                 PlatformNamespace = Get("PLATFORM_NAMESPACE") ?? new TelemetryBudgetOptions().PlatformNamespace,
@@ -161,6 +164,11 @@ public static class WatchdogSettingsReader
             enabled.Add(ChronicleObserversCheck.CheckName);
         }
 
+        if (settings.GitHubAuditToken is not null)
+        {
+            enabled.Add(ActionsScheduleAuditCheck.CheckName);
+        }
+
         return enabled;
     }
 
@@ -182,6 +190,7 @@ public static class WatchdogSettingsReader
         Require(OperationalMetricsCheck.CheckName, settings.Prometheus is not null, "PROMETHEUS_URL");
         Require(TelemetryBudgetCheck.CheckName, settings.Prometheus is not null, "PROMETHEUS_URL");
         Require(ChronicleObserversCheck.CheckName, settings.Chronicle is not null, "CHRONICLE_URL");
+        Require(ActionsScheduleAuditCheck.CheckName, settings.GitHubAuditToken is not null, "GITHUB_AUDIT_TOKEN");
     }
 
     static TimeSpan? ScheduleInterval(string? schedule)

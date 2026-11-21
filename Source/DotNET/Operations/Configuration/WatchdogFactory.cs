@@ -22,6 +22,7 @@ namespace Cratis.Showrunner.Operations.Configuration;
 /// <param name="timeProvider">The clock.</param>
 /// <param name="loggers">The logger factory.</param>
 /// <param name="chronicleHttp">Creates the HTTP client that reads Chronicle, which may have to trust its certificate authority; <paramref name="http"/> is used when it is not given.</param>
+/// <param name="gitHubHttp">The HTTP client that reads GitHub. It must not follow redirects, so the token never reaches another host; <paramref name="http"/> is used when it is not given.</param>
 public sealed class WatchdogFactory(
     WatchdogSettings settings,
     IClusterReader reader,
@@ -30,7 +31,8 @@ public sealed class WatchdogFactory(
     IEmailSender? emails,
     TimeProvider timeProvider,
     ILoggerFactory loggers,
-    Func<ChronicleSettings, HttpClient>? chronicleHttp = null)
+    Func<ChronicleSettings, HttpClient>? chronicleHttp = null,
+    HttpClient? gitHubHttp = null)
 {
     /// <summary>
     /// Creates the cluster watchdog run.
@@ -118,6 +120,9 @@ public sealed class WatchdogFactory(
         ChronicleObserversCheck.CheckName when settings.Chronicle is { } chronicle => new ChronicleObserversCheck(
             new HttpChronicleReader(chronicleHttp?.Invoke(chronicle) ?? http, chronicle.Url, chronicle.ClientId, chronicle.ClientSecret),
             settings.ChronicleObservers),
+        ActionsScheduleAuditCheck.CheckName when settings.GitHubAuditToken is { } token => new ActionsScheduleAuditCheck(
+            new HttpGitHubReader(gitHubHttp ?? http, token),
+            settings.ActionsAudit),
         TelemetryBudgetCheck.CheckName when settings.Prometheus is { } budgetPrometheus => new TelemetryBudgetCheck(new HttpPrometheusReader(http, budgetPrometheus), settings.TelemetryBudget),
         _ => null
     };

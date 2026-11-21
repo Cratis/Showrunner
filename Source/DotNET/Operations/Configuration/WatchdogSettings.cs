@@ -76,4 +76,14 @@ public sealed record WatchdogSettings
     /// Gets the public URLs to probe.
     /// </summary>
     public IReadOnlyList<Uri> PublicUrls { get; init; } = [];
+
+    /// <summary>
+    /// Gets the Prometheus base address, or <see langword="null"/> when Prometheus is not read.
+    /// </summary>
+    public Uri? Prometheus { get; init; }
+
+    /// <summary>
+    /// Gets the options of the operational metrics check.
+    /// </summary>
+    public OperationalMetricsOptions Metrics { get; init; } = new();
 }

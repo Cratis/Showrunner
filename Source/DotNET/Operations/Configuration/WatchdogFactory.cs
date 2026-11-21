@@ -112,6 +112,7 @@ public sealed class WatchdogFactory(
         RestoreDrillCheck.CheckName when settings.RestoreDrill is { } drill => new RestoreDrillCheck(reader, drill.Namespace, drill.CronJob, drill.StaleAfter),
         ReadinessCheck.CheckName when settings.Readiness is { } readiness => new ReadinessCheck(reader, http, readiness, timeProvider),
         PublicUrlsCheck.CheckName => new PublicUrlsCheck(http, settings.PublicUrls, timeProvider),
+        OperationalMetricsCheck.CheckName when settings.Prometheus is { } prometheus => new OperationalMetricsCheck(reader, new HttpPrometheusReader(http, prometheus), settings.Metrics),
         _ => null
     };
 }

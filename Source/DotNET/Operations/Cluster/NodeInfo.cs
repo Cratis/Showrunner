@@ -53,7 +53,7 @@ public sealed record NodeInfo(string Name, IReadOnlyList<NodeCondition> Conditio
     /// <returns>True when the node is changing.</returns>
     public bool IsChanging(DateTimeOffset now)
     {
-        if (Deleting || TaintKeys.Any(key => key is "ToBeDeletedByClusterAutoscaler" or "DeletionCandidateOfClusterAutoscaler"))
+        if (Deleting || TaintKeys.Any(key => string.Equals(key, "ToBeDeletedByClusterAutoscaler", StringComparison.Ordinal) || string.Equals(key, "DeletionCandidateOfClusterAutoscaler", StringComparison.Ordinal)))
         {
             return true;
         }

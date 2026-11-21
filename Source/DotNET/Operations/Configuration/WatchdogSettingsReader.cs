@@ -28,7 +28,8 @@ public static class WatchdogSettingsReader
         PbmBackupsCheck.CheckName,
         RestoreDrillCheck.CheckName,
         ReadinessCheck.CheckName,
-        PublicUrlsCheck.CheckName
+        PublicUrlsCheck.CheckName,
+        OperationalMetricsCheck.CheckName
     ];
 
     /// <summary>
@@ -87,7 +88,13 @@ public static class WatchdogSettingsReader
             Pbm = pbm,
             RestoreDrill = drill,
             Readiness = readiness,
-            PublicUrls = urls
+            PublicUrls = urls,
+            Prometheus = GetUrl("PROMETHEUS_URL"),
+            Metrics = new OperationalMetricsOptions
+            {
+                PlatformNamespace = Get("PLATFORM_NAMESPACE") ?? new OperationalMetricsOptions().PlatformNamespace,
+                Advice = Get("VOLUME_ADVICE") ?? new OperationalMetricsOptions().Advice
+            }
         };
 
         var enabled = EnabledChecks(Get("WATCHDOG_CHECKS"), settings, problems);
@@ -136,6 +143,11 @@ public static class WatchdogSettingsReader
             enabled.Add(PublicUrlsCheck.CheckName);
         }
 
+        if (settings.Prometheus is not null)
+        {
+            enabled.Add(OperationalMetricsCheck.CheckName);
+        }
+
         return enabled;
     }
 
@@ -154,6 +166,7 @@ public static class WatchdogSettingsReader
         Require(RestoreDrillCheck.CheckName, settings.RestoreDrill is not null, "RESTORE_DRILL_NAMESPACE");
         Require(ReadinessCheck.CheckName, settings.Readiness is not null, "READINESS_NAMESPACE");
         Require(PublicUrlsCheck.CheckName, settings.PublicUrls.Count > 0, "PUBLIC_URLS");
+        Require(OperationalMetricsCheck.CheckName, settings.Prometheus is not null, "PROMETHEUS_URL");
     }
 
     static TimeSpan? ScheduleInterval(string? schedule)

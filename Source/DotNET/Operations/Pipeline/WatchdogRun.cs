@@ -109,6 +109,25 @@ public sealed class WatchdogRun(
         return snapshot.LastAlerted.TryGetValue(key, out var alerted) ? alerted : now;
     }
 
+    /// <summary>
+    /// A batch node's unreadable summary is held back until it has failed several consecutive runs.
+    /// </summary>
+    /// <param name="findings">The confirmed findings; held-back ones are removed.</param>
+    /// <param name="previous">The consecutive failed runs of the previous run.</param>
+    /// <returns>The consecutive failed runs including this one.</returns>
+    static ImmutableDictionary<string, int> ApplySummaryStreaks(Dictionary<string, Finding> findings, ImmutableDictionary<string, int> previous)
+    {
+        var streaks = findings.Keys
+            .Where(key => key.StartsWith(VolumesCheck.BatchSummaryPrefix, StringComparison.Ordinal))
+            .ToImmutableDictionary(key => key, key => (previous.TryGetValue(key, out var count) ? count : 0) + 1, StringComparer.Ordinal);
+        foreach (var key in streaks.Where(entry => entry.Value < VolumesCheck.BatchSummaryFailureRuns).Select(entry => entry.Key))
+        {
+            findings.Remove(key);
+        }
+
+        return streaks;
+    }
+
     async Task Swallow(Func<Task> action)
     {
         try
@@ -224,23 +243,6 @@ public sealed class WatchdogRun(
             },
             cancellationToken);
         await Ping(false, cancellationToken);
-    }
-
-    /// <summary>
-    /// A batch node's unreadable summary is held back until it has failed several consecutive runs.
-    /// </summary>
-    static ImmutableDictionary<string, int> ApplySummaryStreaks(Dictionary<string, Finding> findings, ImmutableDictionary<string, int> previous)
-    {
-        var streaks = findings.Keys
-            .Where(key => key.StartsWith(VolumesCheck.BatchSummaryPrefix, StringComparison.Ordinal))
-            .ToImmutableDictionary(key => key, key => (previous.TryGetValue(key, out var count) ? count : 0) + 1, StringComparer.Ordinal);
-        foreach (var (key, streak) in streaks.Where(entry => entry.Value < VolumesCheck.BatchSummaryFailureRuns))
-        {
-            _ = streak;
-            findings.Remove(key);
-        }
-
-        return streaks;
     }
 
     async Task<Dictionary<string, Finding>> Confirm(IReadOnlyDictionary<string, Finding> fixedFindings, DateTimeOffset started, DateTimeOffset windowStarted, CancellationToken cancellationToken)

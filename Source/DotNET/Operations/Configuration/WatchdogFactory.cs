@@ -169,7 +169,7 @@ public sealed class WatchdogFactory(
         PublicUrlsCheck.CheckName => new PublicUrlsCheck(http, settings.PublicUrls, timeProvider),
         OperationalMetricsCheck.CheckName when settings.Prometheus is { } prometheus => new OperationalMetricsCheck(reader, new HttpPrometheusReader(http, prometheus), settings.Metrics),
         ChronicleObserversCheck.CheckName when settings.Chronicle is { } chronicle => new ChronicleObserversCheck(
-            new HttpChronicleReader(chronicleHttp?.Invoke(chronicle) ?? http, chronicle.Url, chronicle.ClientId, chronicle.ClientSecret),
+            new LazyChronicleReader(() => new HttpChronicleReader(chronicleHttp?.Invoke(chronicle) ?? http, chronicle.Url, chronicle.ClientId, chronicle.ClientSecret)),
             settings.ChronicleObservers),
         VolumeSweepCheck.CheckName when settings.VolumeSweeper is { } sweeper && volumeHandles is not null => new VolumeSweepCheck(
             new UpCloudVolumeCloud(http, sweeper.Username, sweeper.Password, sweeper.Options.ClusterLabel),

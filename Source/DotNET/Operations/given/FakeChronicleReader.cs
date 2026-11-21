@@ -34,6 +34,16 @@ public sealed class FakeChronicleReader : IChronicleReader
     public bool RejectCredentials { get; set; }
 
     /// <summary>
+    /// Gets or sets what happens at the start of every request, for example the clock moving to simulate a slow Chronicle.
+    /// </summary>
+    public Action? OnRequest { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether every namespace answers with data that is not shaped as expected.
+    /// </summary>
+    public bool MalformedNamespaces { get; set; }
+
+    /// <summary>
     /// Gets how many times the event stores were listed.
     /// </summary>
     public int ListedStores { get; private set; }
@@ -63,6 +73,7 @@ public sealed class FakeChronicleReader : IChronicleReader
     /// <inheritdoc/>
     public Task<IReadOnlyList<string>> EventStores(TimeSpan timeout, CancellationToken cancellationToken)
     {
+        OnRequest?.Invoke();
         ListedStores++;
         Timeouts.Enqueue(timeout);
         return RejectCredentials
@@ -73,6 +84,7 @@ public sealed class FakeChronicleReader : IChronicleReader
     /// <inheritdoc/>
     public Task<IReadOnlyList<string>> Namespaces(string eventStore, TimeSpan timeout, CancellationToken cancellationToken)
     {
+        OnRequest?.Invoke();
         Timeouts.Enqueue(timeout);
         return Task.FromResult<IReadOnlyList<string>>([.. Stores[eventStore].Keys]);
     }
@@ -83,7 +95,7 @@ public sealed class FakeChronicleReader : IChronicleReader
         await Enter(timeout);
         try
         {
-            return Broken.Contains((eventStore, @namespace)) ? throw new InvalidOperationException("Event store does not exist.") : Stores[eventStore][@namespace];
+            return MalformedNamespaces ? throw new InvalidOperationException("a Chronicle answer has no observerId") : Broken.Contains((eventStore, @namespace)) ? throw new InvalidOperationException("Event store does not exist.") : Stores[eventStore][@namespace];
         }
         finally
         {
@@ -100,6 +112,7 @@ public sealed class FakeChronicleReader : IChronicleReader
 
     async Task Enter(TimeSpan timeout)
     {
+        OnRequest?.Invoke();
         Timeouts.Enqueue(timeout);
         var now = Interlocked.Increment(ref _inFlight);
         lock (Timeouts)

@@ -37,6 +37,12 @@ public sealed class PbmBackupsCheck(IClusterReader reader, string @namespace, Ti
             return [new Finding("pbm-backups:api", $"could not read PBM backup freshness ({error.GetType().Name}); inspect watchdog RBAC and Percona backup status", AlertSeverity.Warning)];
         }
 
+        // A backup that says it is ready but whose completion cannot be read is not evidence of anything: it is never healthy.
+        if (backups.Any(backup => backup.State == "ready" && backup.Completed is null))
+        {
+            return [new Finding("pbm-backups:api", "could not read PBM backup freshness (unreadable completion time); inspect Percona backup status", AlertSeverity.Warning)];
+        }
+
         // The operator records successful completion in status.completed, not in the creation time.
         var ready = backups.Where(backup => backup.State == "ready" && backup.Completed is not null).Select(backup => backup.Completed!.Value).ToList();
         if (ready.Count > 0 && context.Now - ready.Max() <= maximumAge)

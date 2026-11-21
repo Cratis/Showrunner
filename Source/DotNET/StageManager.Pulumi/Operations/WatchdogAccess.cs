@@ -54,15 +54,27 @@ internal static class WatchdogAccess
     /// </summary>
     /// <param name="kubernetesName">The Kubernetes name of the watchdog.</param>
     /// <returns>The rules.</returns>
-    internal static IReadOnlyList<PolicyRuleArgs> OwnNamespaceRules(string kubernetesName) =>
-    [
-        new PolicyRuleArgs { ApiGroups = [string.Empty], Resources = ["configmaps"], ResourceNames = [$"{kubernetesName}-state"], Verbs = ["get", "patch"] },
+    internal static IReadOnlyList<PolicyRuleArgs> OwnNamespaceRules(string kubernetesName, bool directLink = false)
+    {
+        var configMaps = directLink ? new[] { $"{kubernetesName}-state", WatchdogEnvironment.LinkStateName(kubernetesName) } : [$"{kubernetesName}-state"];
+        var rules = new List<PolicyRuleArgs>
+        {
+            new() { ApiGroups = [string.Empty], Resources = ["configmaps"], ResourceNames = configMaps, Verbs = ["get", "patch"] },
 
-        // A ConfigMap cannot be created by name restriction, so creating it is its own rule; the watchdog creates it once.
-        new PolicyRuleArgs { ApiGroups = [string.Empty], Resources = ["configmaps"], Verbs = ["create"] },
-        new PolicyRuleArgs { ApiGroups = ["batch"], Resources = ["jobs"], Verbs = ["list"] },
-        new PolicyRuleArgs { ApiGroups = ["batch"], Resources = ["cronjobs"], Verbs = ["get"] }
-    ];
+            // A ConfigMap cannot be created by name restriction, so creating it is its own rule; the watchdog creates it once.
+            new() { ApiGroups = [string.Empty], Resources = ["configmaps"], Verbs = ["create"] },
+            new() { ApiGroups = ["batch"], Resources = ["jobs"], Verbs = ["list"] },
+            new() { ApiGroups = ["batch"], Resources = ["cronjobs"], Verbs = ["get"] }
+        };
+        if (directLink)
+        {
+            // The link keeps its instance credential in a Secret of its own: read and patched by name, created once.
+            rules.Add(new() { ApiGroups = [string.Empty], Resources = ["secrets"], ResourceNames = [WatchdogEnvironment.LinkStateName(kubernetesName)], Verbs = ["get", "patch"] });
+            rules.Add(new() { ApiGroups = [string.Empty], Resources = ["secrets"], Verbs = ["create"] });
+        }
+
+        return rules;
+    }
 
     /// <summary>
     /// Gets the read rules in another namespace that a check looks at.
@@ -74,14 +86,28 @@ internal static class WatchdogAccess
     {
         var rules = new Dictionary<string, List<PolicyRuleArgs>>(StringComparer.Ordinal);
 
-        void Add(string @namespace, string group, string resource, params string[] verbs)
+        void Add(string @namespace, string group, string resource, params string[] verbs) => AddNamed(@namespace, group, resource, [], verbs);
+
+        void AddNamed(string @namespace, string group, string resource, string[] names, params string[] verbs)
         {
             if (!rules.TryGetValue(@namespace, out var list))
             {
                 rules[@namespace] = list = [];
             }
 
-            list.Add(new PolicyRuleArgs { ApiGroups = [group], Resources = [resource], Verbs = verbs });
+            var rule = new PolicyRuleArgs { ApiGroups = [group], Resources = [resource], Verbs = verbs };
+            if (names.Length > 0)
+            {
+                rule.ResourceNames = names;
+            }
+
+            list.Add(rule);
+        }
+
+        // A Direct remedy restarts one named Deployment: get and patch on exactly it, and nothing else in its namespace.
+        foreach (var remedies in (args.DirectLink?.Remedies ?? []).GroupBy(remedy => remedy.Namespace, StringComparer.Ordinal))
+        {
+            AddNamed(remedies.Key, "apps", "deployments", [.. remedies.Select(remedy => remedy.Deployment).Distinct(StringComparer.Ordinal)], "get", "patch");
         }
 
         if (checks.Contains(WatchdogChecks.CronJobs))

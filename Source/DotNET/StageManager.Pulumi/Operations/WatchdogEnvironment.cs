@@ -22,6 +22,8 @@ internal static class WatchdogEnvironment
 
     /// <summary>The bearer token of the Direct alert source, a secret.</summary>
     internal const string DirectTokenKey = "DIRECT_ALERTS_TOKEN";
+    /// <summary>The Secret key and variable of the Direct link's one-time enrollment token.</summary>
+    internal const string DirectLinkTokenKey = "DIRECT_LINK_ENROLLMENT_TOKEN";
 
     /// <summary>The heartbeat URL, a secret.</summary>
     internal const string HeartbeatKey = "WATCHDOG_HEARTBEAT_URL";
@@ -44,6 +46,13 @@ internal static class WatchdogEnvironment
         "SMTP_SERVER", "SMTP_PORT", "ALERT_FROM_NAME", "ALERT_FROM", "ALERT_TO",
         "DIRECT_ALERTS_URL", "DIRECT_ALERTS_SOURCE"
     ];
+
+    /// <summary>
+    /// The name of the ConfigMap and the Secret the Direct link keeps its state in.
+    /// </summary>
+    /// <param name="kubernetesName">The watchdog's name.</param>
+    /// <returns>The name.</returns>
+    internal static string LinkStateName(string kubernetesName) => $"{kubernetesName}-direct-link";
 
     /// <summary>
     /// Builds the variables that are not secret.
@@ -104,6 +113,16 @@ internal static class WatchdogEnvironment
         Add("GITHUB_AUDIT_ORG", args.GitHubAudit?.Organization);
         Add("DIRECT_ALERTS_URL", args.Direct?.Url);
         Add("DIRECT_ALERTS_SOURCE", args.Direct?.Source);
+        if (args.DirectLink is { } link)
+        {
+            Add("DIRECT_LINK_URL", link.Url);
+            Add("DIRECT_LINK_INSTANCE", link.InstanceName);
+            Add("DIRECT_LINK_STATE_NAME", LinkStateName(kubernetesName));
+            Add("DIRECT_LINK_RESOURCE", link.Resource);
+            Add("DIRECT_LINK_REMEDIES", link.Remedies.Count > 0 ? string.Join(',', link.Remedies.Select(remedy => $"{remedy.Remedy}={remedy.Namespace}/{remedy.Deployment}")) : null);
+            Add("DIRECT_LINK_HTTP_REMEDIES", link.AllowHttpRemedies ? "true" : null);
+            Add("DIRECT_LINK_OUTBOX_LIMIT", link.OutboxLimit?.ToString(CultureInfo.InvariantCulture));
+        }
 
         if (args.Pbm is { } pbm)
         {

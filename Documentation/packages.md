@@ -30,6 +30,7 @@ All packages are released under one semantic version. Stage Manager's image and 
 | `Cratis.Showrunner.StageManager.Pulumi` | NuGet | Typed Pulumi components that declare a Stage Manager `Production`, `Performance` and `Understudy`, with the Kubernetes Secrets they name, from a C# Pulumi program | [Declare Stage Manager resources with Pulumi](./StageManager/pulumi.md) |
 | `Cratis.Showrunner.Usher.Contracts` | NuGet | Usher's event contracts, for hosts that react to what Usher records | [Usher](./Usher/index.md) |
 | `Cratis.Showrunner.Cue` | NuGet | Cue's backend — records which guided tours each person has started, built on Arc and Chronicle | [Cue](./Cue/index.md) |
+| `Cratis.Showrunner.Playbill` | NuGet | Playbill's backend — embeds an application's release notes at build time, serves them under `/.cratis/playbill/v1` and records which releases each person has seen, built on Arc and Chronicle | [Playbill](./Playbill/index.md) |
 | `Cratis.Showrunner.Marquee.Contracts` | NuGet | Marquee's event contracts: the public events a product receives announcements through | [Marquee](./Marquee/index.md) |
 | `Cratis.Showrunner.GuestList` | NuGet | The product side of audiences: records an operator's grants and answers which audiences apply | [GuestList](./GuestList/index.md) |
 | `Cratis.Showrunner.GuestList.Authoring` | NuGet | The operator side of audiences: commands, queries and the outbox for granting and withdrawing | [GuestList](./GuestList/index.md) |
@@ -45,6 +46,8 @@ All packages are released under one semantic version. Stage Manager's image and 
 | `@cratis/showrunner.boxoffice.react` | npm | React components for entitlements, module filtering, trials, suspension, seats, usage and plans | [Box Office](./BoxOffice/index.md) |
 | `@cratis/showrunner.cue` | npm | Generated TypeScript proxies for Cue's command and observable query | [Cue](./Cue/index.md) |
 | `@cratis/showrunner.cue.react` | npm | The Cue guided-tour player for React: the script types, the overlay, the pointer, the voice-over contract and the hooks that connect a tour to the backend, built on `@cratis/arc.react` and `@cratis/components` | [Cue](./Cue/index.md) |
+| `@cratis/showrunner.playbill` | npm | Generated TypeScript proxies for Playbill's command and observable query | [Playbill](./Playbill/index.md) |
+| `@cratis/showrunner.playbill.react` | npm | The Playbill release-notes experience for React: a releases page, a what's new dialog and an unread badge, built on `@cratis/arc.react` and `@cratis/components` | [Playbill](./Playbill/index.md) |
 | `@cratis/showrunner.marquee` | npm | Generated TypeScript proxies for Marquee's receiving commands and queries | [Marquee](./Marquee/index.md) |
 | `@cratis/showrunner.marquee.authoring` | npm | Generated TypeScript proxies for Marquee's authoring commands and query | [Marquee](./Marquee/index.md) |
 | `@cratis/showrunner.marquee.react` | npm | The Marquee drop-in React component: banners and dialogs for a product's announcements, built on `@cratis/arc.react` and `@cratis/components` | [Marquee](./Marquee/index.md) |

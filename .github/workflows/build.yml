@@ -128,7 +128,7 @@ jobs:
       - name: Test
         run: yarn test
       - name: Test the release-notes capture action
-        run: node --test .github/actions/playbill-capture/capture.test.mjs .github/actions/playbill-capture/aggregate.test.mjs
+        run: node --test .github/actions/playbill-capture/capture.test.mjs .github/actions/playbill-capture/aggregate.test.mjs .github/actions/playbill-capture/materialize.test.mjs
 
       - name: Build
         run: yarn build

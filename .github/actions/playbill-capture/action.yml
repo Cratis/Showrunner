@@ -12,18 +12,23 @@ author: Cratis
 #   2. mode: capture     After cratis/release-action has decided the version. Writes <output>/<version>/<version>.md, the
 #                        images it refers to and <version>.json, and optionally commits them.
 #
+# A repository that does not commit its notes uses a third mode instead of capture:
+#
+#   mode: materialize    During the build. Writes the notes of every published GitHub release the folder does not hold yet, so
+#                        the image carries the whole history without a commit per release.
+#
 # Nothing here is on by default that a repository did not ask for: aggregation is a separate mode, the commit is `commit: true`,
 # and the versions.txt manifest is `manifest: true`.
 
 inputs:
   mode:
-    description: '`capture` writes the notes of a released version. `aggregate` works out the unreleased range before the release.'
+    description: '`capture` writes the notes of a released version. `materialize` writes the notes of every published release the folder does not hold yet. `aggregate` works out the unreleased range before the release.'
     required: false
     default: capture
 
   # --- capture
   version:
-    description: 'capture: the version that was released, such as 2.3.0 or 2.4.0-beta.1.'
+    description: 'capture: the version that was released, such as 2.3.0 or 2.4.0-beta.1. materialize: the version being built, which must be among the published releases.'
     required: false
   body-file:
     description: 'capture: a file holding the release notes. aggregate: where to write the merged notes (defaults to $RUNNER_TEMP/release-body.md).'
@@ -32,7 +37,7 @@ inputs:
     description: 'capture: the release notes as text, when there is no file. A body-file wins.'
     required: false
   output:
-    description: 'capture: the folder that holds one sub-folder per version, in the project that embeds them, such as Source/Host/ReleaseNotes.'
+    description: 'capture, materialize: the folder that holds one sub-folder per version, in the project that embeds them, such as Source/Host/ReleaseNotes.'
     required: false
   pull:
     description: 'capture: the pull request the release was made from. Defaults to the pull request that triggered the run.'
@@ -41,7 +46,7 @@ inputs:
     description: 'capture: when the release was made, as an ISO date. Defaults to now.'
     required: false
   manifest:
-    description: 'capture: also keep <output>/versions.txt, for a frontend that still reads the list. Playbill does not need it.'
+    description: 'capture, materialize: also keep <output>/versions.txt, for a frontend that still reads the list. Playbill does not need it.'
     required: false
     default: 'false'
   commit:
@@ -70,11 +75,11 @@ inputs:
     required: false
     default: 'Add release notes for {version} [skip ci]'
   repo:
-    description: 'aggregate: the repository as owner/name. Defaults to the one the workflow runs in.'
+    description: 'aggregate, materialize: the repository as owner/name. Defaults to the one the workflow runs in.'
     required: false
     default: ${{ github.repository }}
   github-token:
-    description: 'aggregate: the token used to read pull requests and releases.'
+    description: 'aggregate, materialize: the token used to read pull requests and releases. capture, materialize: also read a private repository''s images; it is sent only to GitHub''s own addresses.'
     required: false
     default: ${{ github.token }}
 
@@ -95,8 +100,8 @@ outputs:
     description: 'aggregate: the pull requests in the range, comma separated.'
     value: ${{ steps.aggregate.outputs.prs }}
   directory:
-    description: 'capture: the folder the notes were written to.'
-    value: ${{ steps.capture.outputs.directory }}
+    description: 'capture, materialize: the folder the notes were written to.'
+    value: ${{ steps.capture.outputs.directory || steps.materialize.outputs.directory }}
   sha:
     description: 'capture: the commit the notes are in; the current head when nothing was committed.'
     value: ${{ steps.commit.outputs.sha }}
@@ -120,11 +125,15 @@ runs:
       run: |
         case "$MODE" in
           aggregate) ;;
+          materialize)
+            [ -n "$VERSION" ] || { echo "::error title=Playbill::materialize needs the version being built."; exit 1; }
+            [ -n "$OUTPUT" ] || { echo "::error title=Playbill::materialize needs output: the release-notes folder of the project that embeds them."; exit 1; }
+            ;;
           capture)
             [ -n "$VERSION" ] || { echo "::error title=Playbill::capture needs the version that was released."; exit 1; }
             [ -n "$OUTPUT" ] || { echo "::error title=Playbill::capture needs output: the release-notes folder of the project that embeds them."; exit 1; }
             ;;
-          *) echo "::error title=Playbill::mode must be capture or aggregate, not '$MODE'."; exit 1 ;;
+          *) echo "::error title=Playbill::mode must be capture, materialize or aggregate, not '$MODE'."; exit 1 ;;
         esac
 
     - name: Aggregate unreleased pull requests
@@ -145,6 +154,22 @@ runs:
         if [ -n "$TRIGGER" ]; then args+=(--trigger "$TRIGGER"); fi
         node "$ACTION_PATH/aggregate.mjs" "${args[@]}"
 
+    - name: Materialize release notes
+      id: materialize
+      if: inputs.mode == 'materialize'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        VERSION: ${{ inputs.version }}
+        OUTPUT: ${{ inputs.output }}
+        REPOSITORY: ${{ inputs.repo }}
+        MANIFEST: ${{ inputs.manifest }}
+        ACTION_PATH: ${{ github.action_path }}
+      run: |
+        set -euo pipefail
+        node "$ACTION_PATH/materialize.mjs" --version "$VERSION" --output "$OUTPUT" --repository "$REPOSITORY" --manifest "$MANIFEST"
+        echo "directory=$OUTPUT" >> "$GITHUB_OUTPUT"
+
     - name: Capture release notes
       id: capture
       if: inputs.mode == 'capture'
@@ -157,6 +182,7 @@ runs:
         PULL: ${{ inputs.pull || github.event.pull_request.number }}
         RELEASED_AT: ${{ inputs.released-at }}
         MANIFEST: ${{ inputs.manifest }}
+        GH_TOKEN: ${{ inputs.github-token }}
         ACTION_PATH: ${{ github.action_path }}
       run: |
         set -euo pipefail

@@ -8,8 +8,9 @@ description: How the playbill-capture GitHub Action writes a release's notes fro
 | --- | --- | --- |
 | `capture` | After the release action has decided the version. | Writes `<output>/<version>/<version>.md`, saves the images the note refers to beside it, writes `<version>.json`, and optionally commits. |
 | `aggregate` | Before the release action, only for a repository that releases from several unreleased pull requests at once. | Finds the pull requests merged since the last release, merges their notes and works out the version. |
+| `materialize` | During the build, for a repository that does not commit its notes. | Writes the notes of every published GitHub release the folder does not hold yet, so the build carries the whole history. |
 
-A repository that releases one pull request at a time needs only `capture`.
+A repository that releases one pull request at a time and commits its notes needs only `capture`. A repository that keeps the notes only in its GitHub releases uses `materialize` instead.
 
 ## Capture one release
 
@@ -48,6 +49,24 @@ With `commit: true` the action stages only `output`, commits and pushes. If anot
 The commit message matters to `aggregate`: it is how the next release finds where this one ended. Keep `commit-message` and `notes-commit` in step if you change either.
 
 Without `commit`, the files are only written and the step reports their folder in the `directory` output. Commit them yourself, or let a later step do it.
+
+## Materialize the releases at build time
+
+A repository that does not want a commit per release keeps its notes in the GitHub releases and writes them into the folder as part of building the image. `materialize` does that for every published release the folder does not hold yet, so the application ships its whole history, and a folder that is already there is never rewritten:
+
+```yaml
+- name: Materialize release notes
+  uses: Cratis/Showrunner/.github/actions/playbill-capture@v2.19.0
+  with:
+    mode: materialize
+    version: ${{ needs.release.outputs.version }}
+    output: Source/Host/ReleaseNotes
+    github-token: ${{ github.token }}
+```
+
+Each release is written as `<version>/<version>.md` with its images and a `<version>.json` that records when it was published. Everything is fetched and staged before anything is moved into place, so a release or an image that cannot be fetched fails the step and leaves the folder exactly as it was, instead of shipping a history with a hole in it. The version being built has to be among the published releases; if the API does not show it yet, the step stops. Drafts, and tags that are not semantic versions, are skipped.
+
+Give it a token that can read the repository's releases. The token is also used to download the images of a private repository, and it is sent only to GitHub's own addresses, never along a redirect to another host. `capture` does the same with the `github-token` input.
 
 ## Aggregate unreleased pull requests
 

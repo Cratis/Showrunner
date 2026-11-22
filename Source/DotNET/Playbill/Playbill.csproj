@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>Cratis.Showrunner.Playbill</AssemblyName>
+        <RootNamespace>Cratis.Showrunner.Playbill</RootNamespace>
+        <PackageId>Cratis.Showrunner.Playbill</PackageId>
+        <Description>Playbill — the Showrunner release-notes part: embed the release history in the application at build time, serve it from /.cratis/playbill, and remember which releases each person has seen, built on Cratis Arc and Chronicle.</Description>
+        <PackageTags>cratis;showrunner;playbill;release-notes;changelog;arc;chronicle;event-sourcing</PackageTags>
+        <!-- The TypeScript proxies for the commands and queries are generated into the
+             @cratis/showrunner.playbill npm package. The Cratis.Showrunner.Playbill namespace segments are
+             skipped so a slice in Cratis.Showrunner.Playbill.<Feature>.<Slice> lands in <Feature>/<Slice>/. Release
+             builds skip generation (CratisProxiesSkip) so generation only runs from the Debug build. -->
+        <CratisProxiesOutputPath>$(MSBuildThisFileDirectory)../../JavaScript/Playbill</CratisProxiesOutputPath>
+        <CratisProxiesSegmentsToSkip>3</CratisProxiesSegmentsToSkip>
+        <CratisProxiesSkipOutputDeletion>true</CratisProxiesSkipOutputDeletion>
+        <CratisProxiesSkipCommandNameInRoute>true</CratisProxiesSkipCommandNameInRoute>
+        <CratisProxiesUseSourceFileAsOutputFile>true</CratisProxiesUseSourceFileAsOutputFile>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="Cratis.Arc" />
+        <PackageReference Include="Cratis.Arc.Chronicle" />
+        <PackageReference Include="Cratis.Arc.ProxyGenerator.Build">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+    <!-- The MSBuild assets a consuming application gets with the package: they embed its ReleaseNotes folder.
+         buildTransitive carries them to an application that reaches Playbill through another package. -->
+    <ItemGroup>
+        <None Include="build/Cratis.Showrunner.Playbill.props" Pack="true" PackagePath="build/;buildTransitive/" />
+        <None Include="build/Cratis.Showrunner.Playbill.targets" Pack="true" PackagePath="build/;buildTransitive/" />
+    </ItemGroup>
+    <!-- Playbill embeds its own specification fixture with the very targets it ships, so a spec reads the
+         assembly's resources exactly as an application's would be read. The fixture is Debug-only: the package
+         carries no release notes of its own. -->
+    <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+        <PlaybillReleaseNotesDirectory>$(MSBuildThisFileDirectory)given/ReleaseNotes</PlaybillReleaseNotesDirectory>
+    </PropertyGroup>
+    <Import Project="build/Cratis.Showrunner.Playbill.props" />
+    <Import Project="build/Cratis.Showrunner.Playbill.targets" Condition="'$(Configuration)' == 'Debug'" />
+</Project>

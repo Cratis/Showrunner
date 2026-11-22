@@ -1,0 +1,14 @@
+<Project>
+    <!--
+        Playbill embeds an application's release notes into its assembly, so they are served from the same
+        place wherever the application runs. Both properties may be set in the project file or on the command line.
+
+        PlaybillEmbedReleaseNotes      Set to false to embed nothing. Defaults to true.
+        PlaybillReleaseNotesDirectory  The folder that holds one sub-folder per version, as the capture action writes
+                                       it. Defaults to ReleaseNotes in the project directory.
+    -->
+    <PropertyGroup>
+        <PlaybillEmbedReleaseNotes Condition="'$(PlaybillEmbedReleaseNotes)' == ''">true</PlaybillEmbedReleaseNotes>
+        <PlaybillReleaseNotesDirectory Condition="'$(PlaybillReleaseNotesDirectory)' == ''">$(MSBuildProjectDirectory)/ReleaseNotes</PlaybillReleaseNotesDirectory>
+    </PropertyGroup>
+</Project>

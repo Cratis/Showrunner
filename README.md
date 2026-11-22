@@ -23,6 +23,10 @@ Box Office lets a managed product honor the licensing decisions its operator mak
 
 Marquee brings product announcements to the people they concern. The people running the product choose the audience, display and time window; the product shows the announcement as a banner or dialog. Add `<Marquee />` to the application shell to use its queries and commands. Follow [the Marquee documentation](./Documentation/Marquee/index.md) to add announcements or host the authoring side.
 
+## Playbill
+
+Playbill shows an application's release notes. A release is described once, in the pull request that ships it; the `playbill-capture` action commits that description next to the code, the `Cratis.Showrunner.Playbill` package embeds it in the assembly at build time and serves it under `/.cratis/playbill/v1`, and React components built on Cratis Components show a releases page, a "what's new" dialog and an unread badge that remember what each person has seen. Follow [the Playbill documentation](./Documentation/Playbill/index.md) to add it.
+
 ## Cue
 
 Cue plays scripted, narrated guided tours inside an application: a pointer that moves to what the narration talks about, subtitles, a chapter list and a written version of each chapter. The voice-over comes from a text-to-speech service the application configures, and a tour without one plays silently. The backend records who has started which tour, so a button points at a tour until it has been taken. Follow [the Cue documentation](./Documentation/Cue/index.md) to add it.
@@ -67,6 +71,7 @@ Choose the backend packages for the part you are hosting, then add its TypeScrip
 | `cratis/showrunner-operator-image`, `cratis/showrunner-operator` | Docker Hub, Helm (OCI) | Stage Manager, the Kubernetes operator: the container image and, in a separate repository, the Helm chart released with the same version |
 | `Cratis.Showrunner.Usher.Contracts` | NuGet | Usher's event contracts, for hosts that react to what Usher records |
 | `Cratis.Showrunner.Cue` | NuGet | Cue's backend — records which guided tours each person has started, built on Arc and Chronicle |
+| `Cratis.Showrunner.Playbill` | NuGet | Playbill's backend — embeds an application's release notes at build time, serves them under `/.cratis/playbill/v1` and records which releases each person has seen, built on Arc and Chronicle |
 | `Cratis.Showrunner.Marquee.Contracts` | NuGet | Marquee's event contracts: the public events a product receives announcements through |
 | `Cratis.Showrunner.GuestList` | NuGet | The product side of audiences: records an operator's grants and answers which audiences apply |
 | `Cratis.Showrunner.GuestList.Authoring` | NuGet | The operator side of audiences: commands, queries and the outbox for granting and withdrawing |
@@ -81,6 +86,8 @@ Choose the backend packages for the part you are hosting, then add its TypeScrip
 | `@cratis/showrunner.boxoffice.react` | npm | React components for entitlements, module filtering, trials, suspension, seats, usage and plans |
 | `@cratis/showrunner.cue` | npm | Generated TypeScript proxies for Cue's command and observable query |
 | `@cratis/showrunner.cue.react` | npm | The Cue guided-tour player for React: the script types, the overlay, the pointer, the voice-over contract and the hooks that connect a tour to the backend, built on `@cratis/arc.react` and `@cratis/components` |
+| `@cratis/showrunner.playbill` | npm | Generated TypeScript proxies for Playbill's command and observable query |
+| `@cratis/showrunner.playbill.react` | npm | The Playbill release-notes experience for React: a releases page, a what's new dialog and an unread badge, built on `@cratis/arc.react` and `@cratis/components` |
 | `@cratis/showrunner.marquee` | npm | Generated TypeScript proxies for Marquee's receiving commands and queries |
 | `@cratis/showrunner.marquee.authoring` | npm | Generated TypeScript proxies for Marquee's authoring commands and query |
 | `@cratis/showrunner.marquee.react` | npm | The Marquee drop-in React component: banners and dialogs for a product's announcements, built on `@cratis/arc.react` and `@cratis/components` |

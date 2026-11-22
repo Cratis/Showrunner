@@ -1,0 +1,298 @@
+/* Copyright (c) Cratis. All rights reserved.
+   Licensed under the MIT license. See LICENSE file in the project root for full license information. */
+
+/*
+ * The styles of the Playbill components. Import once, after the Cratis Components stylesheets:
+ *   @import '@cratis/showrunner.playbill.react/styles';
+ *
+ * Every color comes from the --cratis-* tokens, so the Cratis Components theme and dark mode apply. To restyle Playbill
+ * without replacing a component, set any of these on an ancestor of it (the components fall back to the Cratis tokens):
+ *   --playbill-accent            the color of the current version, the selected release and the unread count
+ *   --playbill-surface           the background of the release list and the badge count's text
+ *   --playbill-border            the lines between releases and sections
+ *   --playbill-text              the text color
+ *   --playbill-muted             dates, summaries and secondary text
+ *   --playbill-radius            the corner radius of tags, items and the badge
+ *   --playbill-added, --playbill-changed, --playbill-fixed, --playbill-removed, --playbill-security,
+ *   --playbill-deprecated        the marker color of each section
+ * Every element has a stable `playbill-*` class, so a product can also style a part directly.
+ */
+
+.playbill,
+.playbill-dialog,
+.playbill-badge {
+    --playbill-accent-resolved: var(--playbill-accent, var(--cratis-primary-color, #3b82f6));
+    --playbill-border-resolved: var(--playbill-border, var(--cratis-surface-border, #d4d4d8));
+    --playbill-text-resolved: var(--playbill-text, var(--cratis-text-color, inherit));
+    --playbill-muted-resolved: var(--playbill-muted, var(--cratis-text-color-secondary, #6b7280));
+    --playbill-radius-resolved: var(--playbill-radius, 0.4rem);
+}
+
+.playbill-icon {
+    flex-shrink: 0;
+}
+
+/* The page: the list of releases on one side, the selected release on the other. */
+.playbill {
+    display: grid;
+    grid-template-columns: minmax(14rem, 20rem) minmax(0, 1fr);
+    gap: 1.5rem;
+    color: var(--playbill-text-resolved);
+}
+
+@media (max-width: 48rem) {
+    .playbill {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.playbill__list ul {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.playbill-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid transparent;
+    border-radius: var(--playbill-radius-resolved);
+    background: transparent;
+    color: var(--playbill-text-resolved);
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+}
+
+.playbill-item:hover {
+    background: var(--playbill-surface, var(--cratis-surface-hover, rgb(127 127 127 / 12%)));
+}
+
+.playbill-item:focus-visible {
+    outline: 2px solid var(--playbill-accent-resolved);
+    outline-offset: 2px;
+}
+
+.playbill-item--selected {
+    border-color: var(--playbill-accent-resolved);
+    background: color-mix(in srgb, var(--playbill-accent-resolved) 10%, transparent);
+}
+
+.playbill-item__heading {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.playbill-item__version {
+    font-weight: 600;
+}
+
+.playbill-item__date,
+.playbill-item__summary {
+    color: var(--playbill-muted-resolved);
+    font-size: 0.875rem;
+}
+
+.playbill-item__summary {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.playbill__content {
+    min-width: 0;
+}
+
+/* Tags: the current version and what has not been seen. */
+.playbill-tag {
+    padding: 0.05rem 0.5rem;
+    border-radius: var(--playbill-radius-resolved);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.playbill-tag--current {
+    border: 1px solid var(--playbill-border-resolved);
+    color: var(--playbill-muted-resolved);
+}
+
+.playbill-tag--unread {
+    background: var(--playbill-accent-resolved);
+    color: var(--playbill-accent-text, var(--cratis-primary-color-text, #fff));
+}
+
+/* A release: its header, its lead and its sections. */
+.playbill-release {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    color: var(--playbill-text-resolved);
+}
+
+.playbill-release + .playbill-release {
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--playbill-border-resolved);
+}
+
+.playbill-release__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem 0.75rem;
+}
+
+.playbill-release__version {
+    margin: 0;
+    font-size: 1.4rem;
+}
+
+.playbill-release__date {
+    color: var(--playbill-muted-resolved);
+    font-size: 0.875rem;
+}
+
+.playbill-release__lead {
+    font-size: 1.05rem;
+}
+
+.playbill-section {
+    --playbill-marker: var(--playbill-other, var(--cratis-text-color-secondary, #6b7280));
+    padding-inline-start: 0.9rem;
+    border-inline-start: 3px solid var(--playbill-marker);
+}
+
+.playbill-section--added {
+    --playbill-marker: var(--playbill-added, var(--cratis-green-500, #22c55e));
+}
+
+.playbill-section--changed {
+    --playbill-marker: var(--playbill-changed, var(--cratis-primary-color, #3b82f6));
+}
+
+.playbill-section--fixed {
+    --playbill-marker: var(--playbill-fixed, var(--cratis-orange-500, #f59e0b));
+}
+
+.playbill-section--removed {
+    --playbill-marker: var(--playbill-removed, var(--cratis-red-500, #ef4444));
+}
+
+.playbill-section--security {
+    --playbill-marker: var(--playbill-security, var(--cratis-red-500, #ef4444));
+}
+
+.playbill-section--deprecated {
+    --playbill-marker: var(--playbill-deprecated, var(--cratis-text-color-secondary, #6b7280));
+}
+
+.playbill-section__title {
+    margin: 0 0 0.35rem;
+    font-size: 1rem;
+}
+
+/* The markdown of a note. */
+.playbill-markdown {
+    overflow-wrap: anywhere;
+}
+
+.playbill-markdown > :first-child {
+    margin-top: 0;
+}
+
+.playbill-markdown > :last-child {
+    margin-bottom: 0;
+}
+
+.playbill-markdown ul,
+.playbill-markdown ol {
+    padding-inline-start: 1.25rem;
+}
+
+.playbill-markdown img {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid var(--playbill-border-resolved);
+    border-radius: var(--playbill-radius-resolved);
+}
+
+.playbill-markdown a {
+    color: var(--playbill-accent-resolved);
+}
+
+.playbill-markdown code {
+    padding: 0.05rem 0.3rem;
+    border-radius: var(--playbill-radius-resolved);
+    background: var(--playbill-surface, var(--cratis-surface-hover, rgb(127 127 127 / 12%)));
+    font-size: 0.9em;
+}
+
+/* The dialog. */
+.playbill-dialog {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    color: var(--playbill-text-resolved);
+}
+
+.playbill-dialog__earlier {
+    margin: 0;
+    color: var(--playbill-muted-resolved);
+    font-size: 0.875rem;
+}
+
+.playbill-status {
+    margin: 0;
+    color: var(--playbill-muted-resolved);
+}
+
+.playbill-status--failed {
+    color: var(--cratis-red-500, #ef4444);
+}
+
+/* The badge. */
+.playbill-badge {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.4rem;
+    border: 0;
+    border-radius: var(--playbill-radius-resolved);
+    background: transparent;
+    color: var(--playbill-text-resolved);
+    font-size: 1.25rem;
+    cursor: pointer;
+}
+
+.playbill-badge:hover {
+    background: var(--playbill-surface, var(--cratis-surface-hover, rgb(127 127 127 / 12%)));
+}
+
+.playbill-badge:focus-visible {
+    outline: 2px solid var(--playbill-accent-resolved);
+    outline-offset: 2px;
+}
+
+.playbill-badge__count {
+    position: absolute;
+    top: -0.1rem;
+    inset-inline-end: -0.15rem;
+    min-width: 1.1rem;
+    padding: 0 0.3rem;
+    border-radius: 999px;
+    background: var(--playbill-accent-resolved);
+    color: var(--playbill-accent-text, var(--cratis-primary-color-text, #fff));
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1.1rem;
+    text-align: center;
+}

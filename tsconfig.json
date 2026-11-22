@@ -72,6 +72,12 @@
             "path": "./Source/JavaScript/Notes.React"
         },
         {
+            "path": "./Source/JavaScript/Playbill"
+        },
+        {
+            "path": "./Source/JavaScript/Playbill.React"
+        },
+        {
             "path": "./Source/JavaScript/Usher"
         },
         {

@@ -1,0 +1,16 @@
+- name: Overview
+  href: index.md
+- name: How Playbill works
+  href: how-playbill-works.md
+- name: Add release notes to an application
+  href: add-release-notes-to-an-application.md
+- name: Capture release notes when you ship
+  href: capture-release-notes.md
+- name: Customize the release-notes experience
+  href: customize-the-release-notes-experience.md
+- name: Endpoint reference
+  href: endpoint-reference.md
+- name: Remember what people have seen
+  href: remember-what-people-have-seen.md
+- name: Event reference
+  href: event-reference.md

@@ -34,6 +34,7 @@ Where a part exchanges public events with another application, its contracts pag
 | [Box Office](./BoxOffice/index.md) | Licensing: trials, seats, modules, compute allowances and suspension of a managed product's tenants |
 | [Marquee](./Marquee/index.md) | Announcements: what the people running a product tell the people using it, with an audience, a display and an exact active window |
 | [Cue](./Cue/index.md) | Guided tours: scripted, narrated walkthroughs with a configurable text-to-speech voice-over, and a record of who has taken which tour |
+| [Playbill](./Playbill/index.md) | Release notes: captured from the pull request that ships a release, embedded in the build, served from `/.cratis/playbill`, and shown by styleable components that remember what each person has seen |
 | [GuestList](./GuestList/index.md) | Audiences: which audiences a tenant, a user or the system is in, granted by the operator and recorded once by the product |
 | [Notes](./Notes/index.md) | Feedback: product feedback from an application's users, tied to the slice, screen or component they were looking at, delivered as events to the people building the application |
 | [Payments](./Payments/index.md) | Payments: a provider-neutral contract for customers, first and recurring payments, subscriptions and refunds, with Mollie first and one webhook |

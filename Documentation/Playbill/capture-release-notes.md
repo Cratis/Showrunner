@@ -117,7 +117,7 @@ The checkout before it must have full history (`fetch-depth: 0`) of the branch b
 | `missing-label` | `true` when a merged pull request carried no release label. |
 | `prs` | The pull requests in the range, comma separated. |
 
-A check that only wants to know what is pending, without releasing, runs `aggregate` with `dry-run: true`: it prints the unreleased range and the notes that would be released, writes no body file and sets no outputs.
+A check that only wants to know what is pending, without releasing, runs `aggregate` with `dry-run: true`: it prints the unreleased range and the notes that would be released, writes no body file, and sets the `mode`, `version` and `prs` outputs so a later step can decide.
 
 ## Moving from a hand-built setup
 

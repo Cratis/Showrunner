@@ -79,7 +79,7 @@ inputs:
     required: false
     default: ${{ github.repository }}
   dry-run:
-    description: 'aggregate: only print the unreleased range and the notes that would be released; write no body file and set no outputs. For a check that wants to know what is pending.'
+    description: 'aggregate: only print the unreleased range and the notes that would be released, and set the mode, version and prs outputs; write no body file. For a check that wants to know what is pending.'
     required: false
     default: 'false'
   github-token:
@@ -157,8 +157,19 @@ runs:
         set -euo pipefail
         args=(--base "$BASE" --notes-commit "$NOTES_COMMIT" --body-file "${BODY_FILE:-$RUNNER_TEMP/release-body.md}")
         if [ -n "$TRIGGER" ]; then args+=(--trigger "$TRIGGER"); fi
-        if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); fi
-        node "$ACTION_PATH/aggregate.mjs" "${args[@]}"
+        if [ "$DRY_RUN" = "true" ]; then
+          # Nothing is written, but what is pending is reported: the mode, the version and the pull requests.
+          args+=(--dry-run)
+          pending="$RUNNER_TEMP/playbill-pending.txt"
+          node "$ACTION_PATH/aggregate.mjs" "${args[@]}" | tee "$pending"
+          {
+            echo "mode=$(sed -n 's/^Mode: //p' "$pending" | head -1)"
+            echo "version=$(sed -n 's/^Version: //p' "$pending" | head -1)"
+            echo "prs=$(sed -n 's/^PRs: //p' "$pending" | head -1)"
+          } >> "$GITHUB_OUTPUT"
+        else
+          node "$ACTION_PATH/aggregate.mjs" "${args[@]}"
+        fi
 
     - name: Materialize release notes
       id: materialize

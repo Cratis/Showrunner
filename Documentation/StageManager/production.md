@@ -94,6 +94,10 @@ One replica runs with Chronicle's default single-node clustering. Above one, the
 
 An `External` database takes its connection string from the Secret named by `database.connectionSecretName`, under the key `connectionString`. Stage Manager creates no database resource for it.
 
+### The System database name
+
+Chronicle 19.117 renamed the databases named `System` to `_system`, and the kernel refuses to start when the System event store is empty under the configured name but holds events under `System`. An installation that predates it sets `database.systemDatabaseName: System` to keep its data where it is. Leave it empty for a new installation.
+
 ### Managed
 
 A `Managed` database is a `PerconaServerMongoDB` run by the Percona operator, with these defaults:

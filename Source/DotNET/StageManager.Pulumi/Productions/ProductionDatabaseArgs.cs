@@ -33,6 +33,12 @@ public sealed class ProductionDatabaseArgs
     public Input<string>? ConnectionString { get; init; }
 
     /// <summary>
+    /// Gets the name of the database holding the System event store, or null for the kernel's default (<c>_system</c>).
+    /// Set <c>System</c> for an installation that predates Chronicle 19.117.
+    /// </summary>
+    public string? SystemDatabaseName { get; init; }
+
+    /// <summary>
     /// Gets the members of the replica set of a managed database: 1 for development, 3 or 5 for production.
     /// </summary>
     public int? Members { get; init; }
@@ -84,6 +90,7 @@ public sealed class ProductionDatabaseArgs
             .PutEnum("kind", Kind)
             .PutEnum("mode", Mode)
             .Put("connectionSecretName", connectionSecretName)
+            .Put("systemDatabaseName", SystemDatabaseName)
             .Put("members", Members)
             .Put("oneMemberPerNode", OneMemberPerNode)
             .Put("memoryLimit", MemoryLimit)

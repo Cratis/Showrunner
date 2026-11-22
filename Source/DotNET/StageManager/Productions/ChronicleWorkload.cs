@@ -32,6 +32,11 @@ public static class ChronicleWorkload
     public const int GatewayPort = 30000;
 
     /// <summary>
+    /// The group the mounted Secret files are readable by. The files are mode 0440, so without a group the kernel, which runs as a user of its own, cannot read them.
+    /// </summary>
+    public const long FileGroup = 10001;
+
+    /// <summary>
     /// Where the TLS certificate is mounted.
     /// </summary>
     public const string CertificateDirectory = "/run/secrets/chronicle-tls";
@@ -180,7 +185,7 @@ public static class ChronicleWorkload
                     Spec = new()
                     {
                         AutomountServiceAccountToken = false,
-                        SecurityContext = new() { SeccompProfile = new() { Type = "RuntimeDefault" } },
+                        SecurityContext = new() { FsGroup = FileGroup, SeccompProfile = new() { Type = "RuntimeDefault" } },
                         Volumes = volumes,
                         Containers =
                         [

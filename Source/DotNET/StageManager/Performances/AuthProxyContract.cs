@@ -56,6 +56,11 @@ public static class AuthProxyContract
             variables[$"{Prefix}EnvironmentName"] = spec.Environment.Name;
         }
 
+        for (var index = 0; index < spec.AuthProxy.TrustedProxies.Count; index++)
+        {
+            variables[$"{Root}Ingress__TrustedProxies__{index}"] = spec.AuthProxy.TrustedProxies[index];
+        }
+
         AddTenancy(variables, spec.AuthProxy.Tenancy);
         AddRequiredClaims(variables, spec.AuthProxy.RequiredClaims);
         if (spec.AuthProxy.Pages is not null)

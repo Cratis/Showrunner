@@ -20,6 +20,10 @@ public static class AuthProxyValidator
         ValidateTenancy(proxy.Tenancy, problems);
         ValidateRequiredClaims(proxy.RequiredClaims, problems);
         ValidateProviderDetails(proxy.Providers, problems);
+        foreach (var peer in proxy.TrustedProxies.Where(peer => !IsAddressOrNetwork(peer)))
+        {
+            problems.Add($"authProxy.trustedProxies '{peer}' is not an IP address or a CIDR range such as 10.0.0.0/8.");
+        }
 
         if (proxy.Pages is { } pages && string.IsNullOrWhiteSpace(pages.ConfigMapRef.Name))
         {
@@ -126,6 +130,9 @@ public static class AuthProxyValidator
             }
         }
     }
+
+    static bool IsAddressOrNetwork(string value) =>
+        System.Net.IPAddress.TryParse(value, out _) || System.Net.IPNetwork.TryParse(value, out _);
 
     static bool IsHttpUrl(string value) =>
         Uri.TryCreate(value, UriKind.Absolute, out var url) && (url.Scheme == Uri.UriSchemeHttp || url.Scheme == Uri.UriSchemeHttps);

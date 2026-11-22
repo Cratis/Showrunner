@@ -48,7 +48,7 @@ public class DataBackupJob(
         var takenAt = Truncate(time.GetUtcNow());
         var topology = await directory.GetTopologyAsync(cancellationToken);
         var existing = await databases.ListAsync(cancellationToken);
-        var options = new BackupPlanOptions(new ChronicleDatabaseNames(configuration.DatabasePrefix), configuration.Databases, configuration.HasVault);
+        var options = new BackupPlanOptions(new ChronicleDatabaseNames(configuration.DatabasePrefix, string.IsNullOrWhiteSpace(configuration.SystemDatabaseName) ? ChronicleDatabaseNames.DefaultSystemDatabaseName : configuration.SystemDatabaseName), configuration.Databases, configuration.HasVault);
         var plan = BackupPlanner.Plan(topology, existing, options);
         logger.PlanMade(configuration.Production, plan.Backups.Count(backup => backup.Present), plan.Unclaimed.Count);
         await using (var report = new MemoryStream(PlanReport.From(plan, takenAt).ToJson()))

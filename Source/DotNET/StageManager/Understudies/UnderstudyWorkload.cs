@@ -71,7 +71,8 @@ public static class UnderstudyWorkload
         understudy.Spec.Storage,
         understudy.Spec.Keys?.Storage,
         understudy.Spec.Keys?.MaxAgeDays ?? Catalog.RetentionPolicy.DefaultMaxAgeDays,
-        production.Spec.Vault.Address);
+        production.Spec.Vault.Address,
+        production.Spec.Database.SystemDatabaseName);
 
     /// <summary>
     /// Gets whether the Production keeps its keys in a Vault. Without one they travel inside the events.

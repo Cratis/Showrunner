@@ -20,6 +20,7 @@ namespace Cratis.Showrunner.StageManager.Understudies.Jobs;
 /// <param name="KeysStorage">Where key backups go, when they are taken.</param>
 /// <param name="KeysMaxAgeDays">How long key backups are kept.</param>
 /// <param name="VaultAddress">The address of the Vault.</param>
+/// <param name="SystemDatabaseName">The name of the database holding the System event store, or empty for Chronicle's default.</param>
 public record UnderstudyJobConfiguration(
     string Kind,
     string Production,
@@ -31,7 +32,8 @@ public record UnderstudyJobConfiguration(
     UnderstudyStorage Storage,
     UnderstudyStorage? KeysStorage,
     int KeysMaxAgeDays,
-    string VaultAddress)
+    string VaultAddress,
+    string SystemDatabaseName = "")
 {
     static readonly JsonSerializerOptions _options = new(JsonSerializerDefaults.Web);
 

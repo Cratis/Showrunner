@@ -110,6 +110,24 @@ export const ReleaseNotesPage = () => (
 );
 ```
 
+An application with no room for a page can open the whole history in a dialog instead, from a menu entry or its "About" dialog:
+
+```tsx
+import { PlaybillHistoryDialog } from '@cratis/showrunner.playbill.react';
+import { useState } from 'react';
+
+export const WhatsNewMenuEntry = () => {
+    const [open, setOpen] = useState(false);
+
+    return (
+        <>
+            <button type='button' onClick={() => setOpen(true)}>What's new</button>
+            <PlaybillHistoryDialog open={open} onClose={() => setOpen(false)} />
+        </>
+    );
+};
+```
+
 ## 6. See it work
 
 - A person who has seen nothing is shown the newest release in the dialog. Closing it records that they saw it, on every device.

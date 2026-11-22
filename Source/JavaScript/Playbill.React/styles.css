@@ -243,6 +243,12 @@
     color: var(--playbill-text-resolved);
 }
 
+.playbill-history {
+    min-height: 20rem;
+    max-height: 70vh;
+    overflow: auto;
+}
+
 .playbill-dialog__earlier {
     margin: 0;
     color: var(--playbill-muted-resolved);

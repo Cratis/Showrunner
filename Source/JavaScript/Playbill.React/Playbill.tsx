@@ -5,7 +5,7 @@ import { ComponentType, useEffect, useMemo, useState } from 'react';
 import { usePlaybillClient } from './Configuration/index.js';
 import { PlaybillLabels, resolveLabels } from './Labels/index.js';
 import { PlaybillMarkdown, PlaybillMarkdownProps } from './Markdown/index.js';
-import { formatReleaseDate, ReleaseNoteView, ReleaseNoteViewProps } from './Release/index.js';
+import { formatReleaseDate, IssueRepository, issueRepositoryFor, ReleaseNoteView, ReleaseNoteViewProps } from './Release/index.js';
 import { usePlaybill } from './usePlaybill.js';
 import { useRelease } from './useReleases.js';
 
@@ -21,6 +21,8 @@ export interface PlaybillProps {
     labels?: Partial<PlaybillLabels>;
     /** The locale to write the dates in; the browser's when not given. */
     locale?: string | string[];
+    /** Where the issues of the releases are tracked, so `#123` in a note links to one. A function answers for each version. Not linked when not given. */
+    issues?: IssueRepository;
     /** The version to show. Give it, with `onSelect`, to keep the selection in the address; by default the newest is selected. */
     selected?: string;
     /** Called when the person picks another release. */
@@ -39,6 +41,7 @@ export const Playbill = ({
     markdown,
     labels,
     locale,
+    issues,
     selected,
     onSelect,
     markSeenWhenShown = true
@@ -112,6 +115,7 @@ export const Playbill = ({
                         labels={resolved}
                         markdown={markdown ?? PlaybillMarkdown}
                         locale={locale}
+                        issueRepository={issueRepositoryFor(issues, note.version)}
                         isUnread={selectedIsUnread}
                         isCurrent={note.version === current} />
                 )}

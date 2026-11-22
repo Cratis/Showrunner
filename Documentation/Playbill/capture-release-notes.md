@@ -117,15 +117,17 @@ The checkout before it must have full history (`fetch-depth: 0`) of the branch b
 | `missing-label` | `true` when a merged pull request carried no release label. |
 | `prs` | The pull requests in the range, comma separated. |
 
+A check that only wants to know what is pending, without releasing, runs `aggregate` with `dry-run: true`: it prints the unreleased range and the notes that would be released, writes no body file, and sets the `mode`, `version` and `prs` outputs so a later step can decide.
+
 ## Moving from a hand-built setup
 
 Studio and Direct each carry a copy of `generate-version-release-notes.mjs`, and Studio also carries `aggregate-release-notes.mjs`. The action replaces both: the capture script is the same one with the same image handling, and the aggregate script is Studio's with the repository, branch and commit message made inputs.
 
 The folder layout is unchanged, so no existing release note moves. To switch a repository over:
 
-1. Replace the generate step with `capture`, and the aggregate step with `aggregate`, as above.
+1. Replace the generate step with `capture`, or with `materialize` if the notes are written at build time from the GitHub releases, and the aggregate step with `aggregate`, as above.
 2. Add `manifest: true` while a hand-written frontend still reads `versions.txt`. Once the application shows its notes with Playbill, remove it, and delete the file.
 3. Add `Cratis.Showrunner.Playbill` to the host, call `AddPlaybill` and `MapPlaybill`, and delete the old release-notes endpoint and its content wiring.
-4. Replace the hand-written release-notes component with `Playbill`, `PlaybillDialog` and `PlaybillBadge`.
+4. Replace the hand-written release-notes component with `Playbill`, `PlaybillDialog` and `PlaybillBadge`, and the "What's new" entry that opened it with `PlaybillHistoryDialog`.
 
 Existing `<version>.md` files work as they are. They have no `<version>.json`, so their releases show without a date until a record is added.

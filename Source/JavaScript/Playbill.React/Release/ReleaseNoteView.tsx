@@ -4,7 +4,7 @@
 import { ComponentType } from 'react';
 import { Release } from '../Client/index.js';
 import { PlaybillLabels } from '../Labels/index.js';
-import { PlaybillMarkdown, PlaybillMarkdownProps } from '../Markdown/index.js';
+import { linkIssueReferences, PlaybillMarkdown, PlaybillMarkdownProps } from '../Markdown/index.js';
 import { formatReleaseDate } from './formatReleaseDate.js';
 import { sectionPresentation } from './sectionPresentation.js';
 
@@ -27,6 +27,8 @@ export interface ReleaseNoteViewProps {
     isUnread?: boolean;
     /** Whether this is the version the application is running; it is marked with the `current` text. */
     isCurrent?: boolean;
+    /** The address of the repository whose issues a bare `#123` in the note refers to. The references are made links when it is given. */
+    issueRepository?: string;
     /** The level of the heading of the version, so the release fits under the heading of the page or dialog around it. Defaults to 2. */
     headingLevel?: 2 | 3 | 4;
 }
@@ -43,11 +45,13 @@ export const ReleaseNoteView = ({
     locale,
     isUnread = false,
     isCurrent = false,
+    issueRepository,
     headingLevel = 2
 }: ReleaseNoteViewProps) => {
     const Heading = `h${headingLevel}` as 'h2';
     const SectionHeading = `h${headingLevel + 1}` as 'h3';
     const date = formatReleaseDate(release.releasedAt, locale);
+    const prepared = (markdown: string) => issueRepository ? linkIssueReferences(markdown, issueRepository) : markdown;
     return (
         <article className='playbill-release' data-version={release.version}>
             <header className='playbill-release__header'>
@@ -62,7 +66,7 @@ export const ReleaseNoteView = ({
             </header>
             {release.lead.trim() !== '' && (
                 <div className='playbill-release__lead'>
-                    <Markdown source={release.lead} assetBase={assetBase} />
+                    <Markdown source={prepared(release.lead)} assetBase={assetBase} />
                 </div>
             )}
             {release.sections.map(section => {
@@ -70,7 +74,7 @@ export const ReleaseNoteView = ({
                 return (
                     <section key={section.name} className={`playbill-section playbill-section--${presentation.modifier}`}>
                         <SectionHeading className='playbill-section__title'>{presentation.title}</SectionHeading>
-                        <Markdown source={section.markdown} assetBase={assetBase} />
+                        <Markdown source={prepared(section.markdown)} assetBase={assetBase} />
                     </section>
                 );
             })}

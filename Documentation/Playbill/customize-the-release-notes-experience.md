@@ -121,6 +121,22 @@ export const OwnSurface = () => {
 
 `usePlaybill` is `useReleases` and `usePlaybillStatus` together. Use `useReleases` alone where there is no Arc context or no signed-in person, such as a public page on an application with `AllowAnonymous`. `useRelease(version)` and `useReleaseNotes(versions)` read the notes themselves. All three components also read and record what the person has seen, so they need the backend package and Arc's context; the hooks that only read the history need neither.
 
+## Link the issues
+
+Release notes mention the issues they deliver, as `#123` or `owner/repo#123`. Give `issues` the address of the repository the bare form belongs to and Playbill turns both into links; without it they stay text:
+
+```tsx
+<Playbill issues='https://github.com/Cratis/Studio' />
+```
+
+`issues` is accepted by `Playbill`, `PlaybillDialog` and `PlaybillHistoryDialog`. A product whose issues moved to another repository can give a function that answers for each version, so an old release keeps pointing at the repository its numbers belong to:
+
+```tsx
+<Playbill issues={version => version < '2.0.0' ? 'https://github.com/Cratis/Old' : 'https://github.com/Cratis/New'} />
+```
+
+A custom `release` receives the answer as `issueRepository`.
+
 ## Read from another endpoint
 
 By default the components read `/.cratis/playbill/v1` of the page's own origin. `PlaybillProvider` changes where, or how the request is made, for example to add a header:

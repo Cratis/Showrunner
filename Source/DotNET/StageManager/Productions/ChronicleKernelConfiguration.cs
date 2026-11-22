@@ -31,6 +31,7 @@ public record ChronicleKernelConfiguration(IReadOnlyDictionary<string, string> E
     const string Prefix = "Cratis__Chronicle__";
     const string StorageType = $"{Prefix}Storage__Type";
     const string StorageConnection = $"{Prefix}Storage__ConnectionDetails";
+    const string SystemDatabaseName = $"{Prefix}Storage__SystemDatabaseName";
     const string SinksReadModels = $"{Prefix}Sinks__ReadModels";
     const string SinksGraphs = $"{Prefix}Sinks__Graphs";
     const string SinkConfigurations = $"{Prefix}Sinks__Configurations__";
@@ -63,6 +64,10 @@ public record ChronicleKernelConfiguration(IReadOnlyDictionary<string, string> E
         var databaseSecret = spec.Database.IsExternal() ? spec.Database.ConnectionSecretName : names.MongoDBConnection;
         sources.Add(new(databaseSecret, new Dictionary<string, string> { [ProductionSecretReference.DefaultKey] = StorageConnection }));
         variables[$"{StorageConnection}{FileSuffix}"] = FileOf(StorageConnection);
+        if (!string.IsNullOrWhiteSpace(spec.Database.SystemDatabaseName))
+        {
+            variables[SystemDatabaseName] = spec.Database.SystemDatabaseName;
+        }
 
         var graph = GraphOf(spec, names);
         if (graph is not null)

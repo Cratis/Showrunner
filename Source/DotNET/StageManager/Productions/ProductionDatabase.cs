@@ -32,6 +32,12 @@ public class ProductionDatabase
     public string ConnectionSecretName { get; set; } = string.Empty;
 
     /// <summary>
+    /// Gets or sets the name of the database holding the System event store.
+    /// </summary>
+    [Description("The name of the database holding Chronicle's System event store. Empty uses the kernel's default, _system. Set System for an installation that predates Chronicle 19.117, whose data is in a database of that name.")]
+    public string SystemDatabaseName { get; set; } = string.Empty;
+
+    /// <summary>
     /// Gets or sets the number of members of a managed replica set.
     /// </summary>
     [Description("For a Managed database: the members of its replica set, 1 for development or 3 or 5 for production.")]

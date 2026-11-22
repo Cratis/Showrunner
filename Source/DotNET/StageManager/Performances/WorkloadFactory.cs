@@ -70,7 +70,7 @@ public static class WorkloadFactory
                     Spec = new()
                     {
                         AutomountServiceAccountToken = false,
-                        SecurityContext = new() { RunAsNonRoot = true, FsGroup = 10001, SeccompProfile = new() { Type = "RuntimeDefault" } },
+                        SecurityContext = new() { RunAsNonRoot = true, RunAsUser = 10001, RunAsGroup = 10001, FsGroup = 10001, SeccompProfile = new() { Type = "RuntimeDefault" } },
                         Volumes = volumes,
                         NodeSelector = shape.NodeSelector?.Count > 0 ? shape.NodeSelector.ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal) : null,
                         ImagePullSecrets = shape.ImagePullSecrets?.Count > 0 ? [.. shape.ImagePullSecrets.Select(name => new V1LocalObjectReference { Name = name })] : null,

@@ -19,6 +19,7 @@ import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
+import { fetchResource } from './fetching.mjs';
 
 const IMAGE_EXTENSIONS_BY_CONTENT_TYPE = {
     'image/png': 'png',
@@ -244,6 +245,8 @@ async function main() {
         releasedAt: values['released-at'] || undefined,
         pull: values.pull || undefined,
         manifest: values.manifest === 'true',
+        // GH_TOKEN, when set, reads a private repository's images and goes nowhere else.
+        fetchImage: url => fetchResource(url, process.env.GH_TOKEN),
     });
     console.log(`Wrote release notes for ${validateVersion(values.version)} (${images} image(s)) to ${directory}`);
 }

@@ -56,7 +56,7 @@ public static class ProductionCertificates
                 ["dnsNames"] = new JsonArray([.. DnsNames(production, names).Select(name => (JsonNode)JsonValue.Create(name))]),
                 ["duration"] = "8760h",
                 ["renewBefore"] = "720h",
-                ["usages"] = new JsonArray("server auth", "digital signature", "key encipherment"),
+                ["usages"] = new JsonArray("server auth", "client auth", "digital signature", "key encipherment"),
                 ["keystores"] = new JsonObject
                 {
                     ["pkcs12"] = new JsonObject

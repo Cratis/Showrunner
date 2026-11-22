@@ -1,6 +1,6 @@
 ---
 title: Playbill
-description: Show an application's release notes with Showrunner Playbill — captured when it ships, embedded in the build, served from /.cratis/playbill and drawn by styleable React components that remember what each person has seen.
+description: "Show an application's release notes with Showrunner Playbill: captured when it ships, embedded in the build and drawn by styleable React components."
 ---
 Playbill is the release-notes part of Showrunner. A release is described once, in the pull request that ships it. Playbill carries that description the rest of the way: it is committed next to the code, embedded in the assembly when the application is built, served from a fixed address, and drawn in the application as a releases page, a "what's new" dialog and an unread badge.
 

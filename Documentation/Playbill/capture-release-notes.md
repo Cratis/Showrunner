@@ -1,6 +1,6 @@
 ---
 title: Capture release notes when you ship
-description: How the playbill-capture GitHub Action writes a release's notes from its pull request into the project that embeds them, with optional aggregation of unreleased pull requests, an optional commit and migration from hand-built scripts.
+description: How the playbill-capture GitHub Action writes a release's notes from its pull request into the embedding project, with optional aggregation and commit.
 ---
 `playbill-capture` is a composite GitHub Action in this repository. It turns the description of the pull request that shipped a release into the folder `Cratis.Showrunner.Playbill` embeds. It has two modes, and everything beyond writing the files is opt-in.
 

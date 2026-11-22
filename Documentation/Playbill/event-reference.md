@@ -1,6 +1,6 @@
 ---
 title: Event reference
-description: The ReleaseNotesSeen event Playbill records when a person has seen a release's notes, the properties it carries and how it is kept as personal data in the event log.
+description: The ReleaseNotesSeen event Playbill records when a person sees a release's notes, its properties and how it is kept as personal data.
 ---
 Playbill appends one event.
 

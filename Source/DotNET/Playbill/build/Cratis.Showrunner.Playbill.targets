@@ -1,0 +1,24 @@
+<Project>
+    <!--
+        Embeds every file under the release-notes folder as a resource named Playbill/<path inside the folder>, which
+        is where Playbill reads the release history from at run time. The manifest (versions.txt) and the folder's
+        README are not release notes and stay out of the assembly.
+
+        Embedding runs before the resource names are assigned, so the files are inputs of the compile and a new
+        release note rebuilds the assembly. A project without the folder embeds nothing and builds as before.
+    -->
+    <Target Name="PlaybillEmbedReleaseNotes"
+            BeforeTargets="AssignTargetPaths"
+            Condition="'$(PlaybillEmbedReleaseNotes)' == 'true' And Exists('$(PlaybillReleaseNotesDirectory)')">
+        <ItemGroup>
+            <_PlaybillReleaseNoteFile Include="$(PlaybillReleaseNotesDirectory)/**/*"
+                                      Exclude="$(PlaybillReleaseNotesDirectory)/versions.txt;$(PlaybillReleaseNotesDirectory)/README.md" />
+            <!-- Culture is set explicitly: a file such as hero.nb.png is an image, not a satellite resource for nb. -->
+            <EmbeddedResource Include="@(_PlaybillReleaseNoteFile)"
+                              LogicalName="Playbill/%(RecursiveDir)%(Filename)%(Extension)"
+                              Culture=""
+                              WithCulture="false"
+                              Type="Non-Resx" />
+        </ItemGroup>
+    </Target>
+</Project>

@@ -11,7 +11,7 @@ const classesInComponents = [
     'playbill', 'playbill__list', 'playbill__content', 'playbill-item', 'playbill-item--selected', 'playbill-item__version',
     'playbill-release', 'playbill-release__header', 'playbill-release__version', 'playbill-release__lead', 'playbill-section',
     'playbill-section__title', 'playbill-tag', 'playbill-tag--current', 'playbill-tag--unread', 'playbill-markdown',
-    'playbill-dialog', 'playbill-dialog__earlier', 'playbill-status', 'playbill-status--failed', 'playbill-badge', 'playbill-badge__count'
+    'playbill-dialog', 'playbill-dialog__earlier', 'playbill-history', 'playbill-status', 'playbill-status--failed', 'playbill-badge', 'playbill-badge__count'
 ];
 const sections = ['added', 'changed', 'fixed', 'removed', 'security', 'deprecated'];
 

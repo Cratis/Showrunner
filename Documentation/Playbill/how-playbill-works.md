@@ -40,4 +40,4 @@ A person who has seen nothing is told about the newest release, not the whole hi
 
 ## Components
 
-`Playbill` is the releases page, `PlaybillDialog` opens by itself with what is new and records that it was read, and `PlaybillBadge` is the unread count for the header. All of them draw with Cratis Components, take their colors from the `--cratis-*` tokens, have stable `playbill-*` classes, and can be replaced part by part. See [Customize the release-notes experience](./customize-the-release-notes-experience.md).
+`Playbill` is the releases page, `PlaybillDialog` opens by itself with what is new and records that it was read, `PlaybillHistoryDialog` opens the whole history on request, and `PlaybillBadge` is the unread count for the header. All of them draw with Cratis Components, take their colors from the `--cratis-*` tokens, have stable `playbill-*` classes, and can be replaced part by part. See [Customize the release-notes experience](./customize-the-release-notes-experience.md).

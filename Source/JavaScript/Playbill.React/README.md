@@ -1,7 +1,7 @@
 # @cratis/showrunner.playbill.react
 
 The Playbill release-notes experience for React, the Showrunner release-notes part: `<Playbill />` is a releases page,
-`<PlaybillDialog />` opens by itself with what is new, and `<PlaybillBadge />` is the unread count for a header. Built on
+`<PlaybillDialog />` opens by itself with what is new, `<PlaybillHistoryDialog />` opens the whole history on request, and `<PlaybillBadge />` is the unread count for a header. Built on
 `@cratis/components` and the generated proxies in `@cratis/showrunner.playbill`. How to use it:
 [Documentation/Playbill](../../../Documentation/Playbill/index.md).
 
@@ -14,6 +14,7 @@ Playbill                     usePlaybill, then the list and the selected release
     └── PlaybillMarkdown     the lead and each section
 
 PlaybillDialog               Cratis Components Dialog, the notes of every unread release
+PlaybillHistoryDialog        Cratis Components Dialog, the Playbill page, opened with `open`
 └── ReleaseNoteView          one for each release, one heading level down
 
 PlaybillBadge                a button with the unread count and an accessible name that says it in words

@@ -500,6 +500,42 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@cratis/showrunner.playbill.react@workspace:Source/JavaScript/Playbill.React":
+  version: 0.0.0-use.local
+  resolution: "@cratis/showrunner.playbill.react@workspace:Source/JavaScript/Playbill.React"
+  dependencies:
+    "@cratis/arc": "npm:22.185.1"
+    "@cratis/arc.react": "npm:22.185.1"
+    "@cratis/components": "npm:4.38.0"
+    "@cratis/fundamentals": "npm:7.34.0"
+    "@cratis/showrunner.playbill": "npm:1.0.0"
+    react: "npm:^19.3.1"
+    react-dom: "npm:^19.3.1"
+    react-markdown: "npm:10.1.0"
+    reflect-metadata: "npm:0.2.2"
+  peerDependencies:
+    "@cratis/arc": ^22.185.1 || ^23.0.0
+    "@cratis/arc.react": ^22.185.1 || ^23.0.0
+    "@cratis/components": ^4.38.0
+    "@cratis/fundamentals": ^7.34.0
+    react: ^19.0.0
+  languageName: unknown
+  linkType: soft
+
+"@cratis/showrunner.playbill@npm:1.0.0, @cratis/showrunner.playbill@workspace:Source/JavaScript/Playbill":
+  version: 0.0.0-use.local
+  resolution: "@cratis/showrunner.playbill@workspace:Source/JavaScript/Playbill"
+  dependencies:
+    "@cratis/arc": "npm:22.185.1"
+    "@cratis/arc.react": "npm:22.185.1"
+    "@cratis/fundamentals": "npm:7.34.0"
+  peerDependencies:
+    "@cratis/arc": ^22.185.1 || ^23.0.0
+    "@cratis/arc.react": ^22.185.1 || ^23.0.0
+    "@cratis/fundamentals": ^7.34.0
+  languageName: unknown
+  linkType: soft
+
 "@cratis/showrunner.usher.react@workspace:Source/JavaScript/Usher.React":
   version: 0.0.0-use.local
   resolution: "@cratis/showrunner.usher.react@workspace:Source/JavaScript/Usher.React"

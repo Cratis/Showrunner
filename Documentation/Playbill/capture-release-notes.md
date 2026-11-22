@@ -117,6 +117,8 @@ The checkout before it must have full history (`fetch-depth: 0`) of the branch b
 | `missing-label` | `true` when a merged pull request carried no release label. |
 | `prs` | The pull requests in the range, comma separated. |
 
+A check that only wants to know what is pending, without releasing, runs `aggregate` with `dry-run: true`: it prints the unreleased range and the notes that would be released, writes no body file and sets no outputs.
+
 ## Moving from a hand-built setup
 
 Studio and Direct each carry a copy of `generate-version-release-notes.mjs`, and Studio also carries `aggregate-release-notes.mjs`. The action replaces both: the capture script is the same one with the same image handling, and the aggregate script is Studio's with the repository, branch and commit message made inputs.

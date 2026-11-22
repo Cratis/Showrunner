@@ -48,6 +48,7 @@ A repository that releases from several merged pull requests at once runs the ac
 | `commit-message` | `Add release notes for {version} [skip ci]` | capture | The commit message. |
 | `branch` | `main` | capture | The branch to push to. |
 | `trigger`, `base`, `notes-commit` | see `action.yml` | aggregate | Where the range starts. |
+| `dry-run` | `false` | aggregate | Only print what is pending; write no body file and set no outputs. |
 | `repo`, `github-token` | the workflow's | aggregate, materialize | Which repository, and the token that reads its pull requests, releases and, for a private repository, images. |
 
 | Output | Mode | Meaning |

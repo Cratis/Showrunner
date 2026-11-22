@@ -78,6 +78,10 @@ inputs:
     description: 'aggregate, materialize: the repository as owner/name. Defaults to the one the workflow runs in.'
     required: false
     default: ${{ github.repository }}
+  dry-run:
+    description: 'aggregate: only print the unreleased range and the notes that would be released; write no body file and set no outputs. For a check that wants to know what is pending.'
+    required: false
+    default: 'false'
   github-token:
     description: 'aggregate, materialize: the token used to read pull requests and releases. capture, materialize: also read a private repository''s images; it is sent only to GitHub''s own addresses.'
     required: false
@@ -147,11 +151,13 @@ runs:
         BASE: ${{ inputs.base }}
         NOTES_COMMIT: ${{ inputs.notes-commit }}
         BODY_FILE: ${{ inputs.body-file }}
+        DRY_RUN: ${{ inputs.dry-run }}
         ACTION_PATH: ${{ github.action_path }}
       run: |
         set -euo pipefail
         args=(--base "$BASE" --notes-commit "$NOTES_COMMIT" --body-file "${BODY_FILE:-$RUNNER_TEMP/release-body.md}")
         if [ -n "$TRIGGER" ]; then args+=(--trigger "$TRIGGER"); fi
+        if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); fi
         node "$ACTION_PATH/aggregate.mjs" "${args[@]}"
 
     - name: Materialize release notes

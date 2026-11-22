@@ -1,6 +1,6 @@
 ---
 title: Declare Stage Manager resources with Pulumi
-description: Declare a Stage Manager Production, Performance and Understudy from a C# Pulumi program with typed components, and let them write the Kubernetes Secrets the resources name.
+description: Declare Stage Manager Production, Performance and Understudy resources from a C# Pulumi program, with typed components that write the Secrets they name.
 ---
 
 The `Cratis.Showrunner.StageManager.Pulumi` package is for a cluster that a C# [Pulumi](https://www.pulumi.com/) program already deploys. It has one component for each resource you would otherwise write as YAML: `Production`, `Performance` and `Understudy`. You pass typed arguments, including the outputs of other resources, and the component creates the custom resource and the Kubernetes Secrets it names. There are no templates and no tokens to fill.

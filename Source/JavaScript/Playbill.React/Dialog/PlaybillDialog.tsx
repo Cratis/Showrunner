@@ -7,7 +7,7 @@ import { ComponentType, useMemo, useState } from 'react';
 import { usePlaybillClient } from '../Configuration/index.js';
 import { PlaybillLabels, resolveLabels, withCount } from '../Labels/index.js';
 import { PlaybillMarkdown, PlaybillMarkdownProps } from '../Markdown/index.js';
-import { ReleaseNoteView, ReleaseNoteViewProps } from '../Release/index.js';
+import { IssueRepository, issueRepositoryFor, ReleaseNoteView, ReleaseNoteViewProps } from '../Release/index.js';
 import { usePlaybillStatus } from '../usePlaybillStatus.js';
 import { useReleaseNotes } from '../useReleases.js';
 
@@ -23,6 +23,8 @@ export interface PlaybillDialogProps {
     labels?: Partial<PlaybillLabels>;
     /** The locale to write the dates in; the browser's when not given. */
     locale?: string | string[];
+    /** Where the issues of the releases are tracked, so `#123` in a note links to one. A function answers for each version. Not linked when not given. */
+    issues?: IssueRepository;
     /** The most releases to show at once, the newest first. Defaults to 5; the rest are pointed to with the `earlier` text. */
     maxReleases?: number;
 }
@@ -32,7 +34,7 @@ export interface PlaybillDialogProps {
  * seen, and records that they have when it is closed, so it does not return on any device. Nothing opens when nothing
  * is unread. Mount it once, in the application shell and inside Arc's context.
  */
-export const PlaybillDialog = ({ release: Release = ReleaseNoteView, markdown, labels, locale, maxReleases = 5 }: PlaybillDialogProps) => {
+export const PlaybillDialog = ({ release: Release = ReleaseNoteView, markdown, labels, locale, issues, maxReleases = 5 }: PlaybillDialogProps) => {
     const client = usePlaybillClient();
     const { unreadVersions, markSeen } = usePlaybillStatus();
     const resolved = useMemo(() => resolveLabels(labels), [labels]);
@@ -72,6 +74,7 @@ export const PlaybillDialog = ({ release: Release = ReleaseNoteView, markdown, l
                         labels={resolved}
                         markdown={markdown ?? PlaybillMarkdown}
                         locale={locale}
+                        issueRepository={issueRepositoryFor(issues, note.version)}
                         headingLevel={3} />
                 ))}
                 {unreadVersions.length > shown.length && (

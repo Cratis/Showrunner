@@ -25,7 +25,7 @@ Marquee brings product announcements to the people they concern. The people runn
 
 ## Playbill
 
-Playbill shows an application's release notes. A release is described once, in the pull request that ships it; the `playbill-capture` action commits that description next to the code, the `Cratis.Showrunner.Playbill` package embeds it in the assembly at build time and serves it under `/.cratis/playbill/v1`, and React components built on Cratis Components show a releases page, a "what's new" dialog and an unread badge that remember what each person has seen. Follow [the Playbill documentation](./Documentation/Playbill/index.md) to add it.
+Playbill shows an application's release notes. A release is described once, in the pull request that ships it; the [`playbill-capture` action](./.github/actions/playbill-capture/README.md), which runs next to `cratis/release-action`, commits that description next to the code, the `Cratis.Showrunner.Playbill` package embeds it in the assembly at build time and serves it under `/.cratis/playbill/v1`, and React components built on Cratis Components show a releases page, a "what's new" dialog and an unread badge that remember what each person has seen. Follow [the Playbill documentation](./Documentation/Playbill/index.md) to add it.
 
 ## Cue
 

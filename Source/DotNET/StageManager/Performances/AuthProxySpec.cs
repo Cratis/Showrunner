@@ -63,6 +63,12 @@ public class AuthProxySpec
     public AuthProxyDataProtectionSpec? DataProtection { get; set; }
 
     /// <summary>
+    /// Gets or sets the peers whose forwarded headers AuthProxy believes.
+    /// </summary>
+    [Description("The addresses or CIDR ranges of the peers AuthProxy believes when they say which client and scheme a request came from through X-Forwarded-For and X-Forwarded-Proto: the ingress controller or load balancer in front of it, such as 10.0.0.0/8. Without one, forwarded headers are ignored, and a sign-in callback is built with the http scheme the ingress terminated.")]
+    public IList<string> TrustedProxies { get; set; } = [];
+
+    /// <summary>
     /// Gets or sets the resources of the AuthProxy container.
     /// </summary>
     [Description("The resource requests and limits of the AuthProxy container. Omit to set none.")]

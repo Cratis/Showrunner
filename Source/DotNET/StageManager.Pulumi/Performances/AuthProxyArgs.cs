@@ -49,6 +49,12 @@ public sealed class AuthProxyArgs
     public AuthProxyDataProtectionArgs? DataProtection { get; init; }
 
     /// <summary>
+    /// Gets the addresses or CIDR ranges of the peers whose forwarded headers AuthProxy believes: the ingress controller or load balancer
+    /// in front of it. Without one it ignores them, and builds a sign-in callback with the http scheme the ingress terminated.
+    /// </summary>
+    public IList<string> TrustedProxies { get; init; } = [];
+
+    /// <summary>
     /// Gets the resources of the AuthProxy container, or null to set none.
     /// </summary>
     public ApplicationResourcesArgs? Resources { get; init; }
@@ -71,6 +77,7 @@ public sealed class AuthProxyArgs
             .Put("replicas", Replicas)
             .PutList("providers", Providers.Select(provider => provider.ToSpec(context)))
             .PutObject("tenancy", Tenancy?.ToSpec() ?? SpecExtensions.NewSpec())
+            .PutList("trustedProxies", TrustedProxies)
             .PutList("requiredClaims", RequiredClaims.Select(claim => claim.ToSpec()))
             .PutObject("pages", Pages?.ToSpec(context) ?? SpecExtensions.NewSpec())
             .PutObject("dataProtection", DataProtection?.ToSpec(context) ?? SpecExtensions.NewSpec())

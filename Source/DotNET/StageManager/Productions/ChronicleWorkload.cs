@@ -110,13 +110,16 @@ public static class ChronicleWorkload
 
         var environment = kernel.EnvironmentVariables
             .Append(new($"{Prefix}Tls__CertificatePath", $"{CertificateDirectory}/{ProductionCertificates.KeystoreKey}"))
+            .Append(new($"{Prefix}EncryptionCertificate__CertificatePath", $"{CertificateDirectory}/{ProductionCertificates.KeystoreKey}"))
             .Append(new($"{Prefix}Authentication__AdminUser__Username", ChronicleCredentials.AdminUserName))
             .OrderBy(pair => pair.Key, StringComparer.Ordinal)
             .Select(pair => new V1EnvVar { Name = pair.Key, Value = pair.Value })
             .ToList();
 
         // Values that are secret come from their Secrets and never stand in the StatefulSet.
+        // The kernel's OAuth authority refuses to start in production without an encryption certificate to protect its keys: it reuses the keystore.
         environment.Add(FromSecret($"{Prefix}Tls__CertificatePassword", names.KeystorePassword, ProductionCertificates.KeystorePasswordKey));
+        environment.Add(FromSecret($"{Prefix}EncryptionCertificate__CertificatePassword", names.KeystorePassword, ProductionCertificates.KeystorePasswordKey));
         environment.Add(FromSecret($"{Prefix}Authentication__AdminUser__Password", names.Credentials, ChronicleCredentials.AdminPasswordKey));
         environment.Add(FromSecret($"{Prefix}Clients__0__ClientId", names.Credentials, ChronicleCredentials.ClientIdKey));
         environment.Add(FromSecret($"{Prefix}Clients__0__ClientSecret", names.Credentials, ChronicleCredentials.ClientSecretKey));

@@ -1,6 +1,6 @@
 ---
 title: Add release notes to an application
-description: A tutorial that adds the Playbill backend and React packages to an application, embeds its release notes at build time, serves them and shows a releases page, a what's new dialog and an unread badge.
+description: A tutorial that adds Playbill to an application: embed release notes at build time and show a releases page, a what's new dialog and an unread badge.
 ---
 In this tutorial you add Playbill to an application called `ledger`: the backend package that embeds and serves its release history, and the React components that show it. The application must already be an Arc application with a Chronicle event store and a React frontend that uses Cratis Components.
 

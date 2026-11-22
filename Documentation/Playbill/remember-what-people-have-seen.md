@@ -1,6 +1,6 @@
 ---
 title: Remember what people have seen
-description: The MarkReleaseNotesSeen command, the ReleaseNotesStatus query and the options Playbill uses to tell each person which releases are new, so a what's new dialog is shown once on every device.
+description: The MarkReleaseNotesSeen command, ReleaseNotesStatus query and options Playbill uses so each person sees a what's new dialog once on every device.
 ---
 Which releases a person has been told about is recorded in the application's own Chronicle event store, per person, so it follows them to every device. It needs the application to be an Arc application with Chronicle; the endpoints that serve the history do not.
 

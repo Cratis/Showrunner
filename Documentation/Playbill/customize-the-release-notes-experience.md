@@ -1,6 +1,6 @@
 ---
 title: Customize the release-notes experience
-description: How to restyle the Playbill components with tokens and part classes, replace a part, change the texts, build your own surface with the hooks and read the history from another endpoint.
+description: Restyle Playbill components with tokens and part classes, replace parts, change texts, build your own surface with hooks or read history elsewhere.
 ---
 Playbill draws with Cratis Components and takes every color from the `--cratis-*` tokens, so your theme and dark mode apply with no work. Everything past that is a choice, from a few custom properties to drawing the whole thing yourself.
 

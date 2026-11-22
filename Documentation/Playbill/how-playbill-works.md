@@ -1,6 +1,6 @@
 ---
 title: How Playbill works
-description: Explains the path a release note takes through Playbill, from the pull request that ships it through the build and the endpoints to the components and the record of what each person has seen.
+description: Explains how a release note travels through Playbill, from the shipping pull request through the build and endpoints to components and seen records.
 ---
 A release note makes four journeys. Each one is small, and none of them needs the next to be running.
 

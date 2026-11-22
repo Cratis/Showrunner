@@ -13,7 +13,7 @@
     <PackageVersion Include="Cratis.Arc.Chronicle.Testing" Version="22.185.1" />
     <PackageVersion Include="Cratis.Fundamentals" Version="7.34.3" />
     <!-- Keep Chronicle clients and testing support on the same release. -->
-    <PackageVersion Include="Cratis.Metrics.Roslyn" Version="7.34.0" />
+    <PackageVersion Include="Cratis.Metrics.Roslyn" Version="7.34.3" />
     <!-- Cratis.Chronicle.Testing does not declare Cratis.Orleans or Cratis.Orleans.Storage.MongoDB, which the inline specifications (Debug only) load at run time. -->
     <GlobalPackageReference Include="Cratis.Orleans" Version="1.27.2" Condition="'$(Configuration)' == 'Debug'" />
     <GlobalPackageReference Include="Cratis.Orleans.Storage.MongoDB" Version="1.27.2" Condition="'$(Configuration)' == 'Debug'" />

@@ -121,6 +121,16 @@ export const OwnSurface = () => {
 
 `usePlaybill` is `useReleases` and `usePlaybillStatus` together. Use `useReleases` alone where there is no Arc context or no signed-in person, such as a public page on an application with `AllowAnonymous`. `useRelease(version)` and `useReleaseNotes(versions)` read the notes themselves. All three components also read and record what the person has seen, so they need the backend package and Arc's context; the hooks that only read the history need neither.
 
+## Choose what a new person sees
+
+A person who has seen the notes of no release at all - someone who has just signed in for the first time, or on a browser Playbill has never met - is shown the newest release by default. For an application whose newcomers have no changes to catch up on, tell the dialog to skip them:
+
+```tsx
+<PlaybillDialog firstVisit='skip' />
+```
+
+With `skip`, the newest release is recorded as seen and nothing opens, on every device, and the dialog opens again from the next release. A person who has seen an older release is not a newcomer: they are shown what they missed either way.
+
 ## Link the issues
 
 Release notes mention the issues they deliver, as `#123` or `owner/repo#123`. Give `issues` the address of the repository the bare form belongs to and Playbill turns both into links; without it they stay text:

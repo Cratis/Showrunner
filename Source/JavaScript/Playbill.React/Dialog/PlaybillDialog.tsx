@@ -3,7 +3,7 @@
 
 import { DialogButtons } from '@cratis/arc.react/dialogs';
 import { Dialog, DialogInitialFocus } from '@cratis/components/Dialogs';
-import { ComponentType, useMemo, useState } from 'react';
+import { ComponentType, useEffect, useMemo, useRef, useState } from 'react';
 import { usePlaybillClient } from '../Configuration/index.js';
 import { PlaybillLabels, resolveLabels, withCount } from '../Labels/index.js';
 import { PlaybillMarkdown, PlaybillMarkdownProps } from '../Markdown/index.js';
@@ -12,9 +12,20 @@ import { usePlaybillStatus } from '../usePlaybillStatus.js';
 import { useReleaseNotes } from '../useReleases.js';
 
 /**
+ * What {@link PlaybillDialog} does for a person who has not seen the notes of any release at all.
+ *
+ * - `show` opens it on the newest release, as for anyone else with something unread.
+ * - `skip` records the newest release as seen and opens nothing, for a person who has just arrived and has no changes to
+ *   catch up on. The dialog then opens from the next release on.
+ */
+export type PlaybillFirstVisit = 'show' | 'skip';
+
+/**
  * Props for {@link PlaybillDialog}.
  */
 export interface PlaybillDialogProps {
+    /** What to do for a person who has seen no release at all. Defaults to `show`. */
+    firstVisit?: PlaybillFirstVisit;
     /** Replaces how one release is drawn. */
     release?: ComponentType<ReleaseNoteViewProps>;
     /** Replaces the Markdown renderer the default release view uses, and that a custom one is given. */
@@ -34,16 +45,26 @@ export interface PlaybillDialogProps {
  * seen, and records that they have when it is closed, so it does not return on any device. Nothing opens when nothing
  * is unread. Mount it once, in the application shell and inside Arc's context.
  */
-export const PlaybillDialog = ({ release: Release = ReleaseNoteView, markdown, labels, locale, issues, maxReleases = 5 }: PlaybillDialogProps) => {
+export const PlaybillDialog = ({ release: Release = ReleaseNoteView, markdown, labels, locale, issues, firstVisit = 'show', maxReleases = 5 }: PlaybillDialogProps) => {
     const client = usePlaybillClient();
-    const { unreadVersions, markSeen } = usePlaybillStatus();
+    const { lastSeen, unreadVersions, markSeen } = usePlaybillStatus();
+    const skipping = firstVisit === 'skip' && !lastSeen && unreadVersions.length > 0;
+    const skipped = useRef<string | undefined>(undefined);
     const resolved = useMemo(() => resolveLabels(labels), [labels]);
     const shown = useMemo(() => unreadVersions.slice(0, maxReleases), [unreadVersions, maxReleases]);
     const key = shown.join('|');
     const [dismissed, setDismissed] = useState<string>();
-    const { data: releases, isLoading, error } = useReleaseNotes(shown);
+    const { data: releases, isLoading, error } = useReleaseNotes(skipping ? [] : shown);
 
-    if (shown.length === 0 || dismissed === key) {
+    // A person who has just arrived is recorded as up to date, once, and sees nothing while that is being remembered.
+    useEffect(() => {
+        if (skipping && skipped.current !== unreadVersions[0]) {
+            skipped.current = unreadVersions[0];
+            markSeen(unreadVersions[0]).catch(() => undefined);
+        }
+    }, [skipping, unreadVersions, markSeen]);
+
+    if (skipping || shown.length === 0 || dismissed === key) {
         return <></>;
     }
 

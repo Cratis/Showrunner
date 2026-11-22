@@ -17,7 +17,7 @@ Run it after the step that releases, giving the version it produced:
 
 ```yaml
 - name: Capture release notes
-  uses: Cratis/Showrunner/.github/actions/playbill-capture@main
+  uses: Cratis/Showrunner/.github/actions/playbill-capture@v2.19.0
   with:
     version: ${{ steps.release.outputs.version }}
     body: ${{ github.event.pull_request.body }}
@@ -25,7 +25,7 @@ Run it after the step that releases, giving the version it produced:
     commit: true
 ```
 
-The folder it writes is the one the [embedding targets](./add-release-notes-to-an-application.md#choose-what-is-embedded) read, so `output` is the project that is the application's entry point. Pin the action to a release tag in your own workflow rather than `main`.
+The folder it writes is the one the [embedding targets](./add-release-notes-to-an-application.md#choose-what-is-embedded) read, so `output` is the project that is the application's entry point. Pin the action to a release tag, or to the commit of that tag, in your own workflow rather than `main`. It is meant to run next to [`cratis/release-action`](https://github.com/Cratis/release-action): the release action decides the version, publishes the GitHub release and closes the issues it delivered, and `playbill-capture` keeps the same description in the repository for the application to show. The [action's own README](https://github.com/Cratis/Showrunner/blob/main/.github/actions/playbill-capture/README.md) has the short version.
 
 | Input | Default | Meaning |
 | --- | --- | --- |
@@ -56,7 +56,7 @@ A repository whose releases are cancelled, batched or re-run can have several me
 ```yaml
 - name: Aggregate unreleased pull requests
   id: aggregate
-  uses: Cratis/Showrunner/.github/actions/playbill-capture@main
+  uses: Cratis/Showrunner/.github/actions/playbill-capture@v2.19.0
   with:
     mode: aggregate
 
@@ -70,7 +70,7 @@ A repository whose releases are cancelled, batched or re-run can have several me
 
 - name: Capture release notes
   if: steps.release.outputs.should-publish == 'true'
-  uses: Cratis/Showrunner/.github/actions/playbill-capture@main
+  uses: Cratis/Showrunner/.github/actions/playbill-capture@v2.19.0
   with:
     version: ${{ steps.release.outputs.version }}
     body: ${{ steps.aggregate.outputs.release-notes }}

@@ -1,0 +1,202 @@
+name: Playbill release-notes capture
+description: >-
+  Captures a release's notes from its pull request into the project that embeds them for Cratis.Showrunner.Playbill, and
+  optionally commits them. Can first work out an unreleased range for a repository that releases from many pull requests.
+author: Cratis
+
+# Two phases, because a release sits between them:
+#
+#   1. mode: aggregate   Before cratis/release-action. Finds the pull requests that merged since the last release, merges their
+#                        notes and works out the version to cut. Optional: a repository that releases one pull request at a
+#                        time skips it and uses the pull request's own body.
+#   2. mode: capture     After cratis/release-action has decided the version. Writes <output>/<version>/<version>.md, the
+#                        images it refers to and <version>.json, and optionally commits them.
+#
+# Nothing here is on by default that a repository did not ask for: aggregation is a separate mode, the commit is `commit: true`,
+# and the versions.txt manifest is `manifest: true`.
+
+inputs:
+  mode:
+    description: '`capture` writes the notes of a released version. `aggregate` works out the unreleased range before the release.'
+    required: false
+    default: capture
+
+  # --- capture
+  version:
+    description: 'capture: the version that was released, such as 2.3.0 or 2.4.0-beta.1.'
+    required: false
+  body-file:
+    description: 'capture: a file holding the release notes. aggregate: where to write the merged notes (defaults to $RUNNER_TEMP/release-body.md).'
+    required: false
+  body:
+    description: 'capture: the release notes as text, when there is no file. A body-file wins.'
+    required: false
+  output:
+    description: 'capture: the folder that holds one sub-folder per version, in the project that embeds them, such as Source/Host/ReleaseNotes.'
+    required: false
+  pull:
+    description: 'capture: the pull request the release was made from. Defaults to the pull request that triggered the run.'
+    required: false
+  released-at:
+    description: 'capture: when the release was made, as an ISO date. Defaults to now.'
+    required: false
+  manifest:
+    description: 'capture: also keep <output>/versions.txt, for a frontend that still reads the list. Playbill does not need it.'
+    required: false
+    default: 'false'
+  commit:
+    description: 'capture: commit and push the notes. Leave it off to commit them yourself.'
+    required: false
+    default: 'false'
+  commit-message:
+    description: 'capture: the commit message; {version} is replaced. Keep the text the aggregate mode looks for, or set notes-commit to match.'
+    required: false
+    default: 'Add release notes for {version} [skip ci]'
+  branch:
+    description: 'capture: the branch to push the notes to.'
+    required: false
+    default: main
+
+  # --- aggregate
+  trigger:
+    description: 'aggregate: the pull request that triggered the release. Defaults to the pull request of the event.'
+    required: false
+  base:
+    description: 'aggregate: the branch pull requests merge into.'
+    required: false
+    default: main
+  notes-commit:
+    description: 'aggregate: the message of the commit that records a version''s notes, so the range can start after it; {version} is replaced.'
+    required: false
+    default: 'Add release notes for {version} [skip ci]'
+  repo:
+    description: 'aggregate: the repository as owner/name. Defaults to the one the workflow runs in.'
+    required: false
+    default: ${{ github.repository }}
+  github-token:
+    description: 'aggregate: the token used to read pull requests and releases.'
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  mode:
+    description: 'aggregate: `single`, `aggregate` or `covered`; what the range holds.'
+    value: ${{ steps.aggregate.outputs.mode }}
+  version:
+    description: 'aggregate: the version to release.'
+    value: ${{ steps.aggregate.outputs.version }}
+  release-notes:
+    description: 'aggregate: the merged release notes, for the release action.'
+    value: ${{ steps.aggregate.outputs.release-notes }}
+  missing-label:
+    description: 'aggregate: `true` when a merged pull request carried no release label.'
+    value: ${{ steps.aggregate.outputs.missing-label }}
+  prs:
+    description: 'aggregate: the pull requests in the range, comma separated.'
+    value: ${{ steps.aggregate.outputs.prs }}
+  directory:
+    description: 'capture: the folder the notes were written to.'
+    value: ${{ steps.capture.outputs.directory }}
+  sha:
+    description: 'capture: the commit the notes are in; the current head when nothing was committed.'
+    value: ${{ steps.commit.outputs.sha }}
+
+runs:
+  using: composite
+  steps:
+    # A runner that bakes Node into its image skips this.
+    - name: Set up Node
+      if: runner.environment != 'self-hosted'
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
+    - name: Validate
+      shell: bash
+      env:
+        MODE: ${{ inputs.mode }}
+        VERSION: ${{ inputs.version }}
+        OUTPUT: ${{ inputs.output }}
+      run: |
+        case "$MODE" in
+          aggregate) ;;
+          capture)
+            [ -n "$VERSION" ] || { echo "::error title=Playbill::capture needs the version that was released."; exit 1; }
+            [ -n "$OUTPUT" ] || { echo "::error title=Playbill::capture needs output: the release-notes folder of the project that embeds them."; exit 1; }
+            ;;
+          *) echo "::error title=Playbill::mode must be capture or aggregate, not '$MODE'."; exit 1 ;;
+        esac
+
+    - name: Aggregate unreleased pull requests
+      id: aggregate
+      if: inputs.mode == 'aggregate'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        GITHUB_REPOSITORY: ${{ inputs.repo }}
+        TRIGGER: ${{ inputs.trigger }}
+        BASE: ${{ inputs.base }}
+        NOTES_COMMIT: ${{ inputs.notes-commit }}
+        BODY_FILE: ${{ inputs.body-file }}
+        ACTION_PATH: ${{ github.action_path }}
+      run: |
+        set -euo pipefail
+        args=(--base "$BASE" --notes-commit "$NOTES_COMMIT" --body-file "${BODY_FILE:-$RUNNER_TEMP/release-body.md}")
+        if [ -n "$TRIGGER" ]; then args+=(--trigger "$TRIGGER"); fi
+        node "$ACTION_PATH/aggregate.mjs" "${args[@]}"
+
+    - name: Capture release notes
+      id: capture
+      if: inputs.mode == 'capture'
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+        OUTPUT: ${{ inputs.output }}
+        BODY_FILE: ${{ inputs.body-file }}
+        BODY: ${{ inputs.body }}
+        PULL: ${{ inputs.pull || github.event.pull_request.number }}
+        RELEASED_AT: ${{ inputs.released-at }}
+        MANIFEST: ${{ inputs.manifest }}
+        ACTION_PATH: ${{ github.action_path }}
+      run: |
+        set -euo pipefail
+        file="$BODY_FILE"
+        if [ -z "$file" ]; then
+          file="$RUNNER_TEMP/playbill-body.md"
+          printf '%s' "$BODY" > "$file"
+        fi
+        args=(--version "$VERSION" --body-file "$file" --output "$OUTPUT" --manifest "$MANIFEST")
+        if [ -n "$PULL" ]; then args+=(--pull "$PULL"); fi
+        if [ -n "$RELEASED_AT" ]; then args+=(--released-at "$RELEASED_AT"); fi
+        node "$ACTION_PATH/capture.mjs" "${args[@]}"
+        echo "directory=$OUTPUT/${VERSION#v}" >> "$GITHUB_OUTPUT"
+
+    # Two releases never write the same folder, so a push that loses the race only needs the other release merged in.
+    # Merging, never rebasing or forcing: history is append-only.
+    - name: Commit release notes
+      id: commit
+      if: inputs.mode == 'capture'
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+        OUTPUT: ${{ inputs.output }}
+        COMMIT: ${{ inputs.commit }}
+        MESSAGE: ${{ inputs.commit-message }}
+        BRANCH: ${{ inputs.branch }}
+      run: |
+        set -euo pipefail
+        if [ "$COMMIT" = "true" ]; then
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -- "$OUTPUT"
+          if ! git diff --cached --quiet; then
+            git commit -m "${MESSAGE//\{version\}/${VERSION#v}}"
+            for attempt in 1 2 3 4 5; do
+              if git push origin "HEAD:$BRANCH"; then break; fi
+              if [ "$attempt" = 5 ]; then echo "::error title=Playbill::Could not push the release notes to $BRANCH after 5 attempts."; exit 1; fi
+              sleep $((attempt * 3))
+              git pull --no-rebase --no-edit origin "$BRANCH"
+            done
+          fi
+        fi
+        echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"

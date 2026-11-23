@@ -59,6 +59,16 @@ public sealed class ProductionArgs
     public ProductionGraphArgs? Graph { get; init; }
 
     /// <summary>
+    /// Gets where the pods of the Production may run.
+    /// </summary>
+    public ProductionSchedulingArgs? Scheduling { get; init; }
+
+    /// <summary>
+    /// Gets the compute resources of the Chronicle container.
+    /// </summary>
+    public ProductionResourcesArgs? Resources { get; init; }
+
+    /// <summary>
     /// Gets the named sinks, or null for none.
     /// </summary>
     public ProductionSinksArgs? Sinks { get; init; }

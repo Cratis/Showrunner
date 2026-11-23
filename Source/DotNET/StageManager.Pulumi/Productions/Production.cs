@@ -96,6 +96,8 @@ public sealed class Production : ComponentResource
             .Put("vault", vault?.ToSpec(tokenSecret))
             .Put("federation", args.Federation?.ToSpec(enrollmentSecret))
             .Put("graph", args.Graph?.ToSpec())
+            .Put("scheduling", args.Scheduling?.ToSpec())
+            .Put("resources", args.Resources?.ToSpec())
             .Put("sinks", args.Sinks?.ToSpec());
 
         StageManagerCustomResources.Declare(

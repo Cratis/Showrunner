@@ -227,10 +227,20 @@ public class UnderstudyReconciler(
         try
         {
             var days = understudy.Spec.MaxAgeDays;
-            var applied = await storage.TryEnforceExpiryAsync(days, cancellationToken);
-            var state = await storage.InspectAsync(cancellationToken);
+            var applied = false;
+            BucketState? state = null;
+            try
+            {
+                applied = await storage.TryEnforceExpiryAsync(days, cancellationToken);
+                state = await storage.InspectAsync(cancellationToken);
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                // A service without bucket lifecycle rules (not every S3 service has them) must not make a bucket that can be read look unreachable.
+            }
+
             status.Set(UnderstudyConditions.StorageReady, true, "Reachable", "The bucket can be reached.");
-            if (state.ExpiryDays == days)
+            if (state?.ExpiryDays == days)
             {
                 status.Set(UnderstudyConditions.LifecycleEnforced, true, "Enforced", $"The bucket expires every object after {days} days.");
             }
@@ -268,7 +278,7 @@ public class UnderstudyReconciler(
             return false;
         }
 
-        if (string.IsNullOrEmpty(production.Spec.Vault.Address))
+        if (string.IsNullOrEmpty(UnderstudyWorkload.VaultAddress(production)))
         {
             status.Set(UnderstudyConditions.KeyBackupsReady, false, "VaultAddressMissing", "The Production names no Vault address.");
             return false;

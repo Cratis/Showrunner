@@ -71,8 +71,15 @@ public static class UnderstudyWorkload
         understudy.Spec.Storage,
         understudy.Spec.Keys?.Storage,
         understudy.Spec.Keys?.MaxAgeDays ?? Catalog.RetentionPolicy.DefaultMaxAgeDays,
-        production.Spec.Vault.Address,
+        VaultAddress(production),
         production.Spec.Database.SystemDatabaseName);
+
+    /// <summary>
+    /// Gets the address of the Vault of a Production: the one declared for an External Vault, the Service of the Vault Stage Manager runs for a Managed one.
+    /// </summary>
+    /// <param name="production">The Production.</param>
+    /// <returns>The address, or null when the Production has no Vault.</returns>
+    public static string? VaultAddress(Production production) => ManagedVault.AddressOf(production.Spec, ProductionNames.For(production));
 
     /// <summary>
     /// Gets whether the Production keeps its keys in a Vault. Without one they travel inside the events.

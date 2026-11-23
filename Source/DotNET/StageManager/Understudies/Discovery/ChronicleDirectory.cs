@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Chronicle;
+using Cratis.Chronicle.Connections;
 
 namespace Cratis.Showrunner.StageManager.Understudies.Discovery;
 
@@ -14,7 +15,9 @@ public class ChronicleDirectory(string connectionString) : IChronicleDirectory
     /// <inheritdoc/>
     public async Task<ChronicleTopology> GetTopologyAsync(CancellationToken cancellationToken)
     {
-        using var client = new ChronicleClient(connectionString);
+        // Only reads: registering the artifacts of the process would write to the event stores it looks at, and fails where a store holds
+        // another version of a built-in event type.
+        using var client = new ChronicleClient(new ChronicleOptions(new ChronicleConnectionString(connectionString)) { AutoDiscoverAndRegister = false });
         var eventStores = new List<EventStoreTopology>();
         foreach (var name in await client.GetEventStores(cancellationToken))
         {

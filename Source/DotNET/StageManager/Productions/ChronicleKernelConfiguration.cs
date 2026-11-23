@@ -113,6 +113,10 @@ public record ChronicleKernelConfiguration(IReadOnlyDictionary<string, string> E
         {
             variables[$"{Prefix}Compliance__Encryption__Storage__Type"] = "vault";
             variables[$"{Prefix}Compliance__Encryption__Storage__ConnectionDetails"] = vaultAddress;
+            if (spec.Vault.MigrateFromDefaultStorage)
+            {
+                variables[$"{Prefix}Compliance__Encryption__MigrateFromDefaultStorage"] = "true";
+            }
         }
 
         SetFederation(spec.Federation, variables, sources);

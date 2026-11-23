@@ -100,7 +100,8 @@ public static class ManagedGraph
                     Spec = new()
                     {
                         AutomountServiceAccountToken = false,
-                        NodeSelector = graph.NodeSelector.Count > 0 ? new Dictionary<string, string>(graph.NodeSelector, StringComparer.Ordinal) : null,
+                        NodeSelector = production.Spec.Scheduling.NodeSelectorFor(graph.NodeSelector),
+                        Tolerations = production.Spec.Scheduling.TolerationsForPod(),
                         SecurityContext = new() { RunAsNonRoot = true, RunAsUser = Neo4jUser, RunAsGroup = Neo4jUser, FsGroup = Neo4jUser, SeccompProfile = new() { Type = "RuntimeDefault" } },
                         Containers =
                         [

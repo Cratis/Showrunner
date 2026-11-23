@@ -48,6 +48,11 @@ public sealed class ProductionVaultArgs
     public ManagedVaultArgs? Managed { get; init; }
 
     /// <summary>
+    /// Gets whether keys that only Chronicle's database holds keep being served and are copied into Vault as they are read.
+    /// </summary>
+    public bool MigrateFromDefaultStorage { get; init; }
+
+    /// <summary>
     /// Builds the spec of the Vault.
     /// </summary>
     /// <param name="tokenSecret">The Secret holding the token, if any.</param>
@@ -57,5 +62,6 @@ public sealed class ProductionVaultArgs
             .PutEnum("mode", Mode)
             .Put("address", Address)
             .Put("tokenSecretRef", tokenSecret is null ? null : SpecExtensions.SecretReference(tokenSecret.Name, tokenSecret.Key))
-            .Put("managed", Managed?.ToSpec());
+            .Put("managed", Managed?.ToSpec())
+            .PutWhenTrue("migrateFromDefaultStorage", MigrateFromDefaultStorage);
 }

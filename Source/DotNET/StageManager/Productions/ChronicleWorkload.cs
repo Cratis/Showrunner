@@ -188,6 +188,8 @@ public static class ChronicleWorkload
                     Spec = new()
                     {
                         AutomountServiceAccountToken = false,
+                        NodeSelector = spec.Scheduling.NodeSelectorFor(),
+                        Tolerations = spec.Scheduling.TolerationsForPod(),
                         SecurityContext = new() { FsGroup = FileGroup, SeccompProfile = new() { Type = "RuntimeDefault" } },
                         Volumes = volumes,
                         Containers =
@@ -198,6 +200,7 @@ public static class ChronicleWorkload
                                 Image = $"{Image}:{spec.Version}",
                                 Ports = containerPorts,
                                 Env = environment,
+                                Resources = spec.Resources.ToRequirements(),
                                 VolumeMounts = mounts,
                                 StartupProbe = new() { TcpSocket = new() { Port = "chronicle" }, PeriodSeconds = 5, FailureThreshold = 60 },
                                 LivenessProbe = new() { HttpGet = new() { Path = "/health/live", Port = "chronicle", Scheme = "HTTPS" }, PeriodSeconds = 10 },

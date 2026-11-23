@@ -340,6 +340,8 @@ public static class ManagedVault
                     Spec = new()
                     {
                         ServiceAccountName = names.VaultBootstrap,
+                        NodeSelector = production.Spec.Scheduling.NodeSelectorFor(),
+                        Tolerations = production.Spec.Scheduling.TolerationsForPod(),
                         SecurityContext = new() { FsGroup = 1000, SeccompProfile = new() { Type = "RuntimeDefault" } },
                         Volumes = [new() { Name = ConfigVolume, ConfigMap = new() { Name = names.VaultConfig, DefaultMode = 0x1A4 } }],
                         Containers =

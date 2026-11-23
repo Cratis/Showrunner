@@ -171,6 +171,19 @@ Database = new ProductionDatabaseArgs
 
 Leave `Tasks` empty for the operator's schedules (hourly 24, daily 7, weekly 4, monthly 12), or list `BackupTaskArgs`. The credentials Secret is `<name>-backup-credentials` unless `CredentialsSecretName` says otherwise. Give both `AccessKeyId` and `SecretAccessKey`, or neither.
 
+### Dedicated nodes
+
+For a cluster whose data nodes are tainted, `Scheduling` puts Chronicle, a managed Vault, a managed graph and the managed database members on them, and `Resources` sizes the Chronicle container. `ProductionVaultArgs.MigrateFromDefaultStorage` keeps serving the keys a database without Vault already holds while it copies them into Vault.
+
+```csharp
+Scheduling = new ProductionSchedulingArgs
+{
+    NodeSelector = { ["workload"] = "data" },
+    Tolerations = [new ProductionTolerationArgs { Key = "workload", Value = "data", Effect = "NoSchedule" }],
+},
+Resources = new ProductionResourcesArgs { Requests = { ["memory"] = "1Gi" }, Limits = { ["memory"] = "1536Mi" } },
+```
+
 ## Declare a Performance
 
 A `Performance` runs an application against a Production. An application with a worker next to its service declares one `Performance` for each component, all against the same Production.

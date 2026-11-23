@@ -23,6 +23,6 @@ public class when_backing_up_the_keys : a_vault_with_keys
     [Fact] void should_not_write_a_plaintext_fence_anywhere() => _storage.Keys.Any(key => Encoding.UTF8.GetString(_storage.ContentOf(key)).Contains("subject-7", StringComparison.Ordinal)).ShouldBeFalse();
     [Fact] void should_list_the_keys_in_the_manifest() => _result.Taken[0].Entries.Select(entry => entry.Type).ShouldContainOnly([BackupType.Keys]);
     [Fact] void should_write_the_manifest_after_the_keys() => _storage.Writes.IndexOf(Prefix("Studio", "acme") + "manifest.json").ShouldBeGreaterThan(_storage.Writes.IndexOf(Prefix("Studio", "acme") + "Keys.cms"));
-    [Fact] void should_ask_vault_for_one_namespace_at_a_time() => _vault.Asked.ShouldContainOnly(["Studio/acme", "Studio/globex"]);
+    [Fact] void should_ask_vault_for_one_namespace_at_a_time() => _vault.Asked.ShouldContainOnly(["k1/Studio/acme", "Studio/acme", "k1/Studio/globex", "Studio/globex"]);
 }
 #endif

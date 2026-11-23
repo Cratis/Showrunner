@@ -11,7 +11,12 @@ namespace Cratis.Showrunner.StageManager.Understudies.Discovery;
 public record PlannedKeys(string EventStore, string Namespace)
 {
     /// <summary>
-    /// Gets the Vault path of the namespace, relative to the mount.
+    /// Gets the Vault path of the namespace in the layout earlier versions of Chronicle wrote, relative to the mount.
     /// </summary>
     public string Path => $"{EventStore}/{Namespace}";
+
+    /// <summary>
+    /// Gets the Vault path of the namespace in the layout Chronicle writes now, under the <c>k1</c> root, relative to the mount.
+    /// </summary>
+    public string CurrentPath => $"k1/{EventStore}/{Namespace}";
 }

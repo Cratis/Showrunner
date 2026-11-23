@@ -33,6 +33,7 @@ public sealed class S3ObjectStorage : IObjectStorage, IDisposable
         var config = new AmazonS3Config
         {
             ForcePathStyle = settings.PathStyle,
+            HttpClientFactory = new ContentMd5HttpClientFactory(),
 
             // Third-party providers do not implement the additional checksums newer SDK versions send by default.
             RequestChecksumCalculation = RequestChecksumCalculation.WHEN_REQUIRED,

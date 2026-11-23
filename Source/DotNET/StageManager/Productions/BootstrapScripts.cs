@@ -43,13 +43,15 @@ public static class BootstrapScripts
         path "sys/mounts/secret"    { capabilities = ["read"] }
         path "secret/data/k1/*"     { capabilities = ["create", "read", "update"] }
         path "secret/metadata/k1/*" { capabilities = ["read", "list", "delete"] }
+        path "secret/data/*"        { capabilities = ["read"] }
+        path "secret/metadata/*"    { capabilities = ["read", "list", "delete"] }
         path "secret/data/~layout"  { capabilities = ["create", "read"] }
         path "secret/metadata/"     { capabilities = ["list"] }
         path "auth/token/renew-self" { capabilities = ["update"] }
         HCL
 
         log "waiting for the Vault API at ${VAULT_ADDR} ..."
-        until [ -n "$(seal_status | jq -r '.initialized // empty')" ]; do sleep 2; done
+        until [ -n "$(seal_status | jq -r '.initialized | tostring')" ]; do sleep 2; done
 
         initialize() {
             if [ "${UNSEAL}" = "secret" ]; then

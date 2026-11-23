@@ -27,6 +27,8 @@ public class InMemoryObjectStorage(TimeProvider? time = null) : IObjectStorage
 
     public bool CanEnforceExpiry { get; set; } = true;
 
+    public bool RejectsExpiry { get; set; }
+
     public bool ReadBackExpiry { get; set; } = true;
 
     public bool Unreachable { get; set; }
@@ -89,6 +91,11 @@ public class InMemoryObjectStorage(TimeProvider? time = null) : IObjectStorage
     public Task<bool> TryEnforceExpiryAsync(int days, CancellationToken cancellationToken)
     {
         ThrowWhenUnreachable();
+        if (RejectsExpiry)
+        {
+            throw new InvalidOperationException("The service has no lifecycle rules.");
+        }
+
         if (!CanEnforceExpiry)
         {
             return Task.FromResult(false);

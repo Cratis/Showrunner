@@ -118,7 +118,9 @@ public class KeyBackupJob(
 
     async Task<BackupManifest> BackupNamespaceAsync(UnderstudyJobConfiguration configuration, PlannedKeys keys, DateTimeOffset takenAt, CancellationToken cancellationToken)
     {
-        var secrets = await vault.ReadTreeAsync(keys.Path, cancellationToken);
+        var secrets = (await vault.ReadTreeAsync(keys.CurrentPath, cancellationToken))
+            .Concat(await vault.ReadTreeAsync(keys.Path, cancellationToken))
+            .ToList();
         var plaintext = JsonSerializer.SerializeToUtf8Bytes(new
         {
             version = 1,

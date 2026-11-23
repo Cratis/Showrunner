@@ -46,6 +46,8 @@ The storage provider is one of `S3` (any S3-compatible endpoint, with `pathStyle
 
 Every provider implements the same abstraction, `IObjectStorage`: put, open for read, list by prefix, delete, create a time-limited download link, inspect the bucket and try to enforce an expiry lifecycle on it. When the provider can enforce expiry itself, the `LifecycleEnforced` condition says so; otherwise the pruner enforces it.
 
+The principal of a bucket needs object access and, for the bucket itself, `s3:ListBucket`, `s3:GetBucketVersioning`, `s3:GetBucketObjectLockConfiguration`, `s3:GetLifecycleConfiguration` and `s3:PutLifecycleConfiguration`: the Understudy reads the bucket's rules and applies its expiry rule. The expiry request carries a `Content-MD5` header, which services such as UpCloud Managed Object Storage require.
+
 ## What a backup looks like
 
 Each run writes its files under a layout keyed by Production, event store, namespace and time, and finishes by writing `manifest.json`. The manifest is written last and only when every file was written, so a run with a manifest is complete, and the manifests alone are enough to list every backup.

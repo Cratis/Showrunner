@@ -9,6 +9,12 @@ namespace Cratis.Showrunner.StageManager.Productions;
 public class ProductionVault
 {
     /// <summary>
+    /// Gets or sets whether keys that only Chronicle's database holds keep being served and are copied into Vault as they are read.
+    /// </summary>
+    [Description("Serve the keys a database that ran without Vault already holds, and copy them into Vault as they are read. Remove once every key has been read through.")]
+    public bool MigrateFromDefaultStorage { get; set; }
+
+    /// <summary>
     /// Gets or sets the mode: <c>None</c>, <c>Managed</c> or <c>External</c>.
     /// </summary>
     [Description("None (Chronicle keeps its keys in its database), Managed (Stage Manager runs Vault) or External. Cannot be changed once the Production is running.")]

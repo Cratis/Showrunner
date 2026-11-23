@@ -46,6 +46,18 @@ public class ProductionSpec
     public ProductionGraph Graph { get; set; } = new();
 
     /// <summary>
+    /// Gets or sets where the pods of the Production may run.
+    /// </summary>
+    [Description("Where the pods of the Production run: the node labels they must match and the taints they tolerate. Off by default.")]
+    public ProductionScheduling Scheduling { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets the compute resources of the Chronicle container.
+    /// </summary>
+    [Description("The compute resources of the Chronicle container. Unset reserves nothing.")]
+    public ProductionResources Resources { get; set; } = new();
+
+    /// <summary>
     /// Gets or sets the named sinks applications store read models and graphs in.
     /// </summary>
     [Description("The named sinks applications store read models and graphs in, and the defaults for those that name none.")]

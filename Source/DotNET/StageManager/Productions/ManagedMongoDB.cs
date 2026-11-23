@@ -64,9 +64,24 @@ public static class ManagedMongoDB
             ["resources"] = new JsonObject { ["limits"] = new JsonObject { ["memory"] = database.MemoryLimit } },
             ["volumeSpec"] = new JsonObject { ["persistentVolumeClaim"] = claim }
         };
-        if (database.NodeSelector.Count > 0)
+        if (production.Spec.Scheduling.NodeSelectorFor(database.NodeSelector) is { } nodeSelector)
         {
-            replicaSet["nodeSelector"] = ToJson(database.NodeSelector);
+            replicaSet["nodeSelector"] = ToJson(nodeSelector);
+        }
+
+        if (production.Spec.Scheduling.Tolerations.Count > 0)
+        {
+            var tolerations = new JsonArray();
+            foreach (var toleration in production.Spec.Scheduling.Tolerations)
+            {
+                var json = new JsonObject { ["operator"] = toleration.Operator };
+                if (!string.IsNullOrEmpty(toleration.Key)) json["key"] = toleration.Key;
+                if (!string.IsNullOrEmpty(toleration.Value)) json["value"] = toleration.Value;
+                if (!string.IsNullOrEmpty(toleration.Effect)) json["effect"] = toleration.Effect;
+                tolerations.Add(json);
+            }
+
+            replicaSet["tolerations"] = tolerations;
         }
 
         // A replica set of fewer than three members is a development setup, which the Percona operator only accepts when told so.

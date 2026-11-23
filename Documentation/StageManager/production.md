@@ -142,6 +142,10 @@ A storage needs a Managed database with `backup.enabled`. The Production stays `
 
 Chronicle is configured for Vault compliance storage automatically, and always gets its token from a Secret (`VAULT_TOKEN`), never as a value. A Production does not start Chronicle until its Vault is ready (`VaultReady`).
 
+### Moving to a Vault
+
+A Production that ran with `mode: None`, or a restore of one, holds its keys in the database. Set `vault.migrateFromDefaultStorage: true` and Chronicle keeps serving those keys and copies each into Vault as it is read, so nothing is lost on the way. Remove it once every key has been read through.
+
 ### Managed Vault
 
 `vault.managed.tier` chooses the shape:
@@ -206,6 +210,25 @@ federation:
 ```
 
 The authority still needs a policy that lets this Chronicle in; that is configured on the authority, not here.
+
+## Scheduling and resources
+
+For a cluster that dedicates nodes to the Production, `scheduling` puts Chronicle, a Managed Vault, a Managed graph and the members of a Managed database on them. `database.nodeSelector` and `graph.nodeSelector` win for their own pods. Both are off by default.
+
+```yaml
+spec:
+  scheduling:
+    nodeSelector:
+      workload: data
+    tolerations:
+      - key: workload
+        operator: Equal
+        value: data
+        effect: NoSchedule
+  resources:            # the Chronicle container
+    requests: { cpu: 500m, memory: 1Gi }
+    limits: { memory: 1536Mi }
+```
 
 ## Graph
 

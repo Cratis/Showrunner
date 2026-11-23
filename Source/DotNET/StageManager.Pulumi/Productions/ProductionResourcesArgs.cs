@@ -18,6 +18,10 @@ public sealed class ProductionResourcesArgs
     /// </summary>
     public IDictionary<string, string> Limits { get; init; } = new Dictionary<string, string>(StringComparer.Ordinal);
 
+    /// <summary>
+    /// Builds the resources as the operator's spec writes it.
+    /// </summary>
+    /// <returns>The spec.</returns>
     internal Dictionary<string, object> ToSpec() =>
         SpecExtensions.NewSpec()
             .PutMap("requests", Requests.Select(pair => new KeyValuePair<string, object>(pair.Key, pair.Value)))

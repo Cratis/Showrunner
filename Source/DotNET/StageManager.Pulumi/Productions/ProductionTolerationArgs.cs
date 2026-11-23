@@ -28,6 +28,10 @@ public sealed class ProductionTolerationArgs
     /// </summary>
     public string? Effect { get; init; }
 
+    /// <summary>
+    /// Builds the toleration as the operator's spec writes it.
+    /// </summary>
+    /// <returns>The spec.</returns>
     internal Dictionary<string, object> ToSpec() =>
         SpecExtensions.NewSpec()
             .Put("key", Key)

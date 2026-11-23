@@ -18,6 +18,10 @@ public sealed class ProductionSchedulingArgs
     /// </summary>
     public IList<ProductionTolerationArgs> Tolerations { get; init; } = [];
 
+    /// <summary>
+    /// Builds the scheduling as the operator's spec writes it.
+    /// </summary>
+    /// <returns>The spec.</returns>
     internal Dictionary<string, object> ToSpec() =>
         SpecExtensions.NewSpec()
             .PutMap("nodeSelector", NodeSelector.Select(pair => new KeyValuePair<string, object>(pair.Key, pair.Value)))

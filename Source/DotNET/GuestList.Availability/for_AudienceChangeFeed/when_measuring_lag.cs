@@ -3,7 +3,7 @@
 
 #if DEBUG
 using System.Diagnostics.Metrics;
-using Cratis.Choreography.Availability.Audiences;
+using Cratis.Arc.Availability.Audiences;
 using Cratis.Showrunner.GuestList.Availability.given;
 using Microsoft.Extensions.Logging.Abstractions;
 

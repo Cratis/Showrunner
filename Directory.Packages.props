@@ -6,21 +6,22 @@
   <ItemGroup>
     <!-- Cratis — keep the public Cratis / Arc family aligned so generated proxies and runtime
          contracts are built against the same Chronicle contract generation. Cratis.Arc.Chronicle
-         22.185.1 requires Cratis.Chronicle >= 19.144.0 and Cratis.Fundamentals >= 7.34.0. -->
-    <PackageVersion Include="Cratis.Arc" Version="22.185.1" />
-    <PackageVersion Include="Cratis.Arc.Chronicle" Version="22.185.1" />
-    <PackageVersion Include="Cratis.Arc.ProxyGenerator.Build" Version="22.185.1" />
-    <PackageVersion Include="Cratis.Arc.Chronicle.Testing" Version="22.185.1" />
-    <PackageVersion Include="Cratis.Fundamentals" Version="7.34.3" />
+         24.8.0 requires Cratis.Chronicle >= 19.184.3 and Cratis.Fundamentals >= 7.34.4. -->
+    <PackageVersion Include="Cratis.Arc" Version="24.8.0" />
+    <PackageVersion Include="Cratis.Arc.Chronicle" Version="24.8.0" />
+    <PackageVersion Include="Cratis.Arc.ProxyGenerator.Build" Version="24.8.0" />
+    <PackageVersion Include="Cratis.Arc.Chronicle.Testing" Version="24.8.0" />
+    <PackageVersion Include="Cratis.Fundamentals" Version="7.34.4" />
     <!-- Keep Chronicle clients and testing support on the same release. -->
-    <PackageVersion Include="Cratis.Metrics.Roslyn" Version="7.34.3" />
+    <PackageVersion Include="Cratis.Metrics.Roslyn" Version="7.34.4" />
     <!-- Cratis.Chronicle.Testing does not declare Cratis.Orleans or Cratis.Orleans.Storage.MongoDB, which the inline specifications (Debug only) load at run time. -->
     <GlobalPackageReference Include="Cratis.Orleans" Version="1.27.2" Condition="'$(Configuration)' == 'Debug'" />
     <GlobalPackageReference Include="Cratis.Orleans.Storage.MongoDB" Version="1.27.2" Condition="'$(Configuration)' == 'Debug'" />
     <PackageVersion Include="MongoDB.Driver" Version="3.13.0" />
-    <PackageVersion Include="Cratis.Choreography" Version="2.9.0" />
-    <PackageVersion Include="Cratis.Chronicle" Version="19.181.5" />
-    <PackageVersion Include="Cratis.Chronicle.Testing" Version="19.181.5" />
+    <PackageVersion Include="Cratis.Arc.Availability" Version="24.8.0" />
+    <PackageVersion Include="Cratis.Choreography" Version="2.11.0" />
+    <PackageVersion Include="Cratis.Chronicle" Version="19.184.3" />
+    <PackageVersion Include="Cratis.Chronicle.Testing" Version="19.184.3" />
     <!-- Serves the integration specifications' web host in memory. -->
     <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="11.0.0" />
     <!-- Verifies the RS256 tokens AuthProxy signs its on-behalf calls with; the same library AuthProxy signs them with. -->
@@ -68,7 +69,7 @@
     <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.21.0" />
     <!-- Operations (watchdog): reads the cluster with the Kubernetes client. KubeOps resolves the same version for Stage Manager. -->
     <PackageVersion Include="KubernetesClient" Version="21.0.8" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.15" />
     <!-- Analysis -->
     <PackageVersion Include="StyleCop.Analyzers" Version="1.2.0-beta.556" NoWarn="NU5104" />
     <PackageVersion Include="Roslynator.Analyzers" Version="5.0.0" />

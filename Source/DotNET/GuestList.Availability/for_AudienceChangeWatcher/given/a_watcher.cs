@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #if DEBUG
-using Cratis.Choreography.Availability.Audiences;
+using Cratis.Arc.Availability.Audiences;
 using Cratis.Chronicle;
 using Cratis.Chronicle.ReadModels;
 using Cratis.Showrunner.GuestList.Availability.given;
@@ -57,6 +57,7 @@ public class a_watcher : Specification
         var store = Substitute.For<IEventStore>();
         var readModels = Substitute.For<IReadModels>();
         readModels.Watch<AudienceHoldings>().Returns(holdings);
+        readModels.Watch<SuspensionHoldings>().Returns(new System.Reactive.Subjects.Subject<ReadModelChangeset<SuspensionHoldings>>());
         store.ReadModels.Returns(readModels);
         store.GetNamespaces(Arg.Any<CancellationToken>()).Returns(_ => Task.FromResult<IEnumerable<EventStoreNamespaceName>>(_tenants));
         return store;

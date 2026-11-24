@@ -1,7 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Cratis.Choreography.Availability.Audiences;
+using Cratis.Arc.Availability.Audiences;
+using Cratis.Arc.Availability.Suspensions;
 using Cratis.Chronicle;
 using Cratis.Chronicle.ReadModels;
 using Cratis.Showrunner.GuestList.Holding;
@@ -128,10 +129,23 @@ public class AudienceChangeWatcher(
     async Task Watch(EventStoreNamespaceName @namespace, CancellationToken cancellationToken)
     {
         var store = await client.GetEventStore(chronicle.Value.EventStore, @namespace).WaitAsync(cancellationToken);
-        var subscription = store.ReadModels.Watch<AudienceHoldings>().Subscribe(new Observer(this, @namespace));
+        var audiences = store.ReadModels.Watch<AudienceHoldings>().Subscribe(new Observer(this, @namespace));
+        var suspensions = store.ReadModels.Watch<SuspensionHoldings>().Subscribe(new SuspensionObserver(this, @namespace));
         lock (_lock)
         {
-            _watching[@namespace] = subscription;
+            _watching[@namespace] = new Both(audiences, suspensions);
+        }
+    }
+
+    async Task PublishSuspension(SuspensionChange change)
+    {
+        try
+        {
+            await feed.PublishSuspension(change);
+        }
+        catch (Exception exception)
+        {
+            logger.RoundFailed(exception);
         }
     }
 
@@ -162,6 +176,32 @@ public class AudienceChangeWatcher(
                 subscription.Dispose();
             }
         }
+    }
+
+    sealed class Both(IDisposable first, IDisposable second) : IDisposable
+    {
+        public void Dispose()
+        {
+            first.Dispose();
+            second.Dispose();
+        }
+    }
+
+    sealed class SuspensionObserver(AudienceChangeWatcher watcher, EventStoreNamespaceName @namespace) : IObserver<ReadModelChangeset<SuspensionHoldings>>
+    {
+        public void OnNext(ReadModelChangeset<SuspensionHoldings> value)
+        {
+            if (AudienceChanges.From(@namespace, value.ModelKey.Value) is not { } change)
+            {
+                return;
+            }
+
+            _ = watcher.PublishSuspension(new SuspensionChange(change.Level, change.Key));
+        }
+
+        public void OnError(Exception error) => watcher.Failed(@namespace, error);
+
+        public void OnCompleted() => watcher.Stopped(@namespace);
     }
 
     sealed class Observer(AudienceChangeWatcher watcher, EventStoreNamespaceName @namespace) : IObserver<ReadModelChangeset<AudienceHoldings>>

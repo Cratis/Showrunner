@@ -1,11 +1,13 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Cratis.Choreography.Availability;
-using Cratis.Choreography.Availability.Audiences;
+using Cratis.Arc.Availability;
+using Cratis.Arc.Availability.Audiences;
+using Cratis.Arc.Availability.Suspensions;
 using Cratis.Showrunner.GuestList;
 using Cratis.Showrunner.GuestList.Availability;
 using Cratis.Showrunner.GuestList.Availability.Declaration;
+using Cratis.Showrunner.GuestList.Availability.Parts;
 using Cratis.Showrunner.GuestList.Availability.Systems;
 using Cratis.Showrunner.GuestList.Contracts.Availability;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -34,12 +36,15 @@ public static class GuestListAvailabilityServiceCollectionExtensions
     public static IServiceCollection AddGuestListAvailability(this IServiceCollection services, Action<AvailabilityOptions>? configure = null)
     {
         services.AddMetrics();
-        services.AddAvailability(configure);
 
+        // The sources are registered before the engine, which defaults to in-memory ones when none is there.
         services.TryAddSingleton(TimeProvider.System);
         services.TryAddSingleton<AudienceChangeFeed>();
         services.TryAddSingleton<IAudienceSource, GuestListAudienceSource>();
+        services.TryAddSingleton<ISuspensionSource, GuestListSuspensionSource>();
         services.TryAddSingleton<IDeclaredAudiences>(provider => DeclaredBy(provider.GetRequiredService<IOptions<GuestListOptions>>().Value));
+        services.AddAvailability(configure);
+
         services.TryAddSingleton<IUndeclaredAudienceObserver, LoggingUndeclaredAudienceObserver>();
         services.TryAddSingleton<GuestListAvailabilityMetrics>();
         services.AddHostedService<AudienceChangeWatcher>();
@@ -55,10 +60,11 @@ public static class GuestListAvailabilityServiceCollectionExtensions
         services.TryAddSingleton<AvailabilityReporter>();
         services.TryAddSingleton<IKnownSystems, InMemoryKnownSystems>();
         services.TryAddSingleton<SystemsReporter>();
+        services.TryAddSingleton<PartsReporter>();
         services.AddHostedService<AvailabilityReportingService>();
         return services;
     }
 
     static DeclaredAudiences DeclaredBy(GuestListOptions options) =>
-        new((options.DeclaredAudiences ?? []).Select(audience => new Cratis.Choreography.Availability.Audiences.AudienceName(audience.Value)));
+        new((options.DeclaredAudiences ?? []).Select(audience => new Cratis.Arc.Availability.Audiences.AudienceName(audience.Value)));
 }

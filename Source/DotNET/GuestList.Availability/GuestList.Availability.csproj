@@ -8,6 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Cratis.Arc.Availability" />
         <PackageReference Include="Cratis.Choreography" />
     </ItemGroup>
 

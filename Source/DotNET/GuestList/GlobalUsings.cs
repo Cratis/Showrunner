@@ -4,6 +4,7 @@
 global using Cratis.Arc.Authorization;
 global using Cratis.Chronicle.Events;
 global using Cratis.Showrunner.GuestList.Contracts.Audiences;
+global using Cratis.Showrunner.GuestList.Contracts.Suspensions;
 global using Cratis.Showrunner.GuestList.Holding;
 
 // The spec usings below are compiled into Debug builds only.

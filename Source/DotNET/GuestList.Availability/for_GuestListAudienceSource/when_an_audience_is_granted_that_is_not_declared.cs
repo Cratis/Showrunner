@@ -2,8 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #if DEBUG
-using Cratis.Choreography.Availability;
-using Cratis.Choreography.Availability.Audiences;
+using Cratis.Arc.Availability;
+using Cratis.Arc.Availability.Audiences;
 using Cratis.Showrunner.GuestList.Availability.given;
 
 namespace Cratis.Showrunner.GuestList.Availability.for_GuestListAudienceSource;

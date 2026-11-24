@@ -32,13 +32,19 @@ public sealed class ProductSide(IHost host, EventStoreName name) : IAsyncDisposa
     /// Gets the engine's view of the audiences: the effective audiences of a request. Only when the product was started with
     /// availability.
     /// </summary>
-    public Cratis.Choreography.Availability.Audiences.IAudienceResolver Resolver => host.Services.GetRequiredService<Cratis.Choreography.Availability.Audiences.IAudienceResolver>();
+    public Cratis.Arc.Availability.Audiences.IAudienceResolver Resolver => host.Services.GetRequiredService<Cratis.Arc.Availability.Audiences.IAudienceResolver>();
 
     /// <summary>
     /// Gets where the engine reads the grants from, and subscribes to their changes. Only when the product was started with
     /// availability.
     /// </summary>
-    public Cratis.Choreography.Availability.Audiences.IAudienceSource Source => host.Services.GetRequiredService<Cratis.Choreography.Availability.Audiences.IAudienceSource>();
+    public Cratis.Arc.Availability.Audiences.IAudienceSource Source => host.Services.GetRequiredService<Cratis.Arc.Availability.Audiences.IAudienceSource>();
+
+    /// <summary>
+    /// Gets where the engine reads the parts suspended from, and subscribes to their changes. Only when the product was started
+    /// with availability.
+    /// </summary>
+    public Cratis.Arc.Availability.Suspensions.ISuspensionSource Suspensions => host.Services.GetRequiredService<Cratis.Arc.Availability.Suspensions.ISuspensionSource>();
 
     /// <summary>
     /// Starts a product with a unique store name, receiving from an operator store.

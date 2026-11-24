@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #if DEBUG
-using Cratis.Choreography.Availability.Audiences;
+using Cratis.Arc.Availability.Audiences;
 using Cratis.Chronicle;
 using Cratis.Chronicle.ReadModels;
 using Cratis.Showrunner.GuestList.Contracts.Audiences;
@@ -67,7 +67,7 @@ public class when_adding_guest_list_availability : Specification
     void Destroy() => _provider.Dispose();
 
     [Fact] void should_use_guest_list_as_the_audience_source() => _source.ShouldBeOfExactType<GuestListAudienceSource>();
-    [Fact] void should_declare_what_guest_list_is_told_the_application_declares() => _declared.All.ShouldContainOnly(new Cratis.Choreography.Availability.Audiences.AudienceName("Plus"));
+    [Fact] void should_declare_what_guest_list_is_told_the_application_declares() => _declared.All.ShouldContainOnly(new Cratis.Arc.Availability.Audiences.AudienceName("Plus"));
     [Fact] void should_resolve_the_declared_audience_the_tenant_holds() => _effective.Holds("Plus").ShouldBeTrue();
     [Fact] void should_carry_but_not_match_what_is_not_declared() => _effective.Undeclared.Select(_ => _.Audience.Value).Distinct().ShouldContainOnly("Beta");
     [Fact] void should_watch_for_changes_in_the_background() => _hosted.OfType<AudienceChangeWatcher>().ShouldNotBeEmpty();

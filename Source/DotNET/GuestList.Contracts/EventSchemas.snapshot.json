@@ -500,6 +500,46 @@
     ],
     "title": "AvailabilityDeclared"
   },
+  "PartsDeclared:1": {
+    "type": "object",
+    "properties": {
+      "product": {
+        "type": "string"
+      },
+      "environment": {
+        "type": "string"
+      },
+      "parts": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string"
+            },
+            "path": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "path",
+            "name"
+          ],
+          "title": "PartDeclaration"
+        }
+      }
+    },
+    "required": [
+      "product",
+      "environment",
+      "parts"
+    ],
+    "title": "PartsDeclared"
+  },
   "SystemsDeclared:1": {
     "type": "object",
     "properties": {

@@ -35,6 +35,7 @@ public static class GuestListServiceCollectionExtensions
         services.TryAddSingleton<GuestListSubscriptions>();
         services.TryAddSingleton<AudienceReceipts>();
         services.TryAddSingleton<IGuestList, GuestLists>();
+        services.TryAddSingleton<IPartSuspensions, PartSuspensions>();
         services.AddHostedService<GuestListWorker>();
         return services;
     }

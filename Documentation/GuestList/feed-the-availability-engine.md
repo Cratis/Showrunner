@@ -56,6 +56,12 @@ A grant for an audience the deployed model does not declare is returned like any
 
 `IAudienceSource.OnChanged` subscribes to changes. The watcher observes the `AudienceHoldings` read model in the product's own namespace and in every tenant's, and publishes an `AudienceChange` when one changes: the tenant for a tenant grant, the user for a user grant, nothing for the system. A tenant added later is picked up on the next `PollingInterval`, and a watch that ends is opened again then.
 
+## Suspended parts
+
+`AddGuestListAvailability` also registers `GuestListSuspensionSource`, an `ISuspensionSource` over what the product recorded from `PartSuspended` and `PartResumed`. It is registered before the engine, which would otherwise default to its in-memory source, and a source the host registered itself wins. `GetDecisions` returns the decisions that apply to the subject, each tagged with its level and dated by when the operator decided: the system's for a system caller, and the tenant's and the user's the subject names. Resumes are returned with the suspensions, so the engine keeps the newest decision per level and path: a resume newer than a suspension at the same level ends it, and a suspension at any other level still holds. The tenant and the user levels are recorded in the tenant's namespace and the system level in the product's own, in the same streams that hold the audiences of that level.
+
+`OnChanged` is called after every suspend or resume, from the same watcher that observes the audiences, so an open session decides again. Nothing is asked of the operator, so what was last received stays in force while the link is down. A suspension wins over every audience, see the Arc documentation on suspending parts.
+
 ## Lag
 
 The meter `Cratis.Showrunner.GuestList` has a gauge, `cratis.showrunner.guestlist.audience_lag`, with the time in seconds since the product last received a change to its audiences. It grows while nothing arrives, so a value that climbs past what the operator normally takes between decisions suggests the link is down. Nothing is reported until the first change has been received since the product started. Add the meter to your OpenTelemetry configuration to export it.

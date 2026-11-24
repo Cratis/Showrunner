@@ -17,6 +17,6 @@ public class when_naming_what_it_connects : Specification
     [Fact] void should_prefix_the_subscription_with_the_part() => GuestListSubscriptions.SubscriptionFor(Operator).Value.ShouldEqual("guestlist-Direct");
     [Fact] void should_observe_the_inbox_of_the_operator_store() => GuestListSubscriptions.SequenceFor(Operator).Value.ShouldEqual("inbox-Direct");
     [Fact] void should_name_the_inbox_reactor_for_the_operator_store() => GuestListSubscriptions.InboxFor(Operator).Value.ShouldEqual("Cratis.Showrunner.GuestList.Receiving.GuestListInbox.Direct");
-    [Fact] void should_receive_the_two_public_events() => GuestListSubscriptions.PublicEvents.ShouldContainOnly(typeof(AudienceGranted), typeof(AudienceWithdrawn));
+    [Fact] void should_receive_the_audience_and_suspension_public_events() => GuestListSubscriptions.PublicEvents.ShouldContainOnly(typeof(AudienceGranted), typeof(AudienceWithdrawn), typeof(PartSuspended), typeof(PartResumed));
 }
 #endif

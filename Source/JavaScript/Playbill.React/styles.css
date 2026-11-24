@@ -243,10 +243,22 @@
     color: var(--playbill-text-resolved);
 }
 
+/* In the dialog the list scrolls on its own while the selected release stays in place. */
 .playbill-history {
+    height: 70vh;
     min-height: 20rem;
-    max-height: 70vh;
-    overflow: auto;
+    overflow: hidden;
+}
+
+.playbill-history .playbill {
+    height: 100%;
+    grid-template-rows: minmax(0, 1fr);
+}
+
+.playbill-history .playbill__list,
+.playbill-history .playbill__content {
+    min-height: 0;
+    overflow-y: auto;
 }
 
 .playbill-dialog__earlier {

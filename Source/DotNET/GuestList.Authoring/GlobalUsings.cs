@@ -7,6 +7,7 @@ global using Cratis.Arc.Commands.ModelBound;
 global using Cratis.Chronicle.Events;
 global using Cratis.Showrunner.GuestList.Authoring.Decisions;
 global using Cratis.Showrunner.GuestList.Contracts.Audiences;
+global using Cratis.Showrunner.GuestList.Contracts.Suspensions;
 global using FluentValidation;
 
 // The spec usings below are compiled into Debug builds only.

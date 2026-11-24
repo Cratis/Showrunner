@@ -123,3 +123,7 @@ GUESTLIST_UPDATE_EVENT_SCHEMA_SNAPSHOT=1 dotnet test Source/DotNET/GuestList.Con
 - A generation 2 event read as generation 1 loses `ClientId` and `Kind`. A `NamedSystem` decision becomes a tenant decision with no tenant, which a generation 1 product ignores as malformed, so a product that has not been updated never widens one system's grant to every system.
 
 Update products before granting an audience to a named system, because a product that has not been updated ignores those decisions.
+
+## Suspensions
+
+The operator publishes `PartSuspended` and `PartResumed`, in the same product-wide stream as the audience decisions. They are generation 1 and have the same fields: `Product`; `Level: SuspensionLevel` (`Tenant`, `User` or `System`); `TenantId`; `UserId`; `Part: PartPath`. `TenantId` and `UserId` are empty when the level does not name them. The newest decision about the same part at the same level wins, and a path covers everything below it. Resuming ends the suspension of its own level only.

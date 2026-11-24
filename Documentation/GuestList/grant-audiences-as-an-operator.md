@@ -30,6 +30,8 @@ builder.Services.AddGuestListAuthoring();
 | --- | --- | --- |
 | `GrantAudience` | `Product`, `Level`, `TenantId`, `UserId`, `Audience`, `ClientId`, `Kind` | Grants an audience at a level |
 | `WithdrawAudience` | `Product`, `Level`, `TenantId`, `UserId`, `Audience`, `ClientId`, `Kind` | Withdraws it from that level only |
+| `SuspendPart` | `Product`, `Level`, `TenantId`, `UserId`, `Part` | Suspends a part for a tenant, a user or the system |
+| `ResumePart` | `Product`, `Level`, `TenantId`, `UserId`, `Part` | Ends the suspension of that level only |
 
 Each level names exactly what it needs: a tenant decision a tenant and no user, a user decision a tenant and a user, a system decision neither, and a named-system decision (`NamedSystem`) a client id and a kind (`Mcp`, `Api` or `Other`) and no tenant or user. `ClientId` and `Kind` are optional for the other levels, so a caller written before named systems keeps working. Anything else is refused with a validation message, as are an empty product, an invalid audience name and a tenant the `IKnownTenants` does not know. Granting an audience that is held, or withdrawing one that is not, succeeds and records nothing, so a retried command is harmless.
 
@@ -52,6 +54,7 @@ A system is who its client id says it is, so granting again with another kind re
 | Read model | Query | Returns |
 | --- | --- | --- |
 | `ProductGuestList` | `ForProduct(product)` | every grant held for the product, observable |
+| `ProductSuspensions` | `ForProduct(product)` | the parts suspended now and the history of every suspension and resume, observable |
 | `UndeclaredAudienceGrant` | `ForProduct(product)` | the grants whose audience the product does not declare, observable; empty when no audiences are declared for the product. What the product reported for the primary environment beats `DeclaredAudiences`, which stays as the fallback for a product that has not reported |
 | `ProductAvailability` | `ForProduct(product)` | what the product last declared in each environment it reports from, and what each report changed, observable |
 | `ProductSystems` | `ForProduct(product)` | the systems the product last said call it, in each environment it reports from, with their client id, kind and name, observable |
@@ -62,6 +65,17 @@ The last three are built from what the product reports, see [Report what the mod
 ### Systems that call a product
 
 `ProductSystems` lists the client ids an operator can pick from when granting to one system. A product reports them as `SystemsDeclared`, see [Report what the model declares](./report-what-the-model-declares.md#report-the-systems-that-call-the-product). Each report replaces the earlier list of its environment. A grant to a client id the product does not list is kept: the list says who can be picked, not who holds what. `ProductGuestList` and `UndeclaredAudienceGrant` carry `ClientId` and `Kind` for named-system grants.
+
+## Suspend and resume a part
+
+Audiences are granted and withdrawn; parts are suspended and resumed. `Part` is a path as the declaration report lists it, for example `Fleet/DataQuality` for a feature, and it covers everything below it. `Level` is `Tenant`, `User` or `System`, and names its tenant and user as an audience decision does; a named system has no suspension level. A suspension wins over every audience. Suspending a part already suspended at that level, and resuming one that is not, record nothing, and a resume ends the suspension of its own level only.
+
+```csharp
+await commands.Execute(new SuspendPart("ledger", SuspensionLevel.Tenant, "acme", UserId.NotSet, "Fleet/DataQuality"));
+await commands.Execute(new ResumePart("ledger", SuspensionLevel.Tenant, "acme", UserId.NotSet, "Fleet/DataQuality"));
+```
+
+The commands record `PartSuspensionDecided` and `PartResumeDecided`, which the same outbox publishes as `PartSuspended` and `PartResumed`, see [Contracts](./contracts.md#suspensions).
 
 ## What is published
 

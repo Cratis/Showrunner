@@ -24,4 +24,20 @@ public static class PublicEvents
     /// <param name="event">The private event.</param>
     /// <returns>The public event.</returns>
     public static AudienceWithdrawn For(Product product, AudienceWithdrawalDecided @event) => new(product, @event.Level, @event.TenantId, @event.UserId, @event.Audience, @event.ClientId, @event.Kind);
+
+    /// <summary>
+    /// Maps a part being suspended.
+    /// </summary>
+    /// <param name="product">The product the decision is for.</param>
+    /// <param name="event">The private event.</param>
+    /// <returns>The public event.</returns>
+    public static PartSuspended For(Product product, PartSuspensionDecided @event) => new(product, @event.Level, @event.TenantId, @event.UserId, @event.Part);
+
+    /// <summary>
+    /// Maps a part being resumed.
+    /// </summary>
+    /// <param name="product">The product the decision is for.</param>
+    /// <param name="event">The private event.</param>
+    /// <returns>The public event.</returns>
+    public static PartResumed For(Product product, PartResumeDecided @event) => new(product, @event.Level, @event.TenantId, @event.UserId, @event.Part);
 }

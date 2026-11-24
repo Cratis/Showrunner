@@ -551,5 +551,81 @@
       "systems"
     ],
     "title": "SystemsDeclared"
+  },
+  "PartResumed:1": {
+    "type": "object",
+    "properties": {
+      "product": {
+        "type": "string"
+      },
+      "level": {
+        "type": "integer",
+        "enum": [
+          0,
+          1,
+          2
+        ],
+        "x-enumNames": [
+          "Tenant",
+          "User",
+          "System"
+        ]
+      },
+      "tenantId": {
+        "type": "string"
+      },
+      "userId": {
+        "type": "string"
+      },
+      "part": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "product",
+      "level",
+      "tenantId",
+      "userId",
+      "part"
+    ],
+    "title": "PartResumed"
+  },
+  "PartSuspended:1": {
+    "type": "object",
+    "properties": {
+      "product": {
+        "type": "string"
+      },
+      "level": {
+        "type": "integer",
+        "enum": [
+          0,
+          1,
+          2
+        ],
+        "x-enumNames": [
+          "Tenant",
+          "User",
+          "System"
+        ]
+      },
+      "tenantId": {
+        "type": "string"
+      },
+      "userId": {
+        "type": "string"
+      },
+      "part": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "product",
+      "level",
+      "tenantId",
+      "userId",
+      "part"
+    ],
+    "title": "PartSuspended"
   }
 }

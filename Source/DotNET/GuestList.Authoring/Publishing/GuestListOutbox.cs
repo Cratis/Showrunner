@@ -58,6 +58,26 @@ public class GuestListOutbox(IChronicleClient client, ILogger<GuestListOutbox> l
     public Task Withdrawn(AudienceWithdrawalDecided @event, EventContext context, ReactorDelivery delivery) =>
         Publish(PublicEvents.For(ProductOf(context), @event), context, delivery);
 
+    /// <summary>
+    /// Reacts to a part being suspended.
+    /// </summary>
+    /// <param name="event">The event.</param>
+    /// <param name="context">The context of the event.</param>
+    /// <param name="delivery">The delivery being handled.</param>
+    /// <returns>An awaitable task.</returns>
+    public Task Suspended(PartSuspensionDecided @event, EventContext context, ReactorDelivery delivery) =>
+        Publish(PublicEvents.For(ProductOf(context), @event), context, delivery);
+
+    /// <summary>
+    /// Reacts to a part being resumed.
+    /// </summary>
+    /// <param name="event">The event.</param>
+    /// <param name="context">The context of the event.</param>
+    /// <param name="delivery">The delivery being handled.</param>
+    /// <returns>An awaitable task.</returns>
+    public Task Resumed(PartResumeDecided @event, EventContext context, ReactorDelivery delivery) =>
+        Publish(PublicEvents.For(ProductOf(context), @event), context, delivery);
+
     static Product ProductOf(EventContext context) => new(context.EventSourceId.Value);
 
     async Task Publish(object publicEvent, EventContext context, ReactorDelivery delivery)

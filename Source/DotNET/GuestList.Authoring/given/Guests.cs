@@ -50,6 +50,21 @@ public static class Guests
     public static readonly AudienceName Preview = "Preview";
 
     /// <summary>
+    /// A part the specifications suspend: a feature.
+    /// </summary>
+    public static readonly PartPath FleetReports = "Fleet/Reports";
+
+    /// <summary>
+    /// The part of the specifications that is suspended for tenant Acme.
+    /// </summary>
+    public static readonly PartSuspensionDecided TenantSuspension = new(SuspensionLevel.Tenant, Acme, UserId.NotSet, FleetReports);
+
+    /// <summary>
+    /// The part of the specifications that is suspended for the system.
+    /// </summary>
+    public static readonly PartSuspensionDecided SystemSuspension = new(SuspensionLevel.System, TenantId.NotSet, UserId.NotSet, FleetReports);
+
+    /// <summary>
     /// The decision that grants <see cref="Plus"/> to <see cref="Acme"/>.
     /// </summary>
     public static readonly AudienceGrantDecided TenantGrant = new(AudienceLevel.Tenant, Acme, UserId.NotSet, Plus, SystemClientId.NotSet, SystemKind.None);

@@ -66,7 +66,7 @@ public class about_suspension : Specification
             "the product to receive the resume");
 
         var store = await _operator.In(EventStoreNamespaceName.Default);
-        _history = (await store.ReadModels.GetInstanceById<ProductSuspensions>(new ReadModelKey(ProductSide.Product.Value)))!;
+        _history = await store.ReadModels.GetInstanceById<ProductSuspensions>(new ReadModelKey(ProductSide.Product.Value));
     }
 
     async Task Destroy()

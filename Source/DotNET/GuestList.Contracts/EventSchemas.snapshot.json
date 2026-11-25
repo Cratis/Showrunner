@@ -1,64 +1,4 @@
 {
-  "AudienceGranted:2": {
-    "type": "object",
-    "properties": {
-      "product": {
-        "type": "string"
-      },
-      "level": {
-        "type": "integer",
-        "enum": [
-          0,
-          1,
-          2,
-          3
-        ],
-        "x-enumNames": [
-          "Tenant",
-          "User",
-          "System",
-          "NamedSystem"
-        ]
-      },
-      "tenantId": {
-        "type": "string"
-      },
-      "userId": {
-        "type": "string"
-      },
-      "audience": {
-        "type": "string"
-      },
-      "clientId": {
-        "type": "string"
-      },
-      "kind": {
-        "type": "integer",
-        "enum": [
-          0,
-          1,
-          2,
-          3
-        ],
-        "x-enumNames": [
-          "None",
-          "Mcp",
-          "Api",
-          "Other"
-        ]
-      }
-    },
-    "required": [
-      "product",
-      "level",
-      "tenantId",
-      "userId",
-      "audience",
-      "clientId",
-      "kind"
-    ],
-    "title": "AudienceGranted"
-  },
   "AudienceGranted:1": {
     "type": "object",
     "properties": {
@@ -70,44 +10,6 @@
         "enum": [
           0,
           1,
-          2
-        ],
-        "x-enumNames": [
-          "Tenant",
-          "User",
-          "System"
-        ]
-      },
-      "tenantId": {
-        "type": "string"
-      },
-      "userId": {
-        "type": "string"
-      },
-      "audience": {
-        "type": "string"
-      }
-    },
-    "required": [
-      "product",
-      "level",
-      "tenantId",
-      "userId",
-      "audience"
-    ],
-    "title": "AudienceGranted"
-  },
-  "AudienceWithdrawn:2": {
-    "type": "object",
-    "properties": {
-      "product": {
-        "type": "string"
-      },
-      "level": {
-        "type": "integer",
-        "enum": [
-          0,
-          1,
           2,
           3
         ],
@@ -155,7 +57,7 @@
       "clientId",
       "kind"
     ],
-    "title": "AudienceWithdrawn"
+    "title": "AudienceGranted"
   },
   "AudienceWithdrawn:1": {
     "type": "object",
@@ -168,12 +70,14 @@
         "enum": [
           0,
           1,
-          2
+          2,
+          3
         ],
         "x-enumNames": [
           "Tenant",
           "User",
-          "System"
+          "System",
+          "NamedSystem"
         ]
       },
       "tenantId": {
@@ -184,6 +88,24 @@
       },
       "audience": {
         "type": "string"
+      },
+      "clientId": {
+        "type": "string"
+      },
+      "kind": {
+        "type": "integer",
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "x-enumNames": [
+          "None",
+          "Mcp",
+          "Api",
+          "Other"
+        ]
       }
     },
     "required": [
@@ -191,11 +113,13 @@
       "level",
       "tenantId",
       "userId",
-      "audience"
+      "audience",
+      "clientId",
+      "kind"
     ],
     "title": "AudienceWithdrawn"
   },
-  "AudienceDecisionReceived:2": {
+  "AudienceDecisionReceived:1": {
     "type": "object",
     "properties": {
       "product": {
@@ -257,65 +181,6 @@
       "audience",
       "decidedAt",
       "clientId"
-    ],
-    "title": "AudienceDecisionReceived"
-  },
-  "AudienceDecisionReceived:1": {
-    "type": "object",
-    "properties": {
-      "product": {
-        "type": "string"
-      },
-      "environment": {
-        "type": "string"
-      },
-      "decision": {
-        "type": "integer",
-        "enum": [
-          0,
-          1
-        ],
-        "x-enumNames": [
-          "Granted",
-          "Withdrawn"
-        ]
-      },
-      "level": {
-        "type": "integer",
-        "enum": [
-          0,
-          1,
-          2
-        ],
-        "x-enumNames": [
-          "Tenant",
-          "User",
-          "System"
-        ]
-      },
-      "tenantId": {
-        "type": "string"
-      },
-      "userId": {
-        "type": "string"
-      },
-      "audience": {
-        "type": "string"
-      },
-      "decidedAt": {
-        "type": "string",
-        "format": "date-time-offset"
-      }
-    },
-    "required": [
-      "product",
-      "environment",
-      "decision",
-      "level",
-      "tenantId",
-      "userId",
-      "audience",
-      "decidedAt"
     ],
     "title": "AudienceDecisionReceived"
   },

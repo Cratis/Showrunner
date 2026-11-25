@@ -353,8 +353,8 @@ __metadata:
     react-dom: "npm:^19.3.1"
     reflect-metadata: "npm:0.2.2"
   peerDependencies:
-    "@cratis/arc": ^24.0.0
-    "@cratis/arc.react": ^24.0.0
+    "@cratis/arc": ^24.8.0
+    "@cratis/arc.react": ^24.8.0
     "@cratis/components": ^4.38.0
     "@cratis/fundamentals": ^7.34.4
     react: ^19.0.0
@@ -369,8 +369,8 @@ __metadata:
     "@cratis/arc.react": "npm:24.8.0"
     "@cratis/fundamentals": "npm:7.34.4"
   peerDependencies:
-    "@cratis/arc": ^24.0.0
-    "@cratis/arc.react": ^24.0.0
+    "@cratis/arc": ^24.8.0
+    "@cratis/arc.react": ^24.8.0
     "@cratis/fundamentals": ^7.34.4
   languageName: unknown
   linkType: soft
@@ -391,8 +391,8 @@ __metadata:
     reflect-metadata: "npm:0.2.2"
     storybook: "npm:^10.5.10"
   peerDependencies:
-    "@cratis/arc": ^24.0.0
-    "@cratis/arc.react": ^24.0.0
+    "@cratis/arc": ^24.8.0
+    "@cratis/arc.react": ^24.8.0
     "@cratis/components": ^4.38.0
     "@cratis/fundamentals": ^7.34.4
     react: ^19.0.0
@@ -407,8 +407,8 @@ __metadata:
     "@cratis/arc.react": "npm:24.8.0"
     "@cratis/fundamentals": "npm:7.34.4"
   peerDependencies:
-    "@cratis/arc": ^24.0.0
-    "@cratis/arc.react": ^24.0.0
+    "@cratis/arc": ^24.8.0
+    "@cratis/arc.react": ^24.8.0
     "@cratis/fundamentals": ^7.34.4
   languageName: unknown
   linkType: soft
@@ -421,8 +421,8 @@ __metadata:
     "@cratis/arc.react": "npm:24.8.0"
     "@cratis/fundamentals": "npm:7.34.4"
   peerDependencies:
-    "@cratis/arc": ^24.0.0
-    "@cratis/arc.react": ^24.0.0
+    "@cratis/arc": ^24.8.0
+    "@cratis/arc.react": ^24.8.0
     "@cratis/fundamentals": ^7.34.4
   languageName: unknown
   linkType: soft
@@ -443,8 +443,8 @@ __metadata:
     reflect-metadata: "npm:0.2.2"
     storybook: "npm:^10.5.10"
   peerDependencies:
-    "@cratis/arc": ^24.0.0
-    "@cratis/arc.react": ^24.0.0
+    "@cratis/arc": ^24.8.0
+    "@cratis/arc.react": ^24.8.0
     "@cratis/components": ^4.38.0
     "@cratis/fundamentals": ^7.34.4
     react: ^19.0.0
@@ -459,8 +459,8 @@ __metadata:
     "@cratis/arc.react": "npm:24.8.0"
     "@cratis/fundamentals": "npm:7.34.4"
   peerDependencies:
-    "@cratis/arc": ^24.0.0
-    "@cratis/arc.react": ^24.0.0
+    "@cratis/arc": ^24.8.0
+    "@cratis/arc.react": ^24.8.0
     "@cratis/fundamentals": ^7.34.4
   languageName: unknown
   linkType: soft
@@ -478,8 +478,8 @@ __metadata:
     react-dom: "npm:^19.3.1"
     reflect-metadata: "npm:0.2.2"
   peerDependencies:
-    "@cratis/arc": ^24.0.0
-    "@cratis/arc.react": ^24.0.0
+    "@cratis/arc": ^24.8.0
+    "@cratis/arc.react": ^24.8.0
     "@cratis/components": ^4.39.0
     "@cratis/fundamentals": ^7.34.4
     react: ^19.0.0
@@ -494,8 +494,8 @@ __metadata:
     "@cratis/arc.react": "npm:24.8.0"
     "@cratis/fundamentals": "npm:7.34.4"
   peerDependencies:
-    "@cratis/arc": ^24.0.0
-    "@cratis/arc.react": ^24.0.0
+    "@cratis/arc": ^24.8.0
+    "@cratis/arc.react": ^24.8.0
     "@cratis/fundamentals": ^7.34.4
   languageName: unknown
   linkType: soft
@@ -514,8 +514,8 @@ __metadata:
     react-markdown: "npm:10.1.0"
     reflect-metadata: "npm:0.2.2"
   peerDependencies:
-    "@cratis/arc": ^24.0.0
-    "@cratis/arc.react": ^24.0.0
+    "@cratis/arc": ^24.8.0
+    "@cratis/arc.react": ^24.8.0
     "@cratis/components": ^4.38.0
     "@cratis/fundamentals": ^7.34.4
     react: ^19.0.0
@@ -530,8 +530,8 @@ __metadata:
     "@cratis/arc.react": "npm:24.8.0"
     "@cratis/fundamentals": "npm:7.34.4"
   peerDependencies:
-    "@cratis/arc": ^24.0.0
-    "@cratis/arc.react": ^24.0.0
+    "@cratis/arc": ^24.8.0
+    "@cratis/arc.react": ^24.8.0
     "@cratis/fundamentals": ^7.34.4
   languageName: unknown
   linkType: soft
@@ -549,8 +549,8 @@ __metadata:
     react-dom: "npm:^19.3.1"
     reflect-metadata: "npm:0.2.2"
   peerDependencies:
-    "@cratis/arc": ^24.0.0
-    "@cratis/arc.react": ^24.0.0
+    "@cratis/arc": ^24.8.0
+    "@cratis/arc.react": ^24.8.0
     "@cratis/components": ^4.38.0
     "@cratis/fundamentals": ^7.34.4
     react: ^19.0.0
@@ -565,8 +565,8 @@ __metadata:
     "@cratis/arc.react": "npm:24.8.0"
     "@cratis/fundamentals": "npm:7.34.4"
   peerDependencies:
-    "@cratis/arc": ^24.0.0
-    "@cratis/arc.react": ^24.0.0
+    "@cratis/arc": ^24.8.0
+    "@cratis/arc.react": ^24.8.0
     "@cratis/fundamentals": ^7.34.4
   languageName: unknown
   linkType: soft

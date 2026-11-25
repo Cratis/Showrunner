@@ -65,8 +65,8 @@
         "@cratis/fundamentals": "7.34.4"
     },
     "peerDependencies": {
-        "@cratis/arc": "^24.0.0",
-        "@cratis/arc.react": "^24.0.0",
+        "@cratis/arc": "^24.8.0",
+        "@cratis/arc.react": "^24.8.0",
         "@cratis/fundamentals": "^7.34.4"
     }
 }

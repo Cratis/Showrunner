@@ -127,3 +127,5 @@ Update products before granting an audience to a named system, because a product
 ## Suspensions
 
 The operator publishes `PartSuspended` and `PartResumed`, in the same product-wide stream as the audience decisions. They are generation 1 and have the same fields: `Product`; `Level: SuspensionLevel` (`Tenant`, `User` or `System`); `TenantId`; `UserId`; `Part: PartPath`. `TenantId` and `UserId` are empty when the level does not name them. The newest decision about the same part at the same level wins, and a path covers everything below it. Resuming ends the suspension of its own level only.
+
+The product publishes `PartsDeclared` back, generation 1: `Product`; `Environment: EnvironmentName`; `Parts: PartDeclaration[]`, each with `Kind` (`module`, `feature`, `slice`, `command`, `query` or `screen`), `Path: PartPath` and `Name`. It is the whole list of the parts the application has, and the newest report of an environment replaces the one before. The path is what `SuspendPart` and `ResumePart` take as `Part`.

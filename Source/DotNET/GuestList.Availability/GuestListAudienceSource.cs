@@ -1,10 +1,10 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Cratis.Choreography.Availability.Audiences;
+using Cratis.Arc.Availability.Audiences;
 using Cratis.Showrunner.GuestList.Querying;
-using ChoreographyAudience = Cratis.Choreography.Availability.Audiences.AudienceName;
-using ChoreographyLevel = Cratis.Choreography.Availability.Audiences.AudienceLevel;
+using ChoreographyAudience = Cratis.Arc.Availability.Audiences.AudienceName;
+using ChoreographyLevel = Cratis.Arc.Availability.Audiences.AudienceLevel;
 using ShowrunnerAudience = Cratis.Showrunner.GuestList.Contracts.Audiences.AudienceName;
 using SystemClientId = Cratis.Showrunner.GuestList.Contracts.Audiences.SystemClientId;
 using TenantId = Cratis.Showrunner.GuestList.Contracts.Audiences.TenantId;

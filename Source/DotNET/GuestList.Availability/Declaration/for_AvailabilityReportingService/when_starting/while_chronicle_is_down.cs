@@ -6,7 +6,7 @@ using Cratis.Chronicle;
 using Cratis.Showrunner.GuestList.Availability.Declaration.for_AvailabilityReporter.given;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using Manifest = Cratis.Choreography.Availability;
+using Manifest = Cratis.Arc.Availability;
 
 namespace Cratis.Showrunner.GuestList.Availability.Declaration.for_AvailabilityReportingService.when_starting;
 

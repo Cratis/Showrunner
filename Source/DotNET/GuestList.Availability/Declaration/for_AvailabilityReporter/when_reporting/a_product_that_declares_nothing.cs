@@ -3,7 +3,7 @@
 
 #if DEBUG
 using Cratis.Showrunner.GuestList.Availability.Declaration.for_AvailabilityReporter.given;
-using Manifest = Cratis.Choreography.Availability;
+using Manifest = Cratis.Arc.Availability;
 
 namespace Cratis.Showrunner.GuestList.Availability.Declaration.for_AvailabilityReporter.when_reporting;
 

@@ -14,6 +14,10 @@
         <CratisProxiesSkipOutputDeletion>true</CratisProxiesSkipOutputDeletion>
         <CratisProxiesSkipCommandNameInRoute>true</CratisProxiesSkipCommandNameInRoute>
         <CratisProxiesUseSourceFileAsOutputFile>true</CratisProxiesUseSourceFileAsOutputFile>
+
+        <!-- Arc 23 turned read protection On by default. MarkReleaseNotesSeen reads what the person has seen through a service in
+             Provide(), which On refuses; Off keeps what ran before the upgrade until that read is moved into a read model parameter. -->
+        <CratisReadProtection>Off</CratisReadProtection>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="Cratis.Arc" />

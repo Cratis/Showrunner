@@ -70,7 +70,7 @@ public class GuestListInbox(IChronicleClient client, IOptions<GuestListOptions> 
     /// <param name="operatorStore">The operator store the event came from.</param>
     /// <returns>An awaitable task.</returns>
     public Task Receive(AudienceGranted @event, EventContext context, EventStoreName operatorStore) =>
-        Record(@event, @event.Product, @event.Level, @event.TenantId, @event.UserId, @event.Audience, @event.ClientId ?? SystemClientId.NotSet, new AudienceGrantRecorded(@event.Level, @event.Audience), context, operatorStore);
+        Record(@event, @event.Product, @event.Level, @event.TenantId, @event.UserId, @event.Audience.Value, @event.ClientId ?? SystemClientId.NotSet, new AudienceGrantRecorded(@event.Level, @event.Audience), context, operatorStore);
 
     /// <summary>
     /// Receives an audience being withdrawn.
@@ -80,7 +80,40 @@ public class GuestListInbox(IChronicleClient client, IOptions<GuestListOptions> 
     /// <param name="operatorStore">The operator store the event came from.</param>
     /// <returns>An awaitable task.</returns>
     public Task Receive(AudienceWithdrawn @event, EventContext context, EventStoreName operatorStore) =>
-        Record(@event, @event.Product, @event.Level, @event.TenantId, @event.UserId, @event.Audience, @event.ClientId ?? SystemClientId.NotSet, new AudienceWithdrawalRecorded(@event.Level, @event.Audience), context, operatorStore);
+        Record(@event, @event.Product, @event.Level, @event.TenantId, @event.UserId, @event.Audience.Value, @event.ClientId ?? SystemClientId.NotSet, new AudienceWithdrawalRecorded(@event.Level, @event.Audience), context, operatorStore);
+
+    /// <summary>
+    /// Receives a part being suspended.
+    /// </summary>
+    /// <param name="event">The public event.</param>
+    /// <param name="context">The context of the event in the inbox.</param>
+    /// <param name="operatorStore">The operator store the event came from.</param>
+    /// <returns>An awaitable task.</returns>
+    public Task Receive(PartSuspended @event, EventContext context, EventStoreName operatorStore) =>
+        Record(@event, @event.Product, LevelOf(@event.Level), @event.TenantId, @event.UserId, @event.Part.Value, SystemClientId.NotSet, new PartSuspensionRecorded(@event.Level, @event.Part), context, operatorStore);
+
+    /// <summary>
+    /// Receives a part being resumed.
+    /// </summary>
+    /// <param name="event">The public event.</param>
+    /// <param name="context">The context of the event in the inbox.</param>
+    /// <param name="operatorStore">The operator store the event came from.</param>
+    /// <returns>An awaitable task.</returns>
+    public Task Receive(PartResumed @event, EventContext context, EventStoreName operatorStore) =>
+        Record(@event, @event.Product, LevelOf(@event.Level), @event.TenantId, @event.UserId, @event.Part.Value, SystemClientId.NotSet, new PartResumeRecorded(@event.Level, @event.Part), context, operatorStore);
+
+    /// <summary>
+    /// Gets the level a suspension is recorded at: the same streams hold a level's audiences and its suspensions.
+    /// </summary>
+    /// <param name="level">The level of the suspension.</param>
+    /// <returns>The level; one no level matches stays unmatched, and the decision is not recorded.</returns>
+    static AudienceLevel LevelOf(SuspensionLevel level) => level switch
+    {
+        SuspensionLevel.Tenant => AudienceLevel.Tenant,
+        SuspensionLevel.User => AudienceLevel.User,
+        SuspensionLevel.System => AudienceLevel.System,
+        _ => (AudienceLevel)(-1)
+    };
 
     static bool IsNamedFor(AudienceLevel level, TenantId tenant, UserId user, SystemClientId client) => level switch
     {
@@ -97,7 +130,7 @@ public class GuestListInbox(IChronicleClient client, IOptions<GuestListOptions> 
         AudienceLevel level,
         TenantId tenant,
         UserId user,
-        AudienceName audience,
+        string subject,
         SystemClientId systemClient,
         object fact,
         EventContext context,
@@ -110,7 +143,7 @@ public class GuestListInbox(IChronicleClient client, IOptions<GuestListOptions> 
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(audience.Value) || !IsNamedFor(level, tenant, user, systemClient))
+        if (string.IsNullOrWhiteSpace(subject) || !IsNamedFor(level, tenant, user, systemClient))
         {
             logger.Malformed(eventType, operatorStore, level);
             return;

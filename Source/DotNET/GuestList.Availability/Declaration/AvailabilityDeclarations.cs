@@ -6,7 +6,7 @@ using System.Text;
 using System.Text.Json;
 using Cratis.Showrunner.GuestList.Contracts.Audiences;
 using Cratis.Showrunner.GuestList.Contracts.Availability;
-using Manifest = Cratis.Choreography.Availability;
+using Manifest = Cratis.Arc.Availability;
 
 namespace Cratis.Showrunner.GuestList.Availability.Declaration;
 

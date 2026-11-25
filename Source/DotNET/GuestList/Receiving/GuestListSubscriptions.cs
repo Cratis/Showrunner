@@ -41,7 +41,9 @@ public class GuestListSubscriptions(GuestListInbox inbox, IOptions<GuestListOpti
     public static IReadOnlyList<Type> PublicEvents { get; } =
     [
         typeof(AudienceGranted),
-        typeof(AudienceWithdrawn)
+        typeof(AudienceWithdrawn),
+        typeof(PartSuspended),
+        typeof(PartResumed)
     ];
 
     /// <summary>
@@ -145,5 +147,7 @@ public class GuestListSubscriptions(GuestListInbox inbox, IOptions<GuestListOpti
         .OnEventSequence(SequenceFor(operatorStore))
         .NotReplayable()
         .On<AudienceGranted>((@event, context) => inbox.Receive(@event, context, operatorStore))
-        .On<AudienceWithdrawn>((@event, context) => inbox.Receive(@event, context, operatorStore));
+        .On<AudienceWithdrawn>((@event, context) => inbox.Receive(@event, context, operatorStore))
+        .On<PartSuspended>((@event, context) => inbox.Receive(@event, context, operatorStore))
+        .On<PartResumed>((@event, context) => inbox.Receive(@event, context, operatorStore));
 }

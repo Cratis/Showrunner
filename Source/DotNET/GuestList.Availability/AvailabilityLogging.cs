@@ -1,8 +1,9 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Cratis.Choreography.Availability.Audiences;
+using Cratis.Arc.Availability.Audiences;
 using Cratis.Showrunner.GuestList.Availability.Declaration;
+using Cratis.Showrunner.GuestList.Availability.Parts;
 using Cratis.Showrunner.GuestList.Availability.Systems;
 using Microsoft.Extensions.Logging;
 using Product = Cratis.Showrunner.GuestList.Contracts.Audiences.Product;
@@ -28,6 +29,12 @@ internal static partial class AvailabilityLogging
 
     [LoggerMessage(LogLevel.Debug, "The systems product '{Product}' knows are what was last reported; nothing to report")]
     internal static partial void SystemsUnchanged(this ILogger<SystemsReporter> logger, Product product);
+
+    [LoggerMessage(LogLevel.Information, "Reported the {Parts} part(s) of product '{Product}'")]
+    internal static partial void PartsReported(this ILogger<PartsReporter> logger, Product product, int parts);
+
+    [LoggerMessage(LogLevel.Debug, "The parts of product '{Product}' are what was last reported; nothing to report")]
+    internal static partial void PartsUnchanged(this ILogger<PartsReporter> logger, Product product);
 
     [LoggerMessage(LogLevel.Warning, "Could not report what the product declares; trying again soon")]
     internal static partial void ReportingFailed(this ILogger<AvailabilityReportingService> logger, Exception exception);

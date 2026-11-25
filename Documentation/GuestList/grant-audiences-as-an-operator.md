@@ -54,6 +54,7 @@ A system is who its client id says it is, so granting again with another kind re
 | Read model | Query | Returns |
 | --- | --- | --- |
 | `ProductGuestList` | `ForProduct(product)` | every grant held for the product, observable |
+| `ProductParts` | `ForProduct(product)` | every part of the application the product last reported in each environment, to pick a part to suspend from, observable |
 | `ProductSuspensions` | `ForProduct(product)` | the parts suspended now and the history of every suspension and resume, observable |
 | `UndeclaredAudienceGrant` | `ForProduct(product)` | the grants whose audience the product does not declare, observable; empty when no audiences are declared for the product. What the product reported for the primary environment beats `DeclaredAudiences`, which stays as the fallback for a product that has not reported |
 | `ProductAvailability` | `ForProduct(product)` | what the product last declared in each environment it reports from, and what each report changed, observable |

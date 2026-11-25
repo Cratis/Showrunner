@@ -2,9 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #if DEBUG
-using Cratis.Choreography.Availability;
-using Cratis.Choreography.Availability.Context;
-using Cratis.Choreography.Availability.Context.Providers;
+using Cratis.Arc.Availability;
+using Cratis.Arc.Availability.Context;
+using Cratis.Arc.Availability.Context.Providers;
 using Cratis.Showrunner.BoxOffice.Contracts;
 using Cratis.Showrunner.BoxOffice.Contracts.Entitlements;
 using Cratis.Showrunner.BoxOffice.Entitlements;

@@ -1,7 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Cratis.Choreography.Availability.Audiences;
+using Cratis.Arc.Availability.Audiences;
+using Cratis.Arc.Availability.Suspensions;
 using Microsoft.Extensions.Logging;
 
 namespace Cratis.Showrunner.GuestList.Availability;
@@ -20,6 +21,7 @@ public class AudienceChangeFeed(TimeProvider time, ILogger<AudienceChangeFeed> l
 {
     readonly Lock _lock = new();
     readonly List<Func<AudienceChange, ValueTask>> _handlers = [];
+    readonly List<Func<SuspensionChange, ValueTask>> _suspensionHandlers = [];
     long _lastReceivedTicks;
 
     /// <summary>
@@ -52,6 +54,55 @@ public class AudienceChangeFeed(TimeProvider time, ILogger<AudienceChangeFeed> l
                 _handlers.Remove(handler);
             }
         });
+    }
+
+    /// <summary>
+    /// Subscribes to changes to the parts suspended.
+    /// </summary>
+    /// <param name="handler">Called for every suspension or resume.</param>
+    /// <returns>A subscription; dispose it to stop receiving changes.</returns>
+    public IDisposable SubscribeToSuspensions(Func<SuspensionChange, ValueTask> handler)
+    {
+        lock (_lock)
+        {
+            _suspensionHandlers.Add(handler);
+        }
+
+        return new Subscription(() =>
+        {
+            lock (_lock)
+            {
+                _suspensionHandlers.Remove(handler);
+            }
+        });
+    }
+
+    /// <summary>
+    /// Records that a suspension or a resume was received and tells every subscriber. A subscriber that fails does not keep
+    /// the others from hearing about it.
+    /// </summary>
+    /// <param name="change">The change.</param>
+    /// <returns>An awaitable task.</returns>
+    public async ValueTask PublishSuspension(SuspensionChange change)
+    {
+        Func<SuspensionChange, ValueTask>[] handlers;
+        lock (_lock)
+        {
+            Interlocked.Exchange(ref _lastReceivedTicks, time.GetUtcNow().UtcTicks);
+            handlers = [.. _suspensionHandlers];
+        }
+
+        foreach (var handler in handlers)
+        {
+            try
+            {
+                await handler(change);
+            }
+            catch (Exception exception)
+            {
+                logger.SubscriberFailed(exception, change.Level, change.Key);
+            }
+        }
     }
 
     /// <summary>

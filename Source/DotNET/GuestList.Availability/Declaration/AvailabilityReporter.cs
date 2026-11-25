@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Reflection;
-using Cratis.Choreography.Availability;
+using Cratis.Arc.Availability;
 using Cratis.Chronicle;
 using Cratis.Chronicle.EventSequences;
 using Cratis.Showrunner.GuestList.Contracts.Availability;

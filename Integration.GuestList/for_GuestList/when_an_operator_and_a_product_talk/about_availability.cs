@@ -1,11 +1,11 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Cratis.Choreography.Availability.Audiences;
+using Cratis.Arc.Availability.Audiences;
 using Cratis.Showrunner.GuestList.Authoring.Decisions;
 using Cratis.Showrunner.GuestList.Integration.given;
 using Cratis.Showrunner.Usher.Integration.given;
-using ChoreographyAudienceLevel = Cratis.Choreography.Availability.Audiences.AudienceLevel;
+using ChoreographyAudienceLevel = Cratis.Arc.Availability.Audiences.AudienceLevel;
 
 namespace Cratis.Showrunner.GuestList.Integration.for_GuestList.when_an_operator_and_a_product_talk;
 

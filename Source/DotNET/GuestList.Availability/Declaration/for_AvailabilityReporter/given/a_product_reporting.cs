@@ -9,8 +9,8 @@ using Cratis.Chronicle.Testing.Events;
 using Cratis.Showrunner.GuestList.Contracts.Availability;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using Manifest = Cratis.Choreography.Availability;
-using Names = Cratis.Choreography.Availability.Audiences;
+using Manifest = Cratis.Arc.Availability;
+using Names = Cratis.Arc.Availability.Audiences;
 
 namespace Cratis.Showrunner.GuestList.Availability.Declaration.for_AvailabilityReporter.given;
 

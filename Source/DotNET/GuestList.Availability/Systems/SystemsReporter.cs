@@ -4,7 +4,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using Cratis.Choreography.Availability;
+using Cratis.Arc.Availability;
 using Cratis.Chronicle;
 using Cratis.Chronicle.EventSequences;
 using Cratis.Showrunner.GuestList.Availability.Declaration;

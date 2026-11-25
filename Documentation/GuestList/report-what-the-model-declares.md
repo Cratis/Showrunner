@@ -43,6 +43,10 @@ services.AddSingleton<IKnownSystems>(systems);
 
 The reporting service appends `SystemsDeclared` with the whole list when it starts, once per change, and reads what was last reported from the outbox, as it does for the declaration. A product that knows no systems and never reported any publishes nothing; one that stops knowing systems it reported publishes the empty list. The operator reads them as `ProductSystems`.
 
+### Report every part of the application
+
+A product also reports every module, feature, slice, command, query and screen the availability engine discovered, whether the model declares anything about it or not, because any part can be suspended. The report is `PartsDeclared`: the product, the environment and the list of parts, each with its kind, its path and its name. It is the whole list, appended only when it differs from the last one reported, so a restart that changes nothing reports nothing. The operator reads it as `ProductParts`, per environment, and picks the part to suspend from the list, see [Grant audiences as an operator](./grant-audiences-as-an-operator.md#suspend-and-resume-a-part).
+
 ### Tell the operator which decisions arrived
 
 For every decision the product records, it appends one `AudienceDecisionReceived` with `DecidedAt` set to when the operator decided. It follows what the product recorded, so a decision that is delivered again, or one the product ignored such as one for a tenant it does not have, produces no receipt and stays waiting. This part is in `Cratis.Showrunner.GuestList` itself and needs no Choreography.

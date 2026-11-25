@@ -16,6 +16,7 @@ public class and_the_person_holds_a_seat : a_seat_command<ReleaseSeat>
     async Task Because() => _result = await _scenario.Execute(new ReleaseSeat(SeatHolder.Of(Tenants.Bo)));
 
     [Fact] void should_succeed() => _result.ShouldBeSuccessful();
+    [Fact] void should_protect_the_person_not_the_tenant() => _scenario.AppendedEvents.Single().Event.Context.Subject.ShouldEqual(PersonSubjects.For(Tenants.Bo));
     [Fact] void should_append_the_release_with_the_person_who_held_it() => _scenario.AppendedEvents.Select(_ => _.Event.Content).ShouldEqual([new SeatUnassigned(Tenants.Bo)]);
 }
 #endif

@@ -47,10 +47,22 @@
             "type": "string"
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "compliance": [
+              {
+                "metadataType": "PII",
+                "details": "The display name used by the operator and tenant administrators to identify a seat holder or the person who registered the tenant."
+              }
+            ]
           },
           "email": {
-            "type": "string"
+            "type": "string",
+            "compliance": [
+              {
+                "metadataType": "PII",
+                "details": "The email address used by the operator and tenant administrators to contact a seat holder or the person who registered the tenant."
+              }
+            ]
           }
         },
         "required": [
@@ -493,10 +505,22 @@
             "type": "string"
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "compliance": [
+              {
+                "metadataType": "PII",
+                "details": "The display name used by the operator and tenant administrators to identify a seat holder or the person who registered the tenant."
+              }
+            ]
           },
           "email": {
-            "type": "string"
+            "type": "string",
+            "compliance": [
+              {
+                "metadataType": "PII",
+                "details": "The email address used by the operator and tenant administrators to contact a seat holder or the person who registered the tenant."
+              }
+            ]
           }
         },
         "required": [
@@ -530,10 +554,22 @@
             "type": "string"
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "compliance": [
+              {
+                "metadataType": "PII",
+                "details": "The display name used by the operator and tenant administrators to identify a seat holder or the person who registered the tenant."
+              }
+            ]
           },
           "email": {
-            "type": "string"
+            "type": "string",
+            "compliance": [
+              {
+                "metadataType": "PII",
+                "details": "The email address used by the operator and tenant administrators to contact a seat holder or the person who registered the tenant."
+              }
+            ]
           }
         },
         "required": [
@@ -610,10 +646,22 @@
             "type": "string"
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "compliance": [
+              {
+                "metadataType": "PII",
+                "details": "The display name used by the operator and tenant administrators to identify a seat holder or the person who registered the tenant."
+              }
+            ]
           },
           "email": {
-            "type": "string"
+            "type": "string",
+            "compliance": [
+              {
+                "metadataType": "PII",
+                "details": "The email address used by the operator and tenant administrators to contact a seat holder or the person who registered the tenant."
+              }
+            ]
           }
         },
         "required": [

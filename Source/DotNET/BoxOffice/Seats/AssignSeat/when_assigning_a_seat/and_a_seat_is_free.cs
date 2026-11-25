@@ -14,6 +14,7 @@ public class and_a_seat_is_free : a_seat_command<AssignSeat>
     async Task Because() => _result = await _scenario.Execute(new AssignSeat(Tenants.Bo));
 
     [Fact] void should_succeed() => _result.ShouldBeSuccessful();
+    [Fact] void should_protect_the_person_not_the_tenant() => _scenario.AppendedEvents.Single().Event.Context.Subject.ShouldEqual(PersonSubjects.For(Tenants.Bo));
     [Fact] void should_append_the_assignment() => _scenario.AppendedEvents.Select(_ => _.Event.Content).ShouldEqual([new SeatAssigned(Tenants.Bo)]);
     [Fact] async Task should_append_it_to_the_tenants_stream() => await _scenario.ShouldHaveAppendedEvent<AssignSeat, SeatAssigned>(TenantStream.Id, e => e.Holder == Tenants.Bo);
 }

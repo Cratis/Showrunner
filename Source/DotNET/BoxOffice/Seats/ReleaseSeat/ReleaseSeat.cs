@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Chronicle.EventSequences;
+
 namespace Cratis.Showrunner.BoxOffice.Seats.ReleaseSeat;
 
 /// <summary>
@@ -19,6 +21,7 @@ public record ReleaseSeat(SeatHolder Holder) : ICanProvideEventSourceId
     /// </summary>
     /// <param name="roster">Who holds the tenant's seats, read fresh from the event log.</param>
     /// <returns><see cref="SeatUnassigned"/>, or nothing when nobody holds the seat.</returns>
-    public IEnumerable<object> Handle(SeatRoster? roster) =>
-        roster?.Holdings.FirstOrDefault(_ => SeatHolder.Of(_.Holder) == Holder) is { } holding ? [new SeatUnassigned(holding.Holder)] : [];
+    public IEnumerable<EventForEventSourceId> Handle(SeatRoster? roster) =>
+        roster?.Holdings.FirstOrDefault(_ => SeatHolder.Of(_.Holder) == Holder) is { } holding ?
+        [new(TenantStream.Id, new SeatUnassigned(holding.Holder)) { Subject = PersonSubjects.For(holding.Holder) }] : [];
 }

@@ -117,7 +117,8 @@ public class TenantRegistrations(
     async Task Record(IEventStore tenant, Arrival arrival, object fact, IdempotencyKey key)
     {
         var context = arrival.Context;
-        var result = await tenant.EventLog.AppendOnce(TenantStream.Id, fact, key, correlationId: context.CorrelationId, occurred: context.Occurred);
+        var subject = fact is TenantCreatorIdentified creator ? PersonSubjects.For(creator.Creator) : null;
+        var result = await tenant.EventLog.AppendOnce(TenantStream.Id, fact, key, correlationId: context.CorrelationId, occurred: context.Occurred, subject: subject);
         if (!IsRecorded(result) && !result.HasIdempotencyConflicts)
         {
             throw new TenantNotRecorded(fact.GetType(), arrival.Tenant, result);

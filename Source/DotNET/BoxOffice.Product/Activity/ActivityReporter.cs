@@ -70,8 +70,14 @@ public class ActivityReporter(ITenantStores stores, TimeProvider time, ILogger<A
         var result = await store.GetEventSequence(EventSequenceId.Outbox).AppendOnce(
             organization,
             new SeatHolderActive(tenant, person, day),
-            KeyFor(tenant, person, day));
+            KeyFor(tenant, person, day),
+            subject: PersonSubjects.For(person));
 
+        return RememberReport(result, tenant, remembered);
+    }
+
+    ActivityOutcome RememberReport(AppendResult result, TenantId tenant, string remembered)
+    {
         // A conflict is the same person and day reported with other details, such as a changed name: still reported.
         if (!result.IsSuccess && !result.WasAlreadyAppended && !result.HasIdempotencyConflicts)
         {

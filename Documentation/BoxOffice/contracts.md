@@ -77,6 +77,25 @@ An `OfferPrice` is an `Interval: BillingInterval` (`Monthly`, `Yearly`), an `Amo
 - `TenantNotProvisioned` says the product refused to create the tenant for a reason that retrying will not change, such as a name it already uses. A failure worth another attempt is not published; the product retries it. See [The product side](./product.md#creating-tenants).
 - `SeatHolderActive` says a person was active in the tenant on a day, in UTC. It is published at most once per person and day, so the operator can show when the person was last seen. See [The product side](./product.md#reporting-activity).
 
+## Personal data and compliance subjects
+
+`PersonName` and `Email` are marked `[PII]`, with compliance details explaining why Box Office keeps each value. Chronicle generates compliance metadata for every nested `Person`, including the holder in `SeatTaken`, `SeatReleased` and `SeatHolderActive`, and the creator in `TenantRegistered`. The private `SeatAssigned`, `SeatUnassigned` and `TenantCreatorIdentified` facts use the same concepts. Chronicle's compliance pipeline encrypts these fields on new appends; this is field-level protection, not encryption of the whole person record.
+
+Every append carrying a person must also supply `PersonSubjects.For(person)` as its **subject**. This is separate from the organization or tenant **event source**, which does not change. Box Office's seat commands, seat reporter, activity reporter and tenant-creator recording supply it. The operator owns the `TenantRegistered` append outside this repository and must supply the creator's subject too:
+
+```csharp
+await outbox.Append(
+    organization,
+    new TenantRegistered(tenantId, name, creator, creatorRole),
+    subject: PersonSubjects.For(creator));
+```
+
+The helper hashes the UTF-8 JSON string pair `[IdentityProvider, IdentityProviderSubject]` with SHA-256, and prefixes its lowercase hex digest with `box-office-person-`. JSON preserves the identity boundaries even when values contain delimiters. Names, emails, organizations and tenants are not inputs: changing a display name or email does not change the key, and people from different identity providers do not share it. The subject travels unencrypted, so it contains neither the raw provider subject nor contact details. It is still a stable, linkable identifier, not anonymous data. Identity-provider fields in the payload are not marked PII by this change. The hash is unsalted: when an identity provider uses guessable subjects, such as email addresses or sequential ids, someone who can read the event store can hash candidate identities and match them against stored subjects, even after erasure. Prefer identity providers with opaque, random subjects.
+
+For erasure, compute the same subject from the person's original identity provider and provider subject. Have the configured Chronicle compliance process delete that subject's encryption key in **every event store and namespace** that holds their events, including operator and product copies. One person's key is not the tenant's key; erasing that person must not erase unrelated seat holders. The subject comes from the identity provider and provider subject the caller supplies when assigning a seat, so a mistyped provider subject encrypts that person's data under a key their real identity does not reach. Assign seats from the identity provider's own values rather than typed input. Other stores, read models and downstream copies need their own erasure handling.
+
+This is forward-only protection. Adding PII metadata does **not** encrypt historical plaintext, repair historical subjects, or erase existing read models. Events written before this change can retain plaintext names and emails and may use a tenant-level default subject. Keep those outside any claim of person-level erasure until a separately planned migration or cleanup covers them. See [Chronicle's PII guidance](https://www.cratis.io/docs/chronicle/compliance/pii) for the supported metadata update and historical-data boundary.
+
 ## Mapping from the v1 contracts
 
 Box Office replaces the v1 `Admin.Contracts` events the operator sent to a product. The first table lists every v1 contract and what replaces it. The second lists Direct's own facts about seats, trials and suspension, so each maps one to one.

@@ -23,6 +23,7 @@ public class a_seat_that_is_assigned : a_seat_reporter
     [Fact] void should_tell_the_operator_the_seat_is_taken() => _reported.ShouldNotBeNull();
     [Fact] void should_name_the_namespace_as_tenant() => _reported.TenantId.ShouldEqual(Tenants.Tenant);
     [Fact] void should_name_who_took_it() => _reported.Holder.ShouldEqual(Tenants.Ada);
+    [Fact] void should_protect_the_person_not_the_organization() => _outbox.Single().Context.Subject.ShouldEqual(PersonSubjects.For(Tenants.Ada));
     [Fact] void should_tell_it_under_the_operators_organization() => _outbox.Single().Context.EventSourceId.Value.ShouldEqual(Tenants.Organization.Value.ToString("D"));
 }
 #endif

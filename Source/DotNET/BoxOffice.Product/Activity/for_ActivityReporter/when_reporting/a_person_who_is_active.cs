@@ -19,6 +19,7 @@ public class a_person_who_is_active : an_activity_reporter
     }
 
     [Fact] void should_report_the_person() => _outcome.ShouldEqual(ActivityOutcome.Reported);
+    [Fact] void should_protect_the_person_not_the_organization() => _outbox.Single().Context.Subject.ShouldEqual(PersonSubjects.For(Tenants.Ada));
     [Fact] void should_tell_the_operator_who_was_active_on_the_day() => _outbox.Single().Content.ShouldEqual(new SeatHolderActive(Tenants.Tenant, Tenants.Ada, Tenants.Today));
     [Fact] void should_tell_it_under_the_operators_organization() => _outbox.Single().Context.EventSourceId.Value.ShouldEqual(Tenants.Organization.Value.ToString("D"));
 }

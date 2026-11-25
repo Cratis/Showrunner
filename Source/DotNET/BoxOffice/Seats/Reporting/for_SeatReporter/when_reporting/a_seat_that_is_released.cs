@@ -22,5 +22,6 @@ public class a_seat_that_is_released : a_seat_reporter
 
     [Fact] void should_tell_the_operator_the_seat_is_released() => _reported.ShouldNotBeNull();
     [Fact] void should_name_who_released_it() => _reported.Holder.ShouldEqual(Tenants.Ada);
+    [Fact] void should_protect_the_person_not_the_organization() => _outbox.Single().Context.Subject.ShouldEqual(PersonSubjects.For(Tenants.Ada));
 }
 #endif

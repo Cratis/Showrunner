@@ -48,7 +48,7 @@ public class SeatReporter(IChronicleClient client, ILogger<SeatReporter> logger,
     /// <param name="context">The <see cref="EventContext"/>.</param>
     /// <param name="delivery">The <see cref="ReactorDelivery"/>.</param>
     /// <returns>An awaitable task.</returns>
-    public Task Assigned(SeatAssigned @event, EventContext context, ReactorDelivery delivery) => Report(@event, context, delivery);
+    public Task Assigned(SeatAssigned @event, EventContext context, ReactorDelivery delivery) => Report(@event, @event.Holder, context, delivery);
 
     /// <summary>
     /// Reports a seat that was released.
@@ -57,9 +57,9 @@ public class SeatReporter(IChronicleClient client, ILogger<SeatReporter> logger,
     /// <param name="context">The <see cref="EventContext"/>.</param>
     /// <param name="delivery">The <see cref="ReactorDelivery"/>.</param>
     /// <returns>An awaitable task.</returns>
-    public Task Unassigned(SeatUnassigned @event, EventContext context, ReactorDelivery delivery) => Report(@event, context, delivery);
+    public Task Unassigned(SeatUnassigned @event, EventContext context, ReactorDelivery delivery) => Report(@event, @event.Holder, context, delivery);
 
-    async Task Report(object fact, EventContext context, ReactorDelivery delivery)
+    async Task Report(object fact, Person holder, EventContext context, ReactorDelivery delivery)
     {
         var eventStore = await client.GetEventStore(context.EventStore, context.Namespace);
 
@@ -79,7 +79,8 @@ public class SeatReporter(IChronicleClient client, ILogger<SeatReporter> logger,
             publicEvent,
             delivery.IdempotencyKeyFor(nameof(Report)),
             correlationId: context.CorrelationId,
-            occurred: context.Occurred);
+            occurred: context.Occurred,
+            subject: PersonSubjects.For(holder));
 
         if (result.HasIdempotencyConflicts)
         {

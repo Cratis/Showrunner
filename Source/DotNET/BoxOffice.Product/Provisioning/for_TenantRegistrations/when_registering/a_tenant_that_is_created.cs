@@ -21,5 +21,6 @@ public class a_tenant_that_is_created : a_tenant_registration
     [Fact] void should_report_under_the_operators_organization() => _outbox.Single().Context.EventSourceId.Value.ShouldEqual(Tenants.Organization.Value.ToString("D"));
     [Fact] void should_tell_the_tenant_which_organization_it_is() => _tenantEvents.Select(_ => _.Content).OfType<TenantOrganizationIdentified>().Single().Organization.ShouldEqual(Tenants.Organization);
     [Fact] void should_remember_who_created_the_tenant() => _tenantEvents.Select(_ => _.Content).OfType<TenantCreatorIdentified>().Single().Creator.ShouldEqual(Tenants.Ada);
+    [Fact] void should_protect_the_person_not_the_tenant() => _tenantEvents.Single(_ => _.Content is TenantCreatorIdentified).Context.Subject.ShouldEqual(PersonSubjects.For(Tenants.Ada));
 }
 #endif

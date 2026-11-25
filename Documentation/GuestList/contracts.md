@@ -13,8 +13,8 @@ All types are in `Cratis.Showrunner.GuestList.Contracts.Audiences`.
 
 | Event | Fields | Meaning |
 | --- | --- | --- |
-| `AudienceGranted` (generation 2) | `Product`; `Level: AudienceLevel`; `TenantId`; `UserId`; `Audience: AudienceName`; `ClientId: SystemClientId`; `Kind: SystemKind` | An operator grants an audience at a level |
-| `AudienceWithdrawn` (generation 2) | `Product`; `Level: AudienceLevel`; `TenantId`; `UserId`; `Audience: AudienceName`; `ClientId: SystemClientId`; `Kind: SystemKind` | An operator withdraws an audience from a level |
+| `AudienceGranted` | `Product`; `Level: AudienceLevel`; `TenantId`; `UserId`; `Audience: AudienceName`; `ClientId: SystemClientId`; `Kind: SystemKind` | An operator grants an audience at a level |
+| `AudienceWithdrawn` | `Product`; `Level: AudienceLevel`; `TenantId`; `UserId`; `Audience: AudienceName`; `ClientId: SystemClientId`; `Kind: SystemKind` | An operator withdraws an audience from a level |
 
 Which of `TenantId`, `UserId`, `ClientId` and `Kind` are filled depends on the level. The others are empty (`Kind` is `None`), so the payload has no nulls.
 
@@ -117,12 +117,9 @@ GUESTLIST_UPDATE_EVENT_SCHEMA_SNAPSHOT=1 dotnet test Source/DotNET/GuestList.Con
 
 ### Naming a system
 
-`AudienceGranted`, `AudienceWithdrawn` and `AudienceDecisionReceived` are generation 2. Generation 1 had no client id, and its schema is kept in code (`AudienceGrantedV1` and its siblings) and in the snapshot. Chronicle reads both through a migration:
+`AudienceGranted`, `AudienceWithdrawn` and `AudienceDecisionReceived` carry a client id (and, for the first two, a kind) so an audience can be granted to one named system. They have one generation, the latest, and no migration: there is no earlier shape to read. An `AudienceLevel.System` grant names no system and means the product-wide system holder, and `AudienceLevel.NamedSystem` is the only level that names one.
 
-- An event of generation 1, stored or published, reads as generation 2 with an empty `ClientId` and `Kind.None`. A `System` grant that was decided before systems were named therefore stays the system-wide holder, and nothing that shipped changes meaning.
-- A generation 2 event read as generation 1 loses `ClientId` and `Kind`. A `NamedSystem` decision becomes a tenant decision with no tenant, which a generation 1 product ignores as malformed, so a product that has not been updated never widens one system's grant to every system.
-
-Update products before granting an audience to a named system, because a product that has not been updated ignores those decisions.
+Update products before granting an audience to a named system, because a product that has not been updated does not know the level.
 
 ## Suspensions
 

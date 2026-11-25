@@ -9,7 +9,6 @@ namespace Cratis.Showrunner.GuestList.Contracts.Availability;
 /// Published by the product, once per decision it recorded, to say that an operator decision reached it. It is the one
 /// fact the operator cannot know for itself. A decision the product did not record, such as one for a tenant it does not
 /// have, produces none, so the decision stays waiting. It is not a heartbeat and says nothing about the connection.
-/// This is generation 2; generation 1 had no <see cref="ClientId"/>.
 /// </summary>
 /// <param name="Product">The product that recorded the decision.</param>
 /// <param name="Environment">The environment the product reports from.</param>
@@ -20,7 +19,7 @@ namespace Cratis.Showrunner.GuestList.Contracts.Availability;
 /// <param name="Audience">The audience decided.</param>
 /// <param name="DecidedAt">When the operator took the decision: its own occurred time, which pairs the receipt with it.</param>
 /// <param name="ClientId">The client id of the system, for <see cref="AudienceLevel.NamedSystem"/>; empty otherwise.</param>
-[EventType(generation: 2)]
+[EventType]
 [Public]
 public record AudienceDecisionReceived(
     Product Product,

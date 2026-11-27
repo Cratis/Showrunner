@@ -101,7 +101,36 @@ public static class ProductionValidator
             problems.Add(new($"database.members must be 1, 3 or 5 for a Managed database, not {database.Members}."));
         }
 
+        ValidateTuning(database, problems);
         ValidateBackupStorage(database, problems);
+    }
+
+    static void ValidateTuning(ProductionDatabase database, List<ProductionProblem> problems)
+    {
+        if (database.WiredTigerCacheSizeRatio is < 0 or >= 1)
+        {
+            problems.Add(new($"database.wiredTigerCacheSizeRatio must be above 0 and below 1, or 0 for the operator's default, not {database.WiredTigerCacheSizeRatio}."));
+        }
+
+        if (database.TcmallocReleaseRate < 0)
+        {
+            problems.Add(new($"database.tcmallocReleaseRate cannot be negative, not {database.TcmallocReleaseRate}."));
+        }
+
+        if (!database.IsExternal())
+        {
+            return;
+        }
+
+        if (database.Metrics.Enabled)
+        {
+            problems.Add(new("database.metrics needs database.mode Managed: Stage Manager only runs exporters for a database it runs."));
+        }
+
+        if (database.WiredTigerCacheSizeRatio != 0 || database.SetParameters.Count > 0 || !string.IsNullOrWhiteSpace(database.MemoryRequest) || !string.IsNullOrWhiteSpace(database.CpuRequest) || !string.IsNullOrWhiteSpace(database.CpuLimit))
+        {
+            problems.Add(new("database.wiredTigerCacheSizeRatio, setParameters, memoryRequest, cpuRequest and cpuLimit need database.mode Managed: they tune a database Stage Manager runs."));
+        }
     }
 
     static void ValidateBackupStorage(ProductionDatabase database, List<ProductionProblem> problems)

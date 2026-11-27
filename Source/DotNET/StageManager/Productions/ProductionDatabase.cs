@@ -14,6 +14,14 @@ public class ProductionDatabase
     public const string DefaultImage = "percona/percona-server-mongodb:7.0.14-8";
 
     /// <summary>
+    /// The bytes per second at which MongoDB returns freed allocator memory to the operating system, when none is given.
+    /// </summary>
+    /// <remarks>
+    /// MongoDB 8.0 never returns freed tcmalloc pages unless this is set (default 0). Measured in production, members held 2.4-3.3 GiB of free pages on top of a 2-3 GiB cache.
+    /// </remarks>
+    public const long DefaultTcmallocReleaseRate = 16_777_216;
+
+    /// <summary>
     /// Gets or sets the storage engine: <c>MongoDB</c>, <c>PostgreSql</c> or <c>SqlServer</c>. The SQL engines are External only.
     /// </summary>
     [Description("MongoDB (the default), PostgreSql or SqlServer. PostgreSql and SqlServer are External only. Cannot be changed once the Production is running.")]
@@ -54,6 +62,48 @@ public class ProductionDatabase
     /// </summary>
     [Description("For a Managed database: the memory limit of each member. Defaults to 8Gi.")]
     public string MemoryLimit { get; set; } = "8Gi";
+
+    /// <summary>
+    /// Gets or sets the memory each member requests.
+    /// </summary>
+    [Description("For a Managed database: the memory each member requests. Empty requests nothing, so the limit alone sizes the pod.")]
+    public string MemoryRequest { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the CPU each member requests.
+    /// </summary>
+    [Description("For a Managed database: the CPU each member requests, such as 500m. Empty requests nothing.")]
+    public string CpuRequest { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the CPU limit of each member.
+    /// </summary>
+    [Description("For a Managed database: the CPU limit of each member, such as 2. Empty sets no CPU limit.")]
+    public string CpuLimit { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the share of the cache budget WiredTiger uses.
+    /// </summary>
+    [Description("For a Managed database: the share of the cache budget WiredTiger uses, 0 to 1 exclusive. Percona sizes the cache as this ratio times the memory limit minus 1 GB, so the default of 0.5 gives a small cache at a small limit. 0 keeps the operator's default.")]
+    public double WiredTigerCacheSizeRatio { get; set; }
+
+    /// <summary>
+    /// Gets or sets the bytes per second at which freed allocator memory goes back to the operating system.
+    /// </summary>
+    [Description("For a Managed database: the bytes per second at which MongoDB hands freed allocator memory back to the operating system (tcmallocReleaseRate). Defaults to 16777216; 0 leaves MongoDB's own default, which never releases it.")]
+    public long TcmallocReleaseRate { get; set; } = DefaultTcmallocReleaseRate;
+
+    /// <summary>
+    /// Gets or sets further <c>mongod</c> <c>setParameter</c> values.
+    /// </summary>
+    [Description("For a Managed database: further mongod setParameter values, by name. Numbers and booleans are written as such; anything else as a string.")]
+    public IDictionary<string, string> SetParameters { get; set; } = new Dictionary<string, string>(StringComparer.Ordinal);
+
+    /// <summary>
+    /// Gets or sets the MongoDB metrics for Prometheus.
+    /// </summary>
+    [Description("For a Managed database: the MongoDB metrics for Prometheus.")]
+    public ProductionDatabaseMetrics Metrics { get; set; } = new();
 
     /// <summary>
     /// Gets or sets the size of the volume of each member of a managed database.

@@ -55,6 +55,42 @@ public sealed class ProductionDatabaseArgs
     public string? MemoryLimit { get; init; }
 
     /// <summary>
+    /// Gets the memory each member of a managed database requests, such as <c>1Gi</c>, or null to request none.
+    /// </summary>
+    public string? MemoryRequest { get; init; }
+
+    /// <summary>
+    /// Gets the CPU each member of a managed database requests, such as <c>500m</c>, or null to request none.
+    /// </summary>
+    public string? CpuRequest { get; init; }
+
+    /// <summary>
+    /// Gets the CPU limit of each member of a managed database, such as <c>2</c>, or null for none.
+    /// </summary>
+    public string? CpuLimit { get; init; }
+
+    /// <summary>
+    /// Gets the share of the cache budget WiredTiger uses, above 0 and below 1, or null for the operator's default.
+    /// Percona sizes the cache as this ratio times the memory limit minus 1 GB.
+    /// </summary>
+    public double? WiredTigerCacheSizeRatio { get; init; }
+
+    /// <summary>
+    /// Gets the bytes per second at which MongoDB hands freed allocator memory back to the operating system, or null for the operator's default (16777216). 0 leaves MongoDB's own default, which never releases it.
+    /// </summary>
+    public int? TcmallocReleaseRate { get; init; }
+
+    /// <summary>
+    /// Gets further <c>mongod</c> <c>setParameter</c> values of a managed database, by name.
+    /// </summary>
+    public IDictionary<string, string> SetParameters { get; init; } = new Dictionary<string, string>(StringComparer.Ordinal);
+
+    /// <summary>
+    /// Gets the MongoDB metrics of a managed database: one exporter per member for Prometheus.
+    /// </summary>
+    public DatabaseMetricsArgs? Metrics { get; init; }
+
+    /// <summary>
     /// Gets the size of the volume of each member of a managed database, such as <c>20Gi</c>.
     /// </summary>
     public string? StorageSize { get; init; }
@@ -94,9 +130,16 @@ public sealed class ProductionDatabaseArgs
             .Put("members", Members)
             .Put("oneMemberPerNode", OneMemberPerNode)
             .Put("memoryLimit", MemoryLimit)
+            .Put("memoryRequest", MemoryRequest)
+            .Put("cpuRequest", CpuRequest)
+            .Put("cpuLimit", CpuLimit)
+            .Put("wiredTigerCacheSizeRatio", WiredTigerCacheSizeRatio)
+            .Put("tcmallocReleaseRate", TcmallocReleaseRate)
+            .PutMap("setParameters", SetParameters.Select(pair => new KeyValuePair<string, object>(pair.Key, pair.Value)))
             .Put("storageSize", StorageSize)
             .Put("storageClassName", StorageClassName)
             .PutMap("nodeSelector", NodeSelector.Select(pair => new KeyValuePair<string, object>(pair.Key, pair.Value)))
             .Put("image", Image)
+            .Put("metrics", Metrics?.ToSpec())
             .Put("backup", Backup?.ToSpec(backupCredentialsSecretName));
 }

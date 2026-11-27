@@ -107,6 +107,10 @@ A `Managed` database is a `PerconaServerMongoDB` run by the Percona operator, wi
 | `members` | `1` | `1` for development, `3` or `5` for production. One member is accepted through the Percona operator's replica-set-size flag |
 | `oneMemberPerNode` | `true` | Run each member on its own node. Set `false` on a single-node cluster, such as kind |
 | `memoryLimit` | `8Gi` | The memory limit of each member |
+| `memoryRequest`, `cpuRequest`, `cpuLimit` | none | What each member requests, and its CPU limit. A member that requests nothing is the first evicted and shares CPU by weight |
+| `wiredTigerCacheSizeRatio` | the operator's | The WiredTiger cache as a share of the memory limit minus 1 GB, above 0 and below 1. Percona's default of 0.5 gives a small cache at a small limit |
+| `tcmallocReleaseRate` | `16777216` | Bytes per second at which MongoDB returns freed allocator memory to the operating system. MongoDB 8.0 never releases it when this is 0, and members were measured holding 2.4-3.3 GiB of free pages on top of the cache. 0 leaves MongoDB's default |
+| `setParameters` | none | Further `mongod` `setParameter` values, by name. Integers and booleans are written as such, anything else as a string |
 | `storageSize`, `storageClassName` | `10Gi`, the cluster's default | The volume of each member |
 | `nodeSelector` | none | The node labels the members must match |
 | `image` | `percona/percona-server-mongodb:7.0.14-8` | Pinned. Automatic upgrades are off |
@@ -114,6 +118,8 @@ A `Managed` database is a `PerconaServerMongoDB` run by the Percona operator, wi
 TLS between the members is disabled: when cert-manager rotates the certificate authority, the Percona operator otherwise restarts the replica set in a loop. The members are only reachable inside the cluster.
 
 Stage Manager waits for the Percona operator to report the database `ready`, then composes Chronicle's connection from the database administrator the Percona operator created into `<name>-mongodb-connection`.
+
+`metrics.enabled` runs one `percona/mongodb_exporter` (`metrics.image`, pinned by default) per member, as a Deployment of its own so that adding it never rolls a `mongod`. Each connects directly to its own member as the Percona-managed `clusterMonitor` user, read from the users Secret into the environment, and serves `/metrics` on port 9216 with the `prometheus.io/*` scrape annotations on its pod. Only the diagnostic data and replica set status collectors run, because Chronicle creates a database per event store and namespace and per-database series would grow without bound. `metrics.nodeSelector` places them. Turning `metrics.enabled` off later leaves the Deployments in place; delete them.
 
 `backup.enabled` runs the Percona Backup for MongoDB agent (`backup.image`, pinned by default) next to every member. Without a storage it only makes the database ready to be backed up.
 

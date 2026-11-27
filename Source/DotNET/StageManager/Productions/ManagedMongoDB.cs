@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Text;
 using System.Text.Json.Nodes;
 
 namespace Cratis.Showrunner.StageManager.Productions;
@@ -61,9 +62,23 @@ public static class ManagedMongoDB
             ["name"] = ReplicaSet,
             ["size"] = database.Members,
             ["affinity"] = new JsonObject { ["antiAffinityTopologyKey"] = database.OneMemberPerNode ? "kubernetes.io/hostname" : "none" },
-            ["resources"] = new JsonObject { ["limits"] = new JsonObject { ["memory"] = database.MemoryLimit } },
+            ["resources"] = Resources(database),
             ["volumeSpec"] = new JsonObject { ["persistentVolumeClaim"] = claim }
         };
+        if (database.WiredTigerCacheSizeRatio > 0)
+        {
+            replicaSet["storage"] = new JsonObject
+            {
+                ["engine"] = "wiredTiger",
+                ["wiredTiger"] = new JsonObject { ["engineConfig"] = new JsonObject { ["cacheSizeRatio"] = database.WiredTigerCacheSizeRatio } }
+            };
+        }
+
+        if (Configuration(database) is { } configuration)
+        {
+            replicaSet["configuration"] = configuration;
+        }
+
         if (production.Spec.Scheduling.NodeSelectorFor(database.NodeSelector) is { } nodeSelector)
         {
             replicaSet["nodeSelector"] = ToJson(nodeSelector);
@@ -126,6 +141,64 @@ public static class ManagedMongoDB
     /// <returns>The connection string.</returns>
     public static string ConnectionString(ProductionNames names, string user, string password) =>
         $"mongodb://{Uri.EscapeDataString(user)}:{Uri.EscapeDataString(password)}@{names.MongoDBHost}:27017/?replicaSet={ReplicaSet}&authSource=admin";
+
+    /// <summary>
+    /// Gets the <c>mongod</c> configuration of a member: the allocator release rate and any further <c>setParameter</c> values.
+    /// </summary>
+    /// <param name="database">The database.</param>
+    /// <returns>The configuration as the YAML Percona takes, or null when there is nothing to set.</returns>
+    public static string? Configuration(ProductionDatabase database)
+    {
+        var parameters = new SortedDictionary<string, string>(database.SetParameters, StringComparer.Ordinal);
+        if (database.TcmallocReleaseRate > 0)
+        {
+            parameters["tcmallocReleaseRate"] = database.TcmallocReleaseRate.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        if (parameters.Count == 0)
+        {
+            return null;
+        }
+
+        var yaml = new StringBuilder("setParameter:\n");
+        foreach (var (name, value) in parameters)
+        {
+            var scalar = long.TryParse(value, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out _) || bool.TryParse(value, out _)
+                ? value.ToLowerInvariant()
+                : JsonSerializer.Serialize(value);
+            yaml.Append("  ").Append(name).Append(": ").Append(scalar).Append('\n');
+        }
+
+        return yaml.ToString();
+    }
+
+    static JsonObject Resources(ProductionDatabase database)
+    {
+        var limits = new JsonObject { ["memory"] = database.MemoryLimit };
+        if (!string.IsNullOrWhiteSpace(database.CpuLimit))
+        {
+            limits["cpu"] = database.CpuLimit;
+        }
+
+        var resources = new JsonObject { ["limits"] = limits };
+        var requests = new JsonObject();
+        if (!string.IsNullOrWhiteSpace(database.MemoryRequest))
+        {
+            requests["memory"] = database.MemoryRequest;
+        }
+
+        if (!string.IsNullOrWhiteSpace(database.CpuRequest))
+        {
+            requests["cpu"] = database.CpuRequest;
+        }
+
+        if (requests.Count > 0)
+        {
+            resources["requests"] = requests;
+        }
+
+        return resources;
+    }
 
     static JsonObject Backup(ProductionDatabaseBackup backup)
     {

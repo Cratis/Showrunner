@@ -169,6 +169,20 @@ Database = new ProductionDatabaseArgs
 },
 ```
 
+Tune the members with `MemoryRequest`, `CpuRequest`, `CpuLimit`, `WiredTigerCacheSizeRatio`, `TcmallocReleaseRate` and `SetParameters`, and run MongoDB's own metrics for Prometheus with `Metrics = new DatabaseMetricsArgs()`:
+
+```csharp
+Database = new ProductionDatabaseArgs
+{
+    Mode = DatabaseMode.Managed,
+    Members = 3,
+    MemoryLimit = "1536Mi",
+    MemoryRequest = "1536Mi",
+    WiredTigerCacheSizeRatio = 0.39,
+    Metrics = new DatabaseMetricsArgs { NodeSelector = { ["workload"] = "compute" } },
+},
+```
+
 Leave `Tasks` empty for the operator's schedules (hourly 24, daily 7, weekly 4, monthly 12), or list `BackupTaskArgs`. The credentials Secret is `<name>-backup-credentials` unless `CredentialsSecretName` says otherwise. Give both `AccessKeyId` and `SecretAccessKey`, or neither.
 
 ### Dedicated nodes

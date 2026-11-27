@@ -179,6 +179,14 @@ public class ProductionReconciler(IProductionCluster cluster, ProductionPreparat
             return false;
         }
 
+        if (database.Metrics.Enabled)
+        {
+            foreach (var exporter in MongoDBExporter.Create(production))
+            {
+                await cluster.ApplyAsync(exporter, cancellationToken);
+            }
+        }
+
         var connection = ManagedMongoDB.ConnectionString(names, user, password);
         await cluster.ApplyAsync(ProductionMetadata.Secret(production, names.MongoDBConnection, "mongodb", new Dictionary<string, string> { [ProductionSecretReference.DefaultKey] = connection }), cancellationToken);
         status.Set(ProductionConditions.DatabaseReady, true, "Ready", $"The managed MongoDB '{names.MongoDB}' with {database.Members} member(s) is ready.");

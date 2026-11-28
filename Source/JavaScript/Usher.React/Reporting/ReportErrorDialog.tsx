@@ -5,7 +5,6 @@ import { DialogResult, useDialogContext } from '@cratis/arc.react/dialogs';
 import { useSliceContext } from '@cratis/arc.react/slices';
 import { SliceLocation as ArcSliceLocation } from '@cratis/arc/reflection';
 import { CommandDialog } from '@cratis/components/CommandDialog';
-import { TextAreaField } from '@cratis/components/CommandForm';
 import { DialogInitialFocus } from '@cratis/components/Dialogs';
 import { Guid } from '@cratis/fundamentals';
 import { IReportError, ReportError } from '@cratis/showrunner.usher';
@@ -13,6 +12,7 @@ import { useState } from 'react';
 import { UsherBoundary } from '../Provider/UsherBoundary.js';
 import { useUsherContext } from '../Provider/UsherContext.js';
 import { AccessFields } from './AccessFields.js';
+import { UsherMarkdownField } from './Attachments/UsherMarkdownField.js';
 import { ReportSent } from './ReportSent.js';
 import { reportErrorValues, toErrorDetails } from './reportValues.js';
 import { SentWithReport } from './SentWithReport.js';
@@ -81,7 +81,7 @@ const ReportErrorForm = ({ values }: { values: IReportError }) => {
                     errorType={values.errorType!}
                     correlationIds={values.correlationIds!}
                     stackFrames={values.stackFrames!} />
-                <TextAreaField<ReportError>
+                <UsherMarkdownField<ReportError>
                     value={command => command.details}
                     title={labels.reportError.details}
                     placeholder={labels.reportError.detailsPlaceholder}

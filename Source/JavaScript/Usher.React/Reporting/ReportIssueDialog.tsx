@@ -5,7 +5,7 @@ import { DialogResult, useDialogContext } from '@cratis/arc.react/dialogs';
 import { useSliceContext } from '@cratis/arc.react/slices';
 import { SliceLocation as ArcSliceLocation } from '@cratis/arc/reflection';
 import { CommandDialog } from '@cratis/components/CommandDialog';
-import { InputTextField, TextAreaField } from '@cratis/components/CommandForm';
+import { InputTextField } from '@cratis/components/CommandForm';
 import { DialogInitialFocus } from '@cratis/components/Dialogs';
 import { Guid } from '@cratis/fundamentals';
 import { ReportIssue } from '@cratis/showrunner.usher';
@@ -13,6 +13,7 @@ import { useState } from 'react';
 import { UsherBoundary } from '../Provider/UsherBoundary.js';
 import { useUsherContext } from '../Provider/UsherContext.js';
 import { AccessFields } from './AccessFields.js';
+import { UsherMarkdownField } from './Attachments/UsherMarkdownField.js';
 import { ReportSent } from './ReportSent.js';
 import { reportIssueValues } from './reportValues.js';
 import { SentWithReport } from './SentWithReport.js';
@@ -72,7 +73,7 @@ const ReportIssueForm = ({ values }: { values: ReturnType<typeof reportIssueValu
             <div className='usher-report-form'>
                 <SentWithReport location={values.location!} correlationIdCount={values.correlationIds!.length} />
                 <InputTextField<ReportIssue> value={command => command.summary} title={labels.reportIssue.summary} />
-                <TextAreaField<ReportIssue> value={command => command.description} title={labels.reportIssue.description} rows={5} />
+                <UsherMarkdownField<ReportIssue> value={command => command.description} title={labels.reportIssue.description} rows={5} />
                 <AccessFields<ReportIssue> choice={access.choice} />
             </div>
         </CommandDialog>

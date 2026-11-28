@@ -5,6 +5,7 @@ import { ChatAuthor, ChatAuthorKind, ChatIdentifier, ChatMessage } from '@cratis
 import { Guid } from '@cratis/fundamentals';
 import { ConversationAuthorKind, ConversationEntry, ConversationEntryKind } from '@cratis/showrunner.usher';
 import { ConversationEventLabels, format, UsherLabels } from '../Labels/index.js';
+import { summarizeAttachmentsInText } from './summarizeAttachmentsInText.js';
 
 /**
  * A message in the conversation on an issue, as the chat shows it.
@@ -100,7 +101,7 @@ export function authorOf(authorId: ChatIdentifier, labels: UsherLabels): ChatAut
  */
 export function bodyOf(entry: ConversationEntry, labels: UsherLabels): string {
     if (textKinds.has(entry.kind)) {
-        return entry.text;
+        return summarizeAttachmentsInText(entry.text);
     }
 
     const key = eventLabelKeys[entry.kind];

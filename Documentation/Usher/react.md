@@ -112,6 +112,8 @@ Every report carries, without the reporter doing anything:
 
 The report dialogs show the reporter this before they send, such as *Billing › Invoices › Pay · Ledger 4.12.1 · 3 recent requests*.
 
+The description field of **Report a problem** and the details field of **Report this error** also accept a pasted or dropped file: an image renders inline, and anything else - a log, a spreadsheet - becomes a link with its file name. Call `app.UseUsherAttachments()` on the host so the uploaded files are actually served; see [Attachments](./backend.md#add-usher-to-an-application).
+
 ### How correlation ids are tracked
 
 `UsherProvider` wraps the HTTP headers Arc sends with every command and snapshot query of the components inside it: each request gets an `X-Correlation-ID` header with a new correlation id, unless the application's own headers already carry one, and Usher keeps the most recent ones. Arc's backend uses the correlation id the request carries, so the ids a report sends are the ids the backend recorded, and Usher finds the error it [captured](./backend.md#error-capture) for a failing command.

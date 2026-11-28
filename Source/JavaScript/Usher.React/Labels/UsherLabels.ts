@@ -22,6 +22,8 @@ export interface UsherLabels {
         unknownLocation: string;
         /** Separates the module, feature and slice of a location. */
         locationSeparator: string;
+        /** Shown when a pasted or dropped attachment could not be uploaded. `{name}` is the file name. */
+        uploadFailed: string;
     };
 
     /** The report button. */

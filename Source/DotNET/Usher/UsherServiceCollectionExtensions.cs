@@ -39,6 +39,8 @@ public static class UsherServiceCollectionExtensions
             .Validate(options => options.ErrorCapture.Retention > TimeSpan.Zero, "Usher keeps captured errors for a while: set UsherOptions.ErrorCapture.Retention to more than zero.")
             .Validate(options => options.ErrorCapture.Capacity >= 0, "Usher keeps a number of captured errors: UsherOptions.ErrorCapture.Capacity cannot be negative.")
             .Validate(options => options.ErrorCapture.MaximumStackFrames >= 0, "Usher keeps a number of stack frames: UsherOptions.ErrorCapture.MaximumStackFrames cannot be negative.")
+            .Validate(options => !string.IsNullOrWhiteSpace(options.Attachments.Path), "Usher stores attachments somewhere: set UsherOptions.Attachments.Path to a non-empty path.")
+            .Validate(options => options.Attachments.MaxSizeInBytes > 0, "Usher keeps a maximum attachment size: UsherOptions.Attachments.MaxSizeInBytes must be positive.")
             .ValidateOnStart();
 
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<ArcOptions>, OnBehalfConfiguration>());

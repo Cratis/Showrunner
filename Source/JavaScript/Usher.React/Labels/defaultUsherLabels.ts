@@ -14,7 +14,8 @@ export const defaultUsherLabels: UsherLabels = {
         recentRequests: '{count} recent requests',
         oneRecentRequest: '1 recent request',
         unknownLocation: 'Unknown location',
-        locationSeparator: ' › '
+        locationSeparator: ' › ',
+        uploadFailed: 'Could not upload {name}'
     },
     reportButton: {
         reportProblem: 'Report a bug',

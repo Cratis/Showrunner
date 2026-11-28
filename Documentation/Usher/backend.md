@@ -26,8 +26,12 @@ builder.AddUsher(usher =>
 | `Audience`, `DeskAudience` | unset | The audience that identifies this application to its desks (filters the subscription), and the audience of the desk (addresses what Usher publishes). See [Audience routing](../BoxOffice/audience-routing.md). |
 | `PollingInterval` | one minute | How often Usher looks for new tenant namespaces and for grants of access whose end has passed. A grant lapses at most this long after its end. |
 | `OnBehalf` | unset | How Usher answers AuthProxy's on-behalf sessions, in which support signs in as a reporter. Unset, support cannot. See [Access and support sessions](./access-and-sessions.md#configure-authproxy-and-usher-together). |
+| `Attachments.Path` | `usher-attachments` | Where attachments a reporter pastes or drops into a report are stored. Point it at a mounted, persistent path in production - a container without one loses attachments on redeploy. |
+| `Attachments.MaxSizeInBytes` | 10 MiB | The largest attachment a reporter can upload. |
 
 The host fails to start when `ApplicationName` is not set. Arc discovers Usher's commands and queries, and Chronicle its events, read models and reactors, from the referenced assembly; there is nothing else to register. `AddUsher` also adds a hosted service that exchanges events with the desks and lapses grants; see [Exchanging events with a desk](./desk-exchange.md).
+
+A reporter can paste or drop a file into a report's description or details; call `app.UseUsherAttachments()` on the built application to serve what they upload. Only `.png`, `.jpg`, `.jpeg`, `.gif` and `.webp` render inline - everything else, including SVG, downloads instead, so an uploaded file never runs as a page or a script in the application's own origin.
 
 Every command and query requires a signed-in user. Usher takes who the reporter is from the signed-in identity, never from the request: the `sub` claim (or the name identifier) is the reporter's subject, the `name` and `email` claims are what support sees when the reporter shares who they are, and the identity provider comes from Arc's identity provider claim. A subject is unique only within its identity provider, so Usher identifies the reporter by the pair, `UserIdentity(IdentityProvider, Subject)`: two people with the same subject at two providers never see or act on each other's issues, and a captured error is kept for the pair too.
 

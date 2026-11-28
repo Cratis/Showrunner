@@ -4,6 +4,7 @@
 using Cratis.Chronicle;
 using Cratis.Showrunner.Usher.Access.OnBehalf;
 using Cratis.Showrunner.Usher.Contracts.Reporting;
+using Cratis.Showrunner.Usher.Reporting.Attachments;
 using Cratis.Showrunner.Usher.Reporting.Capture;
 
 namespace Cratis.Showrunner.Usher;
@@ -51,6 +52,11 @@ public class UsherOptions
     /// backend saw rather than from what the client sends.
     /// </summary>
     public ErrorCaptureOptions ErrorCapture { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets how Usher stores the files a reporter attaches to a report.
+    /// </summary>
+    public UsherAttachmentsOptions Attachments { get; set; } = new();
 
     /// <summary>
     /// Gets or sets how often Usher looks for tenant namespaces it does not serve yet and for grants of access whose end

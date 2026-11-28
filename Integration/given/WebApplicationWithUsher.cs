@@ -7,6 +7,7 @@ using System.Text.Json;
 using Cratis.Arc;
 using Cratis.Chronicle.Connections;
 using Cratis.Showrunner.Usher.Access.OnBehalf;
+using Cratis.Showrunner.Usher.Reporting.Attachments;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
@@ -45,9 +46,10 @@ public sealed class WebApplicationWithUsher(WebApplication app, EventStoreName n
     /// <param name="infrastructure">The Chronicle kernel.</param>
     /// <param name="deskStore">The desk store the application exchanges events with.</param>
     /// <param name="authProxy">The AuthProxy whose tokens the application accepts.</param>
+    /// <param name="maxAttachmentSizeInBytes">The largest attachment the application accepts; <see cref="UsherAttachmentsOptions"/>'s own default when not given.</param>
     /// <returns>The running application.</returns>
     /// <exception cref="InvalidOperationException">The application's event store did not register with the kernel.</exception>
-    public static async Task<WebApplicationWithUsher> Start(ChronicleInfrastructure infrastructure, EventStoreName deskStore, AuthProxy authProxy)
+    public static async Task<WebApplicationWithUsher> Start(ChronicleInfrastructure infrastructure, EventStoreName deskStore, AuthProxy authProxy, long? maxAttachmentSizeInBytes = null)
     {
         var name = new EventStoreName($"Ledger-{Guid.NewGuid():N}");
         var builder = WebApplication.CreateBuilder();
@@ -94,6 +96,13 @@ public sealed class WebApplicationWithUsher(WebApplication app, EventStoreName n
                 BaseUrl = BaseUrl,
                 AgentIdentityProviders = ["usher-agents"]
             };
+
+            // A fresh directory per application, so parallel specs never share or fight over stored attachments.
+            usher.Attachments.Path = Path.Combine(Path.GetTempPath(), $"usher-attachments-{Guid.NewGuid():N}");
+            if (maxAttachmentSizeInBytes is { } max)
+            {
+                usher.Attachments.MaxSizeInBytes = max;
+            }
         });
 
         if (Environment.GetEnvironmentVariable("USHER_INTEGRATION_LOG") is { Length: > 0 } log)
@@ -106,6 +115,7 @@ public sealed class WebApplicationWithUsher(WebApplication app, EventStoreName n
         app.UseAuthorization();
         app.UseCratisArc();
         app.MapUsher();
+        app.UseUsherAttachments();
         await app.StartAsync();
 
         var application = new WebApplicationWithUsher(app, name);
@@ -178,6 +188,32 @@ public sealed class WebApplicationWithUsher(WebApplication app, EventStoreName n
         request.Headers.Add("x-cratis-tenant-id", call.Tenant);
         request.Headers.Add("Tenant-ID", call.Tenant);
         request.Headers.Add("x-cratis-on-behalf-actor", call.ActorHeader);
+        return await Http.SendAsync(request);
+    }
+
+    /// <summary>
+    /// Uploads a file to Usher's attachment endpoint, with or without a signed-in user.
+    /// </summary>
+    /// <param name="fileName">The file's name, as a reporter's browser would send it.</param>
+    /// <param name="contentType">The declared content type.</param>
+    /// <param name="content">The file's bytes.</param>
+    /// <param name="principal">The signed-in user, or <see langword="null"/> for an anonymous request.</param>
+    /// <returns>The response.</returns>
+    public async Task<HttpResponseMessage> UploadAttachment(string fileName, string contentType, byte[] content, ForwardedUser? principal)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, UsherAttachmentEndpoints.Route)
+        {
+            Content = new ByteArrayContent(content)
+        };
+        request.Content.Headers.ContentType = new(contentType);
+        request.Headers.Add(UsherAttachmentEndpoints.FileNameHeader, Uri.EscapeDataString(fileName));
+        if (principal is not null)
+        {
+            request.Headers.Add("x-ms-client-principal", AuthProxy.Encode(principal));
+            request.Headers.Add("x-ms-client-principal-id", principal.UserId);
+            request.Headers.Add("x-ms-client-principal-name", principal.UserDetails);
+        }
+
         return await Http.SendAsync(request);
     }
 

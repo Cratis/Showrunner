@@ -80,12 +80,17 @@ public static class UsherAttachmentEndpoints
     }
 
     /// <summary>
-    /// Serves uploaded attachments from the configured directory at <see cref="Route"/>.
+    /// Maps the upload endpoint and serves uploaded attachments from the configured directory at
+    /// <see cref="Route"/>. The one call a host needs: <see cref="WebApplication"/> is itself an
+    /// <see cref="IEndpointRouteBuilder"/>, so mapping and serving are wired together rather than needing
+    /// a second, easily-forgotten call to <see cref="MapUsherAttachments(IEndpointRouteBuilder)"/>.
     /// </summary>
     /// <param name="app">The <see cref="WebApplication"/> to configure.</param>
     /// <returns>The same <see cref="WebApplication"/> for chaining.</returns>
     public static WebApplication UseUsherAttachments(this WebApplication app)
     {
+        app.MapUsherAttachments();
+
         var options = app.Services.GetRequiredService<IOptions<UsherOptions>>().Value.Attachments;
         Directory.CreateDirectory(options.Path);
 
